@@ -1,0 +1,85 @@
+<div class="card p-6">
+    <div>
+        <form [formGroup]="updateForm" (ngSubmit)="onSubmit()" class="space-y-8">
+            <div class="flex justify-between items-center mb-6">
+                <span class="block text-surface-900 font-bold text-xl mb-6">Stock Adjustment</span>
+                <!-- Buttons -->
+                <div class="flex gap-4">
+                    <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
+                    <button pButton type="button" label="BarCode Print" class="p-button-secondary"></button>
+                      <button pButton type="submit" label="Save" class="p-button-warning"></button>
+                </div>
+            </div>
+
+            <!-- 🏷 Product Info Section -->
+            <div>
+                <!-- ✅ Changed to a 2-column grid for half-width fields -->
+                <div class="flex mb-3">
+                    <input type="text" pInputText placeholder="Search..." class="w-full p-inputtext" formControlName="globalFilter" (input)="applyGlobalFilter()" />
+                </div>
+                <!-- Category -->
+                <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
+                    <div class="flex flex-col">
+                        <label class="font-medium mb-1">Category</label>
+                        <p-dropdown [options]="categoryOptions" optionLabel="label" optionValue="value" [filter]="true" filterPlaceholder="Search Category" formControlName="category" placeholder="Category"> </p-dropdown>
+                        <small class="text-red-500 ms-3 mt-1" *ngIf="updateForm.get('category')?.touched || updateForm.get('category')?.touched">
+                            <span *ngIf="updateForm.get('category')?.errors?.['required']">Category is required</span>
+                        </small>
+                    </div>
+
+                    <!-- Item -->
+                    <div class="flex flex-col">
+                        <label class="font-medium mb-1">Item</label>
+                        <p-dropdown [options]="itemOptions" optionLabel="label" optionValue="value" [filter]="true" filterPlaceholder="Search Item" formControlName="item" placeholder="Item"> </p-dropdown>
+                        <small class="text-red-500 ms-3 mt-1" *ngIf="updateForm.get('item')?.touched">
+                            <span *ngIf="updateForm.get('item')?.errors?.['required']">Item is required</span>
+                        </small>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <p-table
+                        [value]="filteredProducts"
+                        [globalFilterFields]="['name', 'category']"
+                        [filters]="{ global: { value: globalFilter, matchMode: 'contains' } }"
+                        dataKey="code"
+                        [paginator]="true"
+                        [rows]="10"
+                        [rowsPerPageOptions]="[5, 10, 20, 50]"
+                        [responsiveLayout]="'scroll'"
+                        class="p-datatable-gridlines mt-6"
+                    >
+                        <ng-template #header>
+                            <tr class="bg-yellow-400">
+                                <th style="width: 4rem"><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
+                                <th>Item Name</th>
+                                <th>Category</th>
+                                <th>Current Stock</th>
+                                <th>Adj Type</th>
+                                <th>Quantity</th>
+                            </tr>
+                        </ng-template>
+                        <ng-template #body let-update>
+                            <tr>
+                                <td><p-tableCheckbox [value]="update" /></td>
+                                <td>{{ update.name }}</td>
+                                <td>{{ update.category }}</td>
+                                <td>{{ update.curStock }}</td>
+                                <td><p-autocomplete [(ngModel)]="update.adjustmentType" [dropdown]="true" [suggestions]="filteredAdjustment" (completeMethod)="search($event)" (onSelect)="onAdjustmentChange($event,update)" placeholder="Increase/Decrease"></p-autocomplete></td>
+                                <td>
+                                    <div class="grid items-center gap-2">
+                                        <input pInputText type="number" [formControl]="update.quantityControl" placeholder="{{ update.quantity }}" />
+                                        <span class="text-red-500" *ngIf="update.quantityControl.touched && update.quantityControl.hasError('greaterThanStock')"> Quantity cannot be greater than current stock ({{ update.curStock }}). </span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="paginatorleft">
+                            <div class="text-gray-600 ms-2">Total Items:{{ filteredProducts?.length || 0 }}</div>
+                        </ng-template>
+                    </p-table>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<p-confirmDialog></p-confirmDialog>

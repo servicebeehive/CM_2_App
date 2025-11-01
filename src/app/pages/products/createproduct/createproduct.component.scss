@@ -1,0 +1,12 @@
+
+        :host ::ng-deep .p-fileupload-header {
+            display: none;
+        }
+
+        :host ::ng-deep .p-fileupload-file-list {
+            display: none;
+        }
+
+        :host ::ng-deep .p-fileupload-content {
+            height: 20rem;
+        }

@@ -1,0 +1,271 @@
+import { CommonModule } from '@angular/common';
+import { Component, ViewChild } from '@angular/core';
+import { AbstractControl, FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
+import { ChipModule } from 'primeng/chip';
+import { EditorModule } from 'primeng/editor';
+import { FileUploadModule } from 'primeng/fileupload';
+import { FluidModule } from 'primeng/fluid';
+import { InputTextModule } from 'primeng/inputtext';
+import { AutoCompleteModule } from 'primeng/autocomplete';
+import { RippleModule } from 'primeng/ripple';
+import { SelectModule } from 'primeng/select';
+import { DropdownModule } from 'primeng/dropdown';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { TableModule } from 'primeng/table';
+import { TextareaModule } from 'primeng/textarea';
+import { MessageModule } from 'primeng/message';
+import { DatePickerModule } from 'primeng/datepicker';
+import { DialogModule } from 'primeng/dialog';
+import { AddinventoryComponent } from "../addinventory/addinventory.component";
+import { StockIn } from '@/types/stockin.model';
+import { InventoryService } from '@/core/services/inventory.service';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { updatePreset } from '@primeng/themes';
+import { filter } from 'rxjs';
+import { ConfirmationService } from 'primeng/api';
+import { CheckboxModule } from 'primeng/checkbox';
+import { Paginator } from 'primeng/paginator';
+import { RouterLink } from "@angular/router";
+interface Product {
+    name: string;
+    price: string;
+    code: string;
+    sku: string;
+    status: string;
+    tags: string[];
+    category: string;
+    colors: string[];
+    stock: string;
+    inStock: boolean;
+    description: string;
+    images: Image[];
+}
+
+interface Image {
+    name: string;
+    objectURL: string;
+}
+
+@Component({
+    selector: 'app-stock-in',
+    imports: [
+    CommonModule,
+    EditorModule,
+    ReactiveFormsModule,
+    TextareaModule,
+    TableModule,
+    InputTextModule,
+    FormsModule,
+    FileUploadModule,
+    ButtonModule,
+    SelectModule,
+    DropdownModule,
+    ToggleSwitchModule,
+    RippleModule,
+    ChipModule,
+    FluidModule,
+    MessageModule,
+    DatePickerModule,
+    DialogModule,
+    AddinventoryComponent,
+    AutoCompleteModule,
+    ConfirmDialogModule,
+    CheckboxModule,
+    RouterLink
+],
+    templateUrl: './stock-in.component.html',
+    styleUrl: './stock-in.component.scss',
+    providers:[ConfirmationService]
+})
+export class StockInComponent {
+    productForm!: FormGroup;
+
+     visibleDialog=false;
+     selectedRow:any=null;
+     filteredVendors: any[] = [];
+     filteredInvoiceNo: any[]=[];
+     selectedVendor:any;
+     mode:'add' |'edit'='add';
+     selection:boolean=true;
+     pagedProducts:StockIn[]=[];
+     first:number=0;
+     rowsPerPage:number=5;
+     childUomStatus:boolean=false;
+     addItemEnabled=false;
+
+    @ViewChild(AddinventoryComponent) addInventoryComp!:AddinventoryComponent;
+
+    // ✅ Move dropdown options into variables
+    transactionIdOptions = [
+        { label: 'Trans1', value: 'trans1' },
+        { label: 'Trans2', value: 'trans2' },
+        { label: 'Trans3', value: 'trans3' }
+    ];
+
+    invoiceNoOptions = [
+        { label: 'Invoice1' },
+        { label: 'Invoice2' },
+        { label: 'Invoice3' }
+    ];
+
+    vendorNameOptions = [
+        { label: 'Karan' },
+        { label: 'Arjun' },
+        { label: 'Ram' }
+    ];
+
+    categoryOptions = [
+        { label: 'Category 1', value: 'category1' },
+        { label: 'Category 2', value: 'category2' },
+        { label: 'Category 3', value: 'category3' }
+    ];
+
+    itemOptions = [
+        { label: 'Item 1', value: 'item1' },
+        { label: 'Item 2', value: 'item2' },
+        { label: 'Item 3', value: 'item3' }
+    ];
+
+    products:StockIn[] =[];
+    constructor(private fb: FormBuilder, private stockInService:InventoryService,private confirmationService:ConfirmationService) {}
+
+    ngOnInit(): void {
+         this.onGetStockIn();
+        this.productForm = this.fb.group(
+            {
+                transId: [''],
+                invoiceNo: ['', [Validators.maxLength(50)]],
+                vendorName: [''],
+                invoiceDate: [''],
+                remark:['',[Validators.maxLength(500)]]
+            }
+        );
+       
+    }
+
+ onGetStockIn() {
+ this.products=this.stockInService.productItem;
+ console.log('item',this.products);
+ this.products.forEach(p=>p.selection=true);
+}
+
+filterVendors(event:any){
+    const query = event.query.toLowerCase();
+    this.filteredVendors=this.vendorNameOptions.filter(v=>v.label.toLowerCase().includes(query));
+    if(!this.filteredVendors.some(v=>v.label.toLowerCase()===query)){
+        this.filteredVendors.push({label:event.query});
+    }
+}
+filterInvoiceNo(event:any){
+    const query = event.query.toLowerCase();
+    this.filteredInvoiceNo=this.invoiceNoOptions.filter(v=>v.label.toLowerCase().includes(query));
+    if(!this.filteredInvoiceNo.some(v=>v.label.toLowerCase()===query)){
+        this.filteredInvoiceNo.push({label:event.query});
+    }
+}
+
+onSave(updatedData:any){
+    const hasChildUOM= updatedData.childUOMDetails?.some((u:any)=> u.childUOM || u.conversion || u.mrp);
+    const mappedData={
+        selection:true,
+     code: updatedData.itemCode.label ||updatedData.itemCode,
+     name:updatedData.itemName,
+     category:updatedData.category,
+     curStock: updatedData.curStock,
+    purchasePrice: updatedData.purchasePrice,
+    quantity: updatedData.qty,
+    total: (updatedData.purchasePrice) * (updatedData.qty),
+    uom: updatedData.parentUOM,
+    childUOM:hasChildUOM?'Yes' :'No',
+    mrp: updatedData.mrp,
+    discount:updatedData.discount,
+    minStock: updatedData.minStock,
+    warPeriod: updatedData.warPeriod,
+    location: updatedData.location,
+    };
+    if(this.mode==='edit' && this.selectedRow){
+        const index=this.products.findIndex(p=>p.code === this.selectedRow.code);
+            if(index!==-1){
+               this.products[index]={...this.products[index], ...mappedData };
+            }
+        }
+            else{
+                this.products.push(mappedData);
+            }
+            this.closeDialog();
+    }
+ deleteItem(product:any) {
+  this.confirmationService.confirm({
+    message: `Are you sure you want to delete <b>${product.name}</b>?`,
+    header: 'Confirm Delete',
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: 'Yes',
+    rejectLabel: 'No',
+    acceptButtonStyleClass: 'p-button-danger',
+    rejectButtonStyleClass: 'p-button-secondary',
+    accept: () => {
+      this.products = this.products.filter(p => p.code !== product.code);
+    },
+    reject: () => {
+      // Optional: Add toast or log cancel
+      console.log('Deletion cancelled');
+    }
+  });
+  }
+onChildUom(status: boolean):boolean{
+this.childUomStatus=status;
+return this.childUomStatus;
+}
+onPageChange(event: any) {
+    this.first = event.first;
+    this.rowsPerPage = event.rows;
+    this.updatePagedProducts();
+}
+
+updatePagedProducts() {
+    this.pagedProducts = this.products.slice(this.first, this.first + this.rowsPerPage);
+}
+
+get grandTotal():number{
+    return this.products.reduce((sum,p)=>sum+(p.total || 0),0);
+}
+    onSubmit() {
+        this.confirmationService.confirm({
+            message:'Do you want to save the header information',
+            header:'Confirm',
+            acceptLabel:'Yes',
+            rejectLabel:'Cancel',
+            rejectButtonStyleClass:'p-button-secondary',
+            accept:()=>{
+             this.addItemEnabled=true;
+            }
+        });
+    }
+    openAddDialog(){
+        this.mode='add';
+        this.selectedRow=null;
+        this.visibleDialog=true;
+        setTimeout(() => {
+          this.addInventoryComp.resetForm();
+        });
+    }
+    openEditDialog(rowData:any){
+        this.mode='edit';
+        this.selectedRow=rowData||null;
+        this.visibleDialog=true;
+    }
+    closeDialog(){
+        this.visibleDialog=false;
+    }
+    reset(){
+        this.productForm.reset();
+        this.products=[];
+        this.first=0;
+        this.pagedProducts=[];
+        this.childUomStatus=false;
+        if (this.addInventoryComp){
+            this.addInventoryComp.resetForm();
+        }
+    }
+}
