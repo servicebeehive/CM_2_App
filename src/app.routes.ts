@@ -40,7 +40,10 @@ export const appRoutes: Routes = [
                 path: 'pos',
                 loadChildren: () => import('@/pages/pos/pos.routers'),
             },
-
+            {
+                path:'settings',
+                loadChildren:() => import('@/pages/settings/settings.routers'),
+            },
 
             // {
             //     path: 'blocks',

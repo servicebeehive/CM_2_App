@@ -110,15 +110,16 @@ export class StockInComponent {
     ];
 
     vendorNameOptions = [
-        { label: 'Karan' },
-        { label: 'Arjun' },
-        { label: 'Ram' }
+       {label:' GreatWhite'},
+       {label:'Self'}
     ];
 
     categoryOptions = [
-        { label: 'Category 1', value: 'category1' },
-        { label: 'Category 2', value: 'category2' },
-        { label: 'Category 3', value: 'category3' }
+        { label: 'Wires & Cables', value: 'Wires & Cables' },
+        { label: 'Lighting', value: 'Lighting' },
+        { label: 'Fans & Fixtures', value: 'Fans & Fixtures' },
+        {label: 'Switches & Accessories',value:'Switches & Accessories'},
+        {label: 'Plugs, Holders & Connectors',value:'Plugs, Holders & Connectors'}
     ];
 
     itemOptions = [

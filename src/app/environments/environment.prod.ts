@@ -1,6 +1,6 @@
 
 export const environment = {
-  production: true,
+  production: false,
    baseurl: "http://13.201.136.123:1608/api/v1",
 //   SubDomain:window.location.protocol+ '//'+window.location.host
 };

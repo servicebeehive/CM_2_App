@@ -7,21 +7,28 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
+import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from "@angular/forms";
+import { CommonModule } from '@angular/common';
 
 @Component({
     selector: 'app-new-password',
     imports: [
-        ButtonModule,
-        RouterModule,
-        AppConfigurator,
-        IconFieldModule,
-        InputIconModule,
-        InputTextModule,
-        PasswordModule,
-        AppConfigurator,
-    ],
+    ButtonModule,
+    RouterModule,
+    AppConfigurator,
+    IconFieldModule,
+    InputIconModule,
+    InputTextModule,
+    PasswordModule,
+    AppConfigurator,
+    FormsModule,
+    CommonModule,
+    ReactiveFormsModule
+],
     standalone: true,
-    template: ` <svg
+    template: ` 
+    <div class="card">
+    <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 1600 800"
             class="fixed left-0 top-0 min-h-screen min-w-screen"
@@ -75,11 +82,11 @@ import { PasswordModule } from 'primeng/password';
                 <div class="text-surface-900 dark:text-surface-0 text-xl font-bold mb-2">New Password</div>
                 <span class="text-surface-600 dark:text-surface-200 font-medium">Enter your new password</span>
             </div>
-                <div class="flex flex-col">
-                    <p-iconfield class="w-full mb-6">
+                <form [formGroup]="passwordForm" (ngSubmit)="onSubmit()" class="flex flex-col">
+                    <p-iconfield class="w-full">
                         <p-inputicon class="pi pi-lock z-20" />
                         <p-password
-                            id="password"
+                            formControlName="password"
                             placeholder="Password"
                             styleClass="w-full"
                             [inputStyle]="{ paddingLeft: '2.5rem' }"
@@ -87,12 +94,16 @@ import { PasswordModule } from 'primeng/password';
                             [toggleMask]="true"
                         ></p-password>
                     </p-iconfield>
+                    <small class="text-red-500 ms-3 mt-2" *ngIf="passwordForm.get('password')?.touched && passwordForm.get('password')?.hasError('required')">
+                        Password is required
+                    </small>
 
-                    <p-iconfield class="w-full mb-6">
+                      <!-- Confirm Password -->
+                    <p-iconfield class="w-full mt-6">
                         <p-inputicon class="pi pi-lock z-20" />
                         <p-password
-                            id="password"
-                            placeholder="Repeat Password"
+                            formControlName="confirmPassword"
+                            placeholder="Confirm Password"
                             styleClass="w-full"
                             [inputStyle]="{ paddingLeft: '2.5rem' }"
                             inputStyleClass="w-full md:w-25rem"
@@ -100,8 +111,14 @@ import { PasswordModule } from 'primeng/password';
                             [feedback]="false"
                         ></p-password>
                     </p-iconfield>
+                    <small
+                        class="text-red-500 mt-2 ms-3"
+                        *ngIf="passwordForm.get('confirmPassword')?.touched && passwordForm.hasError('passwordMismatch')"
+                    >
+                        Passwords do not match
+                    </small>
 
-                    <div class="flex flex-wrap gap-2 justify-between">
+                    <div class="flex flex-wrap gap-2 justify-between mt-6">
                         <button
                             pButton
                             pRipple
@@ -109,6 +126,7 @@ import { PasswordModule } from 'primeng/password';
                             class="flex-auto"
                             outlined
                             [routerLink]="['/']"
+                            type="button"
                         ></button>
                         <button
                             pButton
@@ -116,16 +134,37 @@ import { PasswordModule } from 'primeng/password';
                             label="Submit"
                             class="flex-auto"
                             [routerLink]="['/']"
+                            type="submit"
+                            [disabled]="passwordForm.invalid"
                         ></button>
                     </div>
-                </div>
+</form>
             </div>
         </div>
 
-          <app-configurator [simple]="true"/>`,
+          <app-configurator [simple]="true"/>
+</div>`,
 })
 export class NewPassword {
     LayoutService = inject(LayoutService);
-
+   fb=inject(FormBuilder);
+   passwordForm: FormGroup=this.fb.group(
+    {
+        password:['',Validators.required],
+        confirmPassword:['',Validators.required]
+    },{
+        validators:this.passwordMismatchValidator
+    }
+   );
     isDarkTheme = computed(() => this.LayoutService.isDarkTheme());
+
+    passwordMismatchValidator(form:AbstractControl){
+        const password=form.get('password')?.value;
+        const confirmPassword=form.get('confirmPassword')?.value;
+        return password===confirmPassword ? null:{passwordMismatchValidator:true};
+    }
+
+    onSubmit(){
+
+    }
 }

@@ -34,7 +34,7 @@ import { Select } from "primeng/select";
     DividerModule,
     IconFieldModule,
     InputIconModule,
-    MessageModule, Select]
+    MessageModule]
 })
 export class LoginComponent  implements OnInit{
  public   loginTypes = [
@@ -64,8 +64,13 @@ constructor(private fb: FormBuilder,private route:Router, private authservice:Au
     });
   }
 
+forgetPassword(){
+  this.route.navigate(['/forgotpassword']);
+}
+
   onSubmit() {
     if (this.loginForm.valid) {
+         this.route.navigate(['/layout']);
         this.authservice.isLoggedIn(this.loginForm.value).subscribe({
             next:(res:any)=>{
                 if(res.success==true){

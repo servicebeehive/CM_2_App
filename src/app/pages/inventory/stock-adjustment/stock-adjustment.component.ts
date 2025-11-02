@@ -57,12 +57,13 @@ export class StockAdjustmentComponent {
     filteredAdjustment : any[]=[];
     
     // ✅ Move dropdown options into variables
-    categoryOptions = [
-        { label: 'Switch', value: 'Switch' },
-        { label: 'Bulb', value: 'Bulb' },
-        { label: 'Fan', value: 'Fan' }
+   categoryOptions = [
+        { label: 'Wires & Cables', value: 'Wires & Cables' },
+        { label: 'Lighting', value: 'Lighting' },
+        { label: 'Fans & Fixtures', value: 'Fans & Fixtures' },
+        {label: 'Switches & Accessories',value:'Switches & Accessories'},
+        {label: 'Plugs, Holders & Connectors',value:'Plugs, Holders & Connectors'}
     ];
-
     itemOptions = [
         { label: 'Anchor switch 3/4', value: 'Anchor Switch 3/4' },
         { label: 'Led Bulb', value: 'LED Bulb' },

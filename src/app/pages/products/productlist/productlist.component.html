@@ -15,8 +15,11 @@
             <!-- 🏷 Product Info Section -->
             <div>
                 <!-- ✅ Changed to a 2-column grid for half-width fields -->
-                <div class="flex mb-3">
+                <div *ngIf="showGlobalSearch" class="flex mb-3">
                     <input type="text" pInputText placeholder="Search..." class="w-full p-inputtext" formControlName="globalFilter" (input)="applyGlobalFilter()" />
+                     <!-- <div *ngIf="showGlobalSearch" class="mb-3">
+                        <app-global-filter [(value)]="globalFilter" placeholder="Search..." (valueChange)="applyGlobalFilter()"></app-global-filter>
+                     </div> -->
                 </div>
                 <!-- Category -->
                 <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
@@ -27,7 +30,6 @@
                             <span *ngIf="updateForm.get('category')?.errors?.['required']">Category is required</span>
                         </small>
                     </div>
-
                     <!-- Item -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Item</label>
@@ -63,8 +65,9 @@
                                 <th>Discount</th>
                                 <th>Min Stock</th>
                                 <th>Warranty Period</th>
-                                <th>Location</th>
                                 <th>BarCode #</th>
+                                <th>Location</th>
+                                
                                 <th class="text-center">Action</th>
                             </tr>
                         </ng-template>
@@ -82,8 +85,8 @@
                                 <td>{{ update.discount }}</td>
                                 <td>{{ update.minStock }}</td>
                                 <td>{{ update.warPeriod }}</td>
-                                <td>{{ update.location }}</td>
                                 <td><input pInputText type="number" [(ngModel)]="update.BarCode" placeholder="{{update.BarCode}}"></td>
+                                 <td>{{ update.location }}</td>
                                 <td class="text-center">
                                     <i class="pi pi-pencil cursor-pointer text-blue-500" (click)="openEditDialog(update)"></i>
                                     <!-- <i class="pi pi-trash ms-2 cursor-pointer text-red-500" (click)="deleteItem(update)"></i> -->

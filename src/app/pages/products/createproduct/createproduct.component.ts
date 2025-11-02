@@ -42,18 +42,23 @@ interface Image {
 })
 export class CreateproductComponent implements OnInit {
    productForm!: FormGroup;
-
+  
   // ✅ Move dropdown options into variables
- categoryOptions = [
-  { label: 'Electronics', value: 'electronics' },
-  { label: 'Furniture', value: 'furniture' },
-  { label: 'Grocery', value: 'grocery' }
-];
+categoryOptions = [
+        { label: 'Wires & Cables', value: 'Wires & Cables' },
+        { label: 'Lighting', value: 'Lighting' },
+        { label: 'Fans & Fixtures', value: 'Fans & Fixtures' },
+        {label: 'Switches & Accessories',value:'Switches & Accessories'},
+        {label: 'Plugs, Holders & Connectors',value:'Plugs, Holders & Connectors'}
+    ];
 
 uomOptions = [
-  { label: 'KG', value: 'kg' },
-  { label: 'Litre', value: 'litre' },
-  { label: 'Box', value: 'box' }
+  
+           { label: 'Box', value: 'box' },
+            {label:'Bundle', value:'bundle'},
+         { label: 'Meter', value: 'meter' },
+        { label: 'Piece', value: 'piece'}
+    
 ];
 
 

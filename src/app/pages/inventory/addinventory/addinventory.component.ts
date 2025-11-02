@@ -78,22 +78,25 @@ filteredItemCode:any[]=[];
     ];
 
     parentUOMOptions = [
-        { label: 'Kg', value: 'kg' },
-        { label: 'Litre', value: 'litre' },
-        { label: 'Meter', value: 'meter' },
+          { label: 'Box', value: 'box' },
+           {label:'Bundle', value:'bundle'},
+         { label: 'Meter', value: 'meter' },
         { label: 'Piece', value: 'piece'}
+      
     ];
 
-    categoryOptions = [
-        { label: 'Category1', value: 'category1' },
-        { label: 'Category2', value: 'category2' },
-        { label: 'Category3', value: 'category3' }
+   categoryOptions = [
+        { label: 'Wires & Cables', value: 'Wires & Cables' },
+        { label: 'Lighting', value: 'Lighting' },
+        { label: 'Fans & Fixtures', value: 'Fans & Fixtures' },
+        {label: 'Switches & Accessories',value:'Switches & Accessories'},
+        {label: 'Plugs, Holders & Connectors',value:'Plugs, Holders & Connectors'}
     ];
     uom = [
-         { label: 'Kg', value: 'kg' },
-        { label: 'Litre', value: 'litre' },
-        { label: 'Meter', value: 'meter' },
-        { label: 'Piece', value: 'piece'}
+           { label: 'Box', value: 'Box' },
+            {label:'Bundle', value:'Bundle'},
+         { label: 'Meter', value: 'Meter' },
+        { label: 'Piece', value: 'Piece'}
     ]
     //   products = [{
     //       childUOM:'',
@@ -116,8 +119,8 @@ filteredItemCode:any[]=[];
                 parentUOM: ['',Validators.required],
                 itemName: ['', [Validators.required,Validators.maxLength(500)]],
                 curStock: [''],
-                purchasePrice:['',[Validators.required ,Validators.min(1)]],
-                minStock:[''],
+                purchasePrice:['1135',[Validators.required ,Validators.min(1)]],
+                minStock:['10'],
                 warPeriod:[''],
                 mrp:['',[Validators.required ,Validators.min(1)]],
                 location:['',Validators.maxLength(100)],
@@ -166,7 +169,8 @@ filteredItemCode:any[]=[];
        parentUOM:this.editData.uom, 
        childUom:this.editData.childUOM,
        conversion:this.editData.conversion,
-       mrpUom:this.editData.mrpUom
+       mrpUom:this.editData.mrpUom,
+       discount:this.editData.discount
     });
   }
   else if(this.mode === 'add' && this.addForm){

@@ -24,7 +24,7 @@
   text-align: left;
   border-bottom: 1px solid var(--surface-border);
 }
-
+//.p-datatable-table tr  td { min-width: 170px;}
 /* ✅ Sticky first column */
  .p-datatable-tbody > tr > td:first-child,
  .p-datatable-thead > tr > th:first-child {
@@ -32,7 +32,7 @@
   left: 0;
   z-index: 11;
   background-color: var(--surface-card);
-  min-width: 120px; /* adjust width as needed */
+  min-width: 20px; /* adjust width as needed */
   box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
 }
 
@@ -40,11 +40,86 @@
  .p-datatable-tbody > tr > td:nth-child(2),
  .p-datatable-thead > tr > th:nth-child(2) {
   position: sticky;
-  left: 120px; /* equal to width of first column */
+  left: 48px; /* equal to width of first column */
   z-index: 11;
   background-color: var(--surface-card);
-  min-width: 150px; /* adjust as needed */
+  min-width: 100px; /* adjust as needed */
   box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+}
+
+//  Sticky Third column
+.p-datatable-tbody > tr > td:nth-child(3),
+.p-datatable-thead > tr > th:nth-child(3){
+  position: sticky;
+  left: 180px; 
+  z-index:11;
+  background-color: var(--surface-card);
+  min-width: 250px;
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+}
+//  Sticky current stock column
+.p-datatable-tbody > tr > td:nth-child(5),
+.p-datatable-thead > tr > th:nth-child(5){
+  min-width: 90px;
+}
+
+//  Sticky qty column
+.p-datatable-tbody > tr > td:nth-child(6),
+.p-datatable-thead > tr > th:nth-child(6){
+  min-width: 80px;
+}
+
+//  Sticky purchase price column
+.p-datatable-tbody > tr > td:nth-child(7),
+.p-datatable-thead > tr > th:nth-child(7){
+  min-width: 110px;
+}
+
+//  Sticky total column
+.p-datatable-tbody > tr > td:nth-child(8),
+.p-datatable-thead > tr > th:nth-child(8){
+  min-width: 110px;
+}
+
+//  Sticky uom column
+.p-datatable-tbody > tr > td:nth-child(9),
+.p-datatable-thead > tr > th:nth-child(9){
+  min-width: 110px;
+}
+
+//  Sticky child uom column
+.p-datatable-tbody > tr > td:nth-child(10),
+.p-datatable-thead > tr > th:nth-child(10){
+  min-width: 80px;
+}
+
+//  Sticky mrp column
+.p-datatable-tbody > tr > td:nth-child(11),
+.p-datatable-thead > tr > th:nth-child(11){
+  min-width: 110px;
+}
+
+//  Sticky discount column
+.p-datatable-tbody > tr > td:nth-child(12),
+.p-datatable-thead > tr > th:nth-child(12){
+  min-width: 80px;
+}
+//  Sticky min stock column
+.p-datatable-tbody > tr > td:nth-child(13),
+.p-datatable-thead > tr > th:nth-child(13){
+  min-width: 80px;
+}
+
+//  Sticky warranty period column
+.p-datatable-tbody > tr > td:nth-child(14),
+.p-datatable-thead > tr > th:nth-child(14){
+  min-width: 110px;
+}
+
+//  Sticky location column
+.p-datatable-tbody > tr > td:nth-last-child(2),
+.p-datatable-thead > tr > th:nth-last-child(2){
+  min-width: 170px;
 }
 
 /* ✅ Sticky last column */
@@ -54,7 +129,7 @@
   right: 0;
   z-index: 11;
   background-color: var(--surface-card);
-  min-width: 120px;
+  min-width: 80px;
   box-shadow: -2px 0 4px rgba(0, 0, 0, 0.05);
 }
 
