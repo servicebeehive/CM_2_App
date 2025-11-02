@@ -15,7 +15,7 @@ export default[
      { path: 'login', component: LoginComponent, },
     { path: 'register', component: Register },
     { path: 'forgotpassword', component: ForgotPassword },
-    { path: 'newpassword', component: NewPassword },
+    // { path: 'newpassword', component: NewPassword },
     { path: 'verification', component: Verification },
     { path: 'lockscreen', component: LockScreen }
 ] as Routes;

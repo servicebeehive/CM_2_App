@@ -229,7 +229,7 @@ export class SalesComponent {
             curStock: updatedData.curStock,
             purchasePrice: updatedData.purchasePrice,
             quantity: updatedData.qty,
-            total: (updatedData.purchasePrice || 0) * (updatedData.qty || 0),
+            total: +(updatedData.mrp * updatedData.qty).toFixed(2),
             uom: updatedData.uom,
             mrp: updatedData.mrp,
             discount: updatedData.discount,

@@ -73,15 +73,15 @@
                 <input pInputText formControlName="warPeriod" placeholder="Warranty Period" (keypress)="allowOnlyNumbers($event)" />
             </div>
 
-            <!-- MRP -->
+              <!-- Quantity -->
             <div class="flex flex-col">
-                <label class="font-medium mb-1">MRP <span class="text-red-500">*</span></label>
-                <input pInputText type="number" formControlName="mrp" placeholder="MRP" />
-                <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('mrp')?.touched || addForm.hasError('mrpGreaterThanPurchase')">
-                    <span *ngIf="addForm.get('mrp')?.errors?.['required']">MRP is required</span>
-                    <span *ngIf="addForm.hasError('mrpGreaterThanPurchase')">MRP must be greater than or equal to Purchase Price</span>
+                <label class="font-medium mb-1">Quantity <span class="text-red-500">*</span></label>
+                <input pInputText type="number" formControlName="qty" placeholder="Quantity" />
+                <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('qty')?.touched && addForm.get('qty')?.invalid">
+                    <span *ngIf="addForm.get('qty')?.errors?.['required']">Quantity is required</span>
                 </small>
             </div>
+           
 
             <!-- Location -->
             <div class="flex flex-col">
@@ -89,12 +89,13 @@
                 <input pInputText formControlName="location" placeholder="Location" />
             </div>
 
-            <!-- Quantity -->
+           <!-- MRP -->
             <div class="flex flex-col">
-                <label class="font-medium mb-1">Quantity <span class="text-red-500">*</span></label>
-                <input pInputText type="number" formControlName="qty" placeholder="Quantity" />
-                <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('qty')?.touched && addForm.get('qty')?.invalid">
-                    <span *ngIf="addForm.get('qty')?.errors?.['required']">Quantity is required</span>
+                <label class="font-medium mb-1">MRP <span class="text-red-500">*</span></label>
+                <input pInputText type="number" formControlName="mrp" placeholder="MRP" />
+                <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('mrp')?.touched || addForm.hasError('mrpGreaterThanPurchase')">
+                    <span *ngIf="addForm.get('mrp')?.errors?.['required']">MRP is required</span>
+                    <span *ngIf="addForm.hasError('mrpGreaterThanPurchase')">MRP must be greater than or equal to Purchase Price</span>
                 </small>
             </div>
 

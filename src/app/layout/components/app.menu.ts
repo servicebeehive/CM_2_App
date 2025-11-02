@@ -24,23 +24,28 @@ export class AppMenu {
     model: any[] = [];
 
     ngOnInit() {
-      this.model = [
+this.model = [
   {
     label: 'DASHBOARD',
     icon: 'pi pi-home',
     routerLink: ['/'],
-    // items: [
-    //   {
-    //     label: 'Overview',
-    //     icon: 'pi pi-fw pi-home',
-    //     routerLink: ['/'],
-    //   }
-    // ]
+    items: [
+      {
+        label: 'Main Dashboard',
+        icon: 'pi pi-fw pi-home',
+        routerLink: ['/'],
+      }
+    ]
   },
   {
     label: 'INVENTORY',
     icon: 'pi pi-chart-bar',
-    items: [   
+    items: [
+      {
+        label: 'Inventory Management',
+        icon: 'pi pi-fw pi-database',
+        routerLink: ['/layout/inventory/overview'],
+        items: [
           {
             label: 'Stock In',
             icon: 'pi pi-fw pi-arrow-down-left',
@@ -56,63 +61,72 @@ export class AppMenu {
             icon: 'pi pi-fw pi-history',
             routerLink: ['/layout/inventory/transactions'],
           },
-           {
+          {
             label: 'Bulk Import',
             icon: 'pi pi-fw pi-file-import',
-            // routerLink: ['/layout/inventory/stock-adjustment'],
           },
-            {
+          {
             label: 'Internal Transfer',
             icon: 'pi pi-fw pi-directions',
-            // routerLink: ['/layout/inventory/stock-adjustment'],
           },
         ]
+      }
+    ]
   },
   {
     label: 'PRODUCTS',
     icon: 'pi pi-box',
     items: [
       {
-        label: 'List',
-        icon: 'pi pi-fw pi-list-check',
-        routerLink: ['/layout/products/list'],
-      },
-      // {
-      //   label: 'Create',
-      //   icon: 'pi pi-fw pi-file-plus',
-      //   routerLink: ['/layout/products/create'],
-      // },
-      {
-        label: 'Categories',
+        label: 'Product Management',
         icon: 'pi pi-fw pi-tags',
-        routerLink: ['/layout/products/category'],
+        routerLink: ['/layout/products/overview'],
+        items: [
+          {
+            label: 'Item List',
+            icon: 'pi pi-fw pi-list-check',
+            routerLink: ['/layout/products/list'],
+          },
+          {
+            label: 'Categories',
+            icon: 'pi pi-fw pi-sitemap',
+            routerLink: ['/layout/products/category'],
+          }
+        ]
       }
     ]
   },
   {
     label: 'POS',
-    icon: 'pi pi pi-shopping-cart',
+    icon: 'pi pi-shopping-cart',
     items: [
       {
-        label: 'Sales',
-        icon: 'pi pi-fw pi pi-dollar',
-        routerLink: ['/layout/pos/sales'],
-      },
-       {
-        label: 'Invoice',
-        icon: 'pi pi-fw pi pi-file',
-        routerLink: ['/layout/pos/list'],
-      },
-       {
-        label: 'Return',
-        icon: 'pi pi-fw pi-arrow-left',
-        routerLink: ['/layout/pos/return'],
-      },
-       {
-        label: 'Replace',
-        icon: 'pi pi-fw pi-arrow-right-arrow-left',
-        routerLink: ['/layout/pos/replace'],
-      },
+        label: 'Point of Sale',
+        icon: 'pi pi-fw pi-desktop',
+        routerLink: ['/layout/pos/overview'],
+        items: [
+          {
+            label: 'Sales',
+            icon: 'pi pi-fw pi-dollar',
+            routerLink: ['/layout/pos/sales'],
+          },
+          {
+            label: 'Invoice',
+            icon: 'pi pi-fw pi-file',
+            routerLink: ['/layout/pos/list'],
+          },
+          {
+            label: 'Return',
+            icon: 'pi pi-fw pi-arrow-left',
+            routerLink: ['/layout/pos/return'],
+          },
+          {
+            label: 'Replace',
+            icon: 'pi pi-fw pi-arrow-right-arrow-left',
+            routerLink: ['/layout/pos/replace'],
+          }
+        ]
+      }
     ]
   },
   {
@@ -120,14 +134,21 @@ export class AppMenu {
     icon: 'pi pi-briefcase',
     items: [
       {
-        label: 'Vendors',
-        icon: 'pi pi pi-truck',
-        routerLink: ['/layout/suppliers/list'],
-      },
-      {
-        label: 'Purchase Orders',
-        icon: 'pi pi-fw pi-shopping-cart',
-        routerLink: ['/layout/suppliers/purchase-orders'],
+        label: 'Supplier Management',
+        icon: 'pi pi-fw pi-truck',
+        routerLink: ['/layout/suppliers/overview'],
+        items: [
+          {
+            label: 'Vendors',
+            icon: 'pi pi-fw pi-users',
+            routerLink: ['/layout/suppliers/list'],
+          },
+          {
+            label: 'Purchase Orders',
+            icon: 'pi pi-fw pi-shopping-cart',
+            routerLink: ['/layout/suppliers/purchase-orders'],
+          }
+        ]
       }
     ]
   },
@@ -136,29 +157,36 @@ export class AppMenu {
     icon: 'pi pi-calculator',
     items: [
       {
-        label: 'Stock Valuation',
-        icon: 'pi pi-fw pi-chart-line',
-        routerLink: ['/layout/reports/stock-valuation'],
-      },
-      {
-        label: 'Fast / Slow Moving Items',
-        icon: 'pi pi-forward',
-        routerLink: ['/layout/reports/low-stock'],
-      },
-      {
-        label: 'Dead Stock Report',
-        icon: 'pi pi-ban',
-        routerLink: ['/layout/reports/consumption'],
-      },
-       {
-        label: 'Current Stock Report',
-        icon: 'pi pi pi-file',
-        routerLink: ['/layout/reports/consumption'],
-      },
-       {
-        label: 'Transaction Report',
-        icon: 'pi pi-money-bill',
-        routerLink: ['/layout/reports/consumption'],
+        label: 'Reports Center',
+        icon: 'pi pi-fw pi-chart-bar',
+        routerLink: ['/layout/reports/overview'],
+        items: [
+          {
+            label: 'Stock Valuation',
+            icon: 'pi pi-fw pi-chart-line',
+            routerLink: ['/layout/reports/stock-valuation'],
+          },
+          {
+            label: 'Fast / Slow Moving Items',
+            icon: 'pi pi-fw pi-forward',
+            routerLink: ['/layout/reports/low-stock'],
+          },
+          {
+            label: 'Dead Stock Report',
+            icon: 'pi pi-fw pi-ban',
+            routerLink: ['/layout/reports/consumption'],
+          },
+          {
+            label: 'Current Stock Report',
+            icon: 'pi pi-fw pi-file',
+            routerLink: ['/layout/reports/consumption'],
+          },
+          {
+            label: 'Transaction Report',
+            icon: 'pi pi-fw pi-money-bill',
+            routerLink: ['/layout/reports/consumption'],
+          }
+        ]
       }
     ]
   },
@@ -166,44 +194,47 @@ export class AppMenu {
     label: 'SETTINGS',
     icon: 'pi pi-cog',
     items: [
-       {
-        label: 'Customer',
-        icon: 'pi pi-user',
-        routerLink: ['/layout/settings/units'],
-      },
       {
-        label: 'User Management',
-        icon: 'pi pi-fw pi-users',
-        routerLink: ['/layout/settings/users'],
-      },
-      {
-        label: 'UOM',
-        icon: 'pi pi-fw pi-sliders-h',
-        routerLink: ['/layout/settings/units'],
-      },
-       {
-        label: 'Roles & Permissions',
-        icon: 'pi pi pi-shield',
-        routerLink: ['/layout/settings/units'],
-      },
-       {
-        label: 'Tax',
-        icon: 'pi pi-file-check',
-        routerLink: ['/layout/settings/units'],
-      },
-     {
-        label: 'Currency',
-        icon: 'pi pi-indian-rupee',
-        routerLink: ['/layout/settings/units'],
-      },
-       {
-        label: 'Company Profile',
-        icon: 'pi pi-id-card',
-        routerLink: ['/layout/settings/units'],
-      },
+        label: 'System Settings',
+        icon: 'pi pi-fw pi-cog',
+        routerLink: ['/layout/settings/overview'],
+        items: [
+          {
+            label: 'Customer',
+            icon: 'pi pi-fw pi-user',
+            routerLink: ['/layout/settings/units'],
+          },
+          {
+            label: 'User Management',
+            icon: 'pi pi-fw pi-users',
+            routerLink: ['/layout/settings/user-management'],
+          },
+          {
+            label: 'UOM',
+            icon: 'pi pi-fw pi-sliders-h',
+            routerLink: ['/layout/settings/units'],
+          },
+          {
+            label: 'Roles & Permissions',
+            icon: 'pi pi-fw pi-shield',
+            routerLink: ['/layout/settings/units'],
+          },
+          {
+            label: 'Tax',
+            icon: 'pi pi-fw pi-file-check',
+            routerLink: ['/layout/settings/units'],
+          },
+          {
+            label: 'Currency',
+            icon: 'pi pi-fw pi-indian-rupee',
+            routerLink: ['/layout/settings/units'],
+          }
+        ]
+      }
     ]
   }
 ];
+
 
 
 

@@ -90,7 +90,7 @@ import { CommonModule } from '@angular/common';
                 </div>
                  <form [formGroup]="forgetForm" (ngSubmit)="onSubmit()">
                 <div class="flex flex-col">
-                    <p-iconfield class="w-full mb-6">
+                    <p-iconfield class="w-full mb-1">
                         <p-inputicon class="pi pi-envelope" />
                         <input
                             formControlName="email"
@@ -101,10 +101,10 @@ import { CommonModule } from '@angular/common';
                             aria-label="email"
                             [ngClass]="{'ng-invalid':forgetForm.get('email')?.invalid && forgetForm.get('email')?.touched}"
                         />
-                        <p-message *ngIf="forgetForm.get('email')?.hasError('required') && forgetForm.get('email')?.touched" severity="error" variant="simple" size="small">Email is required</p-message>
                     </p-iconfield>
+                     <p-message *ngIf="forgetForm.get('email')?.hasError('required') && forgetForm.get('email')?.touched" severity="error" variant="simple" size="small" class="ms-3" >Email is required</p-message>
 
-                    <div class="flex flex-wrap gap-2 justify-between">
+                    <div class="flex flex-wrap gap-2 justify-between mt-4">
                         <button
                             pButton
                             pRipple
@@ -139,7 +139,7 @@ export class ForgotPassword {
 
   ngOnInit() {
     this.forgetForm=this.fb.group({
-      email:['',[Validators.required,Validators.email]]
+      email:['',[Validators.required,Validators.email,Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)]]
     })
   }
 onSubmit(){

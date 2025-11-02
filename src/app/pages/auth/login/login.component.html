@@ -72,7 +72,7 @@
                         <p-checkbox name="checkbox" value="val" formControlName="rememberMe" styleClass="mr-2" class="flex" [binary]="true"></p-checkbox>
                         <label for="checkbox" class="text-surface-900 dark:text-surface-0 font-medium mr-20">Remember Me</label>
                     </div> -->
-                    <a class="text-surface-600 dark:text-surface-200 cursor-pointer hover:text-primary ml-auto transition-colors duration-300">Forgot password</a>
+                    <a class="text-surface-600 dark:text-surface-200 cursor-pointer hover:text-primary ml-auto transition-colors duration-300" (click)="forgetPassword()">Forgot password</a>
                 </div>
                 <button pButton pRipple label="Log In" class="w-full" type="submit" [disabled]="loginForm.invalid"></button>
             </div>

@@ -22,6 +22,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { CheckboxModule } from 'primeng/checkbox';
 import { AddinventoryComponent } from '@/pages/inventory/addinventory/addinventory.component';
+import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
 @Component({
     selector: 'app-productlist',
     imports: [
@@ -44,7 +45,8 @@ import { AddinventoryComponent } from '@/pages/inventory/addinventory/addinvento
         DialogModule,
         ConfirmDialogModule,
         CheckboxModule,
-        AddinventoryComponent
+        AddinventoryComponent,
+        // GlobalFilterComponent   
     ],
     templateUrl: './productlist.component.html',
     styleUrl: './productlist.component.scss',
@@ -52,7 +54,7 @@ import { AddinventoryComponent } from '@/pages/inventory/addinventory/addinvento
 })
 export class ProductlistComponent {
     updateForm!: FormGroup;
-
+    
     visibleDialog = false;
     selectedRow: any = null;
     selection: boolean = true;
@@ -63,11 +65,14 @@ export class ProductlistComponent {
     products: StockIn[] = [];
     filteredProducts: StockIn[] = [];
     globalFilter: string = '';
+    showGlobalSearch: boolean =true;
     // ✅ Move dropdown options into variables
-    categoryOptions = [
-        { label: 'Switch', value: 'Switch' },
-        { label: 'Bulb', value: 'Bulb' },
-        { label: 'Fan', value: 'Fan' }
+   categoryOptions = [
+        { label: 'Wires & Cables', value: 'Wires & Cables' },
+        { label: 'Lighting', value: 'Lighting' },
+        { label: 'Fans & Fixtures', value: 'Fans & Fixtures' },
+        {label: 'Switches & Accessories',value:'Switches & Accessories'},
+        {label: 'Plugs, Holders & Connectors',value:'Plugs, Holders & Connectors'}
     ];
 
     itemOptions = [
@@ -117,6 +122,10 @@ export class ProductlistComponent {
         this.filteredProducts = this.products.filter((p) => {
             return Object.values(p).some((value) => String(value).toLowerCase().includes(searchTerm));
         });
+        // const searchTerm=this.globalFilter?.toLowerCase() || '';
+        // this.filteredProducts=this.products.filter((p)=>{
+        //     return Object.values(p).some((value)=>String(value).toLowerCase().includes(searchTerm));
+        // });
     }
     onPageChange(event: any) {
         this.first = event.first;
@@ -127,7 +136,13 @@ export class ProductlistComponent {
         this.pagedProducts = this.products.slice(this.first, this.first + this.rowsPerPage);
     }
     openEditDialog(rowData: any) {
-        this.selectedRow = rowData || null;
+       const matchedCategory = this.categoryOptions.find(otp=>otp.value===rowData.category);
+       const matchedUOM = rowData.uom?{label:rowData.uom , value:rowData.uom} : null; 
+       this.selectedRow={
+        ...rowData,
+        category:matchedCategory? matchedCategory.value :rowData.category,
+        parentUOM:matchedUOM?matchedUOM.value:rowData.uom
+       }
         this.visibleDialog = true;
     }
 
@@ -162,7 +177,7 @@ export class ProductlistComponent {
             purchasePrice: updatedData.purchasePrice,
             quantity: updatedData.qty,
             total: (updatedData.purchasePrice || 0) * (updatedData.qty || 0),
-            uom: updatedData.discount,
+            uom: updatedData.parentUOM,
             mrp: updatedData.mrp,
             discount: updatedData.discount,
             minStock: updatedData.minStock,

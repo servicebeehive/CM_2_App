@@ -61,7 +61,7 @@
         <!-- Invoice Date -->
         <div class="flex flex-col">
           <label class="font-medium mb-1">Invoice Date</label>
-          <p-datepicker  fluid formControlName="invoiceDate" placeholder="Invoice Date"></p-datepicker>
+          <p-datepicker  fluid formControlName="invoiceDate" [showIcon]="true" placeholder="Invoice Date"></p-datepicker>
         </div>
 
         <!-- Remark -->
@@ -96,9 +96,9 @@
       >
         <ng-template #header>
           <tr class="bg-yellow-400">
-            <th style="width: 4rem"><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
+            <th><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
             <th>Item Code</th>
-            <th style="width: 10rem">Item Name</th>
+            <th>Item Name</th>
             <th>Category</th>
             <th>Current Stock</th>
             <th>Qty</th>
@@ -120,8 +120,10 @@
             <td class="text-center">
              <p-tableCheckbox [value]="product" />
             </td>
-            <td class="flex justify-between gap-2">{{ product.code}} <span class=" pi pi-copy cursor-pointer "></span></td>
-            <td routerLink="/stockAjustment" class="cursor-pointer" >{{ product.name }}</td>
+            <td class="flex justify-between gap-2">{{ product.code}}
+               <!-- <span class=" pi pi-copy cursor-pointer "></span> -->
+              </td>
+            <td routerLink="/stockAjustment" class="cursor-pointer">{{ product.name }}</td>
             <td>{{ product.category }}</td>
             <td>{{ product.curStock }}</td>
             <td>{{ product.quantity }}</td>
