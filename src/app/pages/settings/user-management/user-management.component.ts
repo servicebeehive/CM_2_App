@@ -71,7 +71,7 @@ export class UserManagementComponent {
     this.userForm = this.fb.group(
       {
         userRole: ['', Validators.required],
-        userName: ['', Validators.required],
+        userName: ['', [Validators.required,Validators.maxLength(20)]],
         password: [
           '',
           [
@@ -84,7 +84,7 @@ export class UserManagementComponent {
         ],
         conPassword: ['', Validators.required],
         mobile: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
-        email: ['', [Validators.required, Validators.email,Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)]],
+        email: ['', [Validators.required, Validators.email,Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/),Validators.maxLength(50)]],
         checked: [true],
       },
       { validators: this.passwordMatchValidator }
@@ -120,11 +120,11 @@ export class UserManagementComponent {
   /** ✅ Submit Form **/
   onSubmit() {
     if (this.userForm.invalid) {
-      this.userForm.markAllAsTouched();
+      this.userForm.markAllAsTouched() ;
       return;
     }
 
-    const formValue = this.userForm.value;
+    const formValue = this.userForm.value  ;
     const newUser = {
       id: this.editMode && this.selectedUser ? this.selectedUser.id : Date.now(),
       userRole: formValue.userRole,

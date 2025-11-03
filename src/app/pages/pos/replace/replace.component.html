@@ -5,10 +5,8 @@
                 <span class="block text-surface-900 font-bold text-xl mb-6">Replace</span>
                 <!-- Buttons -->
                 <div class="flex gap-4">
-                    <button pButton type="button" label="Add" class="p-button-secondary" (click)="addItem()"></button>
                     <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
-                    <button pButton type="button" label="Hold" class="p-button-secondary" (click)="hold()"></button>
-                    <button pButton type="button" label="Print" class="p-button-secondary" (click)="print()"></button>
+                    <button pButton type="button" label="New Sale" class="p-button-secondary" (click)="newSale()"></button>
                     <button pButton type="submit" label="Submit" class="p-button-warning"></button>
                 </div>
             </div>
@@ -16,8 +14,8 @@
             <!-- 🏷 Product Info Section -->
             <div>
                 <!-- ✅ Changed to a 2-column grid for half-width fields -->
-                <div class="flex item-center gap-2 mb-3">
-                     <input type="text" pInputText placeholder="Search..." class="w-9/12 p-inputtext" formControlName="globalFilter" (input)="applyGlobalFilter()" />
+                <div class="flex item-center gap-2 mb-3 w-full">
+                     <app-global-filter [(value)]="globalFilter" placeholder="Search Products..." (valueChange)="applyGlobalFilter()" class="p-inputtext-sm"></app-global-filter>
                    <div class="flex items-center">
                     <p-checkbox [(ngModel)]="checked" [binary]="true"></p-checkbox>
                     <label for="similarItems" class="ml-2" (onChange)="onSimilarItemsChange()" [style]="{'font-size':'1.1rem' }">Similar Items</label>
@@ -44,7 +42,6 @@
                     <p-table
                         [value]="filteredProducts"
                         [globalFilterFields]="['name']"
-                        [filters]="{ global: { value: globalFilter, matchMode: 'contains' } }"
                         dataKey="code"
                         [paginator]="true"
                         [rows]="10"
@@ -94,16 +91,17 @@
                     </p-table>
                 </div>
                 <div class="grid grid-cols-5 gap-x-8 gap-y-4">
-                    <!--MRP Total -->
-                    <div class="flex flex-col">
-                        <label class="font-medium mb-1">MRP Total</label>
-                        <input pInputText formControlName="mrpTotal" placeholder="Grand Total" readonly />
-                    </div>
 
                     <!-- Total Cost -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Total Cost</label>
                         <input pInputText formControlName="totalCost" placeholder="Total Cost" readonly />
+                    </div>
+
+                      <!--MRP Total -->
+                    <div class="flex flex-col">
+                        <label class="font-medium mb-1">MRP Total</label>
+                        <input pInputText formControlName="mrpTotal" placeholder="Grand Total" readonly />
                     </div>
 
                     <!-- Discount -->

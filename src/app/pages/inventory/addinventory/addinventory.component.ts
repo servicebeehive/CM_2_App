@@ -16,6 +16,7 @@ import { TextareaModule } from 'primeng/textarea';
 import { MessageModule } from 'primeng/message';
 import { AutoCompleteModule } from 'primeng/autocomplete';
 import productRouters from '@/pages/products/product.routers';
+import { CheckboxModule } from 'primeng/checkbox';
 interface Product {
     name: string;
     price: string;
@@ -55,7 +56,8 @@ interface Image {
           ChipModule,
           FluidModule,
           MessageModule,
-          AutoCompleteModule
+          AutoCompleteModule,
+          CheckboxModule
       ],
   templateUrl: './addinventory.component.html',
   styleUrl: './addinventory.component.scss'
@@ -66,7 +68,7 @@ export class AddinventoryComponent {
   @Input() editData: any;
   @Input() mode : 'add' |'edit' ='add';
   @Output() save=new EventEmitter<any>();
-  @Output() childUom = new EventEmitter<boolean>();
+  @Output() childUom = new EventEmitter<boolean>() ;
 
   addForm!: FormGroup;
 filteredItemCode:any[]=[];
@@ -122,12 +124,16 @@ filteredItemCode:any[]=[];
                 purchasePrice:['1135',[Validators.required ,Validators.min(1)]],
                 minStock:['10'],
                 warPeriod:[''],
+                costPerItem:[{value:'',disabled:true}],
                 mrp:['',[Validators.required ,Validators.min(1)]],
                 location:['',Validators.maxLength(100)],
                 qty:['',Validators.required ],
                 discount:[''],
+                gstItem:[true]
             },{validators:this.mrpValidator}
         );  
+        this.addForm.get('purchasePrice')?.valueChanges.subscribe(()=>this.updateCostPerItem());
+        this.addForm.get('qty')?.valueChanges.subscribe(()=>this.updateCostPerItem());
         this.resetChildUOMTable();
     }
     resetChildUOMTable(){
@@ -153,6 +159,18 @@ filteredItemCode:any[]=[];
     return null;
    };
 
+    updateCostPerItem():void{
+        const purchasePrice=parseFloat(this.addForm.get('purchasePrice')?.value);
+        const qty = parseFloat(this.addForm.get('qty')?.value);
+
+        if(!isNaN(purchasePrice )&& !isNaN(qty) && qty>0){
+            const cost=purchasePrice/qty;
+            this.addForm.get('costPerItem')?.setValue(cost.toFixed(2),{emitEvent:false});
+        }else{
+            this.addForm.get('costPerItem')?.setValue('',{emitEvent:false});
+        }
+    }
+
    ngOnChanges(changes: SimpleChanges): void {
   if (changes['editData'] && this.editData && this.mode==='edit' && this.addForm) {
     this.addForm.patchValue({
@@ -165,12 +183,14 @@ filteredItemCode:any[]=[];
        mrp:this.editData.mrp,
        minStock:this.editData.minStock,
        warPeriod:this.editData.warPeriod,
+       costPerItem:this.editData.costPerItem,
        location:this.editData.location,
        parentUOM:this.editData.uom, 
        childUom:this.editData.childUOM,
        conversion:this.editData.conversion,
        mrpUom:this.editData.mrpUom,
-       discount:this.editData.discount
+       discount:this.editData.discount,
+       gstItem:this.editData.gstItem
     });
   }
   else if(this.mode === 'add' && this.addForm){

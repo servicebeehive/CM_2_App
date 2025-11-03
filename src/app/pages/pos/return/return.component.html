@@ -5,9 +5,7 @@
                 <span class="block text-surface-900 font-bold text-xl mb-6">Return</span>
                 <!-- Buttons -->
                 <div class="flex gap-4">
-                    <button pButton type="button" label="Add" class="p-button-secondary" (click)="addItem()"></button>
                     <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
-                    <button pButton type="button" label="Hold" class="p-button-secondary" (click)="hold()"></button>
                     <button pButton type="button" label="Print" class="p-button-secondary" (click)="print()"></button>
                     <button pButton type="submit" label="Submit" class="p-button-warning"></button>
                 </div>
@@ -16,9 +14,12 @@
             <!-- 🏷 Product Info Section -->
             <div>
                 <!-- ✅ Changed to a 2-column grid for half-width fields -->
-                <div class="flex mb-3">
+                <!-- <div class="flex mb-3">
                     <input type="text" pInputText placeholder="Search..." class="w-full p-inputtext" formControlName="globalFilter" (input)="applyGlobalFilter()" />
-                </div>
+                </div> -->
+                <div *ngIf="showGlobalSearch" class="mb-3">
+                        <app-global-filter  [(value)]="globalFilter" placeholder="Search Items..." (valueChange)="applyGlobalFilter()"></app-global-filter>
+                     </div>
                 <!-- Bill no -->
                 <div class="grid grid-cols-2 gap-x-8 mb-2 w-full">
                     <div class="flex flex-col mb-1">
@@ -105,16 +106,15 @@
                 </div>
                  <div class="grid grid-cols-5 gap-x-8 gap-y-4">
 
-                              <!--MRP Total -->
-                            <div class="flex flex-col">
-                                <label class="font-medium mb-1">MRP Total</label>
-                                <input pInputText formControlName="mrpTotal" placeholder="Grand Total" readonly />
-                            </div>
-
  <!-- Total Cost -->
                             <div class="flex flex-col">
                                 <label class="font-medium mb-1">Total Cost</label>
                                 <input pInputText formControlName="totalCost" placeholder="Total Cost" readonly />
+                            </div>
+                                <!--MRP Total -->
+                            <div class="flex flex-col">
+                                <label class="font-medium mb-1">MRP Total</label>
+                                <input pInputText formControlName="mrpTotal" placeholder="Grand Total" readonly />
                             </div>
 
                               <!-- Discount -->
@@ -130,8 +130,8 @@
 
                               <!-- Final Payable -->
                             <div class="flex flex-col">
-                                <label class="font-medium mb-1">Final Payable</label>
-                                <input pInputText formControlName="finalPayable" placeholder="Grand Total" readonly/>
+                                <label class="font-medium mb-1">Final Receiveable</label>
+                                <input pInputText formControlName="finalPayable" placeholder="Final Receiveable" readonly/>
                             </div>
                         </div>
             </div>

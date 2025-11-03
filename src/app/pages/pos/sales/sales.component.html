@@ -16,9 +16,12 @@
             <!-- 🏷 Product Info Section -->
             <div>
                 <!-- ✅ Changed to a 2-column grid for half-width fields -->
-                <div class="flex mb-3">
+                <!-- <div class="flex mb-3">
                     <input type="text" pInputText placeholder="Search..." class="w-full p-inputtext" formControlName="globalFilter" (input)="applyGlobalFilter()" />
-                </div>
+                </div> -->
+                 <div *ngIf="showGlobalSearch" class="mb-3">
+                        <app-global-filter  [(value)]="globalFilter" placeholder="Search Items..." (valueChange)="applyGlobalFilter()"></app-global-filter>
+                     </div>
                 <!-- Bill no -->
                 <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
                     <div class="flex flex-col">

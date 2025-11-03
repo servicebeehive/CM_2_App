@@ -22,6 +22,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { CheckboxModule } from 'primeng/checkbox';
 import { AddinventoryComponent } from '@/pages/inventory/addinventory/addinventory.component';
+import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
 @Component({
     selector: 'app-sales',
     imports: [
@@ -44,7 +45,8 @@ import { AddinventoryComponent } from '@/pages/inventory/addinventory/addinvento
         DialogModule,
         ConfirmDialogModule,
         CheckboxModule,
-        AddinventoryComponent
+        AddinventoryComponent,
+        GlobalFilterComponent
     ],
     templateUrl: './sales.component.html',
     styleUrl: './sales.component.scss',
@@ -62,7 +64,7 @@ export class SalesComponent {
     filteredProducts: StockIn[] = [];
     globalFilter: string = '';
      childUomStatus:boolean =false;
-
+     showGlobalSearch:boolean=true;
       //for testing
   @ViewChild(AddinventoryComponent) addInventoryComp!:AddinventoryComponent;
 
@@ -97,7 +99,6 @@ export class SalesComponent {
             roundOff:[''],
             discountLabel:[''],
             finalPayable:[''],
-             globalFilter: ['']
         });
         this.salesForm.valueChanges.subscribe(() => {
             this.filterProducts();
@@ -136,9 +137,13 @@ export class SalesComponent {
     }
 
     applyGlobalFilter() {
-        const searchTerm = this.salesForm.get('globalFilter')?.value?.toLowerCase() || '';
-        this.filteredProducts = this.products.filter((p) => {
-            return Object.values(p).some((value) => String(value).toLowerCase().includes(searchTerm));
+        // const searchTerm = this.salesForm.get('globalFilter')?.value?.toLowerCase() || '';
+        // this.filteredProducts = this.products.filter((p) => {
+        //     return Object.values(p).some((value) => String(value).toLowerCase().includes(searchTerm));
+        // });
+         const searchTerm=this.globalFilter?.toLowerCase().trim() || '';
+        this.filteredProducts=this.products.filter((p:any)=>{
+             return Object.values(p).some((val)=>String(val).toLowerCase().includes(searchTerm));
         });
     }
     updateTotal(item:any){
@@ -255,7 +260,7 @@ export class SalesComponent {
     onSubmit() {
         console.log(this.salesForm.value);
         this.confirmationService.confirm({
-            message:'Are you sure you want to make changes?',
+            message:'Are you sure you want to submit?',
             header:'Confirm',
             acceptLabel:'Yes',
             rejectLabel:'Cancel',
