@@ -22,6 +22,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { CheckboxModule } from 'primeng/checkbox';
 import { AddinventoryComponent } from '@/pages/inventory/addinventory/addinventory.component';
+import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
 @Component({
     selector: 'app-retrun',
     imports: [
@@ -44,7 +45,8 @@ import { AddinventoryComponent } from '@/pages/inventory/addinventory/addinvento
         DialogModule,
         ConfirmDialogModule,
         CheckboxModule,
-        AddinventoryComponent
+        AddinventoryComponent,
+        GlobalFilterComponent
     ],
     templateUrl: './return.component.html',
     styleUrl: './return.component.scss',
@@ -63,7 +65,7 @@ export class ReturnComponent {
     selectedProducts:any[]=[];
     globalFilter: string = '';
     childUomStatus: boolean = false;
-
+    showGlobalSearch:boolean=true;
     //for testing
     @ViewChild(AddinventoryComponent) addInventoryComp!: AddinventoryComponent;
 
@@ -98,7 +100,6 @@ export class ReturnComponent {
             roundOff: [''],
             discountLabel: [''],
             finalPayable: [''],
-             globalFilter: ['']
         });
         this.salesForm.valueChanges.subscribe(() => {
             this.filterProducts();
@@ -135,7 +136,7 @@ export class ReturnComponent {
     }
 
     applyGlobalFilter() {
-        const searchTerm = this.salesForm.get('globalFilter')?.value?.toLowerCase() || '';
+        const searchTerm = this.globalFilter?.toLowerCase() || '';
         this.filteredProducts = this.products.filter((p) => {
             return Object.values(p).some((value) => String(value).toLowerCase().includes(searchTerm));
         });

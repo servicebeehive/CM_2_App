@@ -70,7 +70,7 @@ forgetPassword(){
 
   onSubmit() {
     if (this.loginForm.valid) {
-         this.route.navigate(['/layout']);
+        //  this.route.navigate(['/layout']);
         this.authservice.isLoggedIn(this.loginForm.value).subscribe({
             next:(res:any)=>{
                 if(res.success==true){
