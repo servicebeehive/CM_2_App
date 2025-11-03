@@ -46,7 +46,7 @@ import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.comp
         ConfirmDialogModule,
         CheckboxModule,
         AddinventoryComponent,
-        // GlobalFilterComponent   
+        GlobalFilterComponent   
     ],
     templateUrl: './productlist.component.html',
     styleUrl: './productlist.component.scss',
@@ -92,7 +92,6 @@ export class ProductlistComponent {
         this.updateForm = this.fb.group({
             category: ['', Validators.required],
             item: ['', Validators.required],
-            globalFilter: ['']
         });
         this.updateForm.valueChanges.subscribe(() => {
             this.filterProducts();
@@ -103,6 +102,13 @@ export class ProductlistComponent {
         this.products = this.stockInService.productItem || [];
         this.products.forEach((p: any) => (p.selection = true));
         this.filteredProducts = [...this.products];
+    }
+    allowOnlyNumbers(event:KeyboardEvent){
+        const allowedChars=/[0-9]\b/;
+        const inputChar=String.fromCharCode(event.key.charCodeAt(0));
+        if(!allowedChars.test(inputChar)){
+            event.preventDefault();
+        }
     }
     filterProducts() {
         const category = this.updateForm.get('category')?.value;
@@ -118,14 +124,14 @@ export class ProductlistComponent {
         console.log('filtered data:', this.filteredProducts);
     }
     applyGlobalFilter() {
-        const searchTerm = this.updateForm.get('globalFilter')?.value?.toLowerCase() || '';
-        this.filteredProducts = this.products.filter((p) => {
-            return Object.values(p).some((value) => String(value).toLowerCase().includes(searchTerm));
-        });
-        // const searchTerm=this.globalFilter?.toLowerCase() || '';
-        // this.filteredProducts=this.products.filter((p)=>{
-        //     return Object.values(p).some((value)=>String(value).toLowerCase().includes(searchTerm));
+        // const searchTerm = this.updateForm.get('globalFilter')?.value?.toLowerCase() || '';
+        // this.filteredProducts = this.products.filter((p) => {
+        //     return Object.values(p).some((value) => String(value).toLowerCase().includes(searchTerm));
         // });
+        const searchTerm=this.globalFilter?.toLowerCase() || '';
+        this.filteredProducts=this.products.filter((p)=>{
+             Object.values(p).some((value)=>String(value).toLowerCase().includes(searchTerm));
+        });
     }
     onPageChange(event: any) {
         this.first = event.first;

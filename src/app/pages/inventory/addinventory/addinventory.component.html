@@ -73,7 +73,7 @@
                 <input pInputText formControlName="warPeriod" placeholder="Warranty Period" (keypress)="allowOnlyNumbers($event)" />
             </div>
 
-              <!-- Quantity -->
+             <!-- Quantity -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Quantity <span class="text-red-500">*</span></label>
                 <input pInputText type="number" formControlName="qty" placeholder="Quantity" />
@@ -89,6 +89,20 @@
                 <input pInputText formControlName="location" placeholder="Location" />
             </div>
 
+
+            <!-- Cost/Item -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Cost/Item</label>
+                <input pInputText formControlName="costPerItem" placeholder="Cost/Item" readonly />
+            </div>
+
+             <!-- Discount -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Discount (%)</label>
+                <input pInputText type="number" formControlName="discount" placeholder="Discount" />
+                <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('discount')?.touched && addForm.get('discount')?.invalid"> </small>
+            </div>
+             
            <!-- MRP -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">MRP <span class="text-red-500">*</span></label>
@@ -99,11 +113,12 @@
                 </small>
             </div>
 
-            <!-- Discount -->
+           
+
+            <!-- GST Item -->
             <div class="flex flex-col">
-                <label class="font-medium mb-1">Discount (%)</label>
-                <input pInputText type="number" formControlName="discount" placeholder="Discount" />
-                <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('discount')?.touched && addForm.get('discount')?.invalid"> </small>
+                <label class="font-medium mb-1">GST Item</label>
+                <p-checkbox formControlName="gstItem" [binary]="true"></p-checkbox>
             </div>
         </div>
     </div>

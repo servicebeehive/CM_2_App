@@ -21,12 +21,11 @@ import { AddinventoryComponent } from "../addinventory/addinventory.component";
 import { StockIn } from '@/types/stockin.model';
 import { InventoryService } from '@/core/services/inventory.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { updatePreset } from '@primeng/themes';
-import { filter } from 'rxjs';
 import { ConfirmationService } from 'primeng/api';
 import { CheckboxModule } from 'primeng/checkbox';
 import { Paginator } from 'primeng/paginator';
 import { RouterLink } from "@angular/router";
+import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
 interface Product {
     name: string;
     price: string;
@@ -72,7 +71,8 @@ interface Image {
     AutoCompleteModule,
     ConfirmDialogModule,
     CheckboxModule,
-    RouterLink
+    RouterLink,
+    GlobalFilterComponent
 ],
     templateUrl: './stock-in.component.html',
     styleUrl: './stock-in.component.scss',
@@ -89,11 +89,13 @@ export class StockInComponent {
      mode:'add' |'edit'='add';
      selection:boolean=true;
      pagedProducts:StockIn[]=[];
+     filteredProducts:StockIn[]=[];
+     globalFilter:string='';
      first:number=0;
      rowsPerPage:number=5;
      childUomStatus:boolean=false;
      addItemEnabled=false;
-
+    showGlobalSearch:boolean=false;
     @ViewChild(AddinventoryComponent) addInventoryComp!:AddinventoryComponent;
 
     // ✅ Move dropdown options into variables
@@ -149,8 +151,14 @@ export class StockInComponent {
  this.products=this.stockInService.productItem;
  console.log('item',this.products);
  this.products.forEach(p=>p.selection=true);
+ this.filteredProducts=[...this.products];
 }
-
+applyGlobalFilter(){
+    const searchTerm = this.globalFilter?.toLowerCase() || '';
+    this.filteredProducts=this.products.filter((p)=>{
+       return Object.values(p).some((value)=>String(value).toLowerCase().includes(searchTerm));
+    })
+}
 filterVendors(event:any){
     const query = event.query.toLowerCase();
     this.filteredVendors=this.vendorNameOptions.filter(v=>v.label.toLowerCase().includes(query));
@@ -168,6 +176,7 @@ filterInvoiceNo(event:any){
 
 onSave(updatedData:any){
     const hasChildUOM= updatedData.childUOMDetails?.some((u:any)=> u.childUOM || u.conversion || u.mrp);
+    const costPerItem=updatedData.qty && updatedData.purchasePrice ? (updatedData.purchasePrice/updatedData.qty).toFixed(2) : 0;
     const mappedData={
         selection:true,
      code: updatedData.itemCode.label ||updatedData.itemCode,
@@ -175,6 +184,7 @@ onSave(updatedData:any){
      category:updatedData.category,
      curStock: updatedData.curStock,
     purchasePrice: updatedData.purchasePrice,
+    costPerItem:costPerItem,
     quantity: updatedData.qty,
     total: (updatedData.purchasePrice) * (updatedData.qty),
     uom: updatedData.parentUOM,
@@ -184,6 +194,7 @@ onSave(updatedData:any){
     minStock: updatedData.minStock,
     warPeriod: updatedData.warPeriod,
     location: updatedData.location,
+    gstItem:updatedData.gstItem===true?'Yes':'No',
     };
     if(this.mode==='edit' && this.selectedRow){
         const index=this.products.findIndex(p=>p.code === this.selectedRow.code);
@@ -265,6 +276,7 @@ get grandTotal():number{
         this.first=0;
         this.pagedProducts=[];
         this.childUomStatus=false;
+        this.globalFilter='';
         if (this.addInventoryComp){
             this.addInventoryComp.resetForm();
         }
