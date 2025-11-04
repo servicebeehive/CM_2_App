@@ -12,7 +12,9 @@ export const API_ENDPOINTS = {
   inventory: {
     base: '/inventory',
     item: (id: number) => `/inventory/${id}`,
-    insertpurchaseheader:'/insertpurchaseheader'
+    insertpurchaseheader:'/insertpurchaseheader',
+    insertitemdetails:'/insertitemdetails',
+    getdropdowndetails:'/getdropdowndetails'
   },
   orders: {
     base: '/orders',
