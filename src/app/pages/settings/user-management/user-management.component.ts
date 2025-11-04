@@ -19,6 +19,7 @@ import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { RippleModule } from 'primeng/ripple';
+import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
 
 @Component({
   selector: 'app-user-management',
@@ -37,7 +38,8 @@ import { RippleModule } from 'primeng/ripple';
     DialogModule,
     ConfirmDialogModule,
     RippleModule,
-  ],
+    GlobalFilterComponent,
+    ],
   providers: [ConfirmationService],
 })
 export class UserManagementComponent {
@@ -45,10 +47,12 @@ export class UserManagementComponent {
   visibleDialog = false;
   showPassword = false;
   showConfirmPassword = false;
-  filteredProducts: any[] = [];
+  user:any[]=[];
+  filteredUser: any[] = [];
   editMode = false;
   selectedUser: any = null;
   globalFilter: string = '';
+  showGlobalSearch:boolean=true;
 
   userRoleOptions = [
     { label: 'Admin', value: 'Admin' },
@@ -65,6 +69,7 @@ export class UserManagementComponent {
 
   ngOnInit() {
     this.initForm();
+    this.filteredUser=[...this.user];
   }
 
   initForm() {
@@ -135,16 +140,16 @@ export class UserManagementComponent {
     };
 
     if (this.editMode) {
-      const index = this.filteredProducts.findIndex(
+      const index = this.user.findIndex(
         (u) => u.id === this.selectedUser.id
       );
-      if (index !== -1) this.filteredProducts[index] = newUser;
+      if (index !== -1) this.user[index] = newUser;
     } else {
-      this.filteredProducts.push(newUser);
+      this.user.push(newUser);
     }
 
     this.visibleDialog = false;
-
+this.applyGlobalFilterManual();
     this.confirmationService.confirm({
       message: this.editMode
         ? 'User updated successfully!'
@@ -175,26 +180,23 @@ export class UserManagementComponent {
       acceptButtonStyleClass: 'p-button-danger',
       rejectButtonStyleClass: 'p-button-secondary',
       accept: () => {
-        this.filteredProducts = this.filteredProducts.filter(
-          (u) => u.id !== user.id
-        );
+      this.user=this.user.filter((u)=>u.id !==user.id);
+      this.applyGlobalFilterManual();
       },
     });
   }
 
   /** 🔍 Global Filter **/
-  applyGlobalFilter(event: any) {
-    const value = event.target.value.toLowerCase();
-    this.globalFilter = value;
-
-    this.filteredProducts = this.filteredProducts.filter((user) => {
-      return (
-        user.userName.toLowerCase().includes(value) ||
-        user.userRole.toLowerCase().includes(value) ||
-        user.email.toLowerCase().includes(value) ||
-        user.mobile.toString().includes(value)
-      );
-    });
+  applyGlobalFilter() {
+    this.applyGlobalFilterManual();
+  }
+  applyGlobalFilterManual(){
+    const value=this.globalFilter;
+     if(!value){
+      this.filteredUser=[...this.user];
+      return;
+     }
+     this.filteredUser=this.user.filter((user)=>Object.values(user).some((v)=>String(v).toLowerCase().includes(value)));
   }
 
   /** 🔁 Reset Filter **/

@@ -18,22 +18,15 @@
 <div class="grid grid-cols-9 gap-4 mb-4 items-center">
 
 
-  <div class="col-span-3 flex items-center gap-2">
-
-    <input
-      type="text"
-      pInputText
-      placeholder="Search..."
-      (input)="applyGlobalFilter($event)"
-      class="w-full p-inputtext-sm"
-    />
-  </div>
+   <div *ngIf="showGlobalSearch" class="mb-3 flex">
+                        <app-global-filter  [(value)]="globalFilter" placeholder="Search Items..." (valueChange)="applyGlobalFilter()"></app-global-filter>
+                     </div>
 </div>
 
 
   <!-- 📋 User Table -->
   <p-table
-    [value]="filteredProducts"
+    [value]="filteredUser"
     dataKey="id"
     [paginator]="true"
     [rows]="5"
@@ -72,7 +65,7 @@
     </ng-template>
     <ng-template pTemplate="paginatorleft">
       <div class="text-gray-600 ms-2">
-        Total Users: {{ filteredProducts?.length || 0 }}
+        Total Users: {{ filteredUser?.length || 0 }}
       </div>
     </ng-template>
   </p-table>
