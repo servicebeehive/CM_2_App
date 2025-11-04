@@ -162,30 +162,40 @@ this.model = [
         routerLink: ['/layout/reports/overview'],
         items: [
           {
-            label: 'Stock Valuation',
+            label: 'Item Report',
+            icon: 'pi pi-fw pi-box',
+            routerLink: ['/layout/reports/item-report'],
+          },
+          {
+            label: 'Sales Report',
             icon: 'pi pi-fw pi-chart-line',
-            routerLink: ['/layout/reports/stock-valuation'],
-          },
-          {
-            label: 'Fast / Slow Moving Items',
-            icon: 'pi pi-fw pi-forward',
-            routerLink: ['/layout/reports/low-stock'],
-          },
-          {
-            label: 'Dead Stock Report',
-            icon: 'pi pi-fw pi-ban',
-            routerLink: ['/layout/reports/consumption'],
-          },
-          {
-            label: 'Current Stock Report',
-            icon: 'pi pi-fw pi-file',
-            routerLink: ['/layout/reports/consumption'],
-          },
-          {
-            label: 'Transaction Report',
-            icon: 'pi pi-fw pi-money-bill',
-            routerLink: ['/layout/reports/consumption'],
+            routerLink: ['/layout/reports/sales-report'],
           }
+          // {
+          //   label: 'Stock Valuation',
+          //   icon: 'pi pi-fw pi-chart-line',
+          //   routerLink: ['/layout/reports/stock-valuation'],
+          // },
+          // {
+          //   label: 'Fast / Slow Moving Items',
+          //   icon: 'pi pi-fw pi-forward',
+          //   routerLink: ['/layout/reports/low-stock'],
+          // },
+          // {
+          //   label: 'Dead Stock Report',
+          //   icon: 'pi pi-fw pi-ban',
+          //   routerLink: ['/layout/reports/consumption'],
+          // },
+          // {
+          //   label: 'Current Stock Report',
+          //   icon: 'pi pi-fw pi-file',
+          //   routerLink: ['/layout/reports/consumption'],
+          // },
+          // {
+          //   label: 'Transaction Report',
+          //   icon: 'pi pi-fw pi-money-bill',
+          //   routerLink: ['/layout/reports/consumption'],
+          // }
         ]
       }
     ]

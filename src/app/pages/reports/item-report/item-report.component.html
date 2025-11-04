@@ -1,0 +1,135 @@
+<div class="card p-6">
+  <!-- Header Row: Stock In + Buttons -->
+  <div class="flex justify-between items-center mb-6">
+    <span class="block text-surface-900 font-bold text-2xl">Item Report</span>
+  </div>
+
+  <form [formGroup]="reportForm" (ngSubmit)="display()" class="space-y-8">
+
+    <!-- 🏷 Product Info Section -->
+    <div>
+    <div *ngIf="showGlobalSearch" class="mb-3">
+                        <app-global-filter  [(value)]="globalFilter" placeholder="Search Items..." (valueChange)="applyGlobalFilter()"></app-global-filter>
+                     </div>
+
+      <!-- Two-column grid layout -->
+      <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
+
+        <!-- Report Type -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Report Type</label>
+           <p-dropdown
+            [options]="reportTypeOptions"
+            optionLabel="label"
+            optionValue="value"
+            [filter]="true"
+            filterPlaceholder="Select Report Type"
+            formControlName="reportType"
+            placeholder="Report Type">
+          </p-dropdown>
+          <!-- <small class="text-red-500 ms-3 mt-1" *ngIf="reportForm.get('vendorName')?.touched">
+            <span *ngIf="reportForm.get('vendorName')?.errors?.['required']">Vendor Name is required</span>
+          </small> -->
+        </div>
+
+        <!-- Count -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Count</label>
+                <input pInputText type="number" formControlName="count" placeholder="Count in Number" (keypress)="allowOnlyNumbers($event)" />
+            </div>
+
+         <!-- Category -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Category <span class="text-red-500">*</span></label>
+                <p-dropdown [options]="categoryOptions" optionLabel="label" optionValue="value" [filter]="true" filterPlaceholder="Search Category" formControlName="category" placeholder="Category"> </p-dropdown>
+                <small class="text-red-500 ms-3 mt-1" *ngIf="reportForm.get('category')?.touched">
+                    <span *ngIf="reportForm.get('category')?.errors?.['required']">Category is required</span>
+                </small>
+            </div>
+
+       <!-- Item Name -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Item Name <span class="text-red-500">*</span></label>
+                <input pInputText formControlName="itemName" placeholder="Item Name" />
+                <small class="text-red-500 ms-3 mt-1" *ngIf="reportForm.get('itemName')?.touched">
+                    <span *ngIf="reportForm.get('itemName')?.errors?.['required']">Item Name is required</span>
+                </small>
+            </div>
+
+      <!-- Add and Display Buttons -->
+      <div class="flex gap-4">
+         <button pButton type="submit" label="Display" class="p-button-warning"></button>
+        <button pButton type="button" label="Export To Excel" class="p-button-warning" (click)="exportToExcel()"></button>
+      </div>
+      </div>
+    </div>
+
+    <!-- Product Table with Pagination -->
+    <div>
+      <p-table
+        [value]="filteredProducts.length? filteredProducts : products"
+        dataKey="code"
+        [tableStyle]="{'min-width': '50rem'}"
+        [paginator]="true"
+        [rows]="10"
+        [rowsPerPageOptions]="[5, 10, 20, 50]"
+        [responsiveLayout]="'scroll'"
+        class="p-datatable-gridlines mt-6"
+      >
+        <ng-template #header>
+          <tr class="bg-yellow-400">
+            <th><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
+            <th>Item Code</th>
+            <th>Item Name</th>
+            <th>Category</th>
+            <th>Current Stock</th>
+            <!-- <th>Qty</th> -->
+            <th>UOM</th>
+            <!-- <th>Child UOM</th> -->
+           <th>Threshold</th>
+            <th>Location</th>
+            <th>GST Item</th>
+            <th class="text-center">Action</th>
+          </tr>
+        </ng-template>
+
+        <ng-template #body let-product>
+          <tr>
+            <td class="text-center">
+             <p-tableCheckbox [value]="product" />
+            </td>
+            <td class="flex justify-between gap-2">{{ product.code}}
+               <!-- <span class=" pi pi-copy cursor-pointer "></span> -->
+              </td>
+            <td routerLink="/stockAjustment" class="cursor-pointer">{{ product.name }}</td>
+            <td>{{ product.category }}</td>
+            <td>{{ product.curStock }}</td>
+            <!-- <td>{{ product.quantity }}</td> -->
+            <td>{{ product.uom }}</td>
+            <!-- <td>{{ product.childUOM}}</td> -->
+            <td>{{ product.threshold}}</td>
+            <td>{{ product.location }}</td>
+            <td>{{ product.gstItem}}</td>
+            <td class="text-center">
+              <!-- <i class="pi pi-pencil cursor-pointer text-blue-500" (click)="openEditDialog(product)"></i> -->
+              <i class="pi pi-trash ms-2 cursor-pointer text-red-500" (click)="deleteItem(product)"></i>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="paginatorleft">
+          <div class="text-gray-600 ms-2">Total Items: {{ products?.length || 0 }}</div>
+        </ng-template>
+      </p-table>
+    </div>
+
+    <!-- Grand Total -->
+    <div class="flex justify-end items-center gap-4 mt-6 border-t pt-4">
+      <label class="font-medium">Grand Total</label>
+      <input pInputText type="text" [value]="grandTotal" readonly placeholder="Total" class="w-40 text-right" />
+    </div>
+  </form>
+
+  <!-- Confirm Dialog -->
+  <p-confirmDialog></p-confirmDialog>
+</div>
