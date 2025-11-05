@@ -91,9 +91,8 @@ export class ItemReportComponent {
     // ✅ Move dropdown options into variables
 
     reportTypeOptions = [
-       {label:' Most Saleable'},
-       {label:'Defective'},
-       {label:'Stock Adjustment'}
+       {label:'Item MAaster'},
+       {label:'Stock Report'}
     ];
 
     categoryOptions = [
