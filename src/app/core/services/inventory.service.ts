@@ -194,7 +194,7 @@ export class InventoryService {
 
 )
   }
-Oninsertitemdetails(payload:StockHeader):Observable<any>{
+Oninsertitemdetails(payload:any):Observable<any>{
     console.log(payload)
     let url=`${this.baseUrl}${API_ENDPOINTS.inventory.insertitemdetails}`;
     return this.http.post<any>(url,payload).pipe(catchError(error=>{
@@ -203,10 +203,10 @@ Oninsertitemdetails(payload:StockHeader):Observable<any>{
 
 )
   }
-  getdropdowndetails(payload:StockHeader):Observable<any>{
-    console.log(payload)
+  getdropdowndetails(payload:any):Observable<any>{
+    // console.log(payload)
     let url=`${this.baseUrl}${API_ENDPOINTS.inventory.getdropdowndetails}`;
-    return this.http.get<any>(url).pipe(catchError(error=>{
+    return this.http.post<any>(url,payload).pipe(catchError(error=>{
         return throwError(()=>error)
     }),
 
