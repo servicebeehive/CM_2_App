@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, ViewChild } from '@angular/core';
+import { Component, inject, ViewChild } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { ChipModule } from 'primeng/chip';
@@ -26,6 +26,8 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { Paginator } from 'primeng/paginator';
 import { RouterLink } from "@angular/router";
 import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
+import { AuthService } from '@/core/services/auth.service';
+import { DrowdownDetails } from '@/core/models/inventory.model';
 interface Product {
     name: string;
     price: string;
@@ -80,7 +82,7 @@ interface Image {
 })
 export class StockInComponent {
     productForm!: FormGroup;
-
+    public authService = inject(AuthService);
      visibleDialog=false;
      selectedRow:any=null;
      filteredVendors: any[] = [];
@@ -100,9 +102,9 @@ export class StockInComponent {
 
     // ✅ Move dropdown options into variables
     transactionIdOptions = [
-        { label: 'Trans1', value: 'trans1' },
-        { label: 'Trans2', value: 'trans2' },
-        { label: 'Trans3', value: 'trans3' }
+        // { label: 'Trans1', value: 'trans1' },
+        // { label: 'Trans2', value: 'trans2' },
+        // { label: 'Trans3', value: 'trans3' }
     ];
 
     invoiceNoOptions = [
@@ -111,10 +113,7 @@ export class StockInComponent {
         { label: 'Invoice3' }
     ];
 
-    vendorNameOptions = [
-       {label:' GreatWhite'},
-       {label:'Self'}
-    ];
+    vendorNameOptions:DrowdownDetails[]=[]
 
     categoryOptions = [
         { label: 'Wires & Cables', value: 'Wires & Cables' },
@@ -134,17 +133,17 @@ export class StockInComponent {
     constructor(private fb: FormBuilder, private stockInService:InventoryService,private confirmationService:ConfirmationService) {}
 
     ngOnInit(): void {
+        this.OnGetDropdown()
          this.onGetStockIn();
-        this.productForm = this.fb.group(
-            {
-                transId: [''],
-                invoiceNo: ['', [Validators.maxLength(50)]],
-                vendorName: [''],
-                invoiceDate: [''],
-                remark:['',[Validators.maxLength(500)]]
-            }
-        );
-       
+     this.productForm = this.fb.group({
+    p_tranpurchaseid: [''],
+    p_invoiceno: ['', [Validators.maxLength(50)]],
+    p_vendorid: [''],
+    p_invoicedate: [''],
+    p_remarks:['',[Validators.maxLength(500)]]
+});
+
+
     }
 
  onGetStockIn() {
@@ -161,7 +160,7 @@ applyGlobalFilter(){
 }
 filterVendors(event:any){
     const query = event.query.toLowerCase();
-    this.filteredVendors=this.vendorNameOptions.filter(v=>v.label.toLowerCase().includes(query));
+    this.filteredVendors=this.vendorNameOptions.filter(v=>v.fieldname.toLowerCase().includes(query));
     if(!this.filteredVendors.some(v=>v.label.toLowerCase()===query)){
         this.filteredVendors.push({label:event.query});
     }
@@ -251,6 +250,7 @@ get grandTotal():number{
             rejectButtonStyleClass:'p-button-secondary',
             accept:()=>{
              this.addItemEnabled=true;
+             this.OnPurchesHeaderCreate(this.productForm.value)
             }
         });
     }
@@ -281,4 +281,55 @@ get grandTotal():number{
             this.addInventoryComp.resetForm();
         }
     }
+
+//GetdropdwonDetails Function
+
+OnGetDropdown(){
+    let payload={
+    "uname": "admin",
+    "p_username": "admin",
+    "p_returntype": "ITEM",
+    "clientcode": "CG01-SE",
+    "x-access-token": this.authService.getToken()
+}
+
+    this.stockInService.getdropdowndetails(payload).subscribe({
+        next:(res=>{
+            console.log(res)
+            this.vendorNameOptions=res.data
+        }),
+        error:(error=>{
+            console.log(error)
+        })
+
+    })
+}
+OnPurchesHeaderCreate(data:any){
+
+    const payload: any = {
+
+    "uname": "admin",
+    "p_operationtype": "PUR_INSERT",
+    "p_purchaseid": "26",
+    "p_vendorid":data.p_vendorid,
+    "p_invoiceno": data.p_invoiceno,
+    "p_invoicedate": data.p_invoicedate,
+    "p_remarks": data.p_remarks,
+    "p_active": "Y",
+    "p_loginuser": "admin",
+    "clientcode": "CG01-SE",
+    "x-access-token":this.authService.getToken()
+
+
+
+};
+this.stockInService.OnPurchesHeaderCreate(payload).subscribe({
+    next:(res)=>{
+ console.log(res)
+    },
+    error:(error)=>{
+        console.log(error)
+    }
+})
+}
 }

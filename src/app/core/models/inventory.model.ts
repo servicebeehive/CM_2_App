@@ -12,3 +12,8 @@ export interface StockHeader {
   "x-access-token"?:string
 
 }
+export interface DrowdownDetails{
+    fieldid:number;
+   fieldname:string;
+
+}
