@@ -138,7 +138,7 @@ filteredItemCode:any[]=[];
         this.addForm.get('purchasePrice')?.valueChanges.subscribe(()=>this.updateCostPerItem());
         this.addForm.get('qty')?.valueChanges.subscribe(()=>this.updateCostPerItem());
         this.resetChildUOMTable();
-        this.onSave()
+
     }
     resetChildUOMTable(){
         this.products=[{ childUOM:'', conversion:'', mrpUom:''}];
@@ -275,33 +275,6 @@ console.log('child uom:',);
     }
  public authService = inject(AuthService);
 
-onSave(){
 
-    const payload: any = {
-
-    "uname": "admin",
-    "p_operationtype": "PUR_INSERT",
-    "p_purchaseid": "26",
-    "p_vendorid": "1",
-    "p_invoiceno": "INV_003",
-    "p_invoicedate": "25/10/25",
-    "p_remarks": "Test by CD Update",
-    "p_active": "Y",
-    "p_loginuser": "admin",
-    "clientcode": "CG01-SE",
-    "x-access-token":this.authService.getToken()
-
-
-
-};
-this.inventoryService.OnPurchesHeaderCreate(payload).subscribe({
-    next:(res)=>{
- console.log(res)
-    },
-    error:(error)=>{
-        console.log(error)
-    }
-})
-}
 
 }

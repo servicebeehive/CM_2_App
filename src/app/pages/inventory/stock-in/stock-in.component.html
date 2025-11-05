@@ -26,7 +26,7 @@
             optionValue="value"
             [filter]="true"
             filterPlaceholder="Search Transaction Id"
-            formControlName="transId"
+            formControlName="p_tranpurchaseid"
             placeholder="Auto Generated ID">
           </p-dropdown>
           <!-- <small class="text-red-500 ms-3 mt-1" *ngIf="productForm.get('transId')?.touched">
@@ -37,13 +37,14 @@
         <!-- Vendor Name -->
         <div class="flex flex-col">
           <label class="font-medium mb-1">Vendor Name</label>
+
            <p-dropdown
             [options]="vendorNameOptions"
-            optionLabel="label"
-            optionValue="value"
+            optionLabel="fieldname"
+            optionValue="fieldid"
             [filter]="true"
             filterPlaceholder="Search Vendor Name"
-            formControlName="vendorName"
+            formControlName="p_vendorid"
             placeholder="Vendor Name">
           </p-dropdown>
           <!-- <small class="text-red-500 ms-3 mt-1" *ngIf="productForm.get('vendorName')?.touched">
@@ -54,24 +55,24 @@
         <!-- Invoice No -->
         <div class="flex flex-col">
           <label class="font-medium mb-1">Invoice No.</label>
-         <input pInputText formControlName="invoiceNo" placeholder="Invoice No." />
-          <small class="text-red-500 ms-3 mt-1" *ngIf="productForm.get('invoiceNo')?.errors">
-            <span *ngIf="productForm.get('invoiceNo')?.errors?.['maxlength']">Invoice No. must have atleast 50 characters</span>
+         <input pInputText formControlName="p_invoiceno" placeholder="Invoice No." />
+          <small class="text-red-500 ms-3 mt-1" *ngIf="productForm.get('p_invoiceno')?.errors">
+            <span *ngIf="productForm.get('p_invoiceno')?.errors?.['maxlength']">Invoice No. must have atleast 50 characters</span>
           </small>
         </div>
 
         <!-- Invoice Date -->
         <div class="flex flex-col">
           <label class="font-medium mb-1">Invoice Date</label>
-          <p-datepicker  fluid formControlName="invoiceDate" [showIcon]="true" placeholder="Invoice Date"></p-datepicker>
+          <p-datepicker  fluid formControlName="p_invoicedate" [showIcon]="true" placeholder="Invoice Date"></p-datepicker>
         </div>
 
         <!-- Remark -->
         <div class="flex flex-col">
           <label class="font-medium mb-1">Remark</label>
-          <input pInputText formControlName="remark" placeholder="Remark" />
-            <small class="text-red-500 ms-3 mt-1" *ngIf="productForm.get('remark')?.errors">
-            <span *ngIf="productForm.get('remark')?.errors?.['maxlength']">Remark must have atleast 500 characters</span>
+          <input pInputText formControlName="p_remarks" placeholder="Remark" />
+            <small class="text-red-500 ms-3 mt-1" *ngIf="productForm.get('p_remarks')?.errors">
+            <span *ngIf="productForm.get('p_remarks')?.errors?.['maxlength']">Remark must have atleast 500 characters</span>
           </small>
         </div>
       </div>
