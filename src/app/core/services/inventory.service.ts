@@ -5,6 +5,7 @@ import { API_ENDPOINTS } from '../config/api-endpoints';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { StockIn } from '@/types/stockin.model';
+import { StockHeader } from '../models/inventory.model';
 
 @Injectable({ providedIn: 'root' })
 export class InventoryService {
@@ -181,6 +182,35 @@ export class InventoryService {
     return this.http.delete<any>(url).pipe(
       catchError(this.handleError)
     );
+  }
+
+
+  OnPurchesHeaderCreate(payload:StockHeader):Observable<any>{
+    console.log(payload)
+    let url=`${this.baseUrl}${API_ENDPOINTS.inventory.insertpurchaseheader}`;
+    return this.http.post<any>(url,payload).pipe(catchError(error=>{
+        return throwError(()=>error)
+    }),
+
+)
+  }
+Oninsertitemdetails(payload:any):Observable<any>{
+    console.log(payload)
+    let url=`${this.baseUrl}${API_ENDPOINTS.inventory.insertitemdetails}`;
+    return this.http.post<any>(url,payload).pipe(catchError(error=>{
+        return throwError(()=>error)
+    }),
+
+)
+  }
+  getdropdowndetails(payload:any):Observable<any>{
+    // console.log(payload)
+    let url=`${this.baseUrl}${API_ENDPOINTS.inventory.getdropdowndetails}`;
+    return this.http.post<any>(url,payload).pipe(catchError(error=>{
+        return throwError(()=>error)
+    }),
+
+)
   }
 
   /** 🔹 Common error handler */

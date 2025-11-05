@@ -7,10 +7,14 @@ export const API_ENDPOINTS = {
   users: {
     base: '/users',
     details: (id: number) => `/users/${id}`
+
   },
   inventory: {
     base: '/inventory',
-    item: (id: number) => `/inventory/${id}`
+    item: (id: number) => `/inventory/${id}`,
+    insertpurchaseheader:'/insertpurchaseheader',
+    insertitemdetails:'/insertitemdetails',
+    getdropdowndetails:'/getdropdowndetails'
   },
   orders: {
     base: '/orders',
@@ -18,5 +22,9 @@ export const API_ENDPOINTS = {
   },
   suppliers: {
     base: '/suppliers'
-  }
+  },
+
+
 };
+
+

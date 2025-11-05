@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, inject, Input, Output, SimpleChanges } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { ChipModule } from 'primeng/chip';
@@ -17,6 +17,9 @@ import { MessageModule } from 'primeng/message';
 import { AutoCompleteModule } from 'primeng/autocomplete';
 import productRouters from '@/pages/products/product.routers';
 import { CheckboxModule } from 'primeng/checkbox';
+import { InventoryService } from '@/core/services/inventory.service';
+import { StockHeader } from '@/core/models/inventory.model';
+import { AuthService } from '@/core/services/auth.service';
 interface Product {
     name: string;
     price: string;
@@ -63,7 +66,7 @@ interface Image {
   styleUrl: './addinventory.component.scss'
 })
 export class AddinventoryComponent {
-  
+
   @Output() close=new EventEmitter<void>();
   @Input() editData: any;
   @Input() mode : 'add' |'edit' ='add';
@@ -84,7 +87,7 @@ filteredItemCode:any[]=[];
            {label:'Bundle', value:'bundle'},
          { label: 'Meter', value: 'meter' },
         { label: 'Piece', value: 'piece'}
-      
+
     ];
 
    categoryOptions = [
@@ -111,7 +114,7 @@ filteredItemCode:any[]=[];
 ];
 
     filteredUOM: any[]=[];
-    constructor(private fb: FormBuilder) {}
+    constructor(private fb: FormBuilder, public inventoryService:InventoryService) {}
 
     ngOnInit(): void {
         this.addForm = this.fb.group(
@@ -131,10 +134,11 @@ filteredItemCode:any[]=[];
                 discount:[''],
                 gstItem:[true]
             },{validators:this.mrpValidator}
-        );  
+        );
         this.addForm.get('purchasePrice')?.valueChanges.subscribe(()=>this.updateCostPerItem());
         this.addForm.get('qty')?.valueChanges.subscribe(()=>this.updateCostPerItem());
         this.resetChildUOMTable();
+
     }
     resetChildUOMTable(){
         this.products=[{ childUOM:'', conversion:'', mrpUom:''}];
@@ -146,7 +150,7 @@ filteredItemCode:any[]=[];
             event.preventDefault();
         }
     }
-   
+
     mrpValidator:ValidatorFn=(group:AbstractControl):ValidationErrors | null=>{
     const purchase=parseFloat(group.get('purchasePrice')?.value);
     const mrp=parseFloat(group.get('mrp')?.value);
@@ -185,7 +189,7 @@ filteredItemCode:any[]=[];
        warPeriod:this.editData.warPeriod,
        costPerItem:this.editData.costPerItem,
        location:this.editData.location,
-       parentUOM:this.editData.uom, 
+       parentUOM:this.editData.uom,
        childUom:this.editData.childUOM,
        conversion:this.editData.conversion,
        mrpUom:this.editData.mrpUom,
@@ -236,7 +240,7 @@ isChildUOMValid(): boolean {
 
     if (hasChild || hasConversion || hasMrp) {
       hasAnyValue = true;
-     
+
       if (!hasChild || !hasConversion || !hasMrp) {
         return false;
       }
@@ -250,7 +254,7 @@ isChildUOMValid(): boolean {
 
 this.childUom.emit();
 console.log('child uom:',);
-        if(this.addForm.valid){  
+        if(this.addForm.valid){
             const formData={
                 ...this.addForm.value,
                 childUOMDetails:this.products
@@ -269,4 +273,8 @@ console.log('child uom:',);
         this.addForm.reset();
         this.resetChildUOMTable();
     }
+ public authService = inject(AuthService);
+
+
+
 }
