@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, ViewChild } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { ChipModule } from 'primeng/chip';
@@ -17,7 +17,6 @@ import { TextareaModule } from 'primeng/textarea';
 import { MessageModule } from 'primeng/message';
 import { DatePickerModule } from 'primeng/datepicker';
 import { DialogModule } from 'primeng/dialog';
-import { AddinventoryComponent } from "../addinventory/addinventory.component";
 import { StockIn } from '@/types/stockin.model';
 import { InventoryService } from '@/core/services/inventory.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -26,8 +25,6 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { Paginator } from 'primeng/paginator';
 import { RouterLink } from "@angular/router";
 import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
-import { AuthService } from '@/core/services/auth.service';
-import { DrowdownDetails } from '@/core/models/inventory.model';
 interface Product {
     name: string;
     price: string;
@@ -49,7 +46,7 @@ interface Image {
 }
 
 @Component({
-    selector: 'app-stock-in',
+    selector: 'app-sales-report',
     imports: [
     CommonModule,
     EditorModule,
@@ -69,26 +66,20 @@ interface Image {
     MessageModule,
     DatePickerModule,
     DialogModule,
-    AddinventoryComponent,
     AutoCompleteModule,
     ConfirmDialogModule,
     CheckboxModule,
     RouterLink,
     GlobalFilterComponent
 ],
-    templateUrl: './stock-in.component.html',
-    styleUrl: './stock-in.component.scss',
+    templateUrl: './sales-report.component.html',
+    styleUrl: './sales-report.component.scss',
     providers:[ConfirmationService]
 })
-export class StockInComponent {
-    productForm!: FormGroup;
-    public authService = inject(AuthService);
-     visibleDialog=false;
+export class SalesReportComponent {
+    reportForm!: FormGroup;
+
      selectedRow:any=null;
-     filteredVendors: any[] = [];
-     filteredInvoiceNo: any[]=[];
-     selectedVendor:any;
-     mode:'add' |'edit'='add';
      selection:boolean=true;
      pagedProducts:StockIn[]=[];
      filteredProducts:StockIn[]=[];
@@ -96,24 +87,14 @@ export class StockInComponent {
      first:number=0;
      rowsPerPage:number=5;
      childUomStatus:boolean=false;
-     addItemEnabled=false;
-    showGlobalSearch:boolean=false;
-    @ViewChild(AddinventoryComponent) addInventoryComp!:AddinventoryComponent;
-
+     showGlobalSearch:boolean=false;
     // ✅ Move dropdown options into variables
-    transactionIdOptions = [
-        // { label: 'Trans1', value: 'trans1' },
-        // { label: 'Trans2', value: 'trans2' },
-        // { label: 'Trans3', value: 'trans3' }
-    ];
 
-    invoiceNoOptions = [
-        { label: 'Invoice1' },
-        { label: 'Invoice2' },
-        { label: 'Invoice3' }
+    reportTypeOptions = [
+       {label:' Most Saleable'},
+       {label:'Defective'},
+       {label:'Stock Adjustment'}
     ];
-
-    vendorNameOptions:DrowdownDetails[]=[]
 
     categoryOptions = [
         { label: 'Wires & Cables', value: 'Wires & Cables' },
@@ -123,27 +104,25 @@ export class StockInComponent {
         {label: 'Plugs, Holders & Connectors',value:'Plugs, Holders & Connectors'}
     ];
 
-    itemOptions = [
-        { label: 'Item 1', value: 'item1' },
-        { label: 'Item 2', value: 'item2' },
-        { label: 'Item 3', value: 'item3' }
-    ];
-
     products:StockIn[] =[];
     constructor(private fb: FormBuilder, private stockInService:InventoryService,private confirmationService:ConfirmationService) {}
 
     ngOnInit(): void {
-        this.OnGetDropdown()
          this.onGetStockIn();
-     this.productForm = this.fb.group({
-    p_tranpurchaseid: [''],
-    p_invoiceno: ['', [Validators.maxLength(50)]],
-    p_vendorid: [''],
-    p_invoicedate: [''],
-    p_remarks:['',[Validators.maxLength(500)]]
-});
-
-
+        this.reportForm = this.fb.group(
+            {
+                count: [''],
+                itemName: ['', [Validators.maxLength(50)]],
+                reportType: ['',Validators.required],
+                fromDate: [''],
+                toDate:[''],
+                category:['',[Validators.required]],
+                activeItem:[true],
+                threshold:[true],
+                groupByMonthly:[true]
+            }
+        );
+       
     }
 
  onGetStockIn() {
@@ -158,53 +137,38 @@ applyGlobalFilter(){
        return Object.values(p).some((value)=>String(value).toLowerCase().includes(searchTerm));
     })
 }
-filterVendors(event:any){
-    const query = event.query.toLowerCase();
-    this.filteredVendors=this.vendorNameOptions.filter(v=>v.fieldname.toLowerCase().includes(query));
-    if(!this.filteredVendors.some(v=>v.label.toLowerCase()===query)){
-        this.filteredVendors.push({label:event.query});
+
+ allowOnlyNumbers(event:KeyboardEvent){
+        const allowedChars=/[0-9]\b/;
+        const inputChar=String.fromCharCode(event.key.charCodeAt(0));
+        if(!allowedChars.test(inputChar)){
+            event.preventDefault();
+        }
     }
-}
-filterInvoiceNo(event:any){
-    const query = event.query.toLowerCase();
-    this.filteredInvoiceNo=this.invoiceNoOptions.filter(v=>v.label.toLowerCase().includes(query));
-    if(!this.filteredInvoiceNo.some(v=>v.label.toLowerCase()===query)){
-        this.filteredInvoiceNo.push({label:event.query});
-    }
-}
 
 onSave(updatedData:any){
-    const hasChildUOM= updatedData.childUOMDetails?.some((u:any)=> u.childUOM || u.conversion || u.mrp);
-    const costPerItem=updatedData.qty && updatedData.purchasePrice ? (updatedData.purchasePrice/updatedData.qty).toFixed(2) : 0;
     const mappedData={
         selection:true,
      code: updatedData.itemCode.label ||updatedData.itemCode,
      name:updatedData.itemName,
      category:updatedData.category,
      curStock: updatedData.curStock,
-    purchasePrice: updatedData.purchasePrice,
-    costPerItem:costPerItem,
-    quantity: updatedData.qty,
-    total: (updatedData.purchasePrice) * (updatedData.qty),
+    // quantity: updatedData.qty,
     uom: updatedData.parentUOM,
-    childUOM:hasChildUOM?'Yes' :'No',
-    mrp: updatedData.mrp,
-    discount:updatedData.discount,
-    minStock: updatedData.minStock,
-    warPeriod: updatedData.warPeriod,
+    // childUOM:hasChildUOM?'Yes' :'No',
+    threshold:updatedData.threshold,
     location: updatedData.location,
     gstItem:updatedData.gstItem===true?'Yes':'No',
     };
-    if(this.mode==='edit' && this.selectedRow){
-        const index=this.products.findIndex(p=>p.code === this.selectedRow.code);
-            if(index!==-1){
-               this.products[index]={...this.products[index], ...mappedData };
-            }
-        }
-            else{
-                this.products.push(mappedData);
-            }
-            this.closeDialog();
+    // if(this.mode==='edit' && this.selectedRow){
+    //     const index=this.products.findIndex(p=>p.code === this.selectedRow.code);
+    //         if(index!==-1){
+    //            this.products[index]={...this.products[index], ...mappedData };
+    //         }
+    //     }
+    //         else{
+    //             this.products.push(mappedData);
+    //         }
     }
  deleteItem(product:any) {
   this.confirmationService.confirm({
@@ -224,10 +188,10 @@ onSave(updatedData:any){
     }
   });
   }
-onChildUom(status: boolean):boolean{
-this.childUomStatus=status;
-return this.childUomStatus;
-}
+// onChildUom(status: boolean):boolean{
+// this.childUomStatus=status;
+// return this.childUomStatus;
+// }
 onPageChange(event: any) {
     this.first = event.first;
     this.rowsPerPage = event.rows;
@@ -241,37 +205,23 @@ updatePagedProducts() {
 get grandTotal():number{
     return this.products.reduce((sum,p)=>sum+(p.total || 0),0);
 }
-    onSubmit() {
-        this.confirmationService.confirm({
-            message:'Do you want to save the header information',
-            header:'Confirm',
-            acceptLabel:'Yes',
-            rejectLabel:'Cancel',
-            rejectButtonStyleClass:'p-button-secondary',
-            accept:()=>{
-             this.addItemEnabled=true;
-             this.OnPurchesHeaderCreate(this.productForm.value)
-            }
-        });
+    display() {
+        // this.confirmationService.confirm({
+        //     message:'Do you want to save the header information',
+        //     header:'Confirm',
+        //     acceptLabel:'Yes',
+        //     rejectLabel:'Cancel',
+        //     rejectButtonStyleClass:'p-button-secondary',
+        //     accept:()=>{
+        //      this.addItemEnabled=true;
+        //     }
+        // });
     }
-    openAddDialog(){
-        this.mode='add';
-        this.selectedRow=null;
-        this.visibleDialog=true;
-        setTimeout(() => {
-          this.addInventoryComp.resetForm();
-        });
+    exportToExcel(){
     }
-    openEditDialog(rowData:any){
-        this.mode='edit';
-        this.selectedRow=rowData||null;
-        this.visibleDialog=true;
-    }
-    closeDialog(){
-        this.visibleDialog=false;
-    }
+
     reset(){
-        this.productForm.reset({
+        this.reportForm.reset({
             transId:'',
             invoiceNo:'',
             vendorName:'',
@@ -284,61 +234,9 @@ get grandTotal():number{
         this.pagedProducts=[];
         this.childUomStatus=false;
         this.globalFilter='';
-        this.addItemEnabled=false;
         this.showGlobalSearch=false;
-        if (this.addInventoryComp){
-            this.addInventoryComp.resetForm();
-        }
+        // if (this.addInventoryComp){
+        //     this.addInventoryComp.resetForm();
+        // }
     }
-
-//GetdropdwonDetails Function
-
-OnGetDropdown(){
-    let payload={
-    "uname": "admin",
-    "p_username": "admin",
-    "p_returntype": "ITEM",
-    "clientcode": "CG01-SE",
-    "x-access-token": this.authService.getToken()
-}
-
-    this.stockInService.getdropdowndetails(payload).subscribe({
-        next:(res=>{
-            console.log(res)
-            this.vendorNameOptions=res.data
-        }),
-        error:(error=>{
-            console.log(error)
-        })
-
-    })
-}
-OnPurchesHeaderCreate(data:any){
-
-    const payload: any = {
-
-    "uname": "admin",
-    "p_operationtype": "PUR_INSERT",
-    "p_purchaseid": "26",
-    "p_vendorid":data.p_vendorid,
-    "p_invoiceno": data.p_invoiceno,
-    "p_invoicedate": data.p_invoicedate,
-    "p_remarks": data.p_remarks,
-    "p_active": "Y",
-    "p_loginuser": "admin",
-    "clientcode": "CG01-SE",
-    "x-access-token":this.authService.getToken()
-
-
-
-};
-this.stockInService.OnPurchesHeaderCreate(payload).subscribe({
-    next:(res)=>{
- console.log(res)
-    },
-    error:(error)=>{
-        console.log(error)
-    }
-})
-}
 }
