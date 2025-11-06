@@ -8,12 +8,8 @@
 
     <!-- 🏷 Product Info Section -->
     <div>
-    <div *ngIf="showGlobalSearch" class="mb-3">
-                        <app-global-filter  [(value)]="globalFilter" placeholder="Search Items..." (valueChange)="applyGlobalFilter()"></app-global-filter>
-                     </div>
-
       <!-- Two-column grid layout -->
-      <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
+      <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full mb-3">
 
         <!-- Report Type -->
         <div class="flex flex-col">
@@ -31,13 +27,8 @@
             <span *ngIf="reportForm.get('vendorName')?.errors?.['required']">Vendor Name is required</span>
           </small> -->
         </div>
-
-        <!-- Count -->
-            <div class="flex flex-col">
-                <label class="font-medium mb-1">Count</label>
-                <input pInputText type="number" formControlName="count" placeholder="Count in Number" (keypress)="allowOnlyNumbers($event)" />
-            </div>
-
+</div>
+<div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
          <!-- Category -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Category <span class="text-red-500">*</span></label>
@@ -67,7 +58,7 @@
     <!-- Product Table with Pagination -->
     <div>
       <p-table
-        [value]="filteredProducts.length? filteredProducts : products"
+        [value]="products"
         dataKey="code"
         [tableStyle]="{'min-width': '50rem'}"
         [paginator]="true"
@@ -82,14 +73,12 @@
             <th>Item Code</th>
             <th>Item Name</th>
             <th>Category</th>
-            <th>Current Stock</th>
-            <!-- <th>Qty</th> -->
-            <th>UOM</th>
-            <!-- <th>Child UOM</th> -->
-           <th>Threshold</th>
+            <th>Stock</th>
+            <th>Cost Price</th>
+           <th>MRP</th>
             <th>Location</th>
-            <th>GST Item</th>
-            <th class="text-center">Action</th>
+            <th>Last Updated By</th>
+            <th>Last Updated</th>
           </tr>
         </ng-template>
 
@@ -101,19 +90,14 @@
             <td class="flex justify-between gap-2">{{ product.code}}
                <!-- <span class=" pi pi-copy cursor-pointer "></span> -->
               </td>
-            <td routerLink="/stockAjustment" class="cursor-pointer">{{ product.name }}</td>
+            <td>{{ product.itemName }}</td>
             <td>{{ product.category }}</td>
-            <td>{{ product.curStock }}</td>
-            <!-- <td>{{ product.quantity }}</td> -->
-            <td>{{ product.uom }}</td>
-            <!-- <td>{{ product.childUOM}}</td> -->
-            <td>{{ product.threshold}}</td>
+            <td>{{ product.stock }}</td>
+            <td>{{ product.costPrice }}</td>
+            <td>{{ product.mrp}}</td>
             <td>{{ product.location }}</td>
-            <td>{{ product.gstItem}}</td>
-            <td class="text-center">
-              <!-- <i class="pi pi-pencil cursor-pointer text-blue-500" (click)="openEditDialog(product)"></i> -->
-              <i class="pi pi-trash ms-2 cursor-pointer text-red-500" (click)="deleteItem(product)"></i>
-            </td>
+            <td>{{ product.lastUpdatedBy}}</td>
+            <td>{{ product.lastUpdated}}</td>
           </tr>
         </ng-template>
 
@@ -130,6 +114,4 @@
     </div>
   </form>
 
-  <!-- Confirm Dialog -->
-  <p-confirmDialog></p-confirmDialog>
-</div>
+ 

@@ -76,39 +76,11 @@ export class AddinventoryComponent {
   addForm!: FormGroup;
 filteredItemCode:any[]=[];
     // ✅ Move dropdown options into variables
-    itemCodeOptions = [
-        { label: 'Item1' },
-        { label: 'Item2' },
-        { label: 'Item3' }
-    ];
-
-    parentUOMOptions = [
-          { label: 'Box', value: 'box' },
-           {label:'Bundle', value:'bundle'},
-         { label: 'Meter', value: 'meter' },
-        { label: 'Piece', value: 'piece'}
-
-    ];
-
-   categoryOptions = [
-        { label: 'Wires & Cables', value: 'Wires & Cables' },
-        { label: 'Lighting', value: 'Lighting' },
-        { label: 'Fans & Fixtures', value: 'Fans & Fixtures' },
-        {label: 'Switches & Accessories',value:'Switches & Accessories'},
-        {label: 'Plugs, Holders & Connectors',value:'Plugs, Holders & Connectors'}
-    ];
-    uom = [
-           { label: 'Box', value: 'Box' },
-            {label:'Bundle', value:'Bundle'},
-         { label: 'Meter', value: 'Meter' },
-        { label: 'Piece', value: 'Piece'}
-    ]
-    //   products = [{
-    //       childUOM:'',
-    //       conversion:'',
-    //       mrp:'',
-    //   },
-    //   ];
+    itemCodeOptions = [];
+    parentUOMOptions = [];
+   categoryOptions = [];
+    uom = []
+   
     products: any[] = [
     { childUOM:'', conversion:'', mrpUom:'' }
 ];
@@ -208,12 +180,12 @@ search(event:any){
         this.filteredUOM=[...this.uom];
         return;
      }
-     this.filteredUOM=this.uom.filter(u=>u.label.toLowerCase().includes(query));
+    //  this.filteredUOM=this.uom.filter(u=>u.label.toLowerCase().includes(query));//commented beacause of error
 }
 
 filterItemCode(event:any){
     const query = event.query.toLowerCase();
-    this.filteredItemCode=this.itemCodeOptions.filter(v=>v.label.toLowerCase().includes(query));
+    // this.filteredItemCode=this.itemCodeOptions.filter(v=>v.label.toLowerCase().includes(query)); //commented beacause of error
     if(!this.filteredItemCode.some(v=>v.label.toLowerCase()===query)){
         this.filteredItemCode.push({label:event.query});
     }

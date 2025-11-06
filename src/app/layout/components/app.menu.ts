@@ -161,15 +161,20 @@ this.model = [
         icon: 'pi pi-fw pi-chart-bar',
         routerLink: ['/layout/reports/overview'],
         items: [
+           {
+            label: 'Credit Note',
+            icon: 'pi pi-fw pi-credit-card',
+            routerLink: ['/layout/reports/credit-note'],
+          },
           {
             label: 'Item Report',
             icon: 'pi pi-fw pi-box',
             routerLink: ['/layout/reports/item-report'],
           },
           {
-            label: 'Sales Report',
+            label: 'Transaction Report',
             icon: 'pi pi-fw pi-chart-line',
-            routerLink: ['/layout/reports/sales-report'],
+            routerLink: ['/layout/reports/transaction-report'],
           }
           // {
           //   label: 'Stock Valuation',
