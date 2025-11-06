@@ -246,7 +246,16 @@ console.log('child uom:',);
         this.resetChildUOMTable();
     }
  public authService = inject(AuthService);
+OnCreatInventory(data:any){
+    this.inventoryService.Oninsertitemdetails(data).subscribe({
+        next:(res=>{
+            console.log(res.data)
+        }),
+        error:(error=>{
 
+        })
+    })
+}
 
 
 }
