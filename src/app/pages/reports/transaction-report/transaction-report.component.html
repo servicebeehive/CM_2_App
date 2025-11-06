@@ -1,21 +1,15 @@
 <div class="card p-6">
   <!-- Header Row: Stock In + Buttons -->
   <div class="flex justify-between items-center mb-6">
-    <span class="block text-surface-900 font-bold text-2xl">Sales Report</span>
+    <span class="block text-surface-900 font-bold text-2xl">Transaction Report</span>
   </div>
 
   <form [formGroup]="reportForm" (ngSubmit)="display()" class="space-y-8">
 
     <!-- 🏷 Product Info Section -->
     <div>
-    <div *ngIf="showGlobalSearch" class="mb-3">
-                        <app-global-filter  [(value)]="globalFilter" placeholder="Search Items..." (valueChange)="applyGlobalFilter()"></app-global-filter>
-                     </div>
-
-      <!-- Two-column grid layout -->
-      <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
-
         <!-- Report Type -->
+         <div class="grid grid-cols-2 gap-x-8 mb-2 w-full">
         <div class="flex flex-col">
           <label class="font-medium mb-1">Report Type</label>
            <p-dropdown
@@ -31,13 +25,9 @@
             <span *ngIf="reportForm.get('vendorName')?.errors?.['required']">Vendor Name is required</span>
           </small> -->
         </div>
-
-        <!-- Count -->
-            <div class="flex flex-col">
-                <label class="font-medium mb-1">Count</label>
-                <input pInputText type="number" formControlName="count" placeholder="Count in Number" (keypress)="allowOnlyNumbers($event)" />
-            </div>
-
+      </div>
+   <!-- Two-column grid layout -->
+      <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
         <!-- Transaction Date From-->
         <div class="flex flex-col">
           <label class="font-medium mb-1">From Date</label>
@@ -75,16 +65,8 @@
       </div>
       <div class="flex gap-x-8">
         <div class="flex gap-2">
-                <label class="font-medium mb-1">Active Item</label>
-                <p-checkbox formControlName="activeItem" [binary]="true"></p-checkbox>
-            </div>
-            <div class="flex gap-2">
-                <label class="font-medium mb-1">Threshold</label>
-                <p-checkbox formControlName="threshold" [binary]="true"></p-checkbox>
-            </div>
-            <div class="flex gap-2">
-                <label class="font-medium mb-1">Group By Monthly</label>
-                <p-checkbox formControlName="groupByMonthly" [binary]="true"></p-checkbox>
+                <label class="font-medium mb-1">GST Transaction</label>
+                <p-checkbox formControlName="gstTransaction" [binary]="true"></p-checkbox>
             </div>
       </div>
       </div>
@@ -93,7 +75,7 @@
     <!-- Product Table with Pagination -->
     <div>
       <p-table
-        [value]="filteredProducts.length? filteredProducts : products"
+        [value]="products"
         dataKey="code"
         [tableStyle]="{'min-width': '50rem'}"
         [paginator]="true"
@@ -105,19 +87,15 @@
         <ng-template #header>
           <tr class="bg-yellow-400">
             <th><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
-            <th>Item Code</th>
+            <th>Transaction Id</th>
+            <th>Transaction Date</th>
             <th>Item Name</th>
-            <th>Category</th>
-            <th>Current Stock</th>
-            <th>Qty</th>
-            <th>UOM</th>
-            <!-- <th>Child UOM</th> -->
+            <th>Category</th>     
            <th>Status</th>
-           <th>Threshold</th>
-           <th>Entry Date</th>
-            <th>Location</th>
-            <th>GST Item</th>
-            <th class="text-center">Action</th>
+           <th>Qty</th>
+           <th>Amount</th>
+            <th>Discount</th>
+            <th>Total</th>
           </tr>
         </ng-template>
 
@@ -126,24 +104,17 @@
             <td class="text-center">
              <p-tableCheckbox [value]="product" />
             </td>
-            <td class="flex justify-between gap-2">{{ product.code}}
+            <td class="flex justify-between gap-2">{{ product.id}}
                <!-- <span class=" pi pi-copy cursor-pointer "></span> -->
               </td>
-            <td routerLink="/stockAjustment" class="cursor-pointer">{{ product.name }}</td>
+            <td>{{ product.transactionDate }}</td>
+            <td>{{ product.itemName }}</td>
             <td>{{ product.category }}</td>
-            <td>{{ product.curStock }}</td>
-            <td>{{ product.quantity }}</td>
-            <td>{{ product.uom }}</td>
-            <!-- <td>{{ product.childUOM}}</td> -->
             <td>{{ product.status}}</td>
-            <td>{{ product.threshold}}</td>
-            <td>{{ product.entryDate}}</td>
-            <td>{{ product.location }}</td>
-            <td>{{ product.gstItem}}</td>
-            <td class="text-center">
-              <!-- <i class="pi pi-pencil cursor-pointer text-blue-500" (click)="openEditDialog(product)"></i> -->
-              <i class="pi pi-trash ms-2 cursor-pointer text-red-500" (click)="deleteItem(product)"></i>
-            </td>
+            <td>{{ product.quantity }}</td>
+            <td>{{ product.amount}}</td>
+            <td>{{ product.discount}}</td>
+            <td>{{ product.total}}</td>
           </tr>
         </ng-template>
 

@@ -11,9 +11,6 @@
 
     <!-- 🏷 Product Info Section -->
     <div>
-    <div *ngIf="showGlobalSearch" class="mb-3">
-                        <app-global-filter  [(value)]="globalFilter" placeholder="Search Items..." (valueChange)="applyGlobalFilter()"></app-global-filter>
-                     </div>
 
       <!-- Two-column grid layout -->
       <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
@@ -88,7 +85,7 @@
     <!-- Product Table with Pagination -->
     <div>
       <p-table
-        [value]="filteredProducts.length? filteredProducts : products"
+        [value]="products"
         dataKey="code"
         [tableStyle]="{'min-width': '50rem'}"
         [paginator]="true"
@@ -171,7 +168,6 @@
     [style]="{ width: '80vw' }"
   >
     <app-addinventory
-      [editData]="selectedRow"
       [mode]="mode"
       (close)="closeDialog()"
       (save)="onSave($event)"

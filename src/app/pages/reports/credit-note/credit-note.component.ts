@@ -45,7 +45,7 @@ interface Image {
 }
 
 @Component({
-    selector: 'app-item-report',
+    selector: 'app-credit-note',
     imports: [
     CommonModule,
     EditorModule,
@@ -70,11 +70,11 @@ interface Image {
     CheckboxModule,
     RouterLink,
 ],
-    templateUrl: './item-report.component.html',
-    styleUrl: './item-report.component.scss',
+    templateUrl: './credit-note.component.html',
+    styleUrl: './credit-note.component.scss',
     providers:[ConfirmationService]
 })
-export class ItemReportComponent {
+export class CreditNoteComponent {
     reportForm!: FormGroup;
 
      visibleDialog=false;
@@ -85,7 +85,7 @@ export class ItemReportComponent {
      rowsPerPage:number=5;
     // ✅ Move dropdown options into variables
 
-    reportTypeOptions = [
+    creditNoteOptions = [
        {label:'Item List'},
        {label:'Most Saleable'},
        {label:'Non Active Item'},
@@ -135,12 +135,12 @@ onSave(updatedData:any){
      code: updatedData.itemCode.label ||updatedData.itemCode,
      itemName:updatedData.itemName,
      category:updatedData.category,
-     stock: updatedData.stock,
-    costPrice:updatedData.costPrice,
+    purchasePrice:updatedData.purchasePrice,
+    qty:updatedData.qty,
+    total: updatedData.total,
+    uom:updatedData.uom,
     mrp:updatedData.mrp,
-    location: updatedData.location,
-    lastUpdatedBy:updatedData.lastUpdatedBy,
-    lastUpdated:updatedData.lastUpdated
+    warantyPeriod:updatedData.warantyPeriod
     };
     }
 
@@ -157,12 +157,15 @@ updatePagedProducts() {
 get grandTotal():number{
     return this.products.reduce((sum,p)=>sum+(p.total || 0),0);
 }
-    display() {
+  print() {
         
     }
-    exportToExcel(){
-    }
+    generateCN(){
 
+    }
+    settleCN(){
+      
+    }
     reset(){
         this.reportForm.reset({
             transId:'',
