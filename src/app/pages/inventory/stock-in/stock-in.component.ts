@@ -25,7 +25,6 @@ import { ConfirmationService } from 'primeng/api';
 import { CheckboxModule } from 'primeng/checkbox';
 import { Paginator } from 'primeng/paginator';
 import { RouterLink } from "@angular/router";
-import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
 import { AuthService } from '@/core/services/auth.service';
 import { DrowdownDetails } from '@/core/models/inventory.model';
 interface Product {
@@ -74,7 +73,6 @@ interface Image {
     ConfirmDialogModule,
     CheckboxModule,
     RouterLink,
-    GlobalFilterComponent
 ],
     templateUrl: './stock-in.component.html',
     styleUrl: './stock-in.component.scss',
@@ -91,43 +89,22 @@ export class StockInComponent {
      mode:'add' |'edit'='add';
      selection:boolean=true;
      pagedProducts:StockIn[]=[];
-     filteredProducts:StockIn[]=[];
-     globalFilter:string='';
      first:number=0;
      rowsPerPage:number=5;
      childUomStatus:boolean=false;
      addItemEnabled=false;
-    showGlobalSearch:boolean=false;
     @ViewChild(AddinventoryComponent) addInventoryComp!:AddinventoryComponent;
 
     // ✅ Move dropdown options into variables
-    transactionIdOptions = [
-        // { label: 'Trans1', value: 'trans1' },
-        // { label: 'Trans2', value: 'trans2' },
-        // { label: 'Trans3', value: 'trans3' }
-    ];
+    transactionIdOptions = [];
 
-    invoiceNoOptions = [
-        { label: 'Invoice1' },
-        { label: 'Invoice2' },
-        { label: 'Invoice3' }
-    ];
+    invoiceNoOptions = [];
 
     vendorNameOptions:DrowdownDetails[]=[]
 
-    categoryOptions = [
-        { label: 'Wires & Cables', value: 'Wires & Cables' },
-        { label: 'Lighting', value: 'Lighting' },
-        { label: 'Fans & Fixtures', value: 'Fans & Fixtures' },
-        {label: 'Switches & Accessories',value:'Switches & Accessories'},
-        {label: 'Plugs, Holders & Connectors',value:'Plugs, Holders & Connectors'}
-    ];
+    categoryOptions = [];
 
-    itemOptions = [
-        { label: 'Item 1', value: 'item1' },
-        { label: 'Item 2', value: 'item2' },
-        { label: 'Item 3', value: 'item3' }
-    ];
+    itemOptions = [];
 
     products:StockIn[] =[];
     constructor(private fb: FormBuilder, private stockInService:InventoryService,private confirmationService:ConfirmationService) {}
@@ -142,22 +119,12 @@ export class StockInComponent {
     p_invoicedate: [''],
     p_remarks:['',[Validators.maxLength(500)]]
 });
-
-
     }
-
  onGetStockIn() {
  this.products=this.stockInService.productItem;
  console.log('item',this.products);
  this.products.forEach(p=>p.selection=true);
- this.filteredProducts=[...this.products];
-}
-applyGlobalFilter(){
-    const searchTerm = this.globalFilter?.toLowerCase() || '';
-    this.filteredProducts=this.products.filter((p)=>{
-       return Object.values(p).some((value)=>String(value).toLowerCase().includes(searchTerm));
-    })
-}
+ }
 filterVendors(event:any){
     const query = event.query.toLowerCase();
     this.filteredVendors=this.vendorNameOptions.filter(v=>v.fieldname.toLowerCase().includes(query));
@@ -167,7 +134,7 @@ filterVendors(event:any){
 }
 filterInvoiceNo(event:any){
     const query = event.query.toLowerCase();
-    this.filteredInvoiceNo=this.invoiceNoOptions.filter(v=>v.label.toLowerCase().includes(query));
+    // this.filteredInvoiceNo=this.invoiceNoOptions.filter(v=>v.label.toLowerCase().includes(query));//commented beacause of error
     if(!this.filteredInvoiceNo.some(v=>v.label.toLowerCase()===query)){
         this.filteredInvoiceNo.push({label:event.query});
     }
@@ -279,13 +246,11 @@ get grandTotal():number{
             remark:''
             });
         this.products=[];
-        this.filteredProducts=[];
+        
         this.first=0;
         this.pagedProducts=[];
         this.childUomStatus=false;
-        this.globalFilter='';
         this.addItemEnabled=false;
-        this.showGlobalSearch=false;
         if (this.addInventoryComp){
             this.addInventoryComp.resetForm();
         }
