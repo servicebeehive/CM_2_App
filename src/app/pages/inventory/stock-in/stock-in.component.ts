@@ -79,6 +79,7 @@ interface Image {
     providers:[ConfirmationService]
 })
 export class StockInComponent {
+    public transationid:any
     productForm!: FormGroup;
     public authService = inject(AuthService);
      visibleDialog=false;
@@ -111,6 +112,7 @@ export class StockInComponent {
 
     ngOnInit(): void {
         this.OnGetDropdown()
+        this.loadAllDropdowns()
          this.onGetStockIn();
      this.productForm = this.fb.group({
     p_tranpurchaseid: [''],
@@ -257,6 +259,11 @@ get grandTotal():number{
     }
 
 //GetdropdwonDetails Function
+// itemOptions: any[] = [];          // For ITEM dropdown
+// categoryOptions: any[] = [];      // For CATEGORY dropdown
+uomOptions: any[] = [];           // For UOM dropdown
+vendorOptions: any[] = [];        // For VENDOR dropdown
+purchaseIdOptions: any[] = [];    // For PURCHASE ID dropdown
 
 OnGetDropdown(){
     let payload={
@@ -278,6 +285,7 @@ OnGetDropdown(){
 
     })
 }
+
 OnPurchesHeaderCreate(data:any){
 
     const payload: any = {
@@ -300,10 +308,68 @@ OnPurchesHeaderCreate(data:any){
 this.stockInService.OnPurchesHeaderCreate(payload).subscribe({
     next:(res)=>{
  console.log(res)
+ this.transationid=res.data[0].tranpurchaseid
+ this.transactionIdOptions=res.data
     },
     error:(error)=>{
         console.log(error)
     }
 })
 }
+createDropdownPayload(returnType: string) {
+  return {
+    uname: "admin",
+    p_username: "admin",
+    p_returntype: returnType,
+    clientcode: "CG01-SE",
+    "x-access-token": this.authService.getToken()
+  };
+}
+OnGetItem() {
+  const payload = this.createDropdownPayload("ITEM");
+  this.stockInService.getdropdowndetails(payload).subscribe({
+    next: (res) => this.itemOptions = res.data,
+    error: (err) => console.log(err)
+  });
+}
+loadAllDropdowns() {
+  this.OnGetItem();
+  this.OnGetCategory();
+  this.OnGetUOM();
+  this.OnGetVendor();
+  this.OnGetPurchaseId();
+}
+
+OnGetCategory() {
+  const payload = this.createDropdownPayload("CATEGORY");
+  this.stockInService.getdropdowndetails(payload).subscribe({
+    next: (res) => this.categoryOptions = res.data,
+    error: (err) => console.log(err)
+  });
+}
+
+OnGetUOM() {
+  const payload = this.createDropdownPayload("UOM");
+  this.stockInService.getdropdowndetails(payload).subscribe({
+    next: (res) => this.uomOptions = res.data,
+    error: (err) => console.log(err)
+  });
+}
+
+OnGetVendor() {
+  const payload = this.createDropdownPayload("VENDOR");
+  this.stockInService.getdropdowndetails(payload).subscribe({
+    next: (res) => this.vendorOptions = res.data,
+    error: (err) => console.log(err)
+  });
+}
+
+OnGetPurchaseId() {
+  const payload = this.createDropdownPayload("PURCHASEID");
+  this.stockInService.getdropdowndetails(payload).subscribe({
+    next: (res) => this.purchaseIdOptions = res.data,
+    error: (err) => console.log(err)
+  });
+}
+
 }
