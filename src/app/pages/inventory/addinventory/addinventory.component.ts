@@ -271,9 +271,7 @@ isChildUOMValid(): boolean {
     }
 
 
-        })
-    })
 }
 
 
-}
+
