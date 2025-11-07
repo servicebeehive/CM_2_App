@@ -20,6 +20,7 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { InventoryService } from '@/core/services/inventory.service';
 import { StockHeader } from '@/core/models/inventory.model';
 import { AuthService } from '@/core/services/auth.service';
+import { ShareService } from '@/core/services/shared.service';
 interface Product {
     name: string;
     price: string;
@@ -66,19 +67,25 @@ interface Image {
   styleUrl: './addinventory.component.scss'
 })
 export class AddinventoryComponent {
-
+@Input() transationid=null
   @Output() close=new EventEmitter<void>();
   @Input() editData: any;
   @Input() mode : 'add' |'edit' ='add';
   @Output() save=new EventEmitter<any>();
   @Output() childUom = new EventEmitter<boolean>() ;
 
+@Input() itemOptions: any[] = [];
+@Input() categoryOptions: any[] = [];
+@Input() uomOptions: any[] = [];
+@Input() vendorOptions: any[] = [];
+@Input() purchaseIdOptions: any[] = [];
+ public authService = inject(AuthService);
   addForm!: FormGroup;
 filteredItemCode:any[]=[];
     // ✅ Move dropdown options into variables
     itemCodeOptions = [];
     parentUOMOptions = [];
-   categoryOptions = [];
+  
     uom = []
    
     products: any[] = [
@@ -86,7 +93,7 @@ filteredItemCode:any[]=[];
 ];
 
     filteredUOM: any[]=[];
-    constructor(private fb: FormBuilder, public inventoryService:InventoryService) {}
+    constructor(private fb: FormBuilder, public inventoryService:InventoryService,public shareservice:ShareService) {}
 
     ngOnInit(): void {
         this.addForm = this.fb.group(
@@ -221,22 +228,39 @@ isChildUOMValid(): boolean {
   return true;
 }
 
+ mapFormToPayload(form: any, childUOM: any[]) {
+    return {
+      p_operationtype: this.mode === 'add' ? 'PUR_INSERT' : 'PUR_UPDATE',
+      p_itemsku: form.itemCode,
+      p_itemname: form.itemName,
+      p_categoryid: form.category,
+      p_uomid: form.parentUOM,
+      p_quantity: form.qty,
+      p_costprice: form.purchasePrice,
+      p_saleprice: form.mrp,
+      p_minimumstock: form.minStock,
+      p_warrentyperiod: form.warPeriod,
+      p_location: form.location,
+      p_currentstock: form.curStock,
+      p_gstitem: form.gstItem ? 'Y' : 'N',
+      p_uom: childUOM.map(x => ({
+        childuomid: x.childUOM,
+        uomconversion: x.conversion,
+        childmrp: x.mrpUom
+      })),
+      p_loginuser: this.shareservice.getUserData()?.username,
+      clientcode: 'CG01-SE',
+      'x-access-token': this.authService.getToken(),
+      "uname": "admin"
+    };
+  }
 
-    onSubmit() {
-
-this.childUom.emit();
-console.log('child uom:',);
-        if(this.addForm.valid){
-            const formData={
-                ...this.addForm.value,
-                childUOMDetails:this.products
-            };
-            this.save.emit(formData);
-          setTimeout(()=>{
-            this.close.emit();
-          },0);
-        }
-    }
+  onSubmit() {
+    if (this.addForm.invalid || !this.isChildUOMValid()) return;
+    this.inventoryService.Oninsertitemdetails(this.mapFormToPayload(this.addForm.getRawValue(), this.products)).subscribe(() => {
+      this.close.emit();
+    });
+  }
     onCancel(){
         this.close.emit();
         console.log(this.products);
@@ -245,13 +269,7 @@ console.log('child uom:',);
         this.addForm.reset();
         this.resetChildUOMTable();
     }
- public authService = inject(AuthService);
-OnCreatInventory(data:any){
-    this.inventoryService.Oninsertitemdetails(data).subscribe({
-        next:(res=>{
-            console.log(res.data)
-        }),
-        error:(error=>{
+
 
         })
     })
