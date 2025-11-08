@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, ViewChild, viewChild } from '@angular/core';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { ChipModule } from 'primeng/chip';
 import { EditorModule } from 'primeng/editor';
@@ -65,6 +65,7 @@ export class SalesComponent {
     globalFilter: string = '';
      childUomStatus:boolean =false;
      showGlobalSearch:boolean=true;
+     today: Date = new Date();
       //for testing
   @ViewChild(AddinventoryComponent) addInventoryComp!:AddinventoryComponent;
 
@@ -93,7 +94,7 @@ export class SalesComponent {
             billNo: ['', Validators.required],
             customerName: [''],
             mobile: ['', [Validators.pattern(/^[0-9]{10}$/)]],
-            transId: ['',Validators.required],
+            transactionDate:[this.today],
             totalCost:[''],
             mrpTotal:[''],
             roundOff:[''],
@@ -115,6 +116,16 @@ export class SalesComponent {
             event.preventDefault();
         }
     }
+
+    // noFutureDateValidator():ValidatorFn{
+    //    return (control:AbstractControl) : ValidationErrors | null =>{
+    //     const selectedDate = new Date(control.value);
+    //     const today = new Date();
+    //     selectedDate.setHours(0,0,0,0);
+    //     today.setHours(0,0,0,0);
+    //     return selectedDate > today ? { futureDateNotAllowed : true} : null ;
+    //    };
+    // }
 
     onGetStockIn() {
         this.products = this.stockInService.productItem || [];
@@ -219,9 +230,6 @@ export class SalesComponent {
        }
      });
      }
-   hold(){
-
-   }
    print(){
 
    }
