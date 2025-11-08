@@ -19,8 +19,8 @@
           <label class="font-medium mb-1">Transaction Id</label>
           <p-dropdown
             [options]="transactionIdOptions"
-            optionLabel="label"
-            optionValue="value"
+            optionLabel="tranpurchaseid"
+            optionValue="tranpurchaseid"
             [filter]="true"
             filterPlaceholder="Search Transaction Id"
             formControlName="p_tranpurchaseid"
@@ -36,7 +36,7 @@
           <label class="font-medium mb-1">Vendor Name</label>
 
            <p-dropdown
-            [options]="vendorNameOptions"
+            [options]="this.vendorOptions"
             optionLabel="fieldname"
             optionValue="fieldid"
             [filter]="true"
@@ -171,6 +171,12 @@
       [mode]="mode"
       (close)="closeDialog()"
       (save)="onSave($event)"
+      [transationid]="transationid"
+      [itemOptions]="itemOptions"
+      [categoryOptions]="categoryOptions"
+      [uomOptions]="uomOptions"
+      [vendorOptions]="vendorOptions"
+      [purchaseIdOptions]="purchaseIdOptions"
       (childUom)="onChildUom($event)"
      >
     </app-addinventory>

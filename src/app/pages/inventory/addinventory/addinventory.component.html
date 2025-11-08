@@ -1,7 +1,7 @@
 <form [formGroup]="addForm" (ngSubmit)="onSubmit()" class="space-y-8">
     <!-- 🧾 Transaction Info -->
     <div>
-        <p class="text font-semibold mb-4 border-b pb-2 text-gray-700">Transaction Id : abc</p>
+        <p class="text font-semibold mb-4 border-b pb-2 text-gray-700">Transaction Id : {{transationid}}</p>
     </div>
 
     <!-- 🧩 Product Details -->
@@ -9,14 +9,23 @@
         <h3 class="text-lg font-semibold mb-3 text-gray-700 border-b pb-2">Product Details</h3>
 
         <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
-            <!-- Item Code -->
-            <div class="flex flex-col">
+              <div class="flex flex-col">
                 <label class="font-medium mb-1">Item Code <span class="text-red-500">*</span></label>
-                <p-autoComplete fluid field="label" [suggestions]="filteredItemCode" (completeMethod)="filterItemCode($event)" [forceSelection]="false" formControlName="itemCode" placeholder="Item Code"> </p-autoComplete>
+                <p-dropdown [options]="itemOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search Item code" formControlName="itemCode" placeholder="Item Code"> </p-dropdown>
                 <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('itemCode')?.touched">
                     <span *ngIf="addForm.get('itemCode')?.errors?.['required']">Item Code is required</span>
                 </small>
             </div>
+            <!-- Item Code -->
+            <!-- <div class="flex flex-col">
+                
+                {{itemOptions|json}}
+                <label class="font-medium mb-1">Item Code <span class="text-red-500">*</span></label>
+                <p-autoComplete fluid field="fieldname"  [suggestions]="itemOptions" (completeMethod)="filterItemCode($event)" [forceSelection]="true" formControlName="itemCode" placeholder="Item Code"> </p-autoComplete>
+                <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('itemCode')?.touched">
+                    <span *ngIf="addForm.get('itemCode')?.errors?.['required']">Item Code is required</span>
+                </small>
+            </div> -->
 
             <!-- Current Stock -->
             <div class="flex flex-col">
@@ -36,7 +45,7 @@
             <!-- Category -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Category <span class="text-red-500">*</span></label>
-                <p-dropdown [options]="categoryOptions" optionLabel="label" optionValue="value" [filter]="true" filterPlaceholder="Search Category" formControlName="category" placeholder="Category"> </p-dropdown>
+                <p-dropdown [options]="categoryOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search Category" formControlName="category" placeholder="Category"> </p-dropdown>
                 <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('category')?.touched">
                     <span *ngIf="addForm.get('category')?.errors?.['required']">Category is required</span>
                 </small>
@@ -61,7 +70,7 @@
             <!-- Parent UOM -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Parent UOM <span class="text-red-500">*</span></label>
-                <p-dropdown [options]="parentUOMOptions" optionLabel="label" optionValue="value" [filter]="true" filterPlaceholder="Search Parent UOM" formControlName="parentUOM" placeholder="Parent UOM"> </p-dropdown>
+                <p-dropdown [options]="uomOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search Parent UOM" formControlName="parentUOM" placeholder="Parent UOM"> </p-dropdown>
                 <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('parentUOM')?.touched">
                     <span *ngIf="addForm.get('parentUOM')?.errors?.['required']">Parent UOM is required</span>
                 </small>
@@ -138,14 +147,47 @@
                         </tr>
                     </ng-template>
                     <ng-template #body let-product>
-                       <tr>
-                        <!-- <td><p-dropdown pInputText [options]="uom" optionLabel="label" optionValue="value" [(ngModel)]="product.childUOM" placeholder="Select Child UOM" class="w-full"></p-dropdown></td> -->
-                        <td><p-dropdown [options]="uom" optionLabel="label" optionValue="value" [filter]="true" filterPlaceholder="Search Child UOM" [(ngModel)]="product.childUOM" (ngModelChange)="isChildUOMValid()" placeholder="Select Child UOM" appendTo="body"></p-dropdown></td>
-                        <td><input pInputText type="number" [(ngModel)]="product.conversion" (ngModelChange)="isChildUOMValid()" placeholder="Conversion" (keypress)="allowOnlyNumbers($event)" /></td>
-                        <td><input pInputText type="number" [(ngModel)]="product.mrpUom" (ngModelChange)="isChildUOMValid()" placeholder="MRP" (keypress)="allowOnlyNumbers($event)" /></td>
-                        <td><i class="pi pi-minus-circle cursor-pointer text-yellow-500" (click)="removeRow()"></i></td>
-                       </tr>
-                    </ng-template>
+<tr>
+  <td>
+    <p-dropdown
+      [options]="uomOptions"
+      optionLabel="fieldname" optionValue="fieldid"
+      [filter]="true"
+      filterPlaceholder="Search Child UOM"
+      [(ngModel)]="product.childUOM"
+      [ngModelOptions]="{standalone: true}"
+      (ngModelChange)="isChildUOMValid()"
+      placeholder="Select Child UOM"
+      appendTo="body">
+    </p-dropdown>
+  </td>
+
+  <td>
+    <input pInputText
+      type="number"
+      [(ngModel)]="product.conversion"
+      [ngModelOptions]="{standalone: true}"
+      (ngModelChange)="isChildUOMValid()"
+      placeholder="Conversion"
+      (keypress)="allowOnlyNumbers($event)" />
+  </td>
+
+  <td>
+    <input pInputText
+      type="number"
+      [(ngModel)]="product.mrpUom"
+      [ngModelOptions]="{standalone: true}"
+      (ngModelChange)="isChildUOMValid()"
+      placeholder="MRP"
+      (keypress)="allowOnlyNumbers($event)" />
+  </td>
+
+  <td>
+    <i class="pi pi-minus-circle cursor-pointer text-yellow-500" (click)="removeRow()"></i>
+  </td>
+</tr>
+</ng-template>
+
                 </p-table>
             </div>
 
