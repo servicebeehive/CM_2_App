@@ -48,7 +48,7 @@ this.model = [
         items: [
           {
             label: 'Stock In',
-            icon: 'pi pi-fw pi-arrow-down-left',
+            icon: 'pi pi-fw pi-arrow-down-left' ,
             routerLink: ['/layout/inventory/stock-in'],
           },
           {
