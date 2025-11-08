@@ -33,7 +33,7 @@ this.model = [
       {
         label: 'Main Dashboard',
         icon: 'pi pi-fw pi-home',
-        routerLink: ['/'],
+            routerLink:['/pages/dashboards/ecommercedashboard']
       }
     ]
   },
