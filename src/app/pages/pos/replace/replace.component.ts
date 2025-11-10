@@ -53,7 +53,7 @@ import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.comp
     providers: [ConfirmationService]
 })
 export class ReplaceComponent {
-    salesForm!: FormGroup;
+    replaceForm!: FormGroup;
     visibleDialog = false;
     selectedRow: any = null;
     mode: 'add' | 'edit' = 'add';
@@ -69,17 +69,11 @@ export class ReplaceComponent {
     //for testing
     @ViewChild(AddinventoryComponent) addInventoryComp!: AddinventoryComponent;
 
-    // ✅ Move dropdown options into variables
-    billNoOptions = [
-        { label: 'Bill 1', value: 'bill1' },
-        { label: 'Bill 2', value: 'bill2' },
-        { label: 'Bill 3', value: 'bill3' }
-    ];
-
-    holdTransIdOptions = [
-        { label: 'Trans 1', value: 'trans1' },
-        { label: 'Trans 2', value: 'trans2' },
-        { label: 'Trans 3', value: 'trans3' }
+    // ✅ Move dropdown options into variable
+    replaceBillNoOptions = [
+        { label: 'Return Bill 1', value: 'rerunBill1' },
+        { label: 'Return Bill 2', value: 'rerunBill2' },
+        { label: 'Return Bill 3', value: 'rerunBill3' }
     ];
 
     constructor(
@@ -90,7 +84,7 @@ export class ReplaceComponent {
 
     ngOnInit(): void {
         this.onGetStockIn();
-        this.salesForm = this.fb.group({
+        this.replaceForm = this.fb.group({
             billNo: ['', Validators.required],
             customerName: [''],
             mobile: ['', [Validators.pattern(/^[0-9]{10}$/)]],
@@ -102,10 +96,10 @@ export class ReplaceComponent {
             finalPayable: [''],
             globalFilter: ['']
         });
-        this.salesForm.valueChanges.subscribe(() => {
+        this.replaceForm.valueChanges.subscribe(() => {
             this.filterProducts();
         });
-        this.salesForm.get('discountLabel')?.valueChanges.subscribe(() => {
+        this.replaceForm.get('discountLabel')?.valueChanges.subscribe(() => {
             this.updatedFinalAmount();
         });
     }
@@ -150,7 +144,7 @@ export class ReplaceComponent {
     }
     calculateTotals() {
         const totalMrp = this.filteredProducts.reduce((sum, p) => sum + (p.mrp || 0) * (p.quantity || 0), 0);
-        this.salesForm.patchValue(
+        this.replaceForm.patchValue(
             {
                 mrpTotal: totalMrp.toFixed(2)
             },
@@ -159,19 +153,19 @@ export class ReplaceComponent {
         this.updatedFinalAmount();
     }
     updatedFinalAmount() {
-        const mrpTotal = Number(this.salesForm.get('mrpTotal')?.value || 0);
-        const disc = Number(this.salesForm.get('discountLabel')?.value || 0);
+        const mrpTotal = Number(this.replaceForm.get('mrpTotal')?.value || 0);
+        const disc = Number(this.replaceForm.get('discountLabel')?.value || 0);
         const discountedAmount = mrpTotal - (mrpTotal * disc) / 100;
         const roundedAmount = Math.round(discountedAmount);
         const roundOff = +(roundedAmount - discountedAmount).toFixed(2);
-        this.salesForm.patchValue(
+        this.replaceForm.patchValue(
             {
                 roundOff: roundOff,
                 finalPayable: roundedAmount
             },
             { emitEvent: false }
         );
-        this.salesForm.patchValue({ finalPayable: roundedAmount }, { emitEvent: false });
+        this.replaceForm.patchValue({ finalPayable: roundedAmount }, { emitEvent: false });
     }
     onPageChange(event: any) {
         this.first = event.first;
@@ -254,7 +248,7 @@ export class ReplaceComponent {
         // this.stockInService.productItem = [...this.filteredProducts];
     }
     onSubmit() {
-        console.log(this.salesForm.value);
+        console.log(this.replaceForm.value);
         this.confirmationService.confirm({
             message: 'Are you sure you want to make changes?',
             header: 'Confirm',
@@ -268,12 +262,12 @@ export class ReplaceComponent {
     }
 
     reset() {
-        this.salesForm.reset();
+        this.replaceForm.reset();
         this.products = [];
         this.filteredProducts = [];
         this.pagedProducts = [];
         this.first = 0;
-        this.salesForm.patchValue(
+        this.replaceForm.patchValue(
             {
                 mrpTotal: '',
                 totalCost: '',

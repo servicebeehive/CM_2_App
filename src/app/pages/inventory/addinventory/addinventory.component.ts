@@ -179,6 +179,7 @@ filteredItemCode:any[]=[];
   else if(this.mode === 'add' && this.addForm){
     this.addForm.reset();
     this.resetChildUOMTable();
+    this.addForm.get('gstItem')?.setValue(true);
   }
 }
 search(event:any){
@@ -268,6 +269,7 @@ isChildUOMValid(): boolean {
     resetForm(){
         this.addForm.reset();
         this.resetChildUOMTable();
+        this.addForm.get('gstItem')?.setValue(true);
     }
 
 
