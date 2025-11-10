@@ -1,6 +1,6 @@
 <div class="card p-6">
     <div>
-        <form [formGroup]="salesForm" (ngSubmit)="onSubmit()" class="space-y-8">
+        <form [formGroup]="returnForm" (ngSubmit)="onSubmit()" class="space-y-8">
             <div class="flex justify-between items-center mb-6">
                 <span class="block text-surface-900 font-bold text-xl mb-6">Return</span>
                 <!-- Buttons -->
@@ -17,21 +17,26 @@
                 <!-- <div class="flex mb-3">
                     <input type="text" pInputText placeholder="Search..." class="w-full p-inputtext" formControlName="globalFilter" (input)="applyGlobalFilter()" />
                 </div> -->
-                <div *ngIf="showGlobalSearch" class="mb-3">
+                <div *ngIf="showGlobalSearch" class="mb-5">
                         <app-global-filter  [(value)]="globalFilter" placeholder="Search Items..." (valueChange)="applyGlobalFilter()"></app-global-filter>
                      </div>
                 <!-- Bill no -->
-                <div class="grid grid-cols-2 gap-x-8 mb-2 w-full">
+                <div class="grid grid-cols-2 gap-x-8 gap-y-4 mb-2 w-full">
+                     <div class="flex flex-col mb-1">
+                        <label class="font-medium">Return Bill No</label>
+                        <p-dropdown [options]="returnBillNoOptions" optionLabel="label" optionValue="value" [filter]="true" filterPlaceholder="Search Return Bill No." formControlName="returnBillNo" placeholder="Return Bill No."> </p-dropdown>
+                        <small class="text-red-500 ms-3 mt-1" *ngIf="returnForm.get('returnBillNo')?.touched">
+                            <span *ngIf="returnForm.get('returnBillNo')?.errors?.['required']">Return Bill No is required</span>
+                        </small>
+                    </div>
                     <div class="flex flex-col mb-1">
                         <label class="font-medium">Bill No</label>
                         <p-dropdown [options]="billNoOptions" optionLabel="label" optionValue="value" [filter]="true" filterPlaceholder="Search Bill No." formControlName="billNo" placeholder="Bill No."> </p-dropdown>
-                        <small class="text-red-500 ms-3 mt-1" *ngIf="salesForm.get('billNo')?.touched">
-                            <span *ngIf="salesForm.get('billNo')?.errors?.['required']">Bill No is required</span>
+                        <small class="text-red-500 ms-3 mt-1" *ngIf="returnForm.get('billNo')?.touched">
+                            <span *ngIf="returnForm.get('billNo')?.errors?.['required']">Bill No is required</span>
                         </small>
                     </div>
-                    </div>
-                    
-                   <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
+                
                     <!-- Customer Name -->
                     <div class="flex flex-col mb-1">
                         <label class="font-medium mb-1">Customer Name</label>
@@ -42,8 +47,8 @@
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Mobile No.</label>
                         <input pInputText type="number" formControlName="mobile" placeholder="Mobile No." />
-                        <small class="text-red-500 ms-3 mt-1" *ngIf="salesForm.get('mobile')?.errors?.['pattern']">
-                            <span *ngIf="salesForm.get('mobile')?.errors?.['pattern']">Please enter a valid 10-digit mobile number</span>
+                        <small class="text-red-500 ms-3 mt-1" *ngIf="returnForm.get('mobile')?.errors?.['pattern']">
+                            <span *ngIf="returnForm.get('mobile')?.errors?.['pattern']">Please enter a valid 10-digit mobile number</span>
                         </small>
                     </div>
                 </div>
