@@ -1,6 +1,6 @@
 <div class="card p-6">
     <div>
-        <form [formGroup]="replaceForm" (ngSubmit)="onSubmit()" class="space-y-8">
+        <form [formGroup]="replaceForm" (ngSubmit)="onSubmit()" class="space-y-2">
             <div class="flex justify-between items-center mb-6">
                 <span class="block text-surface-900 font-bold text-xl mb-6">Replace</span>
                 <!-- Buttons -->
@@ -12,7 +12,7 @@
             </div>
             <div>
             <!-- 🏷 Product Info Section -->
-            <div class="flex flex-wrap items-center justify-between gap-4 mb-3 w-full">
+            <div class="flex flex-wrap items-center justify-between gap-2 w-full">
                 <!-- ✅ Changed to a 2-column grid for half-width fields -->
                 <div class="flex-1 min-w-[250px]">
                      <app-global-filter [(value)]="globalFilter" placeholder="Search Products..." (valueChange)="applyGlobalFilter()" class="p-inputtext-sm w-full"></app-global-filter>

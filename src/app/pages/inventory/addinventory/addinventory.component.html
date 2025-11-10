@@ -123,11 +123,18 @@
             </div>
 
            
-
+              <div class="flex gap-6">
+                <!-- Active -->
+                    <!-- GST Item -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Active Item</label>
+                <p-checkbox formControlName="activeItem" [binary]="true"></p-checkbox>
+            </div>
             <!-- GST Item -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">GST Item</label>
                 <p-checkbox formControlName="gstItem" [binary]="true"></p-checkbox>
+            </div>
             </div>
         </div>
     </div>

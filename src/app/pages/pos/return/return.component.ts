@@ -91,6 +91,7 @@ export class ReturnComponent {
     ngOnInit(): void {
         this.onGetStockIn();
         this.returnForm = this.fb.group({
+            returnBillNo: ['', Validators.required],
             billNo: ['', Validators.required],
             customerName: [''],
             mobile: ['', [Validators.pattern(/^[0-9]{10}$/)]],

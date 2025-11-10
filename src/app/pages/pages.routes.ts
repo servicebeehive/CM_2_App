@@ -21,5 +21,6 @@ export default [
     // { path: 'help', component: Help },
     // { path: 'faq', component: Faq},
     // { path: 'contact', component: ContactUs},
+    
     { path: '**', redirectTo: '/notfound' }
 ] as Routes;

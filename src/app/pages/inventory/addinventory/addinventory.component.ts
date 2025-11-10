@@ -111,6 +111,7 @@ filteredItemCode:any[]=[];
                 location:['',Validators.maxLength(100)],
                 qty:['',Validators.required ],
                 discount:[''],
+                activeItem:[true],
                 gstItem:[true]
             },{validators:this.mrpValidator}
         );
@@ -179,7 +180,8 @@ filteredItemCode:any[]=[];
   else if(this.mode === 'add' && this.addForm){
     this.addForm.reset();
     this.resetChildUOMTable();
-    this.addForm.get('gstItem')?.setValue(true);
+    this.addForm.get('activeItem')?.setValue(true);
+     this.addForm.get('gstItem')?.setValue(true);
   }
 }
 search(event:any){
@@ -286,6 +288,7 @@ isChildUOMValid(): boolean {
     resetForm(){
         this.addForm.reset();
         this.resetChildUOMTable();
+        this.addForm.get('activeItem')?.setValue(true);
         this.addForm.get('gstItem')?.setValue(true);
     }
 onItemCodeChange(event:any){

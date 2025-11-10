@@ -85,7 +85,7 @@ export class ReplaceComponent {
     ngOnInit(): void {
         this.onGetStockIn();
         this.replaceForm = this.fb.group({
-            billNo: ['', Validators.required],
+            replaceBillNo: ['', Validators.required],
             customerName: [''],
             mobile: ['', [Validators.pattern(/^[0-9]{10}$/)]],
             transId: ['', Validators.required],

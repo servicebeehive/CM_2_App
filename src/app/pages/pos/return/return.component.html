@@ -17,7 +17,7 @@
                 <!-- <div class="flex mb-3">
                     <input type="text" pInputText placeholder="Search..." class="w-full p-inputtext" formControlName="globalFilter" (input)="applyGlobalFilter()" />
                 </div> -->
-                <div *ngIf="showGlobalSearch" class="mb-3">
+                <div *ngIf="showGlobalSearch" class="mb-5">
                         <app-global-filter  [(value)]="globalFilter" placeholder="Search Items..." (valueChange)="applyGlobalFilter()"></app-global-filter>
                      </div>
                 <!-- Bill no -->

@@ -15,13 +15,9 @@
   </div>
 
 <!-- 🔍 Compact Global Search Section -->
-<div class="grid grid-cols-9 gap-4 mb-4 items-center">
-
-
-   <div *ngIf="showGlobalSearch" class="mb-3 flex">
+   <div  class="mb-3 w-full" *ngIf="showGlobalSearch">
                         <app-global-filter  [(value)]="globalFilter" placeholder="Search Items..." (valueChange)="applyGlobalFilter()"></app-global-filter>
                      </div>
-</div>
 
 
   <!-- 📋 User Table -->

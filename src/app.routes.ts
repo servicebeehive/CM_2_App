@@ -8,11 +8,11 @@ export const appRoutes: Routes = [
         path: 'layout',
         component: AppLayout,
         children: [
-            // {
-            //     path: '',
-            //     loadComponent: () => import('./app/pages/dashboards/ecommercedashboard').then(c => c.EcommerceDashboard),
-            //     data: { breadcrumb: 'E-Commerce Dashboard' },
-            // },
+            {
+                path: 'dashboard',
+                loadComponent: () => import('./app/pages/dashboards/ecommercedashboard').then(c => c.EcommerceDashboard),
+                data: { breadcrumb: 'E-Commerce Dashboard' },
+            },
             // {
             //     path: 'dashboard-banking',
             //     loadComponent: () => import('./app/pages/dashboards/bankingdashboard').then(c => c.BankingDashboard),
