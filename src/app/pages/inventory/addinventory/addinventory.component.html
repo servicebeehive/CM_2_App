@@ -11,7 +11,7 @@
         <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
               <div class="flex flex-col">
                 <label class="font-medium mb-1">Item Code <span class="text-red-500">*</span></label>
-                <p-dropdown [options]="itemOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search Item code" formControlName="itemCode" placeholder="Item Code"> </p-dropdown>
+                <p-dropdown  (onChange)="onItemCodeChange($event)" [options]="itemOptions" optionLabel="itemsku" optionValue="itemsku" [filter]="true" filterPlaceholder="Search Item code" formControlName="itemCode" placeholder="Item Code"> </p-dropdown>
                 <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('itemCode')?.touched">
                     <span *ngIf="addForm.get('itemCode')?.errors?.['required']">Item Code is required</span>
                 </small>

@@ -89,7 +89,7 @@ filteredItemCode:any[]=[];
     uom = []
    
     products: any[] = [
-    { childUOM:'', conversion:'', mrpUom:'' }
+   // { childUOM:'', conversion:'', mrpUom:'' }
 ];
 
     filteredUOM: any[]=[];
@@ -230,31 +230,48 @@ isChildUOMValid(): boolean {
 }
 
  mapFormToPayload(form: any, childUOM: any[]) {
-    return {
-      p_operationtype: this.mode === 'add' ? 'PUR_INSERT' : 'PUR_UPDATE',
-      p_itemsku: form.itemCode,
-      p_itemname: form.itemName,
-      p_categoryid: form.category,
-      p_uomid: form.parentUOM,
-      p_quantity: form.qty,
-      p_costprice: form.purchasePrice,
-      p_saleprice: form.mrp,
-      p_minimumstock: form.minStock,
-      p_warrentyperiod: form.warPeriod,
-      p_location: form.location,
-      p_currentstock: form.curStock,
-      p_gstitem: form.gstItem ? 'Y' : 'N',
-      p_uom: childUOM.map(x => ({
-        childuomid: x.childUOM,
-        uomconversion: x.conversion,
-        childmrp: x.mrpUom
-      })),
-      p_loginuser: this.shareservice.getUserData()?.username,
-      clientcode: 'CG01-SE',
-      'x-access-token': this.authService.getToken(),
-      "uname": "admin"
-    };
-  }
+  return {
+    p_operationtype: this.mode === 'add' ? 'PUR_INSERT' : 'PUR_UPDATE',
+
+    p_itemsku: form.itemCode,
+    p_itemname: form.itemName,
+    p_categoryid: Number(form.category),
+    p_uomid: Number(form.parentUOM),
+    p_quantity: Number(form.qty),
+    p_costprice: Number(form.purchasePrice),
+    p_saleprice: Number(form.mrp),
+    p_minimumstock: Number(form.minStock),
+    p_warrentyperiod: Number(form.warPeriod),
+    p_location: form.location,
+    p_currentstock: Number(form.curStock),
+
+    // Extra values added from expected format
+    p_expirydate: form.expiryDate, // Keep dd/mm/yyyy format as string
+    p_currencyid: Number(form.currencyId || 1),
+    p_taxid: Number(form.taxId || 0),
+    p_warehourse: form.warehouse || 'ShristiShop', // fallback default
+    p_isactive: 'Y',
+
+    p_gstitem: form.gstItem ? 'Y' : 'N',
+    p_childuom: childUOM.length > 0 ? 'Y' : 'N',
+
+    // Child UOM array mapping corrected
+    // p_uom: childUOM.map(x => ({
+    //   itemsku: form.itemCode,
+    //   childuomid: Number(x.childUOM),
+    //   uomconversion: Number(x.conversion),
+    //   childmrp: Number(x.mrpUom)
+    // })),
+    p_uom:null,
+
+    // User & token information
+    p_loginuser: this.shareservice.getUserData()?.username || 'admin',
+    clientcode: 'CG01-SE',
+    'x-access-token': this.authService.getToken(),
+    uname: 'admin'
+  };
+}
+
 
   onSubmit() {
     if (this.addForm.invalid || !this.isChildUOMValid()) return;
@@ -271,7 +288,17 @@ isChildUOMValid(): boolean {
         this.resetChildUOMTable();
         this.addForm.get('gstItem')?.setValue(true);
     }
+onItemCodeChange(event:any){
+  console.log(event.value)
+  const itemnamdata=this.itemOptions.find(item=>item.itemsku===event.value)
+  console.log(itemnamdata)
+  if(itemnamdata){
+      this.addForm.controls['itemName'].setValue(itemnamdata.itemname)
+      console.log(this.addForm.value)
+  }
 
+
+}
 
 }
 
