@@ -292,7 +292,7 @@ OnPurchesHeaderCreate(data:any){
 
     "uname": "admin",
     "p_operationtype": "PUR_INSERT",
-    "p_purchaseid": "26",
+    "p_purchaseid":data.p_vendorid,
     "p_vendorid":data.p_vendorid,
     "p_invoiceno": data.p_invoiceno,
     "p_invoicedate": data.p_invoicedate,
@@ -324,6 +324,21 @@ createDropdownPayload(returnType: string) {
     clientcode: "CG01-SE",
     "x-access-token": this.authService.getToken()
   };
+}
+purchaseIdDetails(event:any){
+  console.log(event)
+const selectedPurchaseData=  this.purchaseIdOptions.find(item=>item.purchaseid==event.value)
+console.log(selectedPurchaseData)
+this.productForm.patchValue({
+  p_vendorid:selectedPurchaseData.vendorid,
+  p_invoiceno:selectedPurchaseData.invoicenumber,
+  p_remarks:selectedPurchaseData.remark,
+  p_invoicedate:new Date(selectedPurchaseData.invoicedate),
+
+})
+
+
+
 }
 OnGetItem() {
   const payload = this.createDropdownPayload("ITEM");

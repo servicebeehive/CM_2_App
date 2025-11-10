@@ -32,7 +32,7 @@
   left: 0;
   z-index: 11;
   background-color: var(--surface-card);
-  min-width: 20px; /* adjust width as needed */
+  min-width:25px; /* adjust width as needed */
   box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
 }
 
@@ -43,7 +43,7 @@
   left: 48px; /* equal to width of first column */
   z-index: 11;
   background-color: var(--surface-card);
-  min-width: 100px; /* adjust as needed */
+  min-width: 132px; /* adjust as needed */
   box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
 }
 
