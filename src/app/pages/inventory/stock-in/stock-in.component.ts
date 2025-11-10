@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { Component, inject, ViewChild } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -76,7 +76,7 @@ interface Image {
 ],
     templateUrl: './stock-in.component.html',
     styleUrl: './stock-in.component.scss',
-    providers:[ConfirmationService]
+    providers:[ConfirmationService,DatePipe]
 })
 export class StockInComponent {
     public transationid:any
@@ -108,7 +108,7 @@ export class StockInComponent {
     itemOptions = [];
 
     products:StockIn[] =[];
-    constructor(private fb: FormBuilder, private stockInService:InventoryService,private confirmationService:ConfirmationService) {}
+    constructor(private fb: FormBuilder, private stockInService:InventoryService,private confirmationService:ConfirmationService,public datePipe:DatePipe) {}
 
     ngOnInit(): void {
         this.OnGetDropdown()
@@ -118,7 +118,7 @@ export class StockInComponent {
     p_tranpurchaseid: [null],
     p_invoiceno: ['', [Validators.maxLength(50)]],
     p_vendorid: [null],
-    p_invoicedate: [''],
+    p_invoicedate: [null],
     p_remarks:['',[Validators.maxLength(500)]]
 });
     }
@@ -290,10 +290,10 @@ OnPurchesHeaderCreate(data:any){
   const payload: any = {
     "uname": "admin",
     "p_operationtype": "PUR_INSERT",
-    "p_purchaseid":data.p_tranpurchaseid==null?"":data.p_tranpurchaseid,
-    "p_vendorid":data.p_vendorid==null?0:data.p_vendorid,
+    "p_purchaseid":data.p_tranpurchaseid==null?"":this.valueReturnToString(data.p_tranpurchaseid),
+    "p_vendorid":data.p_vendorid==null?this.valueReturnToString(0):this.valueReturnToString(data.p_vendorid),
     "p_invoiceno": data.p_invoiceno,
-    "p_invoicedate": data.p_invoicedate,
+    "p_invoicedate":this.datePipe.transform(data.p_invoicedate, 'dd/MM/yyyy'),
     "p_remarks": data.p_remarks,
     "p_active": "Y",
     "p_loginuser": "admin",
@@ -303,6 +303,7 @@ OnPurchesHeaderCreate(data:any){
 
 
 };
+
 this.stockInService.OnPurchesHeaderCreate(payload).subscribe({
     next:(res)=>{
  console.log(res)
@@ -343,6 +344,10 @@ if(this.productForm.value){
 
 
 }
+valueReturnToString(value: any) {
+  return value != null ? value.toString() : null;
+}
+
 OnGetItem() {
   const payload = this.createDropdownPayload("ITEM");
   this.stockInService.getdropdowndetails(payload).subscribe({

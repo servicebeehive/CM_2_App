@@ -101,7 +101,7 @@ filteredItemCode:any[]=[];
 ];
 
     filteredUOM: any[]=[];
-    constructor(private fb: FormBuilder, public inventoryService:InventoryService,public shareservice:ShareService,public date:DatePipe,private messageService: MessageService) {}
+    constructor(private fb: FormBuilder, public inventoryService:InventoryService,public shareservice:ShareService,public datePipe:DatePipe,private messageService: MessageService) {}
 
     ngOnInit(): void {
         this.addForm = this.fb.group(
@@ -262,7 +262,7 @@ mapFormToPayload(form: any, childUOM: any[]) {
     p_currentstock: Number(form.curStock),
 
     // Date Format (dd/MM/yyyy)
-    p_expirydate: this.date.transform(form.expiryDate, 'dd/MM/yyyy'),
+    p_expirydate: this.datePipe.transform(form.expiryDate, 'dd/MM/yyyy'),
 
     p_currencyid: Number(form.currencyId || 1),
     p_taxid: Number(form.taxId || 0),
