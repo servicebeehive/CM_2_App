@@ -76,8 +76,8 @@ interface ExportColumn {
             [columns]="cols"
             responsiveLayout="scroll"
             [globalFilterFields]="[
-                'name',
-                'category',
+                'type',
+                'billDate',
                 'price',
                 'inventoryStatus',
             ]"
@@ -85,17 +85,20 @@ interface ExportColumn {
         >
             <ng-template #header>
                 <tr>
-                    <th pSortableColumn="name">
-                        <span class="flex items-center gap-2">Name <p-sortIcon field="name"></p-sortIcon></span>
+                    <th pSortableColumn="type">
+                        <span class="flex items-center gap-2">Type <p-sortIcon field="type"></p-sortIcon></span>
                     </th>
-                    <th pSortableColumn="category">
-                        <span class="flex items-center gap-2">Category <p-sortIcon field="category"></p-sortIcon></span>
+                    <th pSortableColumn="billDate">
+                        <span class="flex items-center gap-2">Bill Date <p-sortIcon field="billDate"></p-sortIcon></span>
                     </th>
-                    <th pSortableColumn="price">
-                        <span class="flex items-center gap-2">Price <p-sortIcon field="price"></p-sortIcon></span>
+                    <th pSortableColumn="billNo">
+                        <span class="flex items-center gap-2">Bill No <p-sortIcon field="billNo"></p-sortIcon></span>
                     </th>
-                    <th pSortableColumn="status">
-                        <span class="flex items-center gap-2">Status <p-sortIcon field="status"></p-sortIcon></span>
+                    <th pSortableColumn="totalQty">
+                        <span class="flex items-center gap-2">Total Qty <p-sortIcon field="totalQty"></p-sortIcon></span>
+                    </th>
+                    <th pSortableColumn="totalSale">
+                        <span class="flex items-center gap-2">Total Sale <p-sortIcon field="totalSale"></p-sortIcon></span>
                     </th>
                     <th>View</th>
                 </tr>

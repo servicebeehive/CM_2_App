@@ -33,7 +33,7 @@ this.model = [
       {
         label: 'Main Dashboard',
         icon: 'pi pi-fw pi-home',
-            routerLink:['/pages/dashboards/ecommercedashboard']
+            routerLink:['/layout/dashboard']
       }
     ]
   },
@@ -61,14 +61,14 @@ this.model = [
             icon: 'pi pi-fw pi-history',
             routerLink: ['/layout/inventory/transactions'],
           },
-          {
-            label: 'Bulk Import',
-            icon: 'pi pi-fw pi-file-import',
-          },
-          {
-            label: 'Internal Transfer',
-            icon: 'pi pi-fw pi-directions',
-          },
+          // {
+          //   label: 'Bulk Import',
+          //   icon: 'pi pi-fw pi-file-import',
+          // },
+          // {
+          //   label: 'Internal Transfer',
+          //   icon: 'pi pi-fw pi-directions',
+          // },
         ]
       }
     ]
@@ -87,11 +87,11 @@ this.model = [
             icon: 'pi pi-fw pi-list-check',
             routerLink: ['/layout/products/list'],
           },
-          {
-            label: 'Categories',
-            icon: 'pi pi-fw pi-sitemap',
-            routerLink: ['/layout/products/category'],
-          }
+          // {
+          //   label: 'Categories',
+          //   icon: 'pi pi-fw pi-sitemap',
+          //   routerLink: ['/layout/products/category'],
+          // }
         ]
       }
     ]
@@ -129,29 +129,29 @@ this.model = [
       }
     ]
   },
-  {
-    label: 'SUPPLIERS',
-    icon: 'pi pi-briefcase',
-    items: [
-      {
-        label: 'Supplier Management',
-        icon: 'pi pi-fw pi-truck',
-        routerLink: ['/layout/suppliers/overview'],
-        items: [
-          {
-            label: 'Vendors',
-            icon: 'pi pi-fw pi-users',
-            routerLink: ['/layout/suppliers/list'],
-          },
-          {
-            label: 'Purchase Orders',
-            icon: 'pi pi-fw pi-shopping-cart',
-            routerLink: ['/layout/suppliers/purchase-orders'],
-          }
-        ]
-      }
-    ]
-  },
+  // {
+  //   label: 'SUPPLIERS',
+  //   icon: 'pi pi-briefcase',
+  //   items: [
+  //     {
+  //       label: 'Supplier Management',
+  //       icon: 'pi pi-fw pi-truck',
+  //       routerLink: ['/layout/suppliers/overview'],
+  //       items: [
+  //         {
+  //           label: 'Vendors',
+  //           icon: 'pi pi-fw pi-users',
+  //           routerLink: ['/layout/suppliers/list'],
+  //         },
+  //         {
+  //           label: 'Purchase Orders',
+  //           icon: 'pi pi-fw pi-shopping-cart',
+  //           routerLink: ['/layout/suppliers/purchase-orders'],
+  //         }
+  //       ]
+  //     }
+  //   ]
+  // },
   {
     label: 'REPORTS',
     icon: 'pi pi-calculator',
@@ -214,36 +214,36 @@ this.model = [
         icon: 'pi pi-fw pi-cog',
         routerLink: ['/layout/settings/overview'],
         items: [
-          {
-            label: 'Customer',
-            icon: 'pi pi-fw pi-user',
-            routerLink: ['/layout/settings/units'],
-          },
+          // {
+          //   label: 'Customer',
+          //   icon: 'pi pi-fw pi-user',
+          //   routerLink: ['/layout/settings/units'],
+          // },
           {
             label: 'User Management',
             icon: 'pi pi-fw pi-users',
             routerLink: ['/layout/settings/user-management'],
           },
-          {
-            label: 'UOM',
-            icon: 'pi pi-fw pi-sliders-h',
-            routerLink: ['/layout/settings/units'],
-          },
-          {
-            label: 'Roles & Permissions',
-            icon: 'pi pi-fw pi-shield',
-            routerLink: ['/layout/settings/units'],
-          },
-          {
-            label: 'Tax',
-            icon: 'pi pi-fw pi-file-check',
-            routerLink: ['/layout/settings/units'],
-          },
-          {
-            label: 'Currency',
-            icon: 'pi pi-fw pi-indian-rupee',
-            routerLink: ['/layout/settings/units'],
-          }
+          // {
+          //   label: 'UOM',
+          //   icon: 'pi pi-fw pi-sliders-h',
+          //   routerLink: ['/layout/settings/units'],
+          // },
+          // {
+          //   label: 'Roles & Permissions',
+          //   icon: 'pi pi-fw pi-shield',
+          //   routerLink: ['/layout/settings/units'],
+          // },
+          // {
+          //   label: 'Tax',
+          //   icon: 'pi pi-fw pi-file-check',
+          //   routerLink: ['/layout/settings/units'],
+          // },
+          // {
+          //   label: 'Currency',
+          //   icon: 'pi pi-fw pi-indian-rupee',
+          //   routerLink: ['/layout/settings/units'],
+          // }
         ]
       }
     ]

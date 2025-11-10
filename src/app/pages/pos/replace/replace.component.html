@@ -1,6 +1,6 @@
 <div class="card p-6">
     <div>
-        <form [formGroup]="salesForm" (ngSubmit)="onSubmit()" class="space-y-8">
+        <form [formGroup]="replaceForm" (ngSubmit)="onSubmit()" class="space-y-2">
             <div class="flex justify-between items-center mb-6">
                 <span class="block text-surface-900 font-bold text-xl mb-6">Replace</span>
                 <!-- Buttons -->
@@ -10,18 +10,28 @@
                     <button pButton type="submit" label="Submit" class="p-button-warning"></button>
                 </div>
             </div>
-
-            <!-- 🏷 Product Info Section -->
             <div>
+            <!-- 🏷 Product Info Section -->
+            <div class="flex flex-wrap items-center justify-between gap-2 w-full">
                 <!-- ✅ Changed to a 2-column grid for half-width fields -->
-                <div class="flex item-center gap-2 mb-3 w-full">
-                     <app-global-filter [(value)]="globalFilter" placeholder="Search Products..." (valueChange)="applyGlobalFilter()" class="p-inputtext-sm"></app-global-filter>
-                   <div class="flex items-center">
+                <div class="flex-1 min-w-[250px]">
+                     <app-global-filter [(value)]="globalFilter" placeholder="Search Products..." (valueChange)="applyGlobalFilter()" class="p-inputtext-sm w-full"></app-global-filter>
+                     </div>
+                   <div class="flex items-center whitespace-nowrap mb-3">
                     <p-checkbox [(ngModel)]="checked" [binary]="true"></p-checkbox>
                     <label for="similarItems" class="ml-2" (onChange)="onSimilarItemsChange()" [style]="{'font-size':'1.1rem' }">Similar Items</label>
                    </div>  
                 </div>
-                <!-- Bill no -->
+                <!--Replace Bill no -->
+                <div class="grid grid-cols-2 gap-x-8 gap-y-4 mb-2 w-full">
+                     <div class="flex flex-col mb-1">
+                        <label class="font-medium">Replace Bill No</label>
+                        <p-dropdown [options]="replaceBillNoOptions" optionLabel="label" optionValue="value" [filter]="true" filterPlaceholder="Search Replace Bill No." formControlName="replaceBillNo" placeholder="Replace Bill No."> </p-dropdown>
+                        <small class="text-red-500 ms-3 mt-1" *ngIf="replaceForm.get('replaceBillNo')?.touched">
+                            <span *ngIf="replaceForm.get('replaceBillNo')?.errors?.['required']">Replace Bill No is required</span>
+                        </small>
+                    </div>
+                </div>
                 <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
                     <!-- Customer Name -->
                     <div class="flex flex-col">
@@ -33,8 +43,8 @@
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Mobile No.</label>
                         <input pInputText type="number" formControlName="mobile" placeholder="Mobile No." />
-                        <small class="text-red-500 ms-3 mt-1" *ngIf="salesForm.get('mobile')?.errors?.['pattern']">
-                            <span *ngIf="salesForm.get('mobile')?.errors?.['pattern']">Please enter a valid 10-digit mobile number</span>
+                        <small class="text-red-500 ms-3 mt-1" *ngIf="replaceForm.get('mobile')?.errors?.['pattern']">
+                            <span *ngIf="replaceForm.get('mobile')?.errors?.['pattern']">Please enter a valid 10-digit mobile number</span>
                         </small>
                     </div>
                 </div>
