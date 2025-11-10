@@ -325,7 +325,7 @@ createDropdownPayload(returnType: string) {
   };
 }
 purchaseIdDetails(event:any){
-  this.transationid=event
+  this.transationid=event.value
 const selectedPurchaseData=  this.purchaseIdOptions.find(item=>item.purchaseid==event.value)
 console.log(selectedPurchaseData)
 this.productForm.patchValue({
@@ -337,7 +337,7 @@ this.productForm.patchValue({
 })
 if(this.productForm.value){
   this.addItemEnabled=true;
-  this.transationid=event
+  this.transationid=event.value
 }
 
 
