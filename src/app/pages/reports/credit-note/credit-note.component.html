@@ -2,6 +2,11 @@
   <!-- Header Row: Stock In + Buttons -->
   <div class="flex justify-between items-center mb-6">
     <span class="block text-surface-900 font-bold text-2xl">Credit Note</span>
+        <div class="flex  gap-4">
+        <button pButton type="button" label="Generate CN" class="p-button-secondary" (click)="generateCN()"></button> 
+        <button pButton type="button" label="Settle CN" class="p-button-secondary" (click)="settleCN()"></button>
+        <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
+    </div>
   </div>
 
   <form [formGroup]="reportForm" (ngSubmit)="print()" class="space-y-8">
@@ -83,17 +88,10 @@
         </ng-template>
       </p-table>
     </div>
-<div class="flex justify-between items-center mt-8 ">
-    <div class="flex  gap-4">
-        <button pButton type="button" label="Generate CN" class="p-button-secondary" (click)="generateCN()"></button> 
-        <button pButton type="button" label="Settle CN" class="p-button-secondary" (click)="settleCN()"></button>
-        <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
-    </div>
-    <div class="flex items-center gap-4 ">
+    <div class="flex justify-end items-center gap-4 mt-6 border-t pt-4">
       <label class="font-medium">Grand Total</label>
       <input pInputText type="text" [value]="grandTotal" readonly placeholder="Total" class="w-40 text-right" />
     </div>
-</div>
   
   </form>
 

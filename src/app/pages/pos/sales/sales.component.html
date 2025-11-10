@@ -7,7 +7,6 @@
                 <div class="flex gap-4">
                     <button pButton type="button" label="Add" class="p-button-secondary" (click)="addItem()"></button>
                     <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
-                    <button pButton type="button" label="Hold" class="p-button-secondary" (click)="hold()"></button>
                     <button pButton type="button" label="Print" class="p-button-secondary" (click)="print()"></button>
                     <button pButton type="submit" label="Submit" class="p-button-warning"></button>
                 </div>
@@ -32,13 +31,11 @@
                         </small>
                     </div>
 
-                    <!-- Hold Transaction Id -->
+                    <!-- Transaction Date -->
                     <div class="flex flex-col">
-                        <label class="font-medium mb-1">Hold Transaction Id</label>
-                        <p-dropdown [options]="holdTransIdOptions" optionLabel="label" optionValue="value" [filter]="true" filterPlaceholder="Search Transaction Id" formControlName="transId" placeholder="Hold Transaction Id"> </p-dropdown>
-                        <small class="text-red-500 ms-3 mt-1" *ngIf="salesForm.get('transId')?.touched">
-                            <span *ngIf="salesForm.get('transId')?.errors?.['required']">Hold Transaction Id is required</span>
-                        </small>
+                        <label class="font-medium mb-1">Transaction Date</label>
+                       <p-datepicker fluid formControlName="transactionDate" [showIcon]="true" placeholder="Transaction Date" [maxDate]="today"></p-datepicker>
+                       <!-- <small class="text-red-500" *ngIf="salesForm.get('date')?.hasError('futureDateNotAllowed')">Future dates are not allowed.</small> -->
                     </div>
 
                     <!-- Customer Name -->

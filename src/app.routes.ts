@@ -28,6 +28,7 @@ export const appRoutes: Routes = [
             //     data: { breadcrumb: 'Documentation' },
             //     loadComponent: () => import('./app/pages/documentation/documentation').then(c => c.Documentation)
             // },
+            
             {
                 path: 'products',
                 loadChildren: () => import('@/pages/products/product.routers'),
