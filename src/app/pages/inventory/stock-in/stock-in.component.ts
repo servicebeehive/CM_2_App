@@ -115,9 +115,9 @@ export class StockInComponent {
         this.loadAllDropdowns()
          this.onGetStockIn();
      this.productForm = this.fb.group({
-    p_tranpurchaseid: [''],
+    p_tranpurchaseid: [null],
     p_invoiceno: ['', [Validators.maxLength(50)]],
-    p_vendorid: [''],
+    p_vendorid: [null],
     p_invoicedate: [''],
     p_remarks:['',[Validators.maxLength(500)]]
 });
@@ -287,13 +287,11 @@ OnGetDropdown(){
 }
 
 OnPurchesHeaderCreate(data:any){
-
-    const payload: any = {
-
+  const payload: any = {
     "uname": "admin",
     "p_operationtype": "PUR_INSERT",
-    "p_purchaseid": "26",
-    "p_vendorid":data.p_vendorid,
+    "p_purchaseid":data.p_tranpurchaseid==null?"":data.p_tranpurchaseid,
+    "p_vendorid":data.p_vendorid==null?0:data.p_vendorid,
     "p_invoiceno": data.p_invoiceno,
     "p_invoicedate": data.p_invoicedate,
     "p_remarks": data.p_remarks,
@@ -310,6 +308,7 @@ this.stockInService.OnPurchesHeaderCreate(payload).subscribe({
  console.log(res)
  this.transationid=res.data[0].tranpurchaseid
  this.transactionIdOptions=res.data
+ this.loadAllDropdowns()
     },
     error:(error)=>{
         console.log(error)
@@ -324,6 +323,25 @@ createDropdownPayload(returnType: string) {
     clientcode: "CG01-SE",
     "x-access-token": this.authService.getToken()
   };
+}
+purchaseIdDetails(event:any){
+  this.transationid=event
+const selectedPurchaseData=  this.purchaseIdOptions.find(item=>item.purchaseid==event.value)
+console.log(selectedPurchaseData)
+this.productForm.patchValue({
+  p_vendorid:selectedPurchaseData.vendorid,
+  p_invoiceno:selectedPurchaseData.invoicenumber,
+  p_remarks:selectedPurchaseData.remark,
+  p_invoicedate:new Date(selectedPurchaseData.invoicedate),
+
+})
+if(this.productForm.value){
+  this.addItemEnabled=true;
+  this.transationid=event
+}
+
+
+
 }
 OnGetItem() {
   const payload = this.createDropdownPayload("ITEM");

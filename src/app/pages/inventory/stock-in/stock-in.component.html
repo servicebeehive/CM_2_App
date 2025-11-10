@@ -18,9 +18,9 @@
         <div class="flex flex-col">
           <label class="font-medium mb-1">Transaction Id</label>
           <p-dropdown
-            [options]="transactionIdOptions"
-            optionLabel="tranpurchaseid"
-            optionValue="tranpurchaseid"
+            [options]="purchaseIdOptions"
+            optionLabel="purchaseid"
+            optionValue="purchaseid" (onChange)="purchaseIdDetails($event)"
             [filter]="true"
             filterPlaceholder="Search Transaction Id"
             formControlName="p_tranpurchaseid"
@@ -85,7 +85,7 @@
     <!-- Product Table with Pagination -->
     <div>
       <p-table
-        [value]="products"
+        [value]="itemOptions"
         dataKey="code"
         [tableStyle]="{'min-width': '50rem'}"
         [paginator]="true"
@@ -117,35 +117,43 @@
           </tr>
         </ng-template>
 
-        <ng-template #body let-product>
-          <tr>
-            <td class="text-center">
-             <p-tableCheckbox [value]="product" />
-            </td>
-            <td class="flex justify-between gap-2">{{ product.code}}
-               <!-- <span class=" pi pi-copy cursor-pointer "></span> -->
-              </td>
-            <td routerLink="/stockAjustment" class="cursor-pointer">{{ product.name }}</td>
-            <td>{{ product.category }}</td>
-            <td>{{ product.curStock }}</td>
-            <td>{{ product.quantity }}</td>
-            <td>{{ product.purchasePrice }}</td>
-            <td>{{ product.costPerItem | number:'1.2-2'}}</td>
-            <td>{{ product.total | number:'1.2-2'}}</td>
-            <td>{{ product.uom }}</td>
-            <td>{{ product.childUOM}}</td>
-            <td>{{ product.mrp }}</td>
-            <td>{{ product.discount }}</td>
-            <td>{{ product.minStock }}</td>
-            <td>{{ product.warPeriod }}</td>
-            <td>{{ product.location }}</td>
-            <td>{{ product.gstItem}}</td>
-            <td class="text-center">
-              <i class="pi pi-pencil cursor-pointer text-blue-500" (click)="openEditDialog(product)"></i>
-              <i class="pi pi-trash ms-2 cursor-pointer text-red-500" (click)="deleteItem(product)"></i>
-            </td>
-          </tr>
-        </ng-template>
+       <ng-template #body let-product>
+  <tr>
+    <td class="text-center">
+      <p-tableCheckbox [value]="product" />
+    </td>
+
+    <td>{{ product.itemsku }}</td>
+    <td routerLink="/stockAjustment" class="cursor-pointer">{{ product.itemname }}</td>
+    <td>{{ product.categoryid }}</td>
+    <td>{{ product.totalqty }}</td>
+
+    <!-- These fields are not present in your data, so keep blank or map later -->
+    <td>-</td> <!-- Qty -->
+    <td>-</td> <!-- Purchase Price -->
+    <td>-</td> <!-- Cost Per Item -->
+    <td>-</td> <!-- Total -->
+    <td>{{ product.uomid }}</td>
+
+    <!-- No child UOM in your response yet -->
+    <td>-</td>
+
+    <!-- MRP not available -->
+    <td>-</td>
+
+    <td>-</td> <!-- Discount -->
+    <td>{{ product.minimumstock }}</td>
+    <td>{{ product.warrentyperiod }}</td>
+    <td>{{ product.location }}</td>
+    <td>{{ product.gstitem === 'Y' ? 'Yes' : 'No' }}</td>
+
+    <td class="text-center">
+      <i class="pi pi-pencil cursor-pointer text-blue-500" (click)="openEditDialog(product)"></i>
+      <i class="pi pi-trash ms-2 cursor-pointer text-red-500" (click)="deleteItem(product)"></i>
+    </td>
+  </tr>
+</ng-template>
+
 
         <ng-template pTemplate="paginatorleft">
           <div class="text-gray-600 ms-2">Total Items: {{ products?.length || 0 }}</div>
