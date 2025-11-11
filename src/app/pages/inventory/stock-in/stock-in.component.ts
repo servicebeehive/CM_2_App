@@ -328,13 +328,14 @@ createDropdownPayload(returnType: string) {
 purchaseIdDetails(event:any){
   this.transationid=event.value
 const selectedPurchaseData=  this.purchaseIdOptions.find(item=>item.purchaseid==event.value)
-console.log(selectedPurchaseData)
+console.log(selectedPurchaseData);
 this.productForm.patchValue({
   p_vendorid:selectedPurchaseData.vendorid,
   p_invoiceno:selectedPurchaseData.invoicenumber,
   p_remarks:selectedPurchaseData.remark,
-  p_invoicedate:new Date(selectedPurchaseData.invoicedate),
-
+p_invoicedate: selectedPurchaseData.invoicedate
+  ? new Date(selectedPurchaseData.invoicedate)
+  : null,
 })
 if(this.productForm.value){
   this.addItemEnabled=true;

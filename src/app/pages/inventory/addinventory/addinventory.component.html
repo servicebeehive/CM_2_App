@@ -1,3 +1,9 @@
+  <div class="grid gap-x-8 gap-y-4">
+              <div class="flex flex-col">
+                <label class="font-medium mb-1">Select Item Type <span class="text-red-500">*</span></label>
+                <p-dropdown  (onChange)="onItemSelectType($event)" [options]="selectItemType" optionLabel="label" optionValue="value" [filter]="true" filterPlaceholder="Search Item code" [(ngModel)]="addNewItem" placeholder="Item Code"> </p-dropdown>
+            </div>
+
 <form [formGroup]="addForm" (ngSubmit)="onSubmit()" class="space-y-8">
     <!-- 🧾 Transaction Info -->
     <div>
@@ -6,10 +12,13 @@
 
     <!-- 🧩 Product Details -->
     <div>
-        <h3 class="text-lg font-semibold mb-3 text-gray-700 border-b pb-2">Product Details</h3>
+        <div class="flex">
+ <h3 class="text-lg font-semibold mb-3 text-gray-700 border-b pb-2">Product Details</h3>
+        </div>
+       
 
         <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
-              <div class="flex flex-col">
+              <div class="flex flex-col" *ngIf="addNewItem===1">
                 <label class="font-medium mb-1">Item Code <span class="text-red-500">*</span></label>
                 <p-dropdown  (onChange)="onItemCodeChange($event)" [options]="itemOptions" optionLabel="itemsku" optionValue="itemsku" [filter]="true" filterPlaceholder="Search Item code" formControlName="itemCode" placeholder="Item Code"> </p-dropdown>
                 <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('itemCode')?.touched">
@@ -27,10 +36,12 @@
                 </small>
             </div> -->
 
+            
+
             <!-- Current Stock -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Current Stock</label>
-                <input pInputText formControlName="curStock" placeholder="Current Stock" />
+                <input pInputText formControlName="curStock" placeholder="Current Stock" readonly />
             </div>
 
             <!-- Item Name -->
@@ -64,7 +75,7 @@
             <!-- Minimum Stock -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Min Stock</label>
-                <input pInputText formControlName="minStock" placeholder="Min Stock" (keypress)="allowOnlyNumbers($event)" />
+                <input pInputText formControlName="minStock" placeholder="Min Stock" />
             </div>
 
             <!-- Parent UOM -->
@@ -82,12 +93,6 @@
                           <!-- <p-datepicker  fluid formControlName="warPeriod" placeholder="Warranty Period" [showIcon]="true" placeholder="Invoice Date"></p-datepicker> -->
                 <input pInputText formControlName="warPeriod" placeholder="Warranty Period" (keypress)="allowOnlyNumbers($event)" />
             </div>
-             <!-- Warranty Period -->
-            <div class="flex flex-col">
-                <label class="font-medium mb-1">Expiry Date</label>
-                          <p-datepicker  fluid formControlName="p_expirydate" placeholder="Warranty Period" [showIcon]="true" placeholder="Invoice Date"></p-datepicker>
-                <!-- <input pInputText formControlName="warPeriod" placeholder="Warranty Period" (keypress)="allowOnlyNumbers($event)" /> -->
-            </div>
 
              <!-- Quantity -->
             <div class="flex flex-col">
@@ -97,7 +102,18 @@
                     <span *ngIf="addForm.get('qty')?.errors?.['required']">Quantity is required</span>
                 </small>
             </div>
-           
+            <!-- Expiry Date -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Expiry Date</label>
+                          <p-datepicker  fluid formControlName="p_expirydate" placeholder="Warranty Period" [showIcon]="true" placeholder="Invoice Date"></p-datepicker>
+                <!-- <input pInputText formControlName="warPeriod" placeholder="Warranty Period" (keypress)="allowOnlyNumbers($event)" /> -->
+            </div>
+
+             <!-- Cost/Item -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Cost/Item</label>
+                <input pInputText formControlName="costPerItem" placeholder="Cost/Item" readonly />
+            </div>
 
             <!-- Location -->
             <div class="flex flex-col">
@@ -105,21 +121,7 @@
                 <input pInputText formControlName="location" placeholder="Location" />
             </div>
 
-
-            <!-- Cost/Item -->
-            <div class="flex flex-col">
-                <label class="font-medium mb-1">Cost/Item</label>
-                <input pInputText formControlName="costPerItem" placeholder="Cost/Item" readonly />
-            </div>
-
-             <!-- Discount -->
-            <div class="flex flex-col">
-                <label class="font-medium mb-1">Discount (%)</label>
-                <input pInputText type="number" formControlName="discount" placeholder="Discount" />
-                <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('discount')?.touched && addForm.get('discount')?.invalid"> </small>
-            </div>
-             
-           <!-- MRP -->
+             <!-- MRP -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">MRP <span class="text-red-500">*</span></label>
                 <input pInputText type="number" formControlName="mrp" placeholder="MRP" />
@@ -127,6 +129,13 @@
                     <span *ngIf="addForm.get('mrp')?.errors?.['required']">MRP is required</span>
                     <span *ngIf="addForm.hasError('mrpGreaterThanPurchase')">MRP must be greater than or equal to Purchase Price</span>
                 </small>
+            </div>
+
+             <!-- Discount -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Discount (%)</label>
+                <input pInputText type="number" formControlName="discount" placeholder="Discount" />
+                <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('discount')?.touched && addForm.get('discount')?.invalid"> </small>
             </div>
 
            

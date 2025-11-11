@@ -58,6 +58,7 @@
                                 <th>Current Stock</th>
                                 <th>Adj Type</th>
                                 <th>Quantity</th>
+                                <th>UOM</th>
                             </tr>
                         </ng-template>
                         <ng-template #body let-update>
@@ -66,6 +67,7 @@
                                 <td>{{ update.name }}</td>
                                 <td>{{ update.category }}</td>
                                 <td>{{ update.curStock }}</td>
+                                <td>{{update.parentUOM}}</td>
                                 <td><p-autocomplete [(ngModel)]="update.adjustmentType" [dropdown]="true" [suggestions]="filteredAdjustment" (completeMethod)="search($event)" (onSelect)="onAdjustmentChange($event,update)" placeholder="Increase/Decrease"></p-autocomplete></td>
                                 <td>
                                     <div class="grid items-center gap-2">

@@ -46,290 +46,328 @@ interface Image {
 }
 
 @Component({
-  selector: 'app-addinventory',
-   imports: [
-          CommonModule,
-          EditorModule,
-          ReactiveFormsModule,
-          TextareaModule,
-          TableModule,
-          InputTextModule,
-          FormsModule,
-          FileUploadModule,
-          ButtonModule,
-          SelectModule,
-           DatePickerModule,
-          DropdownModule,
-          ToggleSwitchModule,
-          RippleModule,
-          ChipModule,
-          FluidModule,
-          MessageModule,
-          AutoCompleteModule,
-          CheckboxModule,
-          ToastModule
-          
-      ],
-  templateUrl: './addinventory.component.html',
-  styleUrl: './addinventory.component.scss',
-  providers:[DatePipe]
+    selector: 'app-addinventory',
+    imports: [
+        CommonModule,
+        EditorModule,
+        ReactiveFormsModule,
+        TextareaModule,
+        TableModule,
+        InputTextModule,
+        FormsModule,
+        FileUploadModule,
+        ButtonModule,
+        SelectModule,
+        DatePickerModule,
+        DropdownModule,
+        ToggleSwitchModule,
+        RippleModule,
+        ChipModule,
+        FluidModule,
+        MessageModule,
+        AutoCompleteModule,
+        CheckboxModule,
+        ToastModule
+    ],
+    templateUrl: './addinventory.component.html',
+    styleUrl: './addinventory.component.scss',
+    providers: [DatePipe]
 })
 export class AddinventoryComponent {
-@Input() transationid:any=null
-  @Output() close=new EventEmitter<void>();
-  @Input() editData: any;
-  @Input() mode : 'add' |'edit' ='add';
-  @Output() save=new EventEmitter<any>();
-  @Output() childUom = new EventEmitter<boolean>() ;
+    @Input() transationid: any = null;
+    @Output() close = new EventEmitter<void>();
+    @Input() editData: any;
+    @Input() mode: 'add' | 'edit' = 'add';
+    @Output() save = new EventEmitter<any>();
+    @Output() childUom = new EventEmitter<boolean>();
 
-@Input() itemOptions: any[] = [];
-@Input() categoryOptions: any[] = [];
-@Input() uomOptions: any[] = [];
-@Input() vendorOptions: any[] = [];
-@Input() purchaseIdOptions: any[] = [];
- public authService = inject(AuthService);
-  addForm!: FormGroup;
-filteredItemCode:any[]=[];
+    @Input() itemOptions: any[] = [];
+    @Input() categoryOptions: any[] = [];
+    @Input() uomOptions: any[] = [];
+    @Input() vendorOptions: any[] = [];
+    @Input() purchaseIdOptions: any[] = [];
+    public authService = inject(AuthService);
+    addForm!: FormGroup;
+    filteredItemCode: any[] = [];
     // ✅ Move dropdown options into variables
     itemCodeOptions = [];
     parentUOMOptions = [];
-  
-    uom = []
-   
-    products: any[] = [
-   // { childUOM:'', conversion:'', mrpUom:'' }
-];
 
-    filteredUOM: any[]=[];
-    constructor(private fb: FormBuilder, public inventoryService:InventoryService,public shareservice:ShareService,public datePipe:DatePipe,private messageService: MessageService) {}
+    uom = [];
+
+    products: any[] = [
+        // { childUOM:'', conversion:'', mrpUom:'' }
+    ];
+
+    selectItemType=[
+      {label:'Select Existing Item' , value:1},
+        {label:'Add New Item' , value:2}
+    ];
+    addNewItem:number=1;
+    filteredUOM: any[] = [];
+    constructor(
+        private fb: FormBuilder,
+        public inventoryService: InventoryService,
+        public shareservice: ShareService,
+        public datePipe: DatePipe,
+        private messageService: MessageService
+    ) {}
 
     ngOnInit(): void {
         this.addForm = this.fb.group(
             {
-                itemCode: ['', [Validators.required,Validators.maxLength(50)]],
+                itemCode: ['', [Validators.required, Validators.maxLength(50)]],
                 category: ['', Validators.required],
-                parentUOM: ['',Validators.required],
-                itemName: ['', [Validators.required,Validators.maxLength(500)]],
+                parentUOM: ['', Validators.required],
+                itemName: ['', [Validators.required, Validators.maxLength(500)]],
                 curStock: [''],
-                purchasePrice:['1135',[Validators.required ,Validators.min(1)]],
-                minStock:['10'],
-                warPeriod:[''],
-                p_expirydate:[],
-                costPerItem:[{value:'',disabled:true}],
-                mrp:['',[Validators.required ,Validators.min(1)]],
-                location:['',Validators.maxLength(100)],
-                qty:['',Validators.required ],
-                discount:[''],
-                activeItem:[true],
-                gstItem:[true]
-            },{validators:this.mrpValidator}
-        );
-        this.addForm.get('purchasePrice')?.valueChanges.subscribe(()=>this.updateCostPerItem());
-        this.addForm.get('qty')?.valueChanges.subscribe(()=>this.updateCostPerItem());
-        this.resetChildUOMTable();
+                purchasePrice: ['1135', [Validators.required, Validators.min(1)]],
+                minStock: ['10'],
+                warPeriod: [''],
+                p_expirydate: [],
+                costPerItem: [{ value: '', disabled: true }],
+                mrp: ['', [Validators.required, Validators.min(1)]],
+                location: ['', Validators.maxLength(100)],
+                qty: ['', Validators.required],
+                discount: [''],
+                activeItem: [true],
+                gstItem: [true],
 
+            },
+            { validators: this.mrpValidator }
+        );
+        this.addForm.get('purchasePrice')?.valueChanges.subscribe(() => this.updateCostPerItem());
+        this.addForm.get('qty')?.valueChanges.subscribe(() => this.updateCostPerItem());
+        this.resetChildUOMTable();
     }
-    resetChildUOMTable(){
-        this.products=[];
+    resetChildUOMTable() {
+        this.products = [];
     }
-    allowOnlyNumbers(event:KeyboardEvent){
-        const allowedChars=/[0-9]\b/;
-        const inputChar=String.fromCharCode(event.key.charCodeAt(0));
-        if(!allowedChars.test(inputChar)){
+    allowOnlyNumbers(event: KeyboardEvent) {
+        const allowedChars = /[0-9]\b/;
+        const inputChar = String.fromCharCode(event.key.charCodeAt(0));
+        if (!allowedChars.test(inputChar)) {
             event.preventDefault();
         }
     }
 
-    mrpValidator:ValidatorFn=(group:AbstractControl):ValidationErrors | null=>{
-    const purchase=parseFloat(group.get('purchasePrice')?.value);
-    const mrp=parseFloat(group.get('mrp')?.value);
-    if(isNaN(purchase) || isNaN(mrp)){
+    mrpValidator: ValidatorFn = (group: AbstractControl): ValidationErrors | null => {
+        const costperitem = parseFloat(group.get('costPerItem')?.value);
+        const mrp = parseFloat(group.get('mrp')?.value);
+        if (isNaN(costperitem) || isNaN(mrp)) {
+            return null;
+        }
+        if (mrp < costperitem) {
+            return { mrpGreaterThanPurchase: true };
+        }
         return null;
-    }
-    if(mrp<purchase){
-        return { mrpGreaterThanPurchase:true };
-    }
-    return null;
-   };
+    };
 
-    updateCostPerItem():void{
-        const purchasePrice=parseFloat(this.addForm.get('purchasePrice')?.value);
+    updateCostPerItem(): void {
+        const purchasePrice = parseFloat(this.addForm.get('purchasePrice')?.value);
         const qty = parseFloat(this.addForm.get('qty')?.value);
 
-        if(!isNaN(purchasePrice )&& !isNaN(qty) && qty>0){
-            const cost=purchasePrice/qty;
-            this.addForm.get('costPerItem')?.setValue(cost.toFixed(2),{emitEvent:false});
-        }else{
-            this.addForm.get('costPerItem')?.setValue('',{emitEvent:false});
+        if (!isNaN(purchasePrice) && !isNaN(qty) && qty > 0) {
+            const cost = purchasePrice / qty;
+            this.addForm.get('costPerItem')?.setValue(cost.toFixed(2), { emitEvent: false });
+        } else {
+            this.addForm.get('costPerItem')?.setValue('', { emitEvent: false });
         }
     }
-
-   ngOnChanges(changes: SimpleChanges): void {
-  if (changes['editData'] && this.editData && this.mode==='edit' && this.addForm) {
+   onItemSelectType(event:any){
+     console.log("event",event.value);
+       if (event.value === 2) {
     this.addForm.patchValue({
-       itemCode:this.editData.code,
-       itemName: this.editData.name,
-       category:this.editData.category,
-       curStock:this.editData.curStock,
-       purchasePrice:this.editData.purchasePrice,
-       qty:this.editData.quantity,
-       mrp:this.editData.mrp,
-       minStock:this.editData.minStock,
-       warPeriod:this.editData.warPeriod,
-       costPerItem:this.editData.costPerItem,
-       location:this.editData.location,
-       parentUOM:this.editData.uom,
-       childUom:this.editData.childUOM,
-       conversion:this.editData.conversion,
-       mrpUom:this.editData.mrpUom,
-       discount:this.editData.discount,
-       gstItem:this.editData.gstItem,
-       p_expirydate:this.editData.p_expirydate
+      itemCode: '',
+      itemName: '',
+      category: '',
+      curStock: '',
+      purchasePrice: '',
+      qty: '',
+      mrp: '',
+      minStock: '',
+      warPeriod: '',
+      costPerItem: '',
+      location: '',
+      parentUOM: '',
+       p_expirydate:'',
+       gstItem:true,
+       activeItem:true,
     });
-  }
-  else if(this.mode === 'add' && this.addForm){
-    this.addForm.reset();
-    this.resetChildUOMTable();
-    this.addForm.get('activeItem')?.setValue(true);
-     this.addForm.get('gstItem')?.setValue(true);
-  }
-}
-search(event:any){
-    const query=event.query?.toLowerCase() || '';
-     if(!query){
-        this.filteredUOM=[...this.uom];
-        return;
-     }
-    //  this.filteredUOM=this.uom.filter(u=>u.label.toLowerCase().includes(query));//commented beacause of error
-}
-
-filterItemCode(event:any){
-    const query = event.query.toLowerCase();
-    // this.filteredItemCode=this.itemCodeOptions.filter(v=>v.label.toLowerCase().includes(query)); //commented beacause of error
-    if(!this.filteredItemCode.some(v=>v.label.toLowerCase()===query)){
-        this.filteredItemCode.push({label:event.query});
+  } 
+   }
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes['editData'] && this.editData && this.mode === 'edit' && this.addForm) {
+            this.addForm.patchValue({
+                itemCode: this.editData.code,
+                itemName: this.editData.name,
+                category: this.editData.category,
+                curStock: this.editData.curStock,
+                purchasePrice: this.editData.purchasePrice,
+                qty: this.editData.quantity,
+                mrp: this.editData.mrp,
+                minStock: this.editData.minStock,
+                warPeriod: this.editData.warPeriod,
+                costPerItem: this.editData.costPerItem,
+                location: this.editData.location,
+                parentUOM: this.editData.uom,
+                childUom: this.editData.childUOM,
+                conversion: this.editData.conversion,
+                mrpUom: this.editData.mrpUom,
+                discount: this.editData.discount,
+                gstItem: this.editData.gstItem,
+                p_expirydate: this.editData.p_expirydate
+            });
+        } else if (this.mode === 'add' && this.addForm) {
+            this.addForm.reset();
+            this.resetChildUOMTable();
+            this.addForm.get('activeItem')?.setValue(true);
+            this.addForm.get('gstItem')?.setValue(true);
+        }
     }
-}
-addRow(){
-this.products.push({childUOM:null, conversion:null, mrpUom:null});
-}
-removeRow(){
-if(this.products.length>1){
-    this.products.pop();
-}
-else{
-    this.resetChildUOMTable();
-}
-}
-isChildUOMValid(): boolean {
-  if (!this.products || this.products.length === 0) return true;
-
-  let hasAnyValue = false;
-  for (const row of this.products) {
-    const hasChild = row.childUOM?.toString().trim() !== '';
-    const hasConversion = row.conversion?.toString().trim() !== '';
-    const hasMrp = row.mrpUom?.toString().trim() !== '';
-
-    if (hasChild || hasConversion || hasMrp) {
-      hasAnyValue = true;
-
-      if (!hasChild || !hasConversion || !hasMrp) {
-        return false;
-      }
+    search(event: any) {
+        const query = event.query?.toLowerCase() || '';
+        if (!query) {
+            this.filteredUOM = [...this.uom];
+            return;
+        }
+        //  this.filteredUOM=this.uom.filter(u=>u.label.toLowerCase().includes(query));//commented beacause of error
     }
-  }
-  return true;
-}
 
-mapFormToPayload(form: any, childUOM: any[]) {
-  return {
-    p_operationtype: this.mode === 'add' ? 'PUR_INSERT' : 'PUR_UPDATE',
-    p_purchaseid:this.transationid.toString(),
+    filterItemCode(event: any) {
+        const query = event.query.toLowerCase();
+        // this.filteredItemCode=this.itemCodeOptions.filter(v=>v.label.toLowerCase().includes(query)); //commented beacause of error
+        if (!this.filteredItemCode.some((v) => v.label.toLowerCase() === query)) {
+            this.filteredItemCode.push({ label: event.query });
+        }
+    }
+    addRow() {
+        this.products.push({ childUOM: null, conversion: null, mrpUom: null });
+    }
+    removeRow() {
+        if (this.products.length > 1) {
+            this.products.pop();
+        } else {
+            this.resetChildUOMTable();
+        }
+    }
+    isChildUOMValid(): boolean {
+        if (!this.products || this.products.length === 0) return true;
 
-    p_itemsku: form.itemCode,
-    p_itemname: form.itemName,
-    p_categoryid: Number(form.category),
-    p_uomid: Number(form.parentUOM),
-    p_quantity: Number(form.qty),
-    p_costprice: Number(form.purchasePrice),
-    p_saleprice: Number(form.mrp),
-    p_minimumstock: Number(form.minStock),
-    p_warrentyperiod: Number(form.warPeriod),
+        let hasAnyValue = false;
+        for (const row of this.products) {
+            const hasChild = row.childUOM?.toString().trim() !== '';
+            const hasConversion = row.conversion?.toString().trim() !== '';
+            const hasMrp = row.mrpUom?.toString().trim() !== '';
 
-    // Location handling
-    p_location: form.location ?? "",
+            if (hasChild || hasConversion || hasMrp) {
+                hasAnyValue = true;
 
-    p_currentstock: Number(form.curStock),
+                if (!hasChild || !hasConversion || !hasMrp) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
 
-    // Date Format (dd/MM/yyyy)
-    p_expirydate: this.datePipe.transform(form.expiryDate, 'dd/MM/yyyy'),
+    mapFormToPayload(form: any, childUOM: any[]) {
+        return {
+            p_operationtype: this.mode === 'add' ? 'PUR_INSERT' : 'PUR_UPDATE',
+            p_purchaseid: this.transationid.toString(),
 
-    p_currencyid: Number(form.currencyId || 1),
-    p_taxid: Number(form.taxId || 0),
-    p_warehourse: form.warehouse || 'ShristiShop',
-    p_isactive: 'Y',
-    p_gstitem: form.gstItem ? 'Y' : 'N',
+            p_itemsku: form.itemCode,
+            p_itemname: form.itemName,
+            p_categoryid: Number(form.category),
+            p_uomid: Number(form.parentUOM),
+            p_quantity: Number(form.qty),
+            p_costprice: Number(form.costPerItem),
+            p_saleprice: Number(form.mrp),
+            p_minimumstock: Number(form.minStock),
+            p_warrentyperiod: Number(form.warPeriod),
 
-    // Child UOM logic
-    p_childuom: childUOM.length > 0 ? 'Y' : 'N',
-    p_uom: childUOM.length > 0
-      ? childUOM.map(x => ({
-          itemsku: form.itemCode,
-          childuomid: Number(x.childUOM),
-          uomconversion: Number(x.conversion),
-          childmrp: Number(x.mrpUom)
-        }))
-      : [],
+            // Location handling
+            p_location: form.location ?? '',
 
-    // User Session Info
-    p_loginuser: this.shareservice.getUserData()?.username || 'admin',
-    clientcode: 'CG01-SE',
-    'x-access-token': this.authService.getToken(),
-    uname: 'admin'
-  };
-}
+            p_currentstock: Number(form.curStock),
 
+            // Date Format (dd/MM/yyyy)
+            p_expirydate: this.datePipe.transform(form.expiryDate, 'dd/MM/yyyy'),
 
+            p_currencyid: Number(form.currencyId || 1),
+            p_taxid: Number(form.taxId || 0),
+            p_warehourse: form.warehouse || 'ShristiShop',
+            p_isactive: 'Y',
+            p_gstitem: form.gstItem ? 'Y' : 'N',
 
-  onSubmit() {
-    if (this.addForm.invalid || !this.isChildUOMValid()) return;
-    this.inventoryService.Oninsertitemdetails(this.mapFormToPayload(this.addForm.getRawValue(), this.products)).subscribe({
-    next:(res=>{
-      this.showSuccess(res.data[0].msg)
-      this.close.emit()
-    }),
-    error:(res=>{
-      
-    })
+            // Child UOM logic
+            p_childuom: childUOM.length > 0 ? 'Y' : 'N',
+            p_uom:
+                childUOM.length > 0
+                    ? childUOM.map((x) => ({
+                          itemsku: form.itemCode,
+                          childuomid: Number(x.childUOM),
+                          uomconversion: Number(x.conversion),
+                          childmrp: Number(x.mrpUom)
+                      }))
+                    : [],
 
+            // User Session Info
+            p_loginuser: this.shareservice.getUserData()?.username || 'admin',
+            clientcode: 'CG01-SE',
+            'x-access-token': this.authService.getToken(),
+            uname: 'admin'
+        };
+    }
 
-    });
-  }
-    onCancel(){
+    onSubmit() {
+        if (this.addForm.invalid || !this.isChildUOMValid()) return;
+        this.inventoryService.Oninsertitemdetails(this.mapFormToPayload(this.addForm.getRawValue(), this.products)).subscribe({
+            next: (res) => {
+                this.showSuccess(res.data[0].msg);
+                this.close.emit();
+            },
+            error: (res) => {}
+        });
+    }
+    onCancel() {
         this.close.emit();
         console.log(this.products);
     }
-    resetForm(){
+    resetForm() {
         this.addForm.reset();
         this.resetChildUOMTable();
         this.addForm.get('activeItem')?.setValue(true);
         this.addForm.get('gstItem')?.setValue(true);
     }
-onItemCodeChange(event:any){
-  console.log(event.value)
-  const itemnamdata=this.itemOptions.find(item=>item.itemsku===event.value)
-  console.log(itemnamdata)
-  if(itemnamdata){
-      this.addForm.controls['itemName'].setValue(itemnamdata.itemname)
-      console.log(this.addForm.value)
-  }
+    onItemCodeChange(event: any) {
+        console.log(event.value);
+        const itemnamdata = this.itemOptions.find((item) => item.itemsku === event.value);
+        const expiry = itemnamdata.expirydate ? new Date(itemnamdata.expirydate) : null;
+        console.log('itemnamdata', itemnamdata);
+      if (itemnamdata) {
+  const expiry = itemnamdata.expirydate ? new Date(itemnamdata.expirydate) : null;
 
+  this.addForm.patchValue({
+    itemName: itemnamdata.itemname,
+    category: itemnamdata.categoryid,
+    curStock: itemnamdata.currentstock,
+    p_expirydate: expiry,
+    gstItem: itemnamdata.gstitem ==='Y' ? true : false,       // ✅ Convert 'Y'/'N' → boolean
+    activeItem: itemnamdata.isactive==='Y' ? true : false,   // ✅ Convert 'Y'/'N' → boolean
+    location: itemnamdata.location,
+    minStock: itemnamdata.minimumstock,
+    purchasePrice: itemnamdata.purchaseprice,   // ✅ fixed typo (was pruchaseprice)
+    mrp: itemnamdata.saleprice,
+    parentUOM: itemnamdata.uomid,
+    warPeriod: itemnamdata.warrentyperiod
+  });
 
+  console.log('✅ Form after patch:', this.addForm.value);
 }
-   showSuccess(message:string) {
+
+    }
+    showSuccess(message: string) {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
     }
 }
-
-
-
