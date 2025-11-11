@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { Component, inject, ViewChild } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -76,7 +76,7 @@ interface Image {
 ],
     templateUrl: './stock-in.component.html',
     styleUrl: './stock-in.component.scss',
-    providers:[ConfirmationService]
+    providers:[ConfirmationService,DatePipe]
 })
 export class StockInComponent {
     public transationid:any
@@ -108,17 +108,17 @@ export class StockInComponent {
     itemOptions = [];
 
     products:StockIn[] =[];
-    constructor(private fb: FormBuilder, private stockInService:InventoryService,private confirmationService:ConfirmationService) {}
+    constructor(private fb: FormBuilder, private stockInService:InventoryService,private confirmationService:ConfirmationService,public datePipe:DatePipe) {}
 
     ngOnInit(): void {
         this.OnGetDropdown()
         this.loadAllDropdowns()
          this.onGetStockIn();
      this.productForm = this.fb.group({
-    p_tranpurchaseid: [''],
+    p_tranpurchaseid: [null],
     p_invoiceno: ['', [Validators.maxLength(50)]],
-    p_vendorid: [''],
-    p_invoicedate: [''],
+    p_vendorid: [null],
+    p_invoicedate: [null],
     p_remarks:['',[Validators.maxLength(500)]]
 });
     }
@@ -287,15 +287,13 @@ OnGetDropdown(){
 }
 
 OnPurchesHeaderCreate(data:any){
-
-    const payload: any = {
-
+  const payload: any = {
     "uname": "admin",
     "p_operationtype": "PUR_INSERT",
-    "p_purchaseid": "26",
-    "p_vendorid":data.p_vendorid,
+    "p_purchaseid":data.p_tranpurchaseid==null?"":this.valueReturnToString(data.p_tranpurchaseid),
+    "p_vendorid":data.p_vendorid==null?this.valueReturnToString(0):this.valueReturnToString(data.p_vendorid),
     "p_invoiceno": data.p_invoiceno,
-    "p_invoicedate": data.p_invoicedate,
+    "p_invoicedate":this.datePipe.transform(data.p_invoicedate, 'dd/MM/yyyy'),
     "p_remarks": data.p_remarks,
     "p_active": "Y",
     "p_loginuser": "admin",
@@ -305,11 +303,13 @@ OnPurchesHeaderCreate(data:any){
 
 
 };
+
 this.stockInService.OnPurchesHeaderCreate(payload).subscribe({
     next:(res)=>{
  console.log(res)
  this.transationid=res.data[0].tranpurchaseid
  this.transactionIdOptions=res.data
+ this.loadAllDropdowns()
     },
     error:(error)=>{
         console.log(error)
@@ -325,6 +325,29 @@ createDropdownPayload(returnType: string) {
     "x-access-token": this.authService.getToken()
   };
 }
+purchaseIdDetails(event:any){
+  this.transationid=event.value
+const selectedPurchaseData=  this.purchaseIdOptions.find(item=>item.purchaseid==event.value)
+console.log(selectedPurchaseData)
+this.productForm.patchValue({
+  p_vendorid:selectedPurchaseData.vendorid,
+  p_invoiceno:selectedPurchaseData.invoicenumber,
+  p_remarks:selectedPurchaseData.remark,
+  p_invoicedate:new Date(selectedPurchaseData.invoicedate),
+
+})
+if(this.productForm.value){
+  this.addItemEnabled=true;
+  this.transationid=event.value
+}
+
+
+
+}
+valueReturnToString(value: any) {
+  return value != null ? value.toString() : null;
+}
+
 OnGetItem() {
   const payload = this.createDropdownPayload("ITEM");
   this.stockInService.getdropdowndetails(payload).subscribe({
