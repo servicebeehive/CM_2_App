@@ -94,6 +94,7 @@ export class AddinventoryComponent {
     parentUOMOptions = [];
 
     uom = [];
+  
 
     products: any[] = [
         // { childUOM:'', conversion:'', mrpUom:'' }
@@ -103,8 +104,9 @@ export class AddinventoryComponent {
       {label:'Select Existing Item' , value:1},
         {label:'Add New Item' , value:2}
     ];
-    addNewItem:number=1;
+
     filteredUOM: any[] = [];
+    searchValue:string='';
     constructor(
         private fb: FormBuilder,
         public inventoryService: InventoryService,
@@ -132,7 +134,7 @@ export class AddinventoryComponent {
                 discount: [''],
                 activeItem: [true],
                 gstItem: [true],
-
+                
             },
             { validators: this.mrpValidator }
         );
@@ -174,28 +176,33 @@ export class AddinventoryComponent {
             this.addForm.get('costPerItem')?.setValue('', { emitEvent: false });
         }
     }
-   onItemSelectType(event:any){
-     console.log("event",event.value);
-       if (event.value === 2) {
-    this.addForm.patchValue({
-      itemCode: '',
-      itemName: '',
-      category: '',
-      curStock: '',
-      purchasePrice: '',
-      qty: '',
-      mrp: '',
-      minStock: '',
-      warPeriod: '',
-      costPerItem: '',
-      location: '',
-      parentUOM: '',
-       p_expirydate:'',
-       gstItem:true,
-       activeItem:true,
-    });
-  } 
+   
+   onItemSearch(event:any){
+    this.searchValue=event.filter || '';
    }
+
+   addNewItem(select:any){
+    const code = this.searchValue?.trim();
+    if(code){
+       
+        select.clear();
+        select.hide();
+        this.addForm.reset();
+    this.addForm.patchValue({
+      itemCode: code,
+      itemName: '',
+      activeItem: true,
+      gstItem: true
+    });
+    this.resetChildUOMTable();
+  } else {
+    this.messageService.add({
+      severity: 'warn',
+      summary: 'Warning',
+      detail: 'Please enter an item code first before adding a new item.'
+    });
+   }
+}
     ngOnChanges(changes: SimpleChanges): void {
         if (changes['editData'] && this.editData && this.mode === 'edit' && this.addForm) {
             this.addForm.patchValue({
@@ -343,12 +350,13 @@ export class AddinventoryComponent {
     onItemCodeChange(event: any) {
         console.log(event.value);
         const itemnamdata = this.itemOptions.find((item) => item.itemsku === event.value);
-        const expiry = itemnamdata.expirydate ? new Date(itemnamdata.expirydate) : null;
+      
         console.log('itemnamdata', itemnamdata);
       if (itemnamdata) {
   const expiry = itemnamdata.expirydate ? new Date(itemnamdata.expirydate) : null;
 
   this.addForm.patchValue({
+    itemCode:itemnamdata.itemsku,
     itemName: itemnamdata.itemname,
     category: itemnamdata.categoryid,
     curStock: itemnamdata.currentstock,
@@ -357,7 +365,7 @@ export class AddinventoryComponent {
     activeItem: itemnamdata.isactive==='Y' ? true : false,   // ✅ Convert 'Y'/'N' → boolean
     location: itemnamdata.location,
     minStock: itemnamdata.minimumstock,
-    purchasePrice: itemnamdata.purchaseprice,   // ✅ fixed typo (was pruchaseprice)
+    purchasePrice: itemnamdata.pruchaseprice,   // ✅ fixed typo (was pruchaseprice)
     mrp: itemnamdata.saleprice,
     parentUOM: itemnamdata.uomid,
     warPeriod: itemnamdata.warrentyperiod
