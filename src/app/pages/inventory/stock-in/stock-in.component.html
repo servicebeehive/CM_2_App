@@ -119,38 +119,46 @@
 
        <ng-template #body let-product>
   <tr>
-    <td class="text-center">
+    <!-- <td class="text-center">
       <p-tableCheckbox [value]="product" />
-    </td>
-
-    <td>{{ product.itemsku }}</td>
-    <td routerLink="/stockAjustment" class="cursor-pointer">{{ product.itemname }}</td>
-    <td>{{ product.categoryid }}</td>
-    <td>{{ product.totalqty }}</td>
+    </td> -->
+<td></td>
+    <!-- <td>{{ product.itemsku }}</td> -->
+     <td></td>
+    <!-- <td routerLink="/stockAjustment" class="cursor-pointer">{{ product.itemname }}</td> -->
+     <td></td>
+       <td></td>
+         <td></td>
+    <!-- <td>{{ product.categoryid }}</td>
+    <td>{{ product.totalqty }}</td> -->
 
     <!-- These fields are not present in your data, so keep blank or map later -->
-    <td>-</td> <!-- Qty -->
-    <td>-</td> <!-- Purchase Price -->
-    <td>-</td> <!-- Cost Per Item -->
-    <td>-</td> <!-- Total -->
-    <td>{{ product.uomid }}</td>
-
+    <td></td> <!-- Qty -->
+    <td></td> <!-- Purchase Price -->
+    <td></td> <!-- Cost Per Item -->
+    <td></td> <!-- Total -->
+    <!-- <td>{{ product.uomid }}</td> -->
+  <td></td>
     <!-- No child UOM in your response yet -->
-    <td>-</td>
+    <td></td>
 
     <!-- MRP not available -->
-    <td>-</td>
+    <td></td>
 
-    <td>-</td> <!-- Discount -->
-    <td>{{ product.minimumstock }}</td>
+    <td></td> <!-- Discount -->
+    <!-- <td>{{ product.minimumstock }}</td>
     <td>{{ product.warrentyperiod }}</td>
     <td>{{ product.location }}</td>
-    <td>{{ product.gstitem === 'Y' ? 'Yes' : 'No' }}</td>
-
-    <td class="text-center">
+    <td>{{ product.gstitem === 'Y' ? 'Yes' : 'No' }}</td> -->
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+    <!-- <td class="text-center">
       <i class="pi pi-pencil cursor-pointer text-blue-500" (click)="openEditDialog(product)"></i>
       <i class="pi pi-trash ms-2 cursor-pointer text-red-500" (click)="deleteItem(product)"></i>
-    </td>
+    </td> -->
+    <td></td>
   </tr>
 </ng-template>
 
