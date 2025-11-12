@@ -2,6 +2,9 @@ import { Routes } from '@angular/router';
 import { AppLayout } from '@/layout/components/app.layout';
 import { Landing } from '@/pages/landing/landing';
 import { Notfound } from '@/pages/notfound/notfound';
+import { AuthGuard } from '@/core/guards/auth.guard';
+import { RoleGaurd } from '@/core/guards/role.guard';
+
 
 export const appRoutes: Routes = [
     {
@@ -10,8 +13,9 @@ export const appRoutes: Routes = [
         children: [
             {
                 path: 'dashboard',
-                loadComponent: () => import('./app/pages/dashboards/ecommercedashboard').then(c => c.EcommerceDashboard),
-                data: { breadcrumb: 'E-Commerce Dashboard' },
+                loadComponent: () => import('./app/pages/dashboards/ecommercedashboard').then((c) => c.EcommerceDashboard),
+                canActivate:[AuthGuard,RoleGaurd],
+                data: { breadcrumb: 'E-Commerce Dashboard',expectedRole:'admin'},
             },
             // {
             //     path: 'dashboard-banking',
@@ -28,28 +32,33 @@ export const appRoutes: Routes = [
             //     data: { breadcrumb: 'Documentation' },
             //     loadComponent: () => import('./app/pages/documentation/documentation').then(c => c.Documentation)
             // },
-            
+
             {
                 path: 'products',
                 loadChildren: () => import('@/pages/products/product.routers'),
-            },
-             {
-                path: 'inventory',
-                loadChildren: () => import('@/pages/inventory/inventory.routers'),
-            },
-             {
-                path: 'pos',
-                loadChildren: () => import('@/pages/pos/pos.routers'),
+                canActivate: [AuthGuard]
             },
             {
-                path:'reports',
-                loadChildren:() => import('@/pages/reports/reports.router'),
+                path: 'inventory',
+                loadChildren: () => import('@/pages/inventory/inventory.routers'),
+                canActivate: [AuthGuard]
+            },
+            {
+                path: 'pos',
+                loadChildren: () => import('@/pages/pos/pos.routers'),
+                canActivate: [AuthGuard]
+            },
+            {
+                path: 'reports',
+                loadChildren: () => import('@/pages/reports/reports.router'),
+                canActivate: [AuthGuard]
             },
 
             {
-                path:'settings',
-                loadChildren:() => import('@/pages/settings/settings.routers'),
-            },
+                path: 'settings',
+                loadChildren: () => import('@/pages/settings/settings.routers'),
+                canActivate: [AuthGuard]
+            }
 
             // {
             //     path: 'blocks',
@@ -66,13 +75,13 @@ export const appRoutes: Routes = [
             //     path: 'profile',
             //     loadChildren: () => import('@/pages/usermanagement/usermanagement.routes'),
             // },
-        ],
+        ]
     },
-  //  { path: 'landing', component: Landing },
+    //  { path: 'landing', component: Landing },
     { path: 'notfound', component: Notfound },
     {
         path: '',
         loadChildren: () => import('@/pages/auth/auth.routes'),
     },
-    { path: '**', redirectTo: '/notfound' },
+    { path: '**', redirectTo: '/notfound' }
 ];

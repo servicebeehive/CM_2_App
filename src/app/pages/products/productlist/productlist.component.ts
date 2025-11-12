@@ -23,6 +23,7 @@ import { ConfirmationService } from 'primeng/api';
 import { CheckboxModule } from 'primeng/checkbox';
 import { AddinventoryComponent } from '@/pages/inventory/addinventory/addinventory.component';
 import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
+import { AuthService } from '@/core/services/auth.service';
 @Component({
     selector: 'app-productlist',
     imports: [
@@ -67,27 +68,20 @@ export class ProductlistComponent {
     globalFilter: string = '';
     showGlobalSearch: boolean =true;
     // ✅ Move dropdown options into variables
-   categoryOptions = [
-        { label: 'Wires & Cables', value: 'Wires & Cables' },
-        { label: 'Lighting', value: 'Lighting' },
-        { label: 'Fans & Fixtures', value: 'Fans & Fixtures' },
-        {label: 'Switches & Accessories',value:'Switches & Accessories'},
-        {label: 'Plugs, Holders & Connectors',value:'Plugs, Holders & Connectors'}
-    ];
+   categoryOptions = [];
 
-    itemOptions = [
-        { label: 'Anchor switch 3/4', value: 'Anchor Switch 3/4' },
-        { label: 'Led Bulb', value: 'LED Bulb' },
-        { label: 'Fan', value: 'Fan' }
-    ];
+    itemOptions = [];
 
     constructor(
         private fb: FormBuilder,
         private stockInService: InventoryService,
-        private confirmationService: ConfirmationService
+        private confirmationService: ConfirmationService,
+        private inventoryService:InventoryService,
+        private authService:AuthService,
     ) {}
 
     ngOnInit(): void {
+        this.loadAllDropdowns();
         this.onGetStockIn();
         this.updateForm = this.fb.group({
             category: ['', Validators.required],
@@ -142,37 +136,42 @@ export class ProductlistComponent {
         this.pagedProducts = this.products.slice(this.first, this.first + this.rowsPerPage);
     }
     openEditDialog(rowData: any) {
-       const matchedCategory = this.categoryOptions.find(otp=>otp.value===rowData.category);
+    //    const matchedCategory = this.categoryOptions.find(otp=>otp.value===rowData.category);
        const matchedUOM = rowData.uom?{label:rowData.uom , value:rowData.uom} : null; 
        this.selectedRow={
         ...rowData,
-        category:matchedCategory? matchedCategory.value :rowData.category,
+        // category:matchedCategory? matchedCategory.value :rowData.category,
         parentUOM:matchedUOM?matchedUOM.value:rowData.uom
        }
         this.visibleDialog = true;
     }
-
-    // deleteAll() {
-    //     const selectedItems=this.filteredProducts.filter(p=>p.selection);
-    //     if(selectedItems.length===0)
-    //         return;
-    //     this.confirmationService.confirm({
-    //         message: `Are you sure you want to delete <b>${selectedItems.length}</b> selected item(s)?`,
-    //         header:'Confirm Bulk Delete',
-    //         icon:'pi pi-exclamation-triangle',
-    //         acceptLabel:'Yes',
-    //         rejectLabel:'No',
-    //         acceptButtonStyleClass:'p-button-danger',
-    //         rejectButtonStyleClass:'p-button-secondary',
-    //         accept: ()=>{
-    //             const selectedCodes=selectedItems.map((p)=>p.code);
-    //             this.products=this.products.filter((p)=>!selectedCodes.includes(p.code));
-    //            this.filteredProducts=this.filteredProducts.filter(p=>!selectedCodes.includes(p.code));
-
-    //         },
-    //         reject: ()=>console.log('Deletion Cancelled')
-    //     });
-    // }
+  createDropdownPayload(returnType: string) {
+  return {
+    uname: "admin",
+    p_username: "admin",
+    p_returntype: returnType,
+    clientcode: "CG01-SE",
+    "x-access-token": this.authService.getToken()
+  };
+}
+    loadAllDropdowns(){
+        this.OnGetItem();
+        this.OnGetCategory();
+    }
+    OnGetItem() {
+  const payload = this.createDropdownPayload("ITEM");
+  this.inventoryService.getdropdowndetails(payload).subscribe({
+    next: (res) => this.itemOptions = res.data,
+    error: (err) => console.log(err)
+  });
+}
+    OnGetCategory() {
+  const payload = this.createDropdownPayload("CATEGORY");
+  this.inventoryService.getdropdowndetails(payload).subscribe({
+    next: (res) => this.categoryOptions = res.data,
+    error: (err) => console.log(err)
+  });
+}
     onSave(updatedData: any) {
         const mappedData = {
             selection: true,
@@ -198,25 +197,6 @@ export class ProductlistComponent {
     closeDialog() {
         this.visibleDialog = false;
     }
-    // deleteItem(product: any) {
-    //     this.confirmationService.confirm({
-    //         message: `Are you sure you want to delete <b>${product.name}</b>?`,
-    //         header: 'Confirm Delete',
-    //         icon: 'pi pi-exclamation-triangle',
-    //         acceptLabel: 'Yes',
-    //         rejectLabel: 'No',
-    //         acceptButtonStyleClass: 'p-button-danger',
-    //         rejectButtonStyleClass: 'p-button-secondary',
-    //         accept: () => {
-    //             this.products = this.products.filter((p) => p.code !== product.code);
-    //             this.filterProducts();
-    //         },
-    //         reject: () => {
-    //             // Optional: Add toast or log cancel
-    //             console.log('Deletion cancelled');
-    //         }
-    //     });
-    // }
     saveAllChanges() {
         // this.stockInService.productItem = [...this.filteredProducts];
     }

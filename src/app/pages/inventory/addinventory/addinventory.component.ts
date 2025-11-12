@@ -92,10 +92,7 @@ export class AddinventoryComponent {
     // ✅ Move dropdown options into variables
     itemCodeOptions = [];
     parentUOMOptions = [];
-
     uom = [];
-  
-
     products: any[] = [
         // { childUOM:'', conversion:'', mrpUom:'' }
     ];
