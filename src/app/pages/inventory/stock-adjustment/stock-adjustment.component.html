@@ -23,7 +23,7 @@
                 <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Category</label>
-                        <p-dropdown [options]="categoryOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search Category" formControlName="category" placeholder="Category" (onChange)="applyGlobalFilter()"> </p-dropdown>
+                        <p-dropdown [options]="categoryOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search Category" formControlName="category" placeholder="Category" (onChange)="applyGlobalFilter()" (onChange)="OnChangedROPdown($event,'categoryid')"> </p-dropdown>
                         <small class="text-red-500 ms-3 mt-1" *ngIf="updateForm.get('category')?.touched || updateForm.get('category')?.touched">
                             <span *ngIf="updateForm.get('category')?.errors?.['required']">Category is required</span>
                         </small>

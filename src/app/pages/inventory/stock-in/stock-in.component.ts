@@ -27,6 +27,7 @@ import { Paginator } from 'primeng/paginator';
 import { RouterLink } from "@angular/router";
 import { AuthService } from '@/core/services/auth.service';
 import { DrowdownDetails } from '@/core/models/inventory.model';
+import { MessageService } from 'primeng/api';
 interface Product {
     name: string;
     price: string;
@@ -95,7 +96,7 @@ export class StockInComponent {
      childUomStatus:boolean=false;
      addItemEnabled=false;
     @ViewChild(AddinventoryComponent) addInventoryComp!:AddinventoryComponent;
-
+   public itemOptionslist:[]=[]
     // ✅ Move dropdown options into variables
     transactionIdOptions = [];
 
@@ -108,7 +109,7 @@ export class StockInComponent {
     itemOptions = [];
 
     products:StockIn[] =[];
-    constructor(private fb: FormBuilder, private stockInService:InventoryService,private confirmationService:ConfirmationService,public datePipe:DatePipe) {}
+    constructor(private fb: FormBuilder, private stockInService:InventoryService,private confirmationService:ConfirmationService,public datePipe:DatePipe,private messageService: MessageService) {}
 
     ngOnInit(): void {
         this.OnGetDropdown()
@@ -173,11 +174,12 @@ onSave(updatedData:any){
             else{
                 this.products.push(mappedData);
             }
-            this.closeDialog();
+            this.closeDialog(updatedData);
     }
  deleteItem(product:any) {
+ 
   this.confirmationService.confirm({
-    message: `Are you sure you want to delete <b>${product.name}</b>?`,
+    message: `Are you sure you want to delete <b>${product.itemname}</b>?`,
     header: 'Confirm Delete',
     icon: 'pi pi-exclamation-triangle',
     acceptLabel: 'Yes',
@@ -185,9 +187,10 @@ onSave(updatedData:any){
     acceptButtonStyleClass: 'p-button-danger',
     rejectButtonStyleClass: 'p-button-secondary',
     accept: () => {
-      this.products = this.products.filter(p => p.code !== product.code);
+      this.OnDeleteItem(product.purchasedetailid) 
     },
     reject: () => {
+      
       // Optional: Add toast or log cancel
       console.log('Deletion cancelled');
     }
@@ -236,8 +239,10 @@ get grandTotal():number{
         this.selectedRow=rowData||null;
         this.visibleDialog=true;
     }
-    closeDialog(){
+    closeDialog(event:any){
+      console.log(event)
         this.visibleDialog=false;
+        this.OnGetPurcheseItem(this.transationid)
     }
     reset(){
         this.productForm.reset({
@@ -342,7 +347,7 @@ if(this.productForm.value){
   this.transationid=event.value
 }
 
-
+this.OnGetPurcheseItem(event.value)
 
 }
 valueReturnToString(value: any) {
@@ -395,5 +400,44 @@ OnGetPurchaseId() {
     error: (err) => console.log(err)
   });
 }
+OnGetPurcheseItem(id:any) {
+  const payload = {
+    "uname": "admin",
+    "p_username": "admin",
+    "p_returntype": "PURCHASEDETAIL",
+    "p_returnvalue":id.toString(),
+    "clientcode": "CG01-SE",
+    "x-access-token":this.authService.getToken()
+    //"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyY29kZSI6ImFkbWluIiwiaWF0IjoxNzYzMDI3NzU5LCJleHAiOjE3NjMxMTQxNTl9.w9YSCAVi4G5bou6vlR2tjFb2oU4jUAJ1uHSLUTfbxKc"
+};
 
+  this.stockInService.Getreturndropdowndetails(payload).subscribe({
+    next: (res) =>{
+   this.itemOptionslist=res.data
+    },
+    error: (err) => console.log(err)
+  });
+}
+//Delete stock item
+OnDeleteItem(id:any){
+    const payload = {
+    "uname": "admin",
+    "p_username": "admin",
+    "p_returntype": "PURCHASEDETAIL",
+     "p_purchasedetailid":id,
+    "clientcode": "CG01-SE",
+    "x-access-token":this.authService.getToken()
+    //"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyY29kZSI6ImFkbWluIiwiaWF0IjoxNzYzMDI3NzU5LCJleHAiOjE3NjMxMTQxNTl9.w9YSCAVi4G5bou6vlR2tjFb2oU4jUAJ1uHSLUTfbxKc"
+};
+  this.stockInService.DeletStockinitem(payload).subscribe({
+    next:(res)=>{
+      this.showSuccess(res.data[0].msg)
+      this.OnGetPurcheseItem(this.transationid)
+      
+    }
+  })
+}
+  showSuccess(message: string) {
+        this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
+    }
 }
