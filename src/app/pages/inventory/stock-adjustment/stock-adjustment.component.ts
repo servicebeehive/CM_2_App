@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { ChipModule } from 'primeng/chip';
@@ -15,11 +15,12 @@ import { DialogModule } from 'primeng/dialog';
 import { StockIn } from '@/types/stockin.model';
 import { InventoryService } from '@/core/services/inventory.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ConfirmationService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { CheckboxModule } from 'primeng/checkbox';
 import { AutoCompleteModule } from 'primeng/autocomplete';
 import { filter } from 'rxjs';
 import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
+import { AuthService } from '@/core/services/auth.service';
 @Component({
     selector: 'app-stock-adjustment',
     imports: [
@@ -60,35 +61,29 @@ export class StockAdjustmentComponent {
     filteredAdjustment: any[] = [];
     showGlobalSearch: boolean = true;
     // ✅ Move dropdown options into variables
-    categoryOptions = [
-        { label: 'Wires & Cables', value: 'Wires & Cables' },
-        { label: 'Lighting', value: 'Lighting' },
-        { label: 'Fans & Fixtures', value: 'Fans & Fixtures' },
-        { label: 'Switches & Accessories', value: 'Switches & Accessories' },
-        { label: 'Plugs, Holders & Connectors', value: 'Plugs, Holders & Connectors' }
-    ];
-    itemOptions = [
-        { label: 'Anchor switch 3/4', value: 'Anchor Switch 3/4' },
-        { label: 'Led Bulb', value: 'LED Bulb' },
-        { label: 'Fan', value: 'Fan' }
-    ];
+    categoryOptions = [];
+    itemOptions = [];
     adjustment = [
         { label: 'Increase', value: 'increase' },
         { label: 'Decrease', value: 'decrease' }
     ];
     constructor(
         private fb: FormBuilder,
-        private stockInService: InventoryService,
-        private confirmationService: ConfirmationService
+        private inventoryService: InventoryService,
+        private confirmationService: ConfirmationService,
+        private authService:AuthService,
+        private messageService:MessageService
     ) {}
 
     ngOnInit(): void {
+        this.loadAllDropdowns();
+        this.onGetStockIn();
         this.updateForm = this.fb.group({
             category: ['', Validators.required],
             item: ['', Validators.required]
         });
 
-        this.onGetStockIn();
+        
         this.updateForm.valueChanges.subscribe(() => {
             this.filterProducts();
         });
@@ -105,7 +100,7 @@ export class StockAdjustmentComponent {
         };
     }
     onGetStockIn() {
-        this.products = this.stockInService.productItem || [];
+        this.products = this.inventoryService.productItem || [];
         this.products.forEach((p: any) => {
             p.selection = true;
             p.adjustmentType = '';
@@ -174,8 +169,35 @@ export class StockAdjustmentComponent {
         this.visibleDialog = false;
     }
     saveAllChanges() {
-        // this.stockInService.productItem = [...this.filteredProducts];
+      
     }
+    createDropdownPayload(returnType: string) {
+  return {
+    uname: "admin",
+    p_username: "admin",
+    p_returntype: returnType,
+    clientcode: "CG01-SE",
+    "x-access-token": this.authService.getToken()
+  };
+}
+    loadAllDropdowns(){
+        this.OnGetItem();
+        this.OnGetCategory();
+    }
+    OnGetItem() {
+  const payload = this.createDropdownPayload("ITEM");
+  this.inventoryService.getdropdowndetails(payload).subscribe({
+    next: (res) => this.itemOptions = res.data,
+    error: (err) => console.log(err)
+  });
+}
+    OnGetCategory() {
+  const payload = this.createDropdownPayload("CATEGORY");
+  this.inventoryService.getdropdowndetails(payload).subscribe({
+    next: (res) => this.categoryOptions = res.data,
+    error: (err) => console.log(err)
+  });
+}
     onSubmit() {
         console.log(this.updateForm.value);
         this.confirmationService.confirm({
@@ -193,5 +215,9 @@ export class StockAdjustmentComponent {
     reset() {
         this.updateForm.reset();
         this.filteredProducts = [...this.products];
+    }
+   
+     showSuccess(message: string) {
+        this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
     }
 }
