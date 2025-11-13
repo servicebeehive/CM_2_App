@@ -23,7 +23,7 @@
                 <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Category</label>
-                        <p-dropdown [options]="categoryOptions" optionLabel="label" optionValue="value" [filter]="true" filterPlaceholder="Search Category" formControlName="category" placeholder="Category" (onChange)="applyGlobalFilter()"> </p-dropdown>
+                        <p-dropdown [options]="categoryOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search Category" formControlName="category" placeholder="Category" (onChange)="applyGlobalFilter()"> </p-dropdown>
                         <small class="text-red-500 ms-3 mt-1" *ngIf="updateForm.get('category')?.touched || updateForm.get('category')?.touched">
                             <span *ngIf="updateForm.get('category')?.errors?.['required']">Category is required</span>
                         </small>
@@ -32,7 +32,7 @@
                     <!-- Item -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Item</label>
-                        <p-dropdown [options]="itemOptions" optionLabel="label" optionValue="value" [filter]="true" filterPlaceholder="Search Item" formControlName="item" placeholder="Item" (onChange)="applyGlobalFilter()"> </p-dropdown>
+                        <p-dropdown [options]="itemOptions" optionLabel="itemname" optionValue="itemid" [filter]="true" filterPlaceholder="Search Item" formControlName="item" placeholder="Item" (onChange)="applyGlobalFilter()"> </p-dropdown>
                         <small class="text-red-500 ms-3 mt-1" *ngIf="updateForm.get('item')?.touched">
                             <span *ngIf="updateForm.get('item')?.errors?.['required']">Item is required</span>
                         </small>
@@ -55,6 +55,7 @@
                                 <th style="width: 4rem"><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
                                 <th>Item Name</th>
                                 <th>Category</th>
+                                 <th>UOM</th>
                                 <th>Current Stock</th>
                                 <th>Adj Type</th>
                                 <th>Quantity</th>
@@ -65,6 +66,7 @@
                                 <td><p-tableCheckbox [value]="update" /></td>
                                 <td>{{ update.name }}</td>
                                 <td>{{ update.category }}</td>
+                                 <td>{{update.parentUOM}}</td>
                                 <td>{{ update.curStock }}</td>
                                 <td><p-autocomplete [(ngModel)]="update.adjustmentType" [dropdown]="true" [suggestions]="filteredAdjustment" (completeMethod)="search($event)" (onSelect)="onAdjustmentChange($event,update)" placeholder="Increase/Decrease"></p-autocomplete></td>
                                 <td>

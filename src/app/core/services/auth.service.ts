@@ -27,7 +27,13 @@ export class AuthService {
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.user_info)
   }
+isLogIn():boolean{
+  return !!localStorage.getItem('app_token');
+}
 
+getUserRole():string|null{
+return localStorage.getItem('username');
+}
   // ✅ Login API and store data in localStorage using ShareService
   isLoggedIn(loginBody: authLogin): Observable<authLogin> {
     const url = `${this.baseUrl}${API_ENDPOINTS.auth.login}`;

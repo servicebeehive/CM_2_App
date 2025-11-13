@@ -1,22 +1,55 @@
+
+
 <form [formGroup]="addForm" (ngSubmit)="onSubmit()" class="space-y-8">
     <!-- 🧾 Transaction Info -->
     <div>
         <p class="text font-semibold mb-4 border-b pb-2 text-gray-700">Transaction Id : {{transationid}}</p>
     </div>
+<div class="flex flex-col">
+  <label class="font-medium mb-1">Item Search</label>
 
+  <!-- 🔽 Select Dropdown -->
+  <p-select #itemSelect (onChange)="onItemCodeChange($event)"  [options]="itemOptions"  optionLabel="itemcombine" optionValue="itemsku" formControlName="selectedItem" [filter]="true" filterBy="itemcombine" [showClear]="true" placeholder="Select Item" (onFilter)="onItemSearch($event)">
+    <ng-template #selectedItem let-item>
+        <div class="flex items-center gap-2">
+          
+            <div>{{ item.itemcombine }}</div>
+        </div>
+    </ng-template>
+    <ng-template let-details #item>
+        <div class="flex items-center gap-2">
+           
+            <div>{{ details.itemcombine}}</div>
+        </div>
+    </ng-template>
+    
+    <ng-template #footer>
+        <div class="p-3 p-button-primary p-button-sm" (click)="$event.stopPropagation()">
+            <button pButton type="button" label="Add New Item" fluid severity="primary" text size="small" icon="pi pi-plus" (click)="addNewItem(itemSelect)"></button>
+        </div>
+    </ng-template>
+  </p-select>
+</div>
     <!-- 🧩 Product Details -->
     <div>
-        <h3 class="text-lg font-semibold mb-3 text-gray-700 border-b pb-2">Product Details</h3>
-
+ <h3 class="text-lg font-semibold mb-3 text-gray-700 border-b pb-2">Product Details</h3>
+       
+   <!-- Item Code -->
         <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
-              <div class="flex flex-col">
+              <!-- <div class="flex flex-col">
+                <label class="font-medium mb-1">Item Detail <span class="text-red-500">*</span></label>
+                <p-dropdown  (onChange)="onItemCodeChange($event)" [options]="itemOptions" optionLabel="itemcombine" optionValue="itemsku" [filter]="true" filterPlaceholder="Search Item code" placeholder="Item Code"> </p-dropdown>
+            
+            </div> -->
+             <div class="flex flex-col">
                 <label class="font-medium mb-1">Item Code <span class="text-red-500">*</span></label>
-                <p-dropdown  (onChange)="onItemCodeChange($event)" [options]="itemOptions" optionLabel="itemsku" optionValue="itemsku" [filter]="true" filterPlaceholder="Search Item code" formControlName="itemCode" placeholder="Item Code"> </p-dropdown>
+                <input pInputText formControlName="itemCode" placeholder="Item Code" />
                 <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('itemCode')?.touched">
                     <span *ngIf="addForm.get('itemCode')?.errors?.['required']">Item Code is required</span>
                 </small>
             </div>
-            <!-- Item Code -->
+
+
             <!-- <div class="flex flex-col">
                 
                 {{itemOptions|json}}
@@ -27,10 +60,12 @@
                 </small>
             </div> -->
 
+            
+
             <!-- Current Stock -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Current Stock</label>
-                <input pInputText formControlName="curStock" placeholder="Current Stock" />
+                <input pInputText formControlName="curStock" placeholder="Current Stock" readonly />
             </div>
 
             <!-- Item Name -->
@@ -64,7 +99,7 @@
             <!-- Minimum Stock -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Min Stock</label>
-                <input pInputText formControlName="minStock" placeholder="Min Stock" (keypress)="allowOnlyNumbers($event)" />
+                <input pInputText formControlName="minStock" placeholder="Min Stock" />
             </div>
 
             <!-- Parent UOM -->
@@ -82,12 +117,6 @@
                           <!-- <p-datepicker  fluid formControlName="warPeriod" placeholder="Warranty Period" [showIcon]="true" placeholder="Invoice Date"></p-datepicker> -->
                 <input pInputText formControlName="warPeriod" placeholder="Warranty Period" (keypress)="allowOnlyNumbers($event)" />
             </div>
-             <!-- Warranty Period -->
-            <div class="flex flex-col">
-                <label class="font-medium mb-1">Expiry Date</label>
-                          <p-datepicker  fluid formControlName="p_expirydate" placeholder="Warranty Period" [showIcon]="true" placeholder="Invoice Date"></p-datepicker>
-                <!-- <input pInputText formControlName="warPeriod" placeholder="Warranty Period" (keypress)="allowOnlyNumbers($event)" /> -->
-            </div>
 
              <!-- Quantity -->
             <div class="flex flex-col">
@@ -97,7 +126,18 @@
                     <span *ngIf="addForm.get('qty')?.errors?.['required']">Quantity is required</span>
                 </small>
             </div>
-           
+            <!-- Expiry Date -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Expiry Date</label>
+                          <p-datepicker  fluid formControlName="p_expirydate" placeholder="Warranty Period" [showIcon]="true" placeholder="Invoice Date"></p-datepicker>
+                <!-- <input pInputText formControlName="warPeriod" placeholder="Warranty Period" (keypress)="allowOnlyNumbers($event)" /> -->
+            </div>
+
+             <!-- Cost/Item -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Cost/Item</label>
+                <input pInputText formControlName="costPerItem" placeholder="Cost/Item" readonly />
+            </div>
 
             <!-- Location -->
             <div class="flex flex-col">
@@ -105,21 +145,7 @@
                 <input pInputText formControlName="location" placeholder="Location" />
             </div>
 
-
-            <!-- Cost/Item -->
-            <div class="flex flex-col">
-                <label class="font-medium mb-1">Cost/Item</label>
-                <input pInputText formControlName="costPerItem" placeholder="Cost/Item" readonly />
-            </div>
-
-             <!-- Discount -->
-            <div class="flex flex-col">
-                <label class="font-medium mb-1">Discount (%)</label>
-                <input pInputText type="number" formControlName="discount" placeholder="Discount" />
-                <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('discount')?.touched && addForm.get('discount')?.invalid"> </small>
-            </div>
-             
-           <!-- MRP -->
+             <!-- MRP -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">MRP <span class="text-red-500">*</span></label>
                 <input pInputText type="number" formControlName="mrp" placeholder="MRP" />
@@ -127,6 +153,13 @@
                     <span *ngIf="addForm.get('mrp')?.errors?.['required']">MRP is required</span>
                     <span *ngIf="addForm.hasError('mrpGreaterThanPurchase')">MRP must be greater than or equal to Purchase Price</span>
                 </small>
+            </div>
+
+             <!-- Discount -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Discount (%)</label>
+                <input pInputText type="number" formControlName="discount" placeholder="Discount" />
+                <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('discount')?.touched && addForm.get('discount')?.invalid"> </small>
             </div>
 
            
