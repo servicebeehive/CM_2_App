@@ -109,7 +109,18 @@ getadjustmentdata(payload:any):Observable<any>{
     }),
 
 )
-  }
+}
+
+
+updatestockadjustment(payload:any):Observable<any>{
+    // console.log(payload)
+    let url=`${this.baseUrl}${API_ENDPOINTS.inventory.updatestockadjustment}`;
+    return this.http.post<any>(url,payload).pipe(catchError(error=>{
+        return throwError(()=>error)
+    }),
+
+)
+}
 
   /** 🔹 Common error handler */
   private handleError(error: HttpErrorResponse): Observable<never> {

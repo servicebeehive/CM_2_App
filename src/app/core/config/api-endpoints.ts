@@ -17,7 +17,8 @@ export const API_ENDPOINTS = {
     getdropdowndetails:'/getdropdowndetails',
     returndropdowndetails:'/returndropdowndetails',
     adjustmentlist:'/getstockadjustment',
-    deletepurchasedetails:'/deletepurchasedetails'
+    deletepurchasedetails:'/deletepurchasedetails',
+    updatestockadjustment:'/updatestockadjustment'
   },
   orders: {
     base: '/orders',
