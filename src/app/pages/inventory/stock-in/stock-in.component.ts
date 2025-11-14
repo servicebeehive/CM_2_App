@@ -28,6 +28,7 @@ import { RouterLink } from "@angular/router";
 import { AuthService } from '@/core/services/auth.service';
 import { DrowdownDetails } from '@/core/models/inventory.model';
 import { MessageService } from 'primeng/api';
+
 interface Product {
     name: string;
     price: string;
@@ -144,6 +145,7 @@ filterInvoiceNo(event:any){
 }
 
 onSave(updatedData:any){
+   if(!updatedData) return;
     const hasChildUOM= updatedData.childUOMDetails?.some((u:any)=> u.childUOM || u.conversion || u.mrp);
     const costPerItem=updatedData.qty && updatedData.purchasePrice ? (updatedData.purchasePrice/updatedData.qty).toFixed(2) : 0;
     const mappedData={
@@ -174,6 +176,7 @@ onSave(updatedData:any){
             else{
                 this.products.push(mappedData);
             }
+           
             this.closeDialog(updatedData);
     }
  deleteItem(product:any) {
@@ -230,9 +233,9 @@ get grandTotal():number{
         this.mode='add';
         this.selectedRow=null;
         this.visibleDialog=true;
-        setTimeout(() => {
-          this.addInventoryComp.resetForm();
-        });
+        setTimeout(() => 
+          this.addInventoryComp.resetForm(),10
+        );
     }
     openEditDialog(rowData:any){
         this.mode='edit';
@@ -348,6 +351,25 @@ if(this.productForm.value){
 }
 
 this.OnGetPurcheseItem(event.value)
+ this.transationid=event.value
+const selectedPurchaseData1=  this.purchaseIdOptions.find(item=>item.purchaseid==event.value)
+console.log(selectedPurchaseData1);
+this.productForm.patchValue({
+  p_vendorid:selectedPurchaseData1.vendorid,
+  p_invoiceno:selectedPurchaseData1.invoicenumber,
+  p_remarks:selectedPurchaseData1.remark,
+p_invoicedate: selectedPurchaseData1.invoicedate
+  ? new Date(selectedPurchaseData1.invoicedate)
+  : null,
+})
+if(this.productForm.value){
+  this.addItemEnabled=true;
+  this.transationid=event.value
+}
+
+this.OnGetPurcheseItem(event.value)
+}
+viewItem(event:any){
 
 }
 valueReturnToString(value: any) {
