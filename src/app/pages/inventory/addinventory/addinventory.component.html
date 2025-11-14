@@ -9,7 +9,7 @@
   <label class="font-medium mb-1">Item Search</label>
 
   <!-- 🔽 Select Dropdown -->
-  <p-select #itemSelect (onChange)="onItemCodeChange($event)"  [options]="itemOptions"  optionLabel="itemcombine" optionValue="itemsku" formControlName="selectedItem" [filter]="true" filterBy="itemcombine" [showClear]="true" placeholder="Select Item" (onFilter)="onItemSearch($event)">
+  <p-select #itemSelect (onChange)="onItemCodeChange($event)"  [options]="itemOptions"  optionLabel="itemcombine" optionValue="itemsku" formControlName="itemCode" [filter]="true" filterBy="itemcombine" [showClear]="true" placeholder="Select Item" (onFilter)="onItemSearch($event)">
     <ng-template #selectedItem let-item>
         <div class="flex items-center gap-2">
           

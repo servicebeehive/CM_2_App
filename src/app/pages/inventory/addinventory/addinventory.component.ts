@@ -223,6 +223,7 @@ export class AddinventoryComponent {
                 gstItem: this.editData.gstitem === 'Y',
                 p_expirydate: this.editData.p_expirydate
             });
+            this.OnChildOM(20)
         } else if (this.mode === 'add' && this.addForm) {
             this.addForm.reset();
             this.resetChildUOMTable();
@@ -378,4 +379,40 @@ export class AddinventoryComponent {
     showSuccess(message: string) {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
     }
+OnChildOM(id: number) {
+  if (this.mode == 'edit') {
+    const payload = {
+      uname: "admin",
+      p_username: "admin",
+      p_returntype: "CHILDUOM",
+      p_returnvalue:"20",
+      clientcode: "CG01-SE",
+      "x-access-token": this.authService.getToken()
+    };
+
+    this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+      next: (res: any) => {
+        console.log("CHILD UOM DATA =>", res.data);
+
+        if (!res.data || res.data.length === 0) {
+          // No need to show error now
+          this.products = []; // or keep existing rows
+          return;
+        }
+
+        // ✅ Assign API data into table rows (NO FUNCTIONALITY CHANGES)
+        this.products = res.data.map((x: any) => ({
+          childUOM: x.childuomid,        // bind to dropdown
+          conversion: x.uomconversion,   // number input
+          mrpUom: x.childmrp             // number input
+        }));
+      },
+
+      error: (err) => {
+        console.error(err);
+      }
+    });
+  }
+}
+
 }
