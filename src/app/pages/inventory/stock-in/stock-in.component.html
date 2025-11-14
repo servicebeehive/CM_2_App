@@ -104,12 +104,13 @@
       <th>Category</th>
       <th>Current Stock</th>
       <th>Qty</th>
-      <th>Purchase Price</th>
+      <!-- <th>Purchase Price</th> -->
       <th>Cost/Item</th>
-      <th>Total</th>
+      <th>Total Cost</th>
+        <th>MRP</th>
       <th>UOM</th>
       <th>Child UOM</th>
-      <th>MRP</th>
+    
       <th>Discount</th>
       <th>Min Stock</th>
       <th>Warranty (Months)</th>
@@ -131,21 +132,15 @@
       <td>{{ product.categoryid }}</td>
       <td>{{ product.currentstock }}</td>
       <td>{{ product.quantity }}</td>
-
       <td>{{ product.costprice }}</td>
-      <td>{{ product.saleprice }}</td>
-
-      <!-- Total = Qty × Purchase Price -->
       <td>{{ product.quantity * product.costprice }}</td>
+      <td>{{ product.saleprice }}</td>
 
       <td>{{ product.uomname }}</td>
       <td>{{ product.childuom }}</td>
 
-      <!-- MRP not available in response, optional: use saleprice -->
-      <td>{{ product.saleprice }}</td>
-
       <!-- Discount not in response → left blank -->
-      <td></td>
+      <td>{{product.discount}}</td>
 
       <td>{{ product.minimumstock }}</td>
       <td>{{ product.warrentyperiod }}</td>
@@ -156,6 +151,7 @@
       <td class="text-center">
         <i class="pi pi-pencil cursor-pointer text-blue-500" (click)="openEditDialog(product)"></i>
         <i class="pi pi-trash ms-2 cursor-pointer text-red-500" (click)="deleteItem(product)"></i>
+         <i class="pi pi-eye ms-2 cursor-pointer text-green-500" (click)="viewItem(product)"></i>
       </td>
     </tr>
   </ng-template>
@@ -176,6 +172,12 @@
     </div>
   </form>
 
+<p-dialog header="Child UOM"  [(visible)]="visibleDialog"
+    [modal]="true"
+    [style]="{ width: '80vw' }" >
+
+</p-dialog>
+
   <!-- Dialog -->
   <p-dialog
     header="{{ mode === 'add' ? 'Add Item' : 'Edit Item' }}"
@@ -185,6 +187,7 @@
   >
     <app-addinventory
       [mode]="mode"
+      [editData]="selectedRow"
       (close)="closeDialog($event)"
       (save)="onSave($event)"
       [transationid]="transationid"
