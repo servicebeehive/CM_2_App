@@ -84,89 +84,85 @@
 
     <!-- Product Table with Pagination -->
     <div>
-      <p-table
-        [value]="itemOptions"
-        dataKey="code"
-        [tableStyle]="{'min-width': '50rem'}"
-        [paginator]="true"
-        [rows]="10"
-        [rowsPerPageOptions]="[5, 10, 20, 50]"
-        [responsiveLayout]="'scroll'"
-        class="p-datatable-gridlines mt-6"
-      >
-        <ng-template #header>
-          <tr class="bg-yellow-400">
-            <th><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
-            <th>Item Code</th>
-            <th>Item Name</th>
-            <th>Category</th>
-            <th>Current Stock</th>
-            <th>Qty</th>
-            <th>Purchase Price</th>
-            <th>Cost/Item</th>
-            <th>Total</th>
-            <th>UOM</th>
-            <th>Child UOM</th>
-            <th>MRP</th>
-            <th>Discount</th>
-            <th>Min Stock</th>
-            <th>Warranty Period</th>
-            <th>Location</th>
-            <th>GST Item</th>
-            <th class="text-center">Action</th>
-          </tr>
-        </ng-template>
+     <p-table
+  [value]="itemOptionslist"
+  dataKey="purchasedetailid"
+  [tableStyle]="{'min-width': '60rem'}"
+  [paginator]="true"
+  [rows]="10"
+  [rowsPerPageOptions]="[ 10, 20, 50]"
+  [responsiveLayout]="'scroll'"
+  class="p-datatable-gridlines mt-6"
+>
 
-       <ng-template #body let-product>
-  <tr>
-    <!-- <td class="text-center">
-      <p-tableCheckbox [value]="product" />
-    </td> -->
-<td></td>
-    <!-- <td>{{ product.itemsku }}</td> -->
-     <td></td>
-    <!-- <td routerLink="/stockAjustment" class="cursor-pointer">{{ product.itemname }}</td> -->
-     <td></td>
-       <td></td>
-         <td></td>
-    <!-- <td>{{ product.categoryid }}</td>
-    <td>{{ product.totalqty }}</td> -->
+  <!-- HEADER -->
+  <ng-template pTemplate="header">
+    <tr class="bg-yellow-400">
+      <th><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
+      <th>Item Code</th>
+      <th>Item Name</th>
+      <th>Category</th>
+      <th>Current Stock</th>
+      <th>Qty</th>
+      <!-- <th>Purchase Price</th> -->
+      <th>Cost/Item</th>
+      <th>Total Cost</th>
+        <th>MRP</th>
+      <th>UOM</th>
+      <th>Child UOM</th>
+    
+      <th>Discount</th>
+      <th>Min Stock</th>
+      <th>Warranty (Months)</th>
+      <th>Location</th>
+      <th>GST Item</th>
+      <th class="text-center">Action</th>
+    </tr>
+  </ng-template>
 
-    <!-- These fields are not present in your data, so keep blank or map later -->
-    <td></td> <!-- Qty -->
-    <td></td> <!-- Purchase Price -->
-    <td></td> <!-- Cost Per Item -->
-    <td></td> <!-- Total -->
-    <!-- <td>{{ product.uomid }}</td> -->
-  <td></td>
-    <!-- No child UOM in your response yet -->
-    <td></td>
+  <!-- BODY -->
+  <ng-template pTemplate="body" let-product>
+    <tr>
+      <td class="text-center">
+        <p-tableCheckbox [value]="product"></p-tableCheckbox>
+      </td>
 
-    <!-- MRP not available -->
-    <td></td>
+      <td>{{ product.itemsku }}</td>
+      <td>{{ product.itemname }}</td>
+      <td>{{ product.categoryid }}</td>
+      <td>{{ product.currentstock }}</td>
+      <td>{{ product.quantity }}</td>
+      <td>{{ product.costprice }}</td>
+      <td>{{ product.quantity * product.costprice }}</td>
+      <td>{{ product.saleprice }}</td>
 
-    <td></td> <!-- Discount -->
-    <!-- <td>{{ product.minimumstock }}</td>
-    <td>{{ product.warrentyperiod }}</td>
-    <td>{{ product.location }}</td>
-    <td>{{ product.gstitem === 'Y' ? 'Yes' : 'No' }}</td> -->
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-    <!-- <td class="text-center">
-      <i class="pi pi-pencil cursor-pointer text-blue-500" (click)="openEditDialog(product)"></i>
-      <i class="pi pi-trash ms-2 cursor-pointer text-red-500" (click)="deleteItem(product)"></i>
-    </td> -->
-    <td></td>
-  </tr>
-</ng-template>
+      <td>{{ product.uomname }}</td>
+      <td>{{ product.childuom }}</td>
 
+      <!-- Discount not in response → left blank -->
+      <td>{{product.discount}}</td>
 
-        <ng-template pTemplate="paginatorleft">
-          <div class="text-gray-600 ms-2">Total Items: {{ products?.length || 0 }}</div>
-        </ng-template>
-      </p-table>
+      <td>{{ product.minimumstock }}</td>
+      <td>{{ product.warrentyperiod }}</td>
+      <td>{{ product.location }}</td>
+
+      <td>{{ product.gstitem === 'Y' ? 'Yes' : 'No' }}</td>
+
+      <td class="text-center">
+        <i class="pi pi-pencil cursor-pointer text-blue-500" (click)="openEditDialog(product)"></i>
+        <i class="pi pi-trash ms-2 cursor-pointer text-red-500" (click)="deleteItem(product)"></i>
+         <i class="pi pi-eye ms-2 cursor-pointer text-green-500" (click)="viewItem(product)"></i>
+      </td>
+    </tr>
+  </ng-template>
+
+  <!-- PAGINATOR LEFT -->
+  <ng-template pTemplate="paginatorleft">
+    <div class="text-gray-600 ms-2">Total Items: {{ itemOptions?.length || 0 }}</div>
+  </ng-template>
+
+</p-table>
+
     </div>
 
     <!-- Grand Total -->
@@ -175,6 +171,12 @@
       <input pInputText type="text" [value]="grandTotal" readonly placeholder="Total" class="w-40 text-right" />
     </div>
   </form>
+
+<p-dialog header="Child UOM"  [(visible)]="visibleDialog"
+    [modal]="true"
+    [style]="{ width: '80vw' }" >
+
+</p-dialog>
 
   <!-- Dialog -->
   <p-dialog
@@ -185,7 +187,8 @@
   >
     <app-addinventory
       [mode]="mode"
-      (close)="closeDialog()"
+      [editData]="selectedRow"
+      (close)="closeDialog($event)"
       (save)="onSave($event)"
       [transationid]="transationid"
       [itemOptions]="itemOptions"

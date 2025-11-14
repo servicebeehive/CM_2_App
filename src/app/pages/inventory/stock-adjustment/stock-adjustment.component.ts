@@ -1,6 +1,17 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
-import { AbstractControl, FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { Component } from '@angular/core';
+import {
+  AbstractControl,
+  FormArray,
+  FormBuilder,
+  FormGroup,
+  FormsModule,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators
+} from '@angular/forms';
+
 import { ButtonModule } from 'primeng/button';
 import { ChipModule } from 'primeng/chip';
 import { EditorModule } from 'primeng/editor';
@@ -12,212 +23,363 @@ import { DropdownModule } from 'primeng/dropdown';
 import { TableModule } from 'primeng/table';
 import { MessageModule } from 'primeng/message';
 import { DialogModule } from 'primeng/dialog';
-import { StockIn } from '@/types/stockin.model';
-import { InventoryService } from '@/core/services/inventory.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { CheckboxModule } from 'primeng/checkbox';
 import { AutoCompleteModule } from 'primeng/autocomplete';
-import { filter } from 'rxjs';
-import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
+
+import { StockIn } from '@/types/stockin.model';
+import { InventoryService } from '@/core/services/inventory.service';
 import { AuthService } from '@/core/services/auth.service';
+import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
+
 @Component({
-    selector: 'app-stock-adjustment',
-    imports: [
-        CommonModule,
-        EditorModule,
-        ReactiveFormsModule,
-        TableModule,
-        InputTextModule,
-        FormsModule,
-        ButtonModule,
-        SelectModule,
-        DropdownModule,
-        RippleModule,
-        ChipModule,
-        FluidModule,
-        MessageModule,
-        DialogModule,
-        ConfirmDialogModule,
-        CheckboxModule,
-        AutoCompleteModule,
-        GlobalFilterComponent
-    ],
-    templateUrl: './stock-adjustment.component.html',
-    styleUrl: './stock-adjustment.component.scss',
-    providers: [ConfirmationService]
+  selector: 'app-stock-adjustment',
+  standalone: true,
+  imports: [
+    CommonModule,
+    EditorModule,
+    ReactiveFormsModule,
+    TableModule,
+    InputTextModule,
+    FormsModule,
+    ButtonModule,
+    SelectModule,
+    DropdownModule,
+    RippleModule,
+    ChipModule,
+    FluidModule,
+    MessageModule,
+    DialogModule,
+    ConfirmDialogModule,
+    CheckboxModule,
+    AutoCompleteModule,
+    GlobalFilterComponent
+  ],
+  templateUrl: './stock-adjustment.component.html',
+  styleUrls: ['./stock-adjustment.component.scss'],
+  providers: [ConfirmationService]
 })
 export class StockAdjustmentComponent {
-    updateForm!: FormGroup;
+  updateForm!: FormGroup;
 
-    visibleDialog = false;
-    selection: boolean = true;
-    pagedProducts: StockIn[] = [];
-    first: number = 0;
-    rowsPerPage: number = 5;
-    products: StockIn[] = [];
-    filteredProducts: StockIn[] = [];
-    globalFilter: string = '';
-    filteredAdjustment: any[] = [];
-    showGlobalSearch: boolean = true;
-    // ✅ Move dropdown options into variables
-    categoryOptions = [];
-    itemOptions = [];
-    adjustment = [
-        { label: 'Increase', value: 'increase' },
-        { label: 'Decrease', value: 'decrease' }
-    ];
-    constructor(
-        private fb: FormBuilder,
-        private inventoryService: InventoryService,
-        private confirmationService: ConfirmationService,
-        private authService:AuthService,
-        private messageService:MessageService
-    ) {}
+  // paging
+  first: number = 0;
+  rowsPerPage: number = 10;
+  pagedProducts: StockIn[] = [];
 
-    ngOnInit(): void {
-        this.loadAllDropdowns();
-        this.onGetStockIn();
-        this.updateForm = this.fb.group({
-            category: ['', Validators.required],
-            item: ['', Validators.required]
-        });
+  // data
+  products: any[] = []; // original full list (raw product objects)
+  filteredProducts: any[] = []; // current filtered list shown in table
+  globalFilter: string = '';
 
-        
-        this.updateForm.valueChanges.subscribe(() => {
-            this.filterProducts();
-        });
-    }
-    quantityValidator(curStock: number, adjustmentTypeGetter: () => string | null): ValidatorFn {
-        return (control: AbstractControl): ValidationErrors | null => {
-            console.log('Validator running for:', curStock, adjustmentTypeGetter(), control.value);
-            const adjustmentType = adjustmentTypeGetter();
-            const enteredQty = control.value;
-            if (adjustmentType === 'decrease' && enteredQty != null && enteredQty > curStock) {
-                return { greaterThanStock: true };
-            }
-            return null;
-        };
-    }
-    onGetStockIn() {
-        this.products = this.inventoryService.productItem || [];
-        this.products.forEach((p: any) => {
-            p.selection = true;
-            p.adjustmentType = '';
-            p.quantityControl = this.fb.control(null, [Validators.required, this.quantityValidator(p.curStock, () => p.adjustmentType)]);
-        });
-        this.filteredProducts = [...this.products];
-    }
-    filterProducts() {
-        const category = this.updateForm.get('category')?.value;
-        const item = this.updateForm.get('item')?.value;
-        const searchTerm = this.globalFilter?.toLowerCase() || '';
-        this.filteredProducts = this.products.filter((p) => {
-            const categoryMatch = category ? p.category === category : true;
-            const itemMatch = item ? p.name === item : true;
-            const globalMatch = searchTerm ? Object.values(p).some((val) => String(val).toLowerCase().includes(searchTerm)) : true;
+  // dropdowns
+  categoryOptions: any[] = [];
+  itemOptions: any[] = [];
+  adjustment = [
+    { label: 'Increase', value: 'increase' },
+    { label: 'Decrease', value: 'decrease' }
+  ];
+  filteredAdjustment: any[] = [];
 
-            return categoryMatch && itemMatch && globalMatch;
-        });
-        console.log('filtered data:', this.filteredProducts);
-    }
-    applyGlobalFilter() {
-  const searchTerm = (this.globalFilter || '').toLowerCase().trim();
-  const selectedCategory = this.updateForm.get('category')?.value;
-  const selectedItem = this.updateForm.get('item')?.value;
+  constructor(
+    private fb: FormBuilder,
+    private inventoryService: InventoryService,
+    private confirmationService: ConfirmationService,
+    private authService: AuthService,
+    private messageService: MessageService
+  ) {}
 
-  this.filteredProducts = this.products.filter((p: any) => {
-    const matchesSearch =
-      !searchTerm ||
-      p.name?.toLowerCase().includes(searchTerm) ||
-      p.category?.toLowerCase().includes(searchTerm) ||
-      p.curStock?.toString().includes(searchTerm);
+  ngOnInit(): void {
+    this.updateForm = this.fb.group({
+      category: ['', Validators.required],
+      item: ['', Validators.required],
+      p_stock: this.fb.array([]) // formArray for rows
+    });
 
-    const matchesCategory = !selectedCategory || p.category === selectedCategory;
-    const matchesItem = !selectedItem || p.name === selectedItem;
+    this.loadAllDropdowns();
+    this.onGetStockIn();
 
-    return matchesSearch && matchesCategory && matchesItem;
-  });
-        // const searchTerm = this.updateForm.get('globalFilter')?.value?.toLowerCase() || '';
-        // this.filteredProducts = this.products.filter((p) => {
-        //     return Object.values(p).some((value) => String(value).toLowerCase().includes(searchTerm));
-        // });
+    // reactively filter products on form changes (category/item)
+    this.updateForm.get('category')?.valueChanges.subscribe(() => this.applyGlobalFilter());
+    this.updateForm.get('item')?.valueChanges.subscribe(() => this.applyGlobalFilter());
+  }
+
+  // ---------- Helpers ----------
+  getStockArray(): FormArray {
+    return this.updateForm.get('p_stock') as FormArray;
+  }
+
+  // Rebuild formArray from a list of product objects
+  private buildFormArrayFromProducts(products: any[]) {
+    const stockArray = this.getStockArray();
+    stockArray.clear();
+    products.forEach((p: any) => {
+      // Keep adjustment type on the plain product for validators that reference it
+      p.adjustmentType = p.adjustmentType || '';
+
+      const group = this.fb.group({
+        ItemId: [p.itemid ?? p.ItemId],
+        UOMId: [p.uomid ?? p.UOMId],
+        Quantity: [
+          p.Quantity ?? null,
+          [
+            Validators.required,
+            this.quantityValidator(p.curStock ?? p.curStock ?? 0, () => p.adjustmentType)
+          ]
+        ],
+        adjtype: [p.adjustmentType ?? '']
+      });
+
+      // bind controls to product so template can use row.quantityControl and row.adjustmentControl
+      p.quantityControl = group.get('Quantity') as AbstractControl;
+      p.adjustmentControl = group.get('adjtype') as AbstractControl;
+
+      stockArray.push(group);
+    });
+
+    // if table is paged, update pagedProducts
+    this.filteredProducts = [...products];
+    this.updatePagedProducts();
+  }
+
+  // ---------- Initial load ----------
+  onGetStockIn() {
+    // Use inventoryService.productItem if present else API call
+    this.products = this.inventoryService.productItem || [];
+
+    // Ensure each product has expected fields and controls
+    this.buildFormArrayFromProducts(this.products);
+  }
+
+  // ---------- Filtering ----------
+  applyGlobalFilter() {
+    const searchTerm = (this.globalFilter || '').toLowerCase().trim();
+    const selectedCategory = this.updateForm.get('category')?.value;
+    const selectedItem = this.updateForm.get('item')?.value;
+
+    this.filteredProducts = this.products.filter((p: any) => {
+      const matchesSearch =
+        !searchTerm ||
+        String(p.itemname ?? p.name ?? '')
+          .toLowerCase()
+          .includes(searchTerm) ||
+        String(p.categoryname ?? p.category ?? '')
+          .toLowerCase()
+          .includes(searchTerm) ||
+        String(p.curStock ?? p.currentstock ?? '')
+          .toLowerCase()
+          .includes(searchTerm);
+
+      const matchesCategory = !selectedCategory || p.category === selectedCategory || p.categoryid === selectedCategory;
+      const matchesItem = !selectedItem || p.name === selectedItem || p.itemid === selectedItem;
+
+      return matchesSearch && matchesCategory && matchesItem;
+    });
+
+    // rebuild form controls to match filteredProducts (keeps the same product objects but ensures controls exist)
+    this.buildFormArrayFromProducts(this.filteredProducts);
+  }
+
+  filterProducts() {
+    // older name for filtering, keep for compatibility
+    this.applyGlobalFilter();
+  }
+
+  // ---------- Adjustment change (dropdown) ----------
+  onAdjustmentChange(event: any, product: any, idx?: number) {
+    const selected = event?.value ?? event;
+    // keep product model updated (used by validator)
+    product.adjustmentType = selected;
+    // update linked form control if available
+    if (product.adjustmentControl) {
+      product.adjustmentControl.setValue(selected);
+    } else if (idx != null) {
+      const ctrl = (this.getStockArray().at(idx) as FormGroup).get('adjtype');
+      ctrl?.setValue(selected);
     }
-    onAdjustmentChange(event: any, product: any) {
-        const selected = event?.value ?? event;
-        product.adjustmentType = selected.value ?? selected;
-        product.quantityControl.updateValueAndValidity({ emitEvent: true });
+
+    // update quantity control validity because validator depends on adjustment type
+    if (product.quantityControl) {
+      product.quantityControl.updateValueAndValidity({ emitEvent: true });
     }
-    onPageChange(event: any) {
-        this.first = event.first;
-        this.rowsPerPage = event.rows;
-        this.updatePagedProducts();
+  }
+
+  // ---------- Validator ----------
+  quantityValidator(curStock: number, adjustmentTypeGetter: () => string | null): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const type = adjustmentTypeGetter();
+      const qty = control.value;
+      if (type === 'decrease' && qty != null && qty > (curStock ?? 0)) {
+        return { greaterThanStock: true };
+      }
+      return null;
+    };
+  }
+
+  // ---------- Autocomplete for adjustment (if you use autocomplete) ----------
+  search(event: any) {
+    const query = (event.query ?? '').toLowerCase();
+    if (!query) {
+      this.filteredAdjustment = [...this.adjustment];
+      return;
     }
-    updatePagedProducts() {
-        this.pagedProducts = this.products.slice(this.first, this.first + this.rowsPerPage);
-    }
-    search(event: any) {
-        const query = (event.query ?? '').toLowerCase();
-        if (!query) {
-            this.filteredAdjustment = [...this.adjustment];
-            return;
+    this.filteredAdjustment = this.adjustment.filter((u) =>
+      u.label.toLowerCase().includes(query)
+    );
+  }
+
+  // ---------- Pagination ----------
+  onPageChange(event: any) {
+    this.first = event.first;
+    this.rowsPerPage = event.rows;
+    this.updatePagedProducts();
+  }
+
+  updatePagedProducts() {
+    // slice from filteredProducts
+    this.pagedProducts = (this.filteredProducts || []).slice(this.first, this.first + this.rowsPerPage);
+  }
+
+  // ---------- Dropdown loaders ----------
+  createDropdownPayload(returnType: string) {
+    return {
+      uname: 'admin',
+      p_username: 'admin',
+      p_returntype: returnType,
+      clientcode: 'CG01-SE',
+      'x-access-token': this.authService.getToken()
+    };
+  }
+
+  loadAllDropdowns() {
+    this.OnGetItem();
+    this.OnGetCategory();
+  }
+
+  OnGetItem() {
+    const payload = this.createDropdownPayload('ITEM');
+    this.inventoryService.getdropdowndetails(payload).subscribe({
+      next: (res: any) => (this.itemOptions = res?.data || []),
+      error: (err) => console.error(err)
+    });
+  }
+
+  OnGetCategory() {
+    const payload = this.createDropdownPayload('CATEGORY');
+    this.inventoryService.getdropdowndetails(payload).subscribe({
+      next: (res: any) => (this.categoryOptions = res?.data || []),
+      error: (err) => console.error(err)
+    });
+  }
+
+  // ---------- Get adjustment data (Filter API) ----------
+  Onreturndropdowndetails() {
+    const category = this.updateForm.controls['category'].value;
+    const item = this.updateForm.controls['item'].value;
+
+    if (category && item) {
+      const payload = {
+        uname: 'admin',
+        p_categoryid: category,
+        p_itemid: item,
+        p_username: 'admin',
+        clientcode: 'CG01-SE',
+        'x-access-token': this.authService.getToken()
+      };
+
+      this.inventoryService.getadjustmentdata(payload).subscribe({
+        next: (res: any) => {
+          // API returned new list; set as products and rebuild formArray
+          this.products = res?.data || [];
+          this.filteredProducts = [...this.products];
+          this.buildFormArrayFromProducts(this.filteredProducts);
+          if(this.products.length==0){
+             let message='No Data Available for this Category and Item'
+        this.showSuccess(message)
+          }
+        },
+        error: (err) => {
+          console.error(err);
         }
-        this.filteredAdjustment = this.adjustment.filter((u) => u.label.toLowerCase().includes(query));
+      });
+    } else {
+      // if you want better UX, show a message instead of alert
+         let message='Please select both Category and Item before filtering.'
+        this.errorSuccess(message)
+    
     }
+  }
 
-    closeDialog() {
-        this.visibleDialog = false;
-    }
-    saveAllChanges() {
-      
-    }
-    createDropdownPayload(returnType: string) {
-  return {
-    uname: "admin",
-    p_username: "admin",
-    p_returntype: returnType,
-    clientcode: "CG01-SE",
-    "x-access-token": this.authService.getToken()
-  };
-}
-    loadAllDropdowns(){
-        this.OnGetItem();
-        this.OnGetCategory();
-    }
-    OnGetItem() {
-  const payload = this.createDropdownPayload("ITEM");
-  this.inventoryService.getdropdowndetails(payload).subscribe({
-    next: (res) => this.itemOptions = res.data,
-    error: (err) => console.log(err)
-  });
-}
-    OnGetCategory() {
-  const payload = this.createDropdownPayload("CATEGORY");
-  this.inventoryService.getdropdowndetails(payload).subscribe({
-    next: (res) => this.categoryOptions = res.data,
-    error: (err) => console.log(err)
-  });
-}
-    onSubmit() {
-        console.log(this.updateForm.value);
-        this.confirmationService.confirm({
-            message: 'Are you sure you want to make changes?',
-            header: 'Confirm',
-            acceptLabel: 'Yes',
-            rejectLabel: 'Cancel',
-            accept: () => {
-                this.saveAllChanges();
-            },
-            reject: () => {}
-        });
-    }
+  // ---------- Build payload and save ----------
+  OnChangedROPdown() {
+    // prepare p_stock from formArray values
+    const stockArray = this.getStockArray().value as any[]; // raw values
+    const trimmed = (stockArray || []).map((r) => ({
+      ItemId: r.ItemId,
+      UOMId: r.UOMId,
+      Quantity: r.Quantity,
+      adjtype: r.adjtype
+    })).filter((r) => r.Quantity != null && r.adjtype); // keep only filled rows
 
-    reset() {
-        this.updateForm.reset();
-        this.filteredProducts = [...this.products];
-    }
+    if (trimmed.length === 0) {
+        let message='No rows to save. Please enter Quantity and Adjustment Type for at least one row.'
+        this.errorSuccess(message)
    
-     showSuccess(message: string) {
-        this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
+      return;
     }
+
+    const payload = {
+      uname: 'admin',
+      p_stock: trimmed,
+      p_username: 'admin',
+      clientcode: 'CG01-SE',
+      'x-access-token': this.authService.getToken()
+    };
+
+    // call API
+    this.inventoryService.updatestockadjustment(payload).subscribe({
+      next: (res: any) => {
+        this.showSuccess((res?.data && res.data[0]?.msg) || 'Stock updated successfully');
+        // optionally refresh data
+        this.onGetStockIn();
+      },
+      error: (err) => console.error(err)
+    });
+  }
+
+  // ---------- Submit wrapper with confirm ----------
+  onSubmit() {
+    // do a confirmation dialog before final save
+    this.confirmationService.confirm({
+      message: 'Are you sure you want to make changes?',
+      header: 'Confirm',
+      acceptLabel: 'Yes',
+      rejectLabel: 'Cancel',
+      accept: () => {
+        // call save function
+        this.OnChangedROPdown();
+      },
+      reject: () => {}
+    });
+  }
+
+  // ---------- Utility ----------
+  reset() {
+    this.updateForm.reset();
+    // reinitialize form array and filteredProducts to full list
+    this.filteredProducts = [...this.products];
+    this.buildFormArrayFromProducts(this.products);
+  }
+
+  showSuccess(message: string) {
+    this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
+  }
+errorSuccess(message: string) {
+    this.messageService.add({ severity: 'error', summary: 'Error', detail: message });
+  }
+
+  closeDialog() {
+    // placeholder in case you use dialogs
+  }
 }

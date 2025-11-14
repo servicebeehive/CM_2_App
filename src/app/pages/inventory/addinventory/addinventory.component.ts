@@ -202,24 +202,25 @@ export class AddinventoryComponent {
 }
     ngOnChanges(changes: SimpleChanges): void {
         if (changes['editData'] && this.editData && this.mode === 'edit' && this.addForm) {
+          
             this.addForm.patchValue({
-                itemCode: this.editData.code,
-                itemName: this.editData.name,
-                category: this.editData.category,
-                curStock: this.editData.curStock,
-                purchasePrice: this.editData.purchasePrice,
+                itemCode: this.editData.itemsku,
+                itemName: this.editData.itemname,
+                category: this.editData.categoryid,
+                curStock: this.editData.currentstock,
+                purchasePrice: this.editData.costprice * this.editData.quantity,
                 qty: this.editData.quantity,
-                mrp: this.editData.mrp,
-                minStock: this.editData.minStock,
-                warPeriod: this.editData.warPeriod,
-                costPerItem: this.editData.costPerItem,
+                mrp: this.editData.saleprice,
+                minStock: this.editData.minimumstock,
+                warPeriod: this.editData.warrentyperiod,
+                costPerItem:this.editData.costprice,
                 location: this.editData.location,
-                parentUOM: this.editData.uom,
+                parentUOM: this.editData.uomid,
                 childUom: this.editData.childUOM,
                 conversion: this.editData.conversion,
                 mrpUom: this.editData.mrpUom,
                 discount: this.editData.discount,
-                gstItem: this.editData.gstItem,
+                gstItem: this.editData.gstitem === 'Y',
                 p_expirydate: this.editData.p_expirydate
             });
         } else if (this.mode === 'add' && this.addForm) {
@@ -328,8 +329,9 @@ export class AddinventoryComponent {
         if (this.addForm.invalid || !this.isChildUOMValid()) return;
         this.inventoryService.Oninsertitemdetails(this.mapFormToPayload(this.addForm.getRawValue(), this.products)).subscribe({
             next: (res) => {
-                this.showSuccess(res.data[0].msg);
-                this.close.emit();
+               const msg = res?.data?.[0]?.msg || "Item saved successfully";
+                this.showSuccess(msg);
+                this.close.emit(this.addForm.getRawValue());
             },
             error: (res) => {}
         });
@@ -365,6 +367,7 @@ export class AddinventoryComponent {
     purchasePrice: itemnamdata.pruchaseprice,   // ✅ fixed typo (was pruchaseprice)
     mrp: itemnamdata.saleprice,
     parentUOM: itemnamdata.uomid,
+
     warPeriod: itemnamdata.warrentyperiod
   });
 
