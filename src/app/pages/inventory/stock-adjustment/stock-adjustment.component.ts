@@ -206,6 +206,10 @@ export class StockAdjustmentComponent {
             acceptLabel: 'Yes',
             rejectLabel: 'Cancel',
             accept: () => {
+                let id =this.updateForm.controls['item'].value
+                let category=this.updateForm.controls['category'].value
+                
+                this.Onreturndropdowndetails(id,category)
                 this.saveAllChanges();
             },
             reject: () => {}
@@ -220,4 +224,24 @@ export class StockAdjustmentComponent {
      showSuccess(message: string) {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
     }
+  Onreturndropdowndetails(id:any,categoryid:number) {
+    
+  const payload ={
+     "uname": "admin",
+    "p_categoryid":categoryid,
+    "p_itemid":id,
+    "p_username": "admin",
+    "clientcode": "CG01-SE",
+    "x-access-token": this.authService.getToken()
+
+  }
+  this.inventoryService.getadjustmentdata(payload).subscribe({
+    next: (res) => this.filteredProducts = res.data,
+    error: (err) => console.log(err)
+  });
+}
+OnChangedROPdown(event:any,type:any){
+ 
+
+}
 }

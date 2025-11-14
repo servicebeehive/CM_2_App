@@ -83,6 +83,33 @@ Oninsertitemdetails(payload:any):Observable<any>{
 
 )
   }
+  Getreturndropdowndetails(payload:any):Observable<any>{
+    // console.log(payload)
+    let url=`${this.baseUrl}${API_ENDPOINTS.inventory.returndropdowndetails}`;
+    return this.http.post<any>(url,payload).pipe(catchError(error=>{
+        return throwError(()=>error)
+    }),
+
+)
+  }
+DeletStockinitem(payload:any):Observable<any>{
+    // console.log(payload)
+    let url=`${this.baseUrl}${API_ENDPOINTS.inventory.deletepurchasedetails}`;
+    return this.http.post<any>(url,payload).pipe(catchError(error=>{
+        return throwError(()=>error)
+    }),
+
+)
+  }
+getadjustmentdata(payload:any):Observable<any>{
+    // console.log(payload)
+    let url=`${this.baseUrl}${API_ENDPOINTS.inventory.adjustmentlist}`;
+    return this.http.post<any>(url,payload).pipe(catchError(error=>{
+        return throwError(()=>error)
+    }),
+
+)
+  }
 
   /** 🔹 Common error handler */
   private handleError(error: HttpErrorResponse): Observable<never> {
