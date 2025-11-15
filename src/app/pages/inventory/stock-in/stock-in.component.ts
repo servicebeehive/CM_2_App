@@ -276,6 +276,7 @@ get grandTotal():number{
 uomOptions: any[] = [];           // For UOM dropdown
 vendorOptions: any[] = [];        // For VENDOR dropdown
 purchaseIdOptions: any[] = [];    // For PURCHASE ID dropdown
+dateTime=new Date()
 
 OnGetDropdown(){
     let payload={
@@ -321,6 +322,33 @@ this.stockInService.OnPurchesHeaderCreate(payload).subscribe({
  console.log(res)
  this.transationid=res.data[0].tranpurchaseid
  this.transactionIdOptions=res.data
+ 
+
+const id = Number(res.data[0].tranpurchaseid);
+
+// check if ID already exists in array
+const exists = this.purchaseIdOptions.some(item => item.purchaseid === id);
+
+if (!exists) {
+  // create item
+  const newItem = {
+    invoicedate: null,
+    invoicenumber: "",
+    purchaseid: id,
+    remark: "",
+    vendorid: 0
+  };
+
+  // push only if not exists
+  this.purchaseIdOptions.push(newItem);
+
+}
+this.productForm.patchValue({
+  p_tranpurchaseid: id
+});
+// patch form always
+
+
  this.loadAllDropdowns()
     },
     error:(error)=>{

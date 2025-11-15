@@ -5,7 +5,8 @@
     <div>
         <p class="text font-semibold mb-4 border-b pb-2 text-gray-700">Transaction Id : {{transationid}}</p>
     </div>
-<div class="flex flex-col">
+     <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
+        <div class="flex flex-col">
   <label class="font-medium mb-1">Item Search</label>
 
   <!-- 🔽 Select Dropdown -->
@@ -23,13 +24,16 @@
         </div>
     </ng-template>
     
-    <ng-template #footer>
+    <!-- <ng-template #footer>
         <div class="p-3 p-button-primary p-button-sm" (click)="$event.stopPropagation()">
             <button pButton type="button" label="Add New Item" fluid severity="primary" text size="small" icon="pi pi-plus" (click)="addNewItem(itemSelect)"></button>
         </div>
-    </ng-template>
+    </ng-template> -->
   </p-select>
 </div>
+
+     </div>
+
     <!-- 🧩 Product Details -->
     <div>
  <h3 class="text-lg font-semibold mb-3 text-gray-700 border-b pb-2">Product Details</h3>
@@ -89,7 +93,7 @@
             <!-- Purchase Price -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Purchase Price <span class="text-red-500">*</span></label>
-                <input pInputText type="number" formControlName="purchasePrice" placeholder="Purchase Price"  />
+                <input pInputText type="number" min="1" formControlName="purchasePrice" placeholder="Purchase Price"  />
                 <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('purchasePrice')?.touched && addForm.get('purchasePrice')?.invalid">
                     <span *ngIf="addForm.get('purchasePrice')?.errors?.['required']">Purchase Price is required</span>
                     <span *ngIf="addForm.get('purchasePrice')?.errors?.['min']">Purchase Price must be greater than 0</span>
@@ -99,7 +103,7 @@
             <!-- Minimum Stock -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Min Stock</label>
-                <input pInputText formControlName="minStock" placeholder="Min Stock" />
+                <input pInputText formControlName="minStock" type="number" min="1" placeholder="Min Stock" />
             </div>
 
             <!-- Parent UOM -->
@@ -121,7 +125,7 @@
              <!-- Quantity -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Quantity <span class="text-red-500">*</span></label>
-                <input pInputText type="number" formControlName="qty" placeholder="Quantity" />
+                <input pInputText type="number" min="1" formControlName="qty" placeholder="Quantity" />
                 <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('qty')?.touched && addForm.get('qty')?.invalid">
                     <span *ngIf="addForm.get('qty')?.errors?.['required']">Quantity is required</span>
                 </small>
@@ -148,7 +152,7 @@
              <!-- MRP -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">MRP <span class="text-red-500">*</span></label>
-                <input pInputText type="number" formControlName="mrp" placeholder="MRP" />
+                <input pInputText type="number" min="1" formControlName="mrp" placeholder="MRP" />
                 <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('mrp')?.touched || addForm.hasError('mrpGreaterThanPurchase')">
                     <span *ngIf="addForm.get('mrp')?.errors?.['required']">MRP is required</span>
                     <span *ngIf="addForm.hasError('mrpGreaterThanPurchase')">MRP must be greater than or equal to Purchase Price</span>
@@ -158,7 +162,7 @@
              <!-- Discount -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Discount (%)</label>
-                <input pInputText type="number" formControlName="discount" placeholder="Discount" readonly />
+                <input pInputText   formControlName="discount" [disabled]="true" placeholder="Discount" readonly />
                 <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('discount')?.touched && addForm.get('discount')?.invalid"> </small>
             </div>
 
@@ -182,6 +186,7 @@
     <!-- 🧮 Child UOM Table -->
     <div class="flex flex-col mt-6">
         <h3 class="text-lg font-semibold mb-3 text-gray-700 border-b pb-2">Child UOM Details</h3>
+        <small class=" text-red-500">Child UOM cannot be the same as Parent UOM.</small>
         <div class="flex gap-4 items-start">
             <div class="flex-1">
                 <p-table [value]="products" class="w-full">
@@ -197,7 +202,8 @@
 <tr>
   <td>
     <p-dropdown
-      [options]="uomOptions"
+    [options]="getFilteredChildUOM()"
+     
       optionLabel="fieldname" optionValue="fieldid"
       [filter]="true"
       filterPlaceholder="Search Child UOM"
@@ -211,7 +217,7 @@
 
   <td>
     <input pInputText
-      type="number"
+      type="number" min="1"
       [(ngModel)]="product.conversion"
       [ngModelOptions]="{standalone: true}"
       (ngModelChange)="isChildUOMValid()"
@@ -221,7 +227,7 @@
 
   <td>
     <input pInputText
-      type="number"
+      type="number" min="1"
       [(ngModel)]="product.mrpUom"
       [ngModelOptions]="{standalone: true}"
       (ngModelChange)="isChildUOMValid()"
@@ -247,7 +253,11 @@
     <!-- 🔘 Form Buttons -->
     <div class="flex justify-end items-center mt-8 border-t pt-4">
         <div class="flex gap-4">
-             <button pButton type="button" label="Cancel" class="p-button-secondary" (click)="onCancel()"></button>
+          
+                  <button pButton type="button" label="Cancel"  class="p-button-secondary" (click)="onCancel()"></button>
+      <button pButton type="button" label="Reset" class="p-button-outlined"  (click)="Reset()"></button>
+
+           
             <button pButton type="submit" label="Submit" class="p-button-warning" [disabled]="addForm.invalid || !isChildUOMValid()"></button>
 
         </div>
