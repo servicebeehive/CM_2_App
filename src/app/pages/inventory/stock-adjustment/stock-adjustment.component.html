@@ -112,19 +112,20 @@
                                 <!-- Adj Type -->
                                 <td>
                                       <div class="grid items-center gap-2">
-                                        <input 
+                                        <p-dropdown 
                                             pInputText 
                                             type="number" 
                                             [formControl]="row.adjustmentControl" 
-                                            placeholder="{{ row.adjtype }}" />
+                                            placeholder="{{ row.adjtype }}" >
+                                            </p-dropdown>
 <!-- 
                                         <span class="text-red-500" 
                                               *ngIf="row.adjtype.touched && row.quantityControl.hasError('greaterThanStock')">
                                            Adj type cannot be greater than current stock ({{ row.curStock }}).
                                         </span> -->
                                     </div>
-                                    <!-- <input 
-                                    <p-autocomplete
+                                     <!-- <input  -->
+                                    <!-- <p-autocomplete
                                         [(ngModel)]="row.adjustmentType"
                                         [dropdown]="true"
                                         [suggestions]="filteredAdjustment"
@@ -141,7 +142,9 @@
                                             pInputText 
                                             type="number" 
                                             [formControl]="row.quantityControl" 
-                                            placeholder="{{ row.quantity }}" />
+                                            placeholder="{{ row.quantity }}" 
+                                            (keydown)="blockMinus($event)"
+                                             />
 <!-- 
                                         <span class="text-red-500" 
                                               *ngIf="row.quantityControl.touched && row.quantityControl.hasError('greaterThanStock')">

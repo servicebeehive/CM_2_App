@@ -122,7 +122,7 @@ export class AddinventoryComponent {
                 itemName: ['', [Validators.required, Validators.maxLength(500)]],
                 curStock: [''],
                 purchasePrice: ['1135', [Validators.required, Validators.min(1)]],
-                minStock: ['10'],
+                minStock: [''],
                 warPeriod: [''],
                 p_expirydate: [],
                 costPerItem: [{ value: '', disabled: true }],
@@ -162,6 +162,11 @@ export class AddinventoryComponent {
         }
         return null;
     };
+blockMinus(event: KeyboardEvent) {
+  if (event.key === '-' || event.key === 'Minus') {
+    event.preventDefault();
+  }
+}
 
     updateCostPerItem(): void {
         const purchasePrice = parseFloat(this.addForm.get('purchasePrice')?.value);

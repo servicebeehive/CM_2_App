@@ -109,6 +109,11 @@ export class StockAdjustmentComponent {
   getStockArray(): FormArray {
     return this.updateForm.get('p_stock') as FormArray;
   }
+blockMinus(event: KeyboardEvent) {
+  if (event.key === '-' || event.key === 'Minus') {
+    event.preventDefault();
+  }
+}
 
   // Rebuild formArray from a list of product objects
   private buildFormArrayFromProducts(products: any[]) {
@@ -278,7 +283,7 @@ export class StockAdjustmentComponent {
     const category = this.updateForm.controls['category'].value;
     const item = this.updateForm.controls['item'].value;
 
-    if (category && item) {
+    if (category || item) {
       const payload = {
         uname: 'admin',
         p_categoryid: category,
