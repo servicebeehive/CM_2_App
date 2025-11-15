@@ -113,8 +113,12 @@
                                 <td>
                                       <div class="grid items-center gap-2">
                                         <p-dropdown 
-                                            pInputText 
+                                            [options]="adjustment" 
+                                            optionLabel="label"
+                                            optionValue="value"
+                                            [filter]="true"
                                             type="number" 
+                                            appendTo="body"
                                             [formControl]="row.adjustmentControl" 
                                             placeholder="{{ row.adjtype }}" >
                                             </p-dropdown>
@@ -145,8 +149,11 @@
                                             placeholder="{{ row.quantity }}" 
                                             (keydown)="blockMinus($event)"
                                              />
-<!-- 
-                                        <span class="text-red-500" 
+                                     <small class="text-red-500 ms-3 mt-1" *ngIf="updateForm.get('quantity')?.touched && updateForm.get('quantity')?.invalid">
+                    <span *ngIf="updateForm.get('quantity')?.errors?.['required']">Quantity is required</span>
+                    <span *ngIf="updateForm.get('quantity')?.errors?.['min']">Quantity must be greater than 0</span>
+                </small>
+                                      <!--  <span class="text-red-500" 
                                               *ngIf="row.quantityControl.touched && row.quantityControl.hasError('greaterThanStock')">
                                             Quantity cannot be greater than current stock ({{ row.curStock }}).
                                         </span> -->

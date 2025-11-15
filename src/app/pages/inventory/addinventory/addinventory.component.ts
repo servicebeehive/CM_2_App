@@ -128,7 +128,7 @@ export class AddinventoryComponent {
                 costPerItem: [{ value: '', disabled: true }],
                 mrp: ['', [Validators.required, Validators.min(1)]],
                 location: ['', Validators.maxLength(100)],
-                qty: ['', Validators.required],
+                qty: ['', Validators.required,Validators.min(1)],
                 discount: [''],
                 activeItem: [true],
                 gstItem: [true],
@@ -285,7 +285,8 @@ blockMinus(event: KeyboardEvent) {
 
     mapFormToPayload(form: any, childUOM: any[]) {
         return {
-            p_operationtype: this.mode === 'add' ? 'PUR_INSERT' : 'PUR_UPDATE',
+            // p_operationtype: this.mode === 'add' ? 'PUR_INSERT' : 'PUR_UPDATE',
+             p_operationtype:'PUR_INSERT',
             p_purchaseid: this.transationid.toString(),
 
             p_itemsku: form.itemCode,
@@ -423,7 +424,8 @@ OnChildOM(id: number) {
   
 }
 Reset(){
-    this.addForm.reset()
+    this.addForm.reset();
+     this.resetChildUOMTable();
 }
 getFilteredChildUOM() {
   const parent = this.addForm.get('parentUOM')?.value;

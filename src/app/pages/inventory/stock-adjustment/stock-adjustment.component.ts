@@ -121,7 +121,7 @@ blockMinus(event: KeyboardEvent) {
     stockArray.clear();
     products.forEach((p: any) => {
       // Keep adjustment type on the plain product for validators that reference it
-      p.adjustmentType = p.adjustmentType || '';
+      p.adjustmentType = p.adjustmentType || 'increase';
 
       const group = this.fb.group({
         ItemId: [p.itemid ?? p.ItemId],
@@ -130,10 +130,11 @@ blockMinus(event: KeyboardEvent) {
           p.Quantity ?? null,
           [
             Validators.required,
+            Validators.min(1),
             this.quantityValidator(p.curStock ?? p.curStock ?? 0, () => p.adjustmentType)
           ]
         ],
-        adjtype: [p.adjustmentType ?? '']
+        adjtype: [p.adjustmentType]
       });
 
       // bind controls to product so template can use row.quantityControl and row.adjustmentControl
