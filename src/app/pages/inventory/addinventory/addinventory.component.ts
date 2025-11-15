@@ -89,6 +89,7 @@ export class AddinventoryComponent {
     public authService = inject(AuthService);
     addForm!: FormGroup;
     filteredItemCode: any[] = [];
+    dateTime=new Date()
     // ✅ Move dropdown options into variables
     itemCodeOptions = [];
     parentUOMOptions = [];
@@ -223,6 +224,7 @@ export class AddinventoryComponent {
                 gstItem: this.editData.gstitem === 'Y',
                 p_expirydate: this.editData.p_expirydate
             });
+            this.OnChildOM(this.editData.itemid)
         } else if (this.mode === 'add' && this.addForm) {
             this.addForm.reset();
             this.resetChildUOMTable();
@@ -352,6 +354,7 @@ export class AddinventoryComponent {
       
         console.log('itemnamdata', itemnamdata);
       if (itemnamdata) {
+
   const expiry = itemnamdata.expirydate ? new Date(itemnamdata.expirydate) : null;
 
   this.addForm.patchValue({
@@ -371,11 +374,56 @@ export class AddinventoryComponent {
     warPeriod: itemnamdata.warrentyperiod
   });
 
-  console.log('✅ Form after patch:', this.addForm.value);
+  console.log('✅ Form after patch:', itemnamdata.itemid);
+  this.OnChildOM(itemnamdata.itemid)
 }
 
     }
     showSuccess(message: string) {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
     }
+OnChildOM(id: number) {
+ 
+    const payload = {
+      uname: "admin",
+      p_username: "admin",
+      p_returntype: "CHILDUOM",
+      p_returnvalue:id.toString(),
+      clientcode: "CG01-SE",
+      "x-access-token": this.authService.getToken()
+    };
+
+    this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+      next: (res: any) => {
+        console.log("CHILD UOM DATA =>", res.data);
+
+        if (!res.data || res.data.length === 0) {
+          // No need to show error now
+          this.products = []; // or keep existing rows
+          return;
+        }
+
+        // ✅ Assign API data into table rows (NO FUNCTIONALITY CHANGES)
+        this.products = res.data.map((x: any) => ({
+          childUOM: x.childuomid,        // bind to dropdown
+          conversion: x.uomconversion,   // number input
+          mrpUom: x.childmrp             // number input
+        }));
+      },
+
+      error: (err) => {
+        console.error(err);
+      }
+    });
+  
+}
+Reset(){
+    this.addForm.reset()
+}
+getFilteredChildUOM() {
+  const parent = this.addForm.get('parentUOM')?.value;
+  return this.uomOptions.filter(u => u.fieldid !== parent);
+}
+
+
 }

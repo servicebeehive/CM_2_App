@@ -61,7 +61,7 @@
         <!-- Invoice Date -->
         <div class="flex flex-col">
           <label class="font-medium mb-1">Invoice Date</label>
-          <p-datepicker  fluid formControlName="p_invoicedate" [showIcon]="true" placeholder="Invoice Date"></p-datepicker>
+          <p-datepicker  fluid formControlName="p_invoicedate" [maxDate]="dateTime" [showIcon]="true" placeholder="Invoice Date"></p-datepicker>
         </div>
 
         <!-- Remark -->
@@ -137,7 +137,12 @@
       <td>{{ product.saleprice }}</td>
 
       <td>{{ product.uomname }}</td>
-      <td>{{ product.childuom }}</td>
+      <td>{{ product.childuom }}   <button pButton 
+        icon="pi pi-eye" type="button"
+        class="p-button-sm p-button-primary ms-2"
+        (click)="viewItem(product.itemid)">
+</button>
+ </td>
 
       <!-- Discount not in response → left blank -->
       <td>{{product.discount}}</td>
@@ -151,14 +156,14 @@
       <td class="text-center">
         <i class="pi pi-pencil cursor-pointer text-blue-500" (click)="openEditDialog(product)"></i>
         <i class="pi pi-trash ms-2 cursor-pointer text-red-500" (click)="deleteItem(product)"></i>
-         <i class="pi pi-eye ms-2 cursor-pointer text-green-500" (click)="viewItem(product)"></i>
+       
       </td>
     </tr>
   </ng-template>
 
   <!-- PAGINATOR LEFT -->
   <ng-template pTemplate="paginatorleft">
-    <div class="text-gray-600 ms-2">Total Items: {{ itemOptions?.length || 0 }}</div>
+    <div class="text-gray-600 ms-2">Total Items: {{ itemOptionslist?.length || 0 }}</div>
   </ng-template>
 
 </p-table>
@@ -196,6 +201,7 @@
       [uomOptions]="uomOptions"
       [vendorOptions]="vendorOptions"
       [purchaseIdOptions]="purchaseIdOptions"
+      
       (childUom)="onChildUom($event)"
      >
     </app-addinventory>
@@ -204,3 +210,32 @@
   <!-- Confirm Dialog -->
   <p-confirmDialog></p-confirmDialog>
 </div>
+<p-dialog 
+  header="Child UOM Details" 
+  [(visible)]="childUomDialog" 
+  [modal]="true" 
+  [style]="{width:'450px'}">
+
+  <p-table 
+    [value]="childUOMList"
+    [responsiveLayout]="'scroll'"
+    class="p-datatable-gridlines">
+
+    <ng-template pTemplate="header">
+      <tr class="bg-yellow-400">
+        <th>Child UOM</th>
+        <th>Conversion</th>
+        <th>Child MRP</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-row>
+      <tr>
+        <td>{{ row.uomname }}</td>
+        <td>{{ row.uomconversion }}</td>
+        <td>{{ row.childmrp }}</td>
+      </tr>
+    </ng-template>
+
+  </p-table>
+</p-dialog>
