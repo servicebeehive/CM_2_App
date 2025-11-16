@@ -259,8 +259,9 @@ get grandTotal():number{
             invoiceDate:'',
             remark:''
             });
+            // this.transationid='null';
         this.products=[];
-        
+        this.itemOptionslist = [];
         this.first=0;
         this.pagedProducts=[];
         this.childUomStatus=false;

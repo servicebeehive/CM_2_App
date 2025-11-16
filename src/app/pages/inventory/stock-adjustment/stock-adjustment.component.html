@@ -22,6 +22,7 @@
                                 filterPlaceholder="Search Category"
                                 formControlName="category"
                                 placeholder="Category"
+                                [showClear]="true"
                                 (onChange)="applyGlobalFilter()">
                             </p-dropdown>
                         </div>
@@ -31,17 +32,17 @@
                             <label class="font-medium mb-1">Item</label>
                             <p-dropdown 
                                 [options]="itemOptions"
-                                optionLabel="itemname"
+                                optionLabel="itemcombine"
                                 optionValue="itemid"
                                 [filter]="true"
                                 filterPlaceholder="Search Item"
                                 formControlName="item"
                                 placeholder="Item"
+                                [showClear]="true"
                                 (onChange)="applyGlobalFilter()">
                             </p-dropdown>
                         </div>
 
-                        <!-- Filter Button -->
                         <div class="flex flex-col">
                             <label class="font-medium mb-1 invisible">label</label>
                             <button 
@@ -94,6 +95,8 @@
                                 <th>Category</th>
                                 <th>UOM</th>
                                 <th>Current Stock</th>
+                                <th>Cost/Item</th>
+                                <th>MRP</th>
                                 <th>Adj Type</th>
                                 <th>Quantity</th>
                             </tr>
@@ -104,10 +107,12 @@
                             <tr>
                                 <td><p-tableCheckbox [value]="row"></p-tableCheckbox></td>
 
-                                <td>{{ row.itemname }}</td>
+                                <td>{{ row.combine}}</td>
                                 <td>{{ row.categoryname }}</td>
-                                <td>{{ row.uomname }}</td>
-                                <td>{{ row.curStock }}</td>
+                                 <td>{{ row.uomname }}</td>
+                                <td>{{ row.totalstock }}</td>
+                                <td>{{ row.costprice}}</td>
+                                <td>{{ row.saleprice}}</td>
 
                                 <!-- Adj Type -->
                                 <td>
