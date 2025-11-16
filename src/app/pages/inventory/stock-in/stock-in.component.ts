@@ -312,16 +312,13 @@ OnPurchesHeaderCreate(data:any){
     "p_loginuser": "admin",
     "clientcode": "CG01-SE",
     "x-access-token":this.authService.getToken()
-
-
-
 };
 
 this.stockInService.OnPurchesHeaderCreate(payload).subscribe({
     next:(res)=>{
  console.log(res)
- this.transationid=res.data[0].tranpurchaseid
- this.transactionIdOptions=res.data
+ this.transationid=res.data[0].tranpurchaseid;
+ this.transactionIdOptions=res.data;
  
 
 const id = Number(res.data[0].tranpurchaseid);

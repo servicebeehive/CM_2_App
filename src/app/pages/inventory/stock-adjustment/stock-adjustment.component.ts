@@ -138,7 +138,7 @@ blockMinus(event: KeyboardEvent) {
       });
 
       // bind controls to product so template can use row.quantityControl and row.adjustmentControl
-      p.quantityControl = group.get('Quantity') as AbstractControl;
+      p.quantityControl ='30';
       p.adjustmentControl = group.get('adjtype') as AbstractControl;
 
       stockArray.push(group);

@@ -57,7 +57,7 @@
                 <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Bill No</label>
-                        <p-dropdown [options]="billNoOptions" optionLabel="billno" optionValue="billno" [filter]="true" filterPlaceholder="Search Bill No." formControlName="billNo" placeholder="Bill No." (onChange)="salesDetail($event)"> </p-dropdown>
+                        <p-dropdown [options]="billNoOptions" optionLabel="billno" optionValue="billno" [filter]="true" filterPlaceholder="Search Bill No." formControlName="billNo" placeholder="Bill No." (onChange)="saleIdDetail($event)"> </p-dropdown>
                         <small class="text-red-500 ms-3 mt-1" *ngIf="salesForm.get('billNo')?.touched">
                             <span *ngIf="salesForm.get('billNo')?.errors?.['required']">Bill No is required</span>
                         </small>
@@ -90,7 +90,7 @@
                         [value]="filteredProducts"
                         [globalFilterFields]="['name']"
                         [filters]="{ global: { value: globalFilter, matchMode: 'contains' } }"
-                        dataKey="code"
+                        dataKey="saleIdDetail"
                         [paginator]="true"
                         [rows]="10"
                         [rowsPerPageOptions]="[5, 10, 20, 50]"
