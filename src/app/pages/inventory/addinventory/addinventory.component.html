@@ -112,7 +112,7 @@
             <!-- Parent UOM -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Parent UOM <span class="text-red-500">*</span></label>
-                <p-dropdown [options]="uomOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search Parent UOM" formControlName="parentUOM" placeholder="Parent UOM" [readonly]="mode==='edit'"> </p-dropdown>
+                <p-dropdown [options]="uomOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true"  (onChange)="onItemParentUM($event)" filterPlaceholder="Search Parent UOM" formControlName="parentUOM" placeholder="Parent UOM" [readonly]="mode==='edit'"> </p-dropdown>
                 <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('parentUOM')?.touched">
                     <span *ngIf="addForm.get('parentUOM')?.errors?.['required']">Parent UOM is required</span>
                 </small>
@@ -137,7 +137,7 @@
             <!-- Expiry Date -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Expiry Date</label>
-                          <p-datepicker  fluid formControlName="p_expirydate" [minDate]="dateTime" placeholder="Warranty Period" [showIcon]="true" placeholder="Invoice Date"></p-datepicker>
+                          <p-datepicker  fluid formControlName="p_expirydate" dateFormat="dd-mm-yy" [minDate]="dateTime" placeholder="Warranty Period" [showIcon]="true" placeholder="Invoice Date"></p-datepicker>
                 <!-- <input pInputText formControlName="warPeriod" placeholder="Warranty Period" (keypress)="allowOnlyNumbers($event)" /> -->
             </div>
 
@@ -206,7 +206,7 @@
 <tr>
   <td>
     <p-dropdown
-    [options]="getFilteredChildUOM()"
+    [options]="this.ChilduomOptions"
      
       optionLabel="fieldname" optionValue="fieldid"
       [filter]="true"

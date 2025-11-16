@@ -86,6 +86,7 @@ export class AddinventoryComponent {
     @Input() uomOptions: any[] = [];
     @Input() vendorOptions: any[] = [];
     @Input() purchaseIdOptions: any[] = [];
+    public ChilduomOptions:[]=[]
     public authService = inject(AuthService);
     addForm!: FormGroup;
     filteredItemCode: any[] = [];
@@ -124,7 +125,7 @@ export class AddinventoryComponent {
                 purchasePrice: ['1135', [Validators.required, Validators.min(1)]],
                 minStock: [''],
                 warPeriod: [''],
-                p_expirydate: [],
+                p_expirydate: [null],
                 costPerItem: [{ value: '', disabled: true }],
                 mrp: ['', [Validators.required, Validators.min(1)]],
                 location: ['', Validators.maxLength(100)],
@@ -232,6 +233,7 @@ blockMinus(event: KeyboardEvent) {
               this.addForm.get('itemCode')?.disable();
     this.addForm.get('parentUOM')?.disable();
             this.OnChildOM(this.editData.itemid)
+            this.viewItem(this.editData.uomid)
         } else if (this.mode === 'add' && this.addForm) {
             this.addForm.reset();
             this.resetChildUOMTable();
@@ -286,6 +288,9 @@ blockMinus(event: KeyboardEvent) {
     }
 
     mapFormToPayload(form: any, childUOM: any[]) {
+       console.log(form)
+     //   return
+        
         return {
             // p_operationtype: this.mode === 'add' ? 'PUR_INSERT' : 'PUR_UPDATE',
              p_operationtype:'PUR_INSERT',
@@ -307,7 +312,7 @@ blockMinus(event: KeyboardEvent) {
             p_currentstock: Number(form.curStock),
 
             // Date Format (dd/MM/yyyy)
-            p_expirydate: this.datePipe.transform(form.expiryDate, 'dd/MM/yyyy'),
+            p_expirydate: this.datePipe.transform(this.addForm.controls['p_expirydate'].value, 'dd/MM/yyyy'),
 
             p_currencyid: Number(form.currencyId || 1),
             p_taxid: Number(form.taxId || 0),
@@ -370,7 +375,7 @@ blockMinus(event: KeyboardEvent) {
     itemName: itemnamdata.itemname,
     category: itemnamdata.categoryid,
     curStock: itemnamdata.currentstock,
-    p_expirydate: expiry,
+    p_expirydate:expiry,
     gstItem: itemnamdata.gstitem ==='Y' ? true : false,       // ✅ Convert 'Y'/'N' → boolean
     activeItem: itemnamdata.isactive==='Y' ? true : false,   // ✅ Convert 'Y'/'N' → boolean
     location: itemnamdata.location,
@@ -378,12 +383,14 @@ blockMinus(event: KeyboardEvent) {
     purchasePrice: itemnamdata.pruchaseprice,   // ✅ fixed typo (was pruchaseprice)
     mrp: itemnamdata.saleprice,
     parentUOM: itemnamdata.uomid,
+    qty:itemnamdata.qty,
 
     warPeriod: itemnamdata.warrentyperiod
   });
 
   console.log('✅ Form after patch:', itemnamdata.itemid);
   this.OnChildOM(itemnamdata.itemid)
+  this.viewItem(itemnamdata.uomid)
 }
 
     }
@@ -429,9 +436,44 @@ Reset(){
     this.addForm.reset();
      this.resetChildUOMTable();
 }
-getFilteredChildUOM() {
-  const parent = this.addForm.get('parentUOM')?.value;
-  return this.uomOptions.filter(u => u.fieldid !== parent);
+// getFilteredChildUOM() {
+//   const parent = this.addForm.get('parentUOM')?.value;
+//   return this.uomOptions.filter(u => u.fieldid !== parent);
+// }
+onItemParentUM(event:any){
+    this.viewItem(event.value)
+
+}
+viewItem(id: number) {
+  console.log(id)
+  this.uomOptions=[]
+
+  const payload = {
+    uname: "admin",
+    p_username: "admin",
+    p_returntype: "CHILDUOMMASTER",
+    P_returnvalue:id.toString(),
+    clientcode: "CG01-SE",
+    "x-access-token": this.authService.getToken()
+  };
+
+  this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+    next: (res: any) => {
+
+      if (!res.data || res.data.length === 0) {
+      //  this.showError("No Child UOM Data Available");
+        return;
+      }
+
+      this.ChilduomOptions = res.data; // assign data
+    //   this.childUomDialog = true;   // open popup
+    },
+    error: (err) => {
+     // this.showError("Failed to load Child UOM Details");
+      console.error(err);
+    }
+  });
+
 }
 
 
