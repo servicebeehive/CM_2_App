@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, ViewChild, viewChild } from '@angular/core';
+import { Component, ViewChild, inject } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { ChipModule } from 'primeng/chip';
@@ -19,10 +19,11 @@ import { DialogModule } from 'primeng/dialog';
 import { StockIn } from '@/types/stockin.model';
 import { InventoryService } from '@/core/services/inventory.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ConfirmationService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { CheckboxModule } from 'primeng/checkbox';
 import { AddinventoryComponent } from '@/pages/inventory/addinventory/addinventory.component';
 import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
+import { AuthService } from '@/core/services/auth.service';
 @Component({
     selector: 'app-sales',
     imports: [
@@ -46,13 +47,14 @@ import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.comp
         ConfirmDialogModule,
         CheckboxModule,
         AddinventoryComponent,
-        GlobalFilterComponent
+        // GlobalFilterComponent
     ],
     templateUrl: './sales.component.html',
     styleUrl: './sales.component.scss',
     providers: [ConfirmationService]
 })
 export class SalesComponent {
+    public transactionid:any;
     salesForm!: FormGroup;
     visibleDialog=false;
     selectedRow: any = null;
@@ -62,36 +64,37 @@ export class SalesComponent {
     rowsPerPage: number = 5;
     products: StockIn[] = [];
     filteredProducts: StockIn[] = [];
+    filteredCustomerName: any[]=[];
+    filteredMobile: any[]=[];
     globalFilter: string = '';
      childUomStatus:boolean =false;
      showGlobalSearch:boolean=true;
      today: Date = new Date();
+     public authService=inject(AuthService);
+     searchValue:string='';
+     itemOptions:any[]=[];
+      transactionIdOptions = []; 
+      public itemOptionslist:[]=[]
       //for testing
   @ViewChild(AddinventoryComponent) addInventoryComp!:AddinventoryComponent;
 
     // ✅ Move dropdown options into variables
-    billNoOptions = [
-        { label: 'Bill 1', value: 'bill1' },
-        { label: 'Bill 2', value: 'bill2' },
-        { label: 'Bill 3', value: 'bill3' }
-    ];
-
-    holdTransIdOptions = [
-        { label: 'Trans 1', value: 'trans1' },
-        { label: 'Trans 2', value: 'trans2' },
-        { label: 'Trans 3', value: 'trans3' }
-    ];
+    billNoOptions:any []= [];
 
     constructor(
         private fb: FormBuilder,
         private stockInService: InventoryService,
-        private confirmationService: ConfirmationService
+        private confirmationService: ConfirmationService,
+        private salesService:InventoryService,
+        private messageService : MessageService
     ) {}
 
     ngOnInit(): void {
+        this.OnGetDropdown();
+        this.loadAllDropdowns();
          this.onGetStockIn();
         this.salesForm = this.fb.group({
-            billNo: ['', Validators.required],
+            billNo: [''],
             customerName: [''],
             mobile: ['', [Validators.pattern(/^[0-9]{10}$/)]],
             transactionDate:[this.today],
@@ -117,18 +120,9 @@ export class SalesComponent {
         }
     }
 
-    // noFutureDateValidator():ValidatorFn{
-    //    return (control:AbstractControl) : ValidationErrors | null =>{
-    //     const selectedDate = new Date(control.value);
-    //     const today = new Date();
-    //     selectedDate.setHours(0,0,0,0);
-    //     today.setHours(0,0,0,0);
-    //     return selectedDate > today ? { futureDateNotAllowed : true} : null ;
-    //    };
-    // }
-
     onGetStockIn() {
         this.products = this.stockInService.productItem || [];
+        console.log('sales',this.products.values);
         this.products.forEach((p:any) => {
             p.selection = true;
             // p.quantity = 0;
@@ -146,17 +140,33 @@ export class SalesComponent {
         });
         console.log('filtered data:', this.filteredProducts);
     }
+    
+    // applyGlobalFilter() {
+    //     // const searchTerm = this.salesForm.get('globalFilter')?.value?.toLowerCase() || '';
+    //     // this.filteredProducts = this.products.filter((p) => {
+    //     //     return Object.values(p).some((value) => String(value).toLowerCase().includes(searchTerm));
+    //     // });
+    //      const searchTerm=this.globalFilter?.toLowerCase().trim() || '';
+    //     this.filteredProducts=this.products.filter((p:any)=>{
+    //          return Object.values(p).some((val)=>String(val).toLowerCase().includes(searchTerm));
+    //     });
+    // }
 
-    applyGlobalFilter() {
-        // const searchTerm = this.salesForm.get('globalFilter')?.value?.toLowerCase() || '';
-        // this.filteredProducts = this.products.filter((p) => {
-        //     return Object.values(p).some((value) => String(value).toLowerCase().includes(searchTerm));
-        // });
-         const searchTerm=this.globalFilter?.toLowerCase().trim() || '';
-        this.filteredProducts=this.products.filter((p:any)=>{
-             return Object.values(p).some((val)=>String(val).toLowerCase().includes(searchTerm));
-        });
+   filterCustomerName(event:any){
+    const query= event.query.toLowerCase();
+    if(!this.filteredCustomerName.some(v=>v.label.toLowerCase()===query)){
+        this.filteredCustomerName.push({label:event.query});
     }
+   }
+
+     filterMobile(event:any){
+    const query= event.query.toLowerCase();
+    if(!this.filteredMobile.some(v=>v.label.toLowerCase()===query)){
+        this.filteredMobile.push({label:event.query});
+    }
+   }
+
+
     updateTotal(item:any){
         const qty = Number(item.quantity);
         const mrp = Number(item.mrp) || 0;
@@ -233,6 +243,155 @@ export class SalesComponent {
    print(){
 
    }
+   OnSalesHeaderCreate(data:any){
+    const payload:any={
+        "uname":"admin",
+        "p_transactiontype":"SALE",
+        "p_transactionid":0,
+        "p_transactiondate":"09/11/2025",
+        "p_customername":"Arushi",
+        "p_mobileno":"9999999990",
+        "p_totalcost":1000,
+        "p_totalsale":1200,
+        "p_overalldiscount":10,
+        "p_roundoff":"0.20",
+        "p_totalpayable":1080,
+        "p_currencyid":0,
+        "p_gsttran":"N",
+        "p_status":"Complete",
+        "p_isactive":"Y",
+        "p_linktransactionid":0,
+        "p_replacesimilir": "",
+    "p_creditnoteno": "",
+    "p_paymentmode": "Cash",
+    "p_paymentdue": 0,
+    "p_sale": [
+        {
+            "TransactiondetailId": 10,
+            "ItemId": 19,
+            "ItemName": "Switch 3 socket",
+            "UOMId": 3,
+            "Quantity":10,
+            "itemcost":50,
+            "MRP":60,
+            "totalPayable":600
+        },
+                {
+            "TransactiondetailId": 10,
+            "ItemId": 19,
+            "ItemName": "Switch 3 socket",
+            "UOMId": 3,
+            "Quantity":10,
+            "itemcost":50,
+            "MRP":60,
+            "totalPayable":600
+        }
+    ],
+    "clientcode": "CG01-SE",
+    "x-access-token": this.authService.getToken()
+   };
+   this.salesService.OnSalesHeaderCreate(payload).subscribe({
+    next:(res)=>{
+        console.log('sales result',res);
+        this.transactionid=res.data[0].tranpurchaseid;
+        this.transactionIdOptions=res.data;
+
+        const id=Number(res.data[0].tranpurchaseid);
+        const exists = this.billNoOptions.some(item=>item.billno===id);
+        if(!exists){
+            const newItem={
+                customername:"",
+                transactiondate:null,
+                billno:id,
+                mobile:"",
+            };
+            this.billNoOptions.push(newItem);
+        }
+        this.salesForm.patchValue({
+           p_tranpurchaseid: id
+        });
+        this.loadAllDropdowns();
+    },
+    error:(error)=>{
+        console.log(error);
+    }
+   })
+   }
+   OnGetDropdown(){
+    let payload={
+    "uname": "admin",
+    "p_username": "admin",
+    "p_returntype": "ITEM",
+    "clientcode": "CG01-SE",
+    "x-access-token": this.authService.getToken()
+}
+this.salesService.Getreturndropdowndetails(payload).subscribe({
+    next:(res)=>{
+        console.log('result:',res);
+        this.itemOptionslist=res.data
+    },
+  error:(err)=>console.log(err)
+});
+}
+
+   OnGetItem() {
+  const payload = this.createDropdownPayload("ITEM");
+  this.stockInService.getdropdowndetails(payload).subscribe({
+    next: (res) => this.itemOptions = res.data,
+    error: (err) => console.log(err)
+  });
+}
+loadAllDropdowns(){
+    this.OnGetItem();
+    this.OnGetBillNo();
+}
+   onItemSelect(event:any){
+    this.transactionid=event.value;
+    const item=this.itemOptions.find((x)=>x.itemsku === event.value);
+    console.log('item',item);
+    if(!item) return;
+     const newRow={
+        selection:true,
+        code:item.itemsku,
+        name:item.itemname,
+        curStock:item.currentstock,
+        uom:item.uomid,
+        quantity:item.quantity,
+        mrp:item.saleprice,
+        total:item.saleprice,
+        warPeriod:item.warrentyperiod,
+        location:item.location
+     };
+   const exists = this.products.some(p=>p.code === newRow.code);
+   if(!exists){
+    this.products.push(newRow);
+    this.filteredProducts=[...this.products];
+   }
+   this.calculateTotals();
+   }
+   OnGetPurchaseItem(id:any){
+    //  const payload={
+    //     "uname":"admin",
+    //     "p_type":"SALE"
+
+    //  }
+   }
+   saleIdDetail(event:any){
+    this.transactionid=event.value;
+    console.log('trans',this.transactionid);
+    const selectBillNo=this.billNoOptions.find((item)=>item.billno==event.value)
+    console.log('bill:',selectBillNo);
+    this.salesForm.patchValue({
+        transactionDate:selectBillNo.transactiondate ? new Date(selectBillNo.transactiondate):null,
+        customerName:selectBillNo.customerid,
+        mobile:selectBillNo.mobileno
+    })
+  if(this.salesForm.valid){
+    this.transactionid=event.value;
+  }
+  this.OnGetPurchaseItem(event.value);
+   }
+   
     onSave(updatedData: any) {
         const mappedData = {
             selection: true,
@@ -262,8 +421,55 @@ export class SalesComponent {
         this.closeDialog();
     }
 
+mapFormToPayLoad(form:any,sales:any[]){
+    return{
+        p_transactionid:this.transactionid || 0,
+        p_transactiontype:'SALE',
+        p_transactiondate:form.transactionDate,
+        p_customername:form.customerName,
+        p_mobileno:form.mobile || '',
+        p_totalcost:form.mrpTotal || 0,
+         p_totalsale: form.mrpTotal || 0,
+        p_overalldiscount: form.discountLabel || 0,
+        p_roundoff: form.roundOff || 0,
+        p_totalpayable: form.finalPayable || 0,
+        p_currencyid: 0,
+        p_gsttran: "N",
+        p_status: "Complete",
+        p_isactive: "Y",
+        p_linktransactionid: 0,
+        p_replacesimilir: "",
+        p_creditnoteno: "",
+        p_paymentmode: "Cash",
+        p_paymentdue: 0,
+
+        /* ---- SALES ITEM ARRAY ---- */
+        p_sale: sales.map((item: any) => ({
+            TransactiondetailId: 0,
+            ItemId: item.code,
+            ItemName: item.name,
+            UOMId: item.uom,
+            Quantity: item.quantity,
+            itemcost: item.purchasePrice || 0,
+            MRP: item.mrp,
+            totalPayable: item.total
+        })),
+          uname: 'admin',
+     clientcode: 'CG01-SE',
+            'x-access-token': this.authService.getToken(),
+        };
+}
+
     saveAllChanges(){
         // this.stockInService.productItem = [...this.filteredProducts];
+        if(this.salesForm.invalid) return;
+        this.salesService.OninsertSalesDetails(this.mapFormToPayLoad(this.salesForm.getRawValue(),this.products)).subscribe({
+            next:(res)=>{
+                const msg = res?.data?.[0]?.msg || "Sales saved successfully";
+                this.showSuccess(msg);
+            },
+            error:(res)=>{}
+        })
     }
     onSubmit() {
         console.log(this.salesForm.value);
@@ -274,6 +480,7 @@ export class SalesComponent {
             rejectLabel:'Cancel',
             accept: ()=>{
               this.saveAllChanges();
+              this.OnSalesHeaderCreate(this.salesForm.value);
             },
             reject: ()=>{
 
@@ -296,6 +503,27 @@ export class SalesComponent {
         finalPayable:''
       },{emitEvent:false});
     }
+onItemSearch(event:any){
+    this.searchValue=event.filter || '';
 }
+    createDropdownPayload(returnType:string){
+        return{
+            uname:"admin",
+            p_username:"admin",
+            p_returntype:returnType,
+            clientcode:"CG01-SE",
+            "x-access-token":this.authService.getToken()
+        };
+    }
 
-
+    OnGetBillNo(){
+        const payload=this.createDropdownPayload("NEWTRANSACTIONID");
+        this.salesService.getdropdowndetails(payload).subscribe({
+            next:(res)=>this.billNoOptions=res.data,
+            error:(err)=>console.log(err)
+        });
+    }
+     showSuccess(message: string) {
+        this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
+    }
+}

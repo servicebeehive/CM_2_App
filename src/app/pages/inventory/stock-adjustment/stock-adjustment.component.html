@@ -112,19 +112,24 @@
                                 <!-- Adj Type -->
                                 <td>
                                       <div class="grid items-center gap-2">
-                                        <input 
-                                            pInputText 
+                                        <p-dropdown 
+                                            [options]="adjustment" 
+                                            optionLabel="label"
+                                            optionValue="value"
+                                            [filter]="true"
                                             type="number" 
+                                            appendTo="body"
                                             [formControl]="row.adjustmentControl" 
-                                            placeholder="{{ row.adjtype }}" />
+                                            placeholder="{{ row.adjtype }}" >
+                                            </p-dropdown>
 <!-- 
                                         <span class="text-red-500" 
                                               *ngIf="row.adjtype.touched && row.quantityControl.hasError('greaterThanStock')">
                                            Adj type cannot be greater than current stock ({{ row.curStock }}).
                                         </span> -->
                                     </div>
-                                    <!-- <input 
-                                    <p-autocomplete
+                                     <!-- <input  -->
+                                    <!-- <p-autocomplete
                                         [(ngModel)]="row.adjustmentType"
                                         [dropdown]="true"
                                         [suggestions]="filteredAdjustment"
@@ -141,9 +146,14 @@
                                             pInputText 
                                             type="number" 
                                             [formControl]="row.quantityControl" 
-                                            placeholder="{{ row.quantity }}" />
-<!-- 
-                                        <span class="text-red-500" 
+                                            placeholder="{{ row.quantity }}" 
+                                            (keydown)="blockMinus($event)"
+                                             />
+                                     <small class="text-red-500 ms-3 mt-1" *ngIf="updateForm.get('quantity')?.touched && updateForm.get('quantity')?.invalid">
+                    <span *ngIf="updateForm.get('quantity')?.errors?.['required']">Quantity is required</span>
+                    <span *ngIf="updateForm.get('quantity')?.errors?.['min']">Quantity must be greater than 0</span>
+                </small>
+                                      <!--  <span class="text-red-500" 
                                               *ngIf="row.quantityControl.touched && row.quantityControl.hasError('greaterThanStock')">
                                             Quantity cannot be greater than current stock ({{ row.curStock }}).
                                         </span> -->

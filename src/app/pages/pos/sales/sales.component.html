@@ -18,14 +18,46 @@
                 <!-- <div class="flex mb-3">
                     <input type="text" pInputText placeholder="Search..." class="w-full p-inputtext" formControlName="globalFilter" (input)="applyGlobalFilter()" />
                 </div> -->
-                 <div *ngIf="showGlobalSearch" class="mb-3">
+                 <!-- <div *ngIf="showGlobalSearch" class="mb-3">
                         <app-global-filter  [(value)]="globalFilter" placeholder="Search Items..." (valueChange)="applyGlobalFilter()"></app-global-filter>
-                     </div>
+                     </div> -->
+
+               <!-- 🔽 Select Dropdown -->
+                
+  <p-select
+    #itemSel
+    [options]="itemOptions"
+    optionLabel="itemcombine"
+    optionValue="itemsku"
+    [filter]="true"
+    filterBy="itemcombine"
+    [showClear]="true"
+    placeholder="Select Item"
+    (onFilter)="onItemSearch($event)"
+    (onChange)="onItemSelect($event)"
+    class="w-full mb-4"
+  >
+
+    <!-- Selected Item Template -->
+    <ng-template #selectedItem let-item>
+      <div class="flex items-center gap-2">
+        <div>{{ item.itemcombine }}</div>
+      </div>
+    </ng-template>
+
+    <!-- Dropdown List Template -->
+    <ng-template let-details #item>
+      <div class="flex items-center gap-2">
+        <div>{{ details.itemcombine }}</div>
+      </div>
+    </ng-template>
+
+  </p-select>
                 <!-- Bill no -->
                 <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Bill No</label>
-                        <p-dropdown [options]="billNoOptions" optionLabel="label" optionValue="value" [filter]="true" filterPlaceholder="Search Bill No." formControlName="billNo" placeholder="Bill No."> </p-dropdown>
+                        <p-dropdown [options]="billNoOptions" optionLabel="billno" optionValue="billno" [filter]="true" filterPlaceholder="Search Bill No." formControlName="billNo" placeholder="Bill No." (onChange)="saleIdDetail($event)"> </p-dropdown>
                         <small class="text-red-500 ms-3 mt-1" *ngIf="salesForm.get('billNo')?.touched">
                             <span *ngIf="salesForm.get('billNo')?.errors?.['required']">Bill No is required</span>
                         </small>
@@ -58,7 +90,7 @@
                         [value]="filteredProducts"
                         [globalFilterFields]="['name']"
                         [filters]="{ global: { value: globalFilter, matchMode: 'contains' } }"
-                        dataKey="code"
+                        dataKey="saleIdDetail"
                         [paginator]="true"
                         [rows]="10"
                         [rowsPerPageOptions]="[5, 10, 20, 50]"
@@ -102,7 +134,7 @@
                             </tr>
                         </ng-template>
                         <ng-template pTemplate="paginatorleft">
-                            <div class="text-gray-600 ms-2">Total Items:{{ filteredProducts?.length || 0 }}</div>
+                            <div class="text-gray-600 ms-2">Total Items:{{ itemOptions?.length || 0 }}</div>
                         </ng-template>
                     </p-table>
                 </div>

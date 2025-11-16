@@ -98,6 +98,9 @@ export class StockInComponent {
      addItemEnabled=false;
     @ViewChild(AddinventoryComponent) addInventoryComp!:AddinventoryComponent;
    public itemOptionslist:[]=[]
+   childUomDialog: boolean = false;
+childUOMList: any[] = [];
+
     // ✅ Move dropdown options into variables
     transactionIdOptions = [];
 
@@ -113,6 +116,7 @@ export class StockInComponent {
     constructor(private fb: FormBuilder, private stockInService:InventoryService,private confirmationService:ConfirmationService,public datePipe:DatePipe,private messageService: MessageService) {}
 
     ngOnInit(): void {
+    
         this.OnGetDropdown()
         this.loadAllDropdowns()
          this.onGetStockIn();
@@ -272,6 +276,7 @@ get grandTotal():number{
 uomOptions: any[] = [];           // For UOM dropdown
 vendorOptions: any[] = [];        // For VENDOR dropdown
 purchaseIdOptions: any[] = [];    // For PURCHASE ID dropdown
+dateTime=new Date()
 
 OnGetDropdown(){
     let payload={
@@ -307,16 +312,40 @@ OnPurchesHeaderCreate(data:any){
     "p_loginuser": "admin",
     "clientcode": "CG01-SE",
     "x-access-token":this.authService.getToken()
-
-
-
 };
 
 this.stockInService.OnPurchesHeaderCreate(payload).subscribe({
     next:(res)=>{
  console.log(res)
- this.transationid=res.data[0].tranpurchaseid
- this.transactionIdOptions=res.data
+ this.transationid=res.data[0].tranpurchaseid;
+ this.transactionIdOptions=res.data;
+ 
+
+const id = Number(res.data[0].tranpurchaseid);
+
+// check if ID already exists in array
+const exists = this.purchaseIdOptions.some(item => item.purchaseid === id);
+
+if (!exists) {
+  // create item
+  const newItem = {
+    invoicedate: null,
+    invoicenumber: "",
+    purchaseid: id,
+    remark: "",
+    vendorid: 0
+  };
+
+  // push only if not exists
+  this.purchaseIdOptions.push(newItem);
+
+}
+this.productForm.patchValue({
+  p_tranpurchaseid: id
+});
+// patch form always
+
+
  this.loadAllDropdowns()
     },
     error:(error)=>{
@@ -369,9 +398,7 @@ if(this.productForm.value){
 
 this.OnGetPurcheseItem(event.value)
 }
-viewItem(event:any){
 
-}
 valueReturnToString(value: any) {
   return value != null ? value.toString() : null;
 }
@@ -459,6 +486,55 @@ OnDeleteItem(id:any){
     }
   })
 }
+// onchildUOM(id:any){
+//     const payload = {
+//     "uname": "admin",
+//     "p_username": "admin",
+//     "p_returntype": "CHILDUOM",
+//      "p_returnvalue":id.toString(),
+//     "clientcode": "CG01-SE",
+//     "x-access-token":this.authService.getToken()
+   
+// };
+//   this.stockInService.Getreturndropdowndetails(payload).subscribe({
+//     next:(res)=>{
+//       this.showSuccess(res.data[0].msg)
+//       this.OnGetPurcheseItem(this.transationid)
+      
+//     }
+//   })
+// }
+viewItem(id: number) {
+  console.log(id)
+
+  const payload = {
+    uname: "admin",
+    p_username: "admin",
+    p_returntype: "CHILDUOM",
+    p_returnvalue:id.toString(),
+    clientcode: "CG01-SE",
+    "x-access-token": this.authService.getToken()
+  };
+
+  this.stockInService.Getreturndropdowndetails(payload).subscribe({
+    next: (res: any) => {
+
+      if (!res.data || res.data.length === 0) {
+      //  this.showError("No Child UOM Data Available");
+        return;
+      }
+
+      this.childUOMList = res.data; // assign data
+      this.childUomDialog = true;   // open popup
+    },
+    error: (err) => {
+     // this.showError("Failed to load Child UOM Details");
+      console.error(err);
+    }
+  });
+
+}
+
   showSuccess(message: string) {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
     }

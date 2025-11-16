@@ -109,6 +109,11 @@ export class StockAdjustmentComponent {
   getStockArray(): FormArray {
     return this.updateForm.get('p_stock') as FormArray;
   }
+blockMinus(event: KeyboardEvent) {
+  if (event.key === '-' || event.key === 'Minus') {
+    event.preventDefault();
+  }
+}
 
   // Rebuild formArray from a list of product objects
   private buildFormArrayFromProducts(products: any[]) {
@@ -116,7 +121,7 @@ export class StockAdjustmentComponent {
     stockArray.clear();
     products.forEach((p: any) => {
       // Keep adjustment type on the plain product for validators that reference it
-      p.adjustmentType = p.adjustmentType || '';
+      p.adjustmentType = p.adjustmentType || 'increase';
 
       const group = this.fb.group({
         ItemId: [p.itemid ?? p.ItemId],
@@ -125,14 +130,15 @@ export class StockAdjustmentComponent {
           p.Quantity ?? null,
           [
             Validators.required,
+            Validators.min(1),
             this.quantityValidator(p.curStock ?? p.curStock ?? 0, () => p.adjustmentType)
           ]
         ],
-        adjtype: [p.adjustmentType ?? '']
+        adjtype: [p.adjustmentType]
       });
 
       // bind controls to product so template can use row.quantityControl and row.adjustmentControl
-      p.quantityControl = group.get('Quantity') as AbstractControl;
+      p.quantityControl ='30';
       p.adjustmentControl = group.get('adjtype') as AbstractControl;
 
       stockArray.push(group);
@@ -278,7 +284,7 @@ export class StockAdjustmentComponent {
     const category = this.updateForm.controls['category'].value;
     const item = this.updateForm.controls['item'].value;
 
-    if (category && item) {
+    if (category || item) {
       const payload = {
         uname: 'admin',
         p_categoryid: category,
