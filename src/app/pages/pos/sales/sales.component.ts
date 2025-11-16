@@ -19,7 +19,7 @@ import { DialogModule } from 'primeng/dialog';
 import { StockIn } from '@/types/stockin.model';
 import { InventoryService } from '@/core/services/inventory.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ConfirmationService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { CheckboxModule } from 'primeng/checkbox';
 import { AddinventoryComponent } from '@/pages/inventory/addinventory/addinventory.component';
 import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
@@ -74,30 +74,27 @@ export class SalesComponent {
      searchValue:string='';
      itemOptions:any[]=[];
       transactionIdOptions = []; 
+      public itemOptionslist:[]=[]
       //for testing
   @ViewChild(AddinventoryComponent) addInventoryComp!:AddinventoryComponent;
 
     // ✅ Move dropdown options into variables
-    billNoOptions = [];
-
-    holdTransIdOptions = [
-        { label: 'Trans 1', value: 'trans1' },
-        { label: 'Trans 2', value: 'trans2' },
-        { label: 'Trans 3', value: 'trans3' }
-    ];
+    billNoOptions:any []= [];
 
     constructor(
         private fb: FormBuilder,
         private stockInService: InventoryService,
         private confirmationService: ConfirmationService,
-        private salesService:InventoryService
+        private salesService:InventoryService,
+        private messageService : MessageService
     ) {}
 
     ngOnInit(): void {
+        this.OnGetDropdown();
         this.loadAllDropdowns();
          this.onGetStockIn();
         this.salesForm = this.fb.group({
-            billNo: ['', Validators.required],
+            billNo: [''],
             customerName: [''],
             mobile: ['', [Validators.pattern(/^[0-9]{10}$/)]],
             transactionDate:[this.today],
@@ -293,19 +290,50 @@ export class SalesComponent {
     "clientcode": "CG01-SE",
     "x-access-token": this.authService.getToken()
    };
-   this.salesService.OnPurchesHeaderCreate(payload).subscribe({
+   this.salesService.OnSalesHeaderCreate(payload).subscribe({
     next:(res)=>{
         console.log('sales result',res);
         this.transactionid=res.data[0].tranpurchaseid;
-        this.transactionIdOptions=res.data
-        this.loadAllDropdowns();
+        this.transactionIdOptions=res.data;
 
+        const id=Number(res.data[0].tranpurchaseid);
+        const exists = this.billNoOptions.some(item=>item.billno===id);
+        if(!exists){
+            const newItem={
+                customername:"",
+                transactiondate:null,
+                billno:id,
+                mobile:"",
+            };
+            this.billNoOptions.push(newItem);
+        }
+        this.salesForm.patchValue({
+           p_tranpurchaseid: id
+        });
+        this.loadAllDropdowns();
     },
     error:(error)=>{
         console.log(error);
     }
    })
    }
+   OnGetDropdown(){
+    let payload={
+    "uname": "admin",
+    "p_username": "admin",
+    "p_returntype": "ITEM",
+    "clientcode": "CG01-SE",
+    "x-access-token": this.authService.getToken()
+}
+this.salesService.Getreturndropdowndetails(payload).subscribe({
+    next:(res)=>{
+        console.log('result:',res);
+        this.itemOptionslist=res.data
+    },
+  error:(err)=>console.log(err)
+});
+}
+
    OnGetItem() {
   const payload = this.createDropdownPayload("ITEM");
   this.stockInService.getdropdowndetails(payload).subscribe({
@@ -321,29 +349,47 @@ loadAllDropdowns(){
     this.transactionid=event.value;
     const item=this.itemOptions.find((x)=>x.itemsku === event.value);
     console.log('item',item);
-    this.salesForm.patchValue({
-    
-    })
-    // if(!item) return;
-    // this.salesForm.patchValue({
-    //     itemCode:item.itemsku,
-    //       itemName: item.itemname,
-    // stock: item.currentstock,
-    // mrp: item.saleprice,
-    // gstItem: item.gstitem === 'Y',
-    // uom: item.uomid
-    // });
+    if(!item) return;
+     const newRow={
+        selection:true,
+        code:item.itemsku,
+        name:item.itemname,
+        curStock:item.currentstock,
+        uom:item.uomid,
+        quantity:item.quantity,
+        mrp:item.saleprice,
+        total:item.saleprice,
+        warPeriod:item.warrentyperiod,
+        location:item.location
+     };
+   const exists = this.products.some(p=>p.code === newRow.code);
+   if(!exists){
+    this.products.push(newRow);
+    this.filteredProducts=[...this.products];
    }
-   salesDetail(event:any){
-//     this.transactionid=event.value;
-//     console.log('trans',this.transactionid);
-//     const selectBillNo=this.billNoOptions.find(item=>item.billno==event.value)
-//     this.salesForm.patchValue({
-//         transactionDate:selectBillNo.transactiondate ? new Date(selectBillNo.invoicedate)
-//   : null,
-//         customerName:selectBillNo.customerid,
-//         mobile:selectBillNo.mobileno
-//     })
+   this.calculateTotals();
+   }
+   OnGetPurchaseItem(id:any){
+    //  const payload={
+    //     "uname":"admin",
+    //     "p_type":"SALE"
+
+    //  }
+   }
+   saleIdDetail(event:any){
+    this.transactionid=event.value;
+    console.log('trans',this.transactionid);
+    const selectBillNo=this.billNoOptions.find((item)=>item.billno==event.value)
+    console.log('bill:',selectBillNo);
+    this.salesForm.patchValue({
+        transactionDate:selectBillNo.transactiondate ? new Date(selectBillNo.transactiondate):null,
+        customerName:selectBillNo.customerid,
+        mobile:selectBillNo.mobileno
+    })
+  if(this.salesForm.valid){
+    this.transactionid=event.value;
+  }
+  this.OnGetPurchaseItem(event.value);
    }
    
     onSave(updatedData: any) {
@@ -375,8 +421,55 @@ loadAllDropdowns(){
         this.closeDialog();
     }
 
+mapFormToPayLoad(form:any,sales:any[]){
+    return{
+        p_transactionid:this.transactionid || 0,
+        p_transactiontype:'SALE',
+        p_transactiondate:form.transactionDate,
+        p_customername:form.customerName,
+        p_mobileno:form.mobile || '',
+        p_totalcost:form.mrpTotal || 0,
+         p_totalsale: form.mrpTotal || 0,
+        p_overalldiscount: form.discountLabel || 0,
+        p_roundoff: form.roundOff || 0,
+        p_totalpayable: form.finalPayable || 0,
+        p_currencyid: 0,
+        p_gsttran: "N",
+        p_status: "Complete",
+        p_isactive: "Y",
+        p_linktransactionid: 0,
+        p_replacesimilir: "",
+        p_creditnoteno: "",
+        p_paymentmode: "Cash",
+        p_paymentdue: 0,
+
+        /* ---- SALES ITEM ARRAY ---- */
+        p_sale: sales.map((item: any) => ({
+            TransactiondetailId: 0,
+            ItemId: item.code,
+            ItemName: item.name,
+            UOMId: item.uom,
+            Quantity: item.quantity,
+            itemcost: item.purchasePrice || 0,
+            MRP: item.mrp,
+            totalPayable: item.total
+        })),
+          uname: 'admin',
+     clientcode: 'CG01-SE',
+            'x-access-token': this.authService.getToken(),
+        };
+}
+
     saveAllChanges(){
         // this.stockInService.productItem = [...this.filteredProducts];
+        if(this.salesForm.invalid) return;
+        this.salesService.OninsertSalesDetails(this.mapFormToPayLoad(this.salesForm.getRawValue(),this.products)).subscribe({
+            next:(res)=>{
+                const msg = res?.data?.[0]?.msg || "Sales saved successfully";
+                this.showSuccess(msg);
+            },
+            error:(res)=>{}
+        })
     }
     onSubmit() {
         console.log(this.salesForm.value);
@@ -387,6 +480,7 @@ loadAllDropdowns(){
             rejectLabel:'Cancel',
             accept: ()=>{
               this.saveAllChanges();
+              this.OnSalesHeaderCreate(this.salesForm.value);
             },
             reject: ()=>{
 
@@ -429,6 +523,7 @@ onItemSearch(event:any){
             error:(err)=>console.log(err)
         });
     }
+     showSuccess(message: string) {
+        this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
+    }
 }
-
-

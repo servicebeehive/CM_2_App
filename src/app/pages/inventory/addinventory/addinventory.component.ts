@@ -184,28 +184,28 @@ blockMinus(event: KeyboardEvent) {
     this.searchValue=event.filter || '';
    }
 
-   addNewItem(select:any){
-    const code = this.searchValue?.trim();
-    if(code){
+//    addNewItem(select:any){
+//     const code = this.searchValue?.trim();
+//     if(code){
        
-        select.clear();
-        select.hide();
-        this.addForm.reset();
-    this.addForm.patchValue({
-      itemCode: code,
-      itemName: '',
-      activeItem: true,
-      gstItem: true
-    });
-    this.resetChildUOMTable();
-  } else {
-    this.messageService.add({
-      severity: 'warn',
-      summary: 'Warning',
-      detail: 'Please enter an item code first before adding a new item.'
-    });
-   }
-}
+//         select.clear();
+//         select.hide();
+//         this.addForm.reset();
+//     this.addForm.patchValue({
+//       itemCode: code,
+//       itemName: '',
+//       activeItem: true,
+//       gstItem: true
+//     });
+//     this.resetChildUOMTable();
+//   } else {
+//     this.messageService.add({
+//       severity: 'warn',
+//       summary: 'Warning',
+//       detail: 'Please enter an item code first before adding a new item.'
+//     });
+//    }
+// }
     ngOnChanges(changes: SimpleChanges): void {
         if (changes['editData'] && this.editData && this.mode === 'edit' && this.addForm) {
           
@@ -229,6 +229,8 @@ blockMinus(event: KeyboardEvent) {
                 gstItem: this.editData.gstitem === 'Y',
                 p_expirydate: this.editData.p_expirydate
             });
+              this.addForm.get('itemCode')?.disable();
+    this.addForm.get('parentUOM')?.disable();
             this.OnChildOM(this.editData.itemid)
         } else if (this.mode === 'add' && this.addForm) {
             this.addForm.reset();

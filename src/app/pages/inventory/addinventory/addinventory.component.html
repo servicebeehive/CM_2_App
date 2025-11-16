@@ -50,7 +50,7 @@
             </div> -->
              <div class="flex flex-col">
                 <label class="font-medium mb-1">Item Code <span class="text-red-500">*</span></label>
-                <input pInputText formControlName="itemCode" placeholder="Item Code" />
+                <input pInputText formControlName="itemCode" placeholder="Item Code" [readOnly]="mode==='edit'" />
                 <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('itemCode')?.touched">
                     <span *ngIf="addForm.get('itemCode')?.errors?.['required']">Item Code is required</span>
                 </small>
@@ -112,7 +112,7 @@
             <!-- Parent UOM -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Parent UOM <span class="text-red-500">*</span></label>
-                <p-dropdown [options]="uomOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search Parent UOM" formControlName="parentUOM" placeholder="Parent UOM"> </p-dropdown>
+                <p-dropdown [options]="uomOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search Parent UOM" formControlName="parentUOM" placeholder="Parent UOM" [readonly]="mode==='edit'"> </p-dropdown>
                 <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('parentUOM')?.touched">
                     <span *ngIf="addForm.get('parentUOM')?.errors?.['required']">Parent UOM is required</span>
                 </small>
