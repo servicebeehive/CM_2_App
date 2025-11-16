@@ -167,7 +167,7 @@ blockMinus(event: KeyboardEvent) {
     this.filteredProducts = this.products.filter((p: any) => {
       const matchesSearch =
         !searchTerm ||
-        String(p.itemname ?? p.name ?? '')
+        String(p.itemcombine ?? p.name ?? '')
           .toLowerCase()
           .includes(searchTerm) ||
         String(p.categoryname ?? p.category ?? '')
@@ -287,8 +287,8 @@ blockMinus(event: KeyboardEvent) {
     if (category || item) {
       const payload = {
         uname: 'admin',
-        p_categoryid: category,
-        p_itemid: item,
+        p_categoryid: category || null,
+        p_itemid: item || null,
         p_username: 'admin',
         clientcode: 'CG01-SE',
         'x-access-token': this.authService.getToken()
@@ -372,10 +372,23 @@ blockMinus(event: KeyboardEvent) {
 
   // ---------- Utility ----------
   reset() {
-    this.updateForm.reset();
-    // reinitialize form array and filteredProducts to full list
-    this.filteredProducts = [...this.products];
-    this.buildFormArrayFromProducts(this.products);
+    // this.updateForm.reset();
+    // // reinitialize form array and filteredProducts to full list
+    // this.filteredProducts = [...this.products];
+    // this.buildFormArrayFromProducts(this.products);
+     this.updateForm.reset();
+
+  // Clear FormArray
+  // this.getStockArray().clear();
+
+  // Clear table data
+  this.products = [];
+  this.filteredProducts = [];
+  this.pagedProducts = [];
+
+  // Reset pagination
+  this.first = 0;
+//  this.globalFilter='';
   }
 
   showSuccess(message: string) {
@@ -388,4 +401,4 @@ errorSuccess(message: string) {
   closeDialog() {
     // placeholder in case you use dialogs
   }
-}
+}  

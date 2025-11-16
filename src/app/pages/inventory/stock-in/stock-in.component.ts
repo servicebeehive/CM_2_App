@@ -182,6 +182,7 @@ onSave(updatedData:any){
             }
            
             this.closeDialog(updatedData);
+          this.OnGetItem();
     }
  deleteItem(product:any) {
  
@@ -237,18 +238,22 @@ get grandTotal():number{
         this.mode='add';
         this.selectedRow=null;
         this.visibleDialog=true;
+        
         setTimeout(() => 
           this.addInventoryComp.resetForm(),10
         );
+        this.OnGetItem()
     }
     openEditDialog(rowData:any){
         this.mode='edit';
         this.selectedRow=rowData||null;
         this.visibleDialog=true;
+       
     }
     closeDialog(event:any){
       console.log(event)
         this.visibleDialog=false;
+        
         this.OnGetPurcheseItem(this.transationid)
     }
     reset(){
@@ -259,8 +264,9 @@ get grandTotal():number{
             invoiceDate:'',
             remark:''
             });
+            // this.transationid='null';
         this.products=[];
-        
+        this.itemOptionslist = [];
         this.first=0;
         this.pagedProducts=[];
         this.childUomStatus=false;
@@ -482,6 +488,7 @@ OnDeleteItem(id:any){
     next:(res)=>{
       this.showSuccess(res.data[0].msg)
       this.OnGetPurcheseItem(this.transationid)
+      this.OnGetItem();
       
     }
   })
