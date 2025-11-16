@@ -436,17 +436,17 @@ Reset(){
     this.addForm.reset();
      this.resetChildUOMTable();
 }
-// getFilteredChildUOM() {
-//   const parent = this.addForm.get('parentUOM')?.value;
-//   return this.uomOptions.filter(u => u.fieldid !== parent);
-// }
+getFilteredChildUOM() {
+  const parent = this.addForm.get('parentUOM')?.value;
+  return this.uomOptions.filter(u => u.fieldid !== parent);
+}
 onItemParentUM(event:any){
     this.viewItem(event.value)
 
 }
 viewItem(id: number) {
   console.log(id)
-  this.uomOptions=[]
+ this.ChilduomOptions=[]
 
   const payload = {
     uname: "admin",
