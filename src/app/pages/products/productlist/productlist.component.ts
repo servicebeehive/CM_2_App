@@ -84,8 +84,8 @@ export class ProductlistComponent {
         this.loadAllDropdowns();
         this.onGetStockIn();
         this.updateForm = this.fb.group({
-            category: ['', Validators.required],
-            item: ['', Validators.required],
+            category: [''],
+            item: [''],
         });
         this.updateForm.valueChanges.subscribe(() => {
             this.filterProducts();

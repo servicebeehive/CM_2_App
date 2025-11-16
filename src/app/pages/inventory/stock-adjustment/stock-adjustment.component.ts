@@ -54,7 +54,8 @@ import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.comp
     ConfirmDialogModule,
     CheckboxModule,
     AutoCompleteModule,
-    GlobalFilterComponent
+    GlobalFilterComponent,
+  
   ],
   templateUrl: './stock-adjustment.component.html',
   styleUrls: ['./stock-adjustment.component.scss'],
@@ -80,6 +81,10 @@ export class StockAdjustmentComponent {
     { label: 'Increase', value: 'increase' },
     { label: 'Decrease', value: 'decrease' }
   ];
+  mrpUpdate=[
+     { label: 'Batch', value: 'batch' },
+    { label: 'Item', value: 'item' }
+  ]
   filteredAdjustment: any[] = [];
 
   constructor(
@@ -92,8 +97,9 @@ export class StockAdjustmentComponent {
 
   ngOnInit(): void {
     this.updateForm = this.fb.group({
-      category: ['', Validators.required],
-      item: ['', Validators.required],
+      category: [''],
+      item: [''],
+      mrpupdate:['batch'],
       p_stock: this.fb.array([]) // formArray for rows
     });
 
@@ -125,12 +131,18 @@ blockMinus(event: KeyboardEvent) {
 
       const group = this.fb.group({
         ItemId: [p.itemid ?? p.ItemId],
-        UOMId: [p.uomid ?? p.UOMId],
+        // UOMId: [p.uomid ?? p.UOMId],
+        BatchId:[p.batchid?? p.BatchId],
+        MRP:[
+         p.saleprice??null,
+         [Validators.min(1)]
+        ],
         Quantity: [
           p.Quantity ?? null,
           [
-            Validators.required,
+            // Validators.required,
             Validators.min(1),
+            this.batchValidator(p.batch_available),
             this.quantityValidator(p.curStock ?? p.curStock ?? 0, () => p.adjustmentType)
           ]
         ],
@@ -138,7 +150,8 @@ blockMinus(event: KeyboardEvent) {
       });
 
       // bind controls to product so template can use row.quantityControl and row.adjustmentControl
-      p.quantityControl ='30';
+      p.mrpControl=group.get('MRP') as AbstractControl;
+      p.quantityControl =group.get('Quantity') as AbstractControl;
       p.adjustmentControl = group.get('adjtype') as AbstractControl;
 
       stockArray.push(group);
@@ -222,6 +235,18 @@ blockMinus(event: KeyboardEvent) {
       return null;
     };
   }
+  
+batchValidator(maxBatch: number): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+     const qty = Number(control.value);
+
+    if (qty > maxBatch) {
+      return { greaterThanBatch: true };
+    }
+    return null;
+  };
+}
+
 
   // ---------- Autocomplete for adjustment (if you use autocomplete) ----------
   search(event: any) {
@@ -323,7 +348,8 @@ blockMinus(event: KeyboardEvent) {
     const stockArray = this.getStockArray().value as any[]; // raw values
     const trimmed = (stockArray || []).map((r) => ({
       ItemId: r.ItemId,
-      UOMId: r.UOMId,
+      // UOMId: r.UOMId,
+      BatchId:r.BatchId,
       Quantity: r.Quantity,
       adjtype: r.adjtype
     })).filter((r) => r.Quantity != null && r.adjtype); // keep only filled rows
@@ -377,7 +403,9 @@ blockMinus(event: KeyboardEvent) {
     // this.filteredProducts = [...this.products];
     // this.buildFormArrayFromProducts(this.products);
      this.updateForm.reset();
-
+ this.updateForm.patchValue({
+    mrpupdate: 'batch'
+  });
   // Clear FormArray
   // this.getStockArray().clear();
 

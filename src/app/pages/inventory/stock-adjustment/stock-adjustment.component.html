@@ -7,14 +7,12 @@
 
             <div>
                 <div class="flex justify-between items-end w-full gap-6">
-
                     <!-- LEFT SIDE -->
                     <div class="grid grid-cols-3 gap-6 flex-grow">
-
                         <!-- Category -->
                         <div class="flex flex-col">
                             <label class="font-medium mb-1">Category</label>
-                            <p-dropdown 
+                            <p-dropdown
                                 [options]="categoryOptions"
                                 optionLabel="fieldname"
                                 optionValue="fieldid"
@@ -23,14 +21,15 @@
                                 formControlName="category"
                                 placeholder="Category"
                                 [showClear]="true"
-                                (onChange)="applyGlobalFilter()">
+                                (onChange)="applyGlobalFilter()"
+                            >
                             </p-dropdown>
                         </div>
 
                         <!-- Item -->
                         <div class="flex flex-col">
                             <label class="font-medium mb-1">Item</label>
-                            <p-dropdown 
+                            <p-dropdown
                                 [options]="itemOptions"
                                 optionLabel="itemcombine"
                                 optionValue="itemid"
@@ -39,54 +38,31 @@
                                 formControlName="item"
                                 placeholder="Item"
                                 [showClear]="true"
-                                (onChange)="applyGlobalFilter()">
+                                (onChange)="applyGlobalFilter()"
+                            >
                             </p-dropdown>
                         </div>
 
                         <div class="flex flex-col">
                             <label class="font-medium mb-1 invisible">label</label>
-                            <button 
-                                pButton 
-                                type="button" 
-                                label="Filter"  
-                                class="p-button-outlined w-[100px]"
-                                (click)="Onreturndropdowndetails()">
-                            </button>
+                            <button pButton type="button" label="Filter" class="p-button-outlined w-[100px]" (click)="Onreturndropdowndetails()"></button>
                         </div>
-
                     </div>
-
+                    <div class="flex flex-col w-[150px]">
+                        <label class="font-medium mb-1">MRP Update</label>
+                        <p-dropdown [options]="mrpUpdate" optionLabel="label" optionValue="value" [filter]="true" appendTo="body" formControlName="mrpupdate"> </p-dropdown>
+                    </div>
                     <!-- RIGHT SIDE (Reset + Save) -->
                     <div class="flex gap-4 w-[200px]">
-                        <button 
-                            pButton 
-                            type="button" 
-                            label="Reset" 
-                            class="p-button-secondary w-full"
-                            (click)="reset()">
-                        </button>
+                        <button pButton type="button" label="Reset" class="p-button-secondary w-full" (click)="reset()"></button>
 
-                        <button 
-                            pButton 
-                            type="submit" 
-                            label="Save" 
-                            class="p-button-warning w-full">
-                        </button>
+                        <button pButton type="submit" label="Save" [disabled]="updateForm.invalid" class="p-button-warning w-full"></button>
                     </div>
-
                 </div>
 
                 <!-- TABLE -->
                 <div class="mt-6">
-                    <p-table
-                        [value]="filteredProducts"
-                        dataKey="code"
-                        [paginator]="true"
-                        [rows]="10"
-                        [rowsPerPageOptions]="[5, 10, 20, 50]"
-                        [responsiveLayout]="'scroll'"
-                        class="p-datatable-gridlines mt-6">
-
+                    <p-table [value]="filteredProducts" dataKey="code" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 20, 50]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines mt-6">
                         <!-- HEADER -->
                         <ng-template pTemplate="header">
                             <tr class="bg-yellow-400">
@@ -95,6 +71,7 @@
                                 <th>Category</th>
                                 <th>UOM</th>
                                 <th>Current Stock</th>
+                                <th>Batch Available</th>
                                 <th>Cost/Item</th>
                                 <th>MRP</th>
                                 <th>Adj Type</th>
@@ -107,31 +84,31 @@
                             <tr>
                                 <td><p-tableCheckbox [value]="row"></p-tableCheckbox></td>
 
-                                <td>{{ row.combine}}</td>
+                                <td>{{ row.combine }}</td>
                                 <td>{{ row.categoryname }}</td>
                                 <td>{{ row.uomname }}</td>
-                                <td>{{ row.curStock }}</td>
+                                <td>{{ row.totalstock }}</td>
+                                <td>{{ row.batch_available }}</td>
+                                <td>{{ row.costprice }}</td>
+                                <td>
+                                    <div class="grid items-center gap-2"><input type="number" pInputText [min]="1" placeholder="{{ row.saleprice }}" [formControl]="row.mrpControl" (keydown)="blockMinus($event)" /></div>
+                                    <!-- <small class="text-red-500" *ngIf="row.mrpControl.touched && row.mrpControl.errors?.['required']"> MRP is required. </small> -->
 
+                                    <!-- Min(1) -->
+                                    <small class="text-red-500" *ngIf="row.mrpControl.touched && row.mrpControl.errors?.['min']"> MRP must be greater than 0. </small>
+                                </td>
                                 <!-- Adj Type -->
                                 <td>
-                                      <div class="grid items-center gap-2">
-                                        <p-dropdown 
-                                            [options]="adjustment" 
-                                            optionLabel="label"
-                                            optionValue="value"
-                                            [filter]="true"
-                                            type="number" 
-                                            appendTo="body"
-                                            [formControl]="row.adjustmentControl" 
-                                            placeholder="{{ row.adjtype }}" >
-                                            </p-dropdown>
-<!-- 
+                                    <div class="grid items-center gap-2">
+                                        <p-dropdown [options]="adjustment" optionLabel="label" optionValue="value" [filter]="true" type="number" appendTo="body" [formControl]="row.adjustmentControl" placeholder="{{ row.adjtype }}"> </p-dropdown>
+
+                                        <!-- 
                                         <span class="text-red-500" 
                                               *ngIf="row.adjtype.touched && row.quantityControl.hasError('greaterThanStock')">
                                            Adj type cannot be greater than current stock ({{ row.curStock }}).
                                         </span> -->
                                     </div>
-                                     <!-- <input  -->
+                                    <!-- <input  -->
                                     <!-- <p-autocomplete
                                         [(ngModel)]="row.adjustmentType"
                                         [dropdown]="true"
@@ -145,18 +122,17 @@
                                 <!-- Quantity -->
                                 <td>
                                     <div class="grid items-center gap-2">
-                                        <input 
-                                            pInputText 
-                                            type="number" [min]="1"
-                                            [formControl]="row.quantityControl" 
-                                            placeholder="{{ row.quantity }}" 
-                                            (keydown)="blockMinus($event)"
-                                             />
-                                     <small class="text-red-500 ms-3 mt-1" *ngIf="updateForm.get('quantity')?.touched && updateForm.get('quantity')?.invalid">
-                    <span *ngIf="updateForm.get('quantity')?.errors?.['required']">Quantity is required</span>
-                    <span *ngIf="updateForm.get('quantity')?.errors?.['min']">Quantity must be greater than 0</span>
-                </small>
-                                      <!--  <span class="text-red-500" 
+                                        <input pInputText type="number" [min]="1" [formControl]="row.quantityControl" placeholder="{{ row.quantity }}" (keydown)="blockMinus($event)" />
+
+                                        <!-- <small class="text-red-500" *ngIf="row.quantityControl.touched && row.quantityControl.errors?.['required']"> Quantity is required. </small> -->
+
+                                        <!-- ERROR: Quantity must be greater than 0 -->
+                                        <small class="text-red-500" *ngIf="row.quantityControl.touched && row.quantityControl.errors?.['min']"> Quantity must be greater than 0. </small>
+
+                                        <!-- ERROR: Quantity exceeds batch -->
+                                        <small class="text-red-500" *ngIf="row.quantityControl.touched && row.quantityControl.errors?.['greaterThanBatch']"> Quantity cannot be greater than batch available ({{ row.batch_available }}). </small>
+
+                                        <!--  <span class="text-red-500" 
                                               *ngIf="row.quantityControl.touched && row.quantityControl.hasError('greaterThanStock')">
                                             Quantity cannot be greater than current stock ({{ row.curStock }}).
                                         </span> -->
@@ -166,11 +142,8 @@
                         </ng-template>
 
                         <ng-template pTemplate="paginatorleft">
-                            <div class="text-gray-600 ms-2">
-                                Total Items: {{ filteredProducts?.length || 0 }}
-                            </div>
+                            <div class="text-gray-600 ms-2">Total Items: {{ filteredProducts?.length || 0 }}</div>
                         </ng-template>
-
                     </p-table>
                 </div>
             </div>

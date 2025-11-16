@@ -3,13 +3,6 @@
         <form [formGroup]="updateForm" (ngSubmit)="onSubmit()" class="space-y-8">
     <div class="flex justify-between items-center mb-6">
         <span class="block text-surface-900 font-bold text-xl mb-6">Item Update</span>
-        <!-- Buttons -->
-        <div class="flex gap-4">
-            <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
-            <!-- <button pButton type="button" label="Delete All" class="p-button-danger" (click)="deleteAll()"></button> -->
-            <button pButton type="button" label="BarCode Print" class="p-button-secondary"></button>
-             <button pButton type="submit" label="Save" class="p-button-warning"></button>
-        </div>
     </div>
     
             <!-- 🏷 Product Info Section -->
@@ -17,27 +10,42 @@
                 <!-- ✅ Changed to a 2-column grid for half-width fields -->
                 <!-- <div *ngIf="showGlobalSearch" class="flex mb-3">
                     <input type="text" pInputText placeholder="Search..." class="w-full p-inputtext" formControlName="globalFilter" (input)="applyGlobalFilter()" /> -->
-                     <div *ngIf="showGlobalSearch" class="mb-3">
+                     <!-- <div *ngIf="showGlobalSearch" class="mb-3">
                         <app-global-filter  [(value)]="globalFilter" placeholder="Search Items..." (valueChange)="applyGlobalFilter()"></app-global-filter>
-                     </div>
+                     </div> -->
                 <!-- </div> -->
-                <!-- Category -->
-                <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
+              
+                <div class="flex justify-between items-end w-full gap-6">
+                    <!-- LEFT SIDE -->
+                    <div class="grid grid-cols-3 gap-6 flex-grow">
+                          <!-- Category -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Category</label>
-                        <p-dropdown [options]="categoryOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search Category" formControlName="category" placeholder="Category"> </p-dropdown>
-                        <small class="text-red-500 ms-3 mt-1" *ngIf="updateForm.get('category')?.touched">
+                        <p-dropdown [options]="categoryOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" [showClear]="true" filterPlaceholder="Search Category" formControlName="category" placeholder="Category"> </p-dropdown>
+                        <!-- <small class="text-red-500 ms-3 mt-1" *ngIf="updateForm.get('category')?.touched">
                             <span *ngIf="updateForm.get('category')?.errors?.['required']">Category is required space added </span>
-                        </small>
+                        </small> -->
                     </div>
                     <!-- Item -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Item</label>
-                        <p-dropdown [options]="itemOptions" optionLabel="itemname" optionValue="itemid" [filter]="true" filterPlaceholder="Search Item" formControlName="item" placeholder="Item"> </p-dropdown>
-                        <small class="text-red-500 ms-3 mt-1" *ngIf="updateForm.get('item')?.touched">
+                        <p-dropdown [options]="itemOptions" optionLabel="itemname" optionValue="itemid" [filter]="true" [showClear]="true" filterPlaceholder="Search Item" formControlName="item" placeholder="Item"> </p-dropdown>
+                        <!-- <small class="text-red-500 ms-3 mt-1" *ngIf="updateForm.get('item')?.touched">
                             <span *ngIf="updateForm.get('item')?.errors?.['required']">Item is required</span>
-                        </small>
+                        </small> -->
                     </div>
+                    <div class="flex flex-col">
+                            <label class="font-medium mb-1 invisible">label</label>
+                            <button pButton type="button" label="Filter" class="p-button-outlined w-[100px]"></button>
+                        </div>
+                </div>
+                  <!-- Buttons -->
+        <div class="flex gap-4">
+            <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
+            <!-- <button pButton type="button" label="Delete All" class="p-button-danger" (click)="deleteAll()"></button> -->
+            <button pButton type="button" label="BarCode Print" class="p-button-secondary"></button>
+             <button pButton type="submit" label="Save" class="p-button-warning"></button>
+        </div>
                 </div>
                 <div class="mt-6">
                     <p-table
