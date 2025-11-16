@@ -107,7 +107,7 @@
                                 <td>{{ row.itemname }}</td>
                                 <td>{{ row.categoryname }}</td>
                                 <td>{{ row.uomname }}</td>
-                                <td>{{ row.curStock }}</td>
+                                <td>{{ row.currentstock }}</td>
 
                                 <!-- Adj Type -->
                                 <td>
@@ -144,7 +144,7 @@
                                     <div class="grid items-center gap-2">
                                         <input 
                                             pInputText 
-                                            type="number" 
+                                            type="number" [min]="1"
                                             [formControl]="row.quantityControl" 
                                             placeholder="{{ row.quantity }}" 
                                             (keydown)="blockMinus($event)"
