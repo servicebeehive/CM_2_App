@@ -27,6 +27,8 @@ import { Paginator } from 'primeng/paginator';
 import { RouterLink } from "@angular/router";
 import { AuthService } from '@/core/services/auth.service';
 import { DrowdownDetails } from '@/core/models/inventory.model';
+import { MessageService } from 'primeng/api';
+
 interface Product {
     name: string;
     price: string;
@@ -95,6 +97,9 @@ export class StockInComponent {
      childUomStatus:boolean=false;
      addItemEnabled=false;
     @ViewChild(AddinventoryComponent) addInventoryComp!:AddinventoryComponent;
+   public itemOptionslist:[]=[]
+   childUomDialog: boolean = false;
+childUOMList: any[] = [];
 
     // ✅ Move dropdown options into variables
     transactionIdOptions = [];
@@ -108,9 +113,10 @@ export class StockInComponent {
     itemOptions = [];
 
     products:StockIn[] =[];
-    constructor(private fb: FormBuilder, private stockInService:InventoryService,private confirmationService:ConfirmationService,public datePipe:DatePipe) {}
+    constructor(private fb: FormBuilder, private stockInService:InventoryService,private confirmationService:ConfirmationService,public datePipe:DatePipe,private messageService: MessageService) {}
 
     ngOnInit(): void {
+    
         this.OnGetDropdown()
         this.loadAllDropdowns()
          this.onGetStockIn();
@@ -143,6 +149,7 @@ filterInvoiceNo(event:any){
 }
 
 onSave(updatedData:any){
+   if(!updatedData) return;
     const hasChildUOM= updatedData.childUOMDetails?.some((u:any)=> u.childUOM || u.conversion || u.mrp);
     const costPerItem=updatedData.qty && updatedData.purchasePrice ? (updatedData.purchasePrice/updatedData.qty).toFixed(2) : 0;
     const mappedData={
@@ -173,11 +180,14 @@ onSave(updatedData:any){
             else{
                 this.products.push(mappedData);
             }
-            this.closeDialog();
+           
+            this.closeDialog(updatedData);
+          this.OnGetItem();
     }
  deleteItem(product:any) {
+ 
   this.confirmationService.confirm({
-    message: `Are you sure you want to delete <b>${product.name}</b>?`,
+    message: `Are you sure you want to delete <b>${product.itemname}</b>?`,
     header: 'Confirm Delete',
     icon: 'pi pi-exclamation-triangle',
     acceptLabel: 'Yes',
@@ -185,9 +195,10 @@ onSave(updatedData:any){
     acceptButtonStyleClass: 'p-button-danger',
     rejectButtonStyleClass: 'p-button-secondary',
     accept: () => {
-      this.products = this.products.filter(p => p.code !== product.code);
+      this.OnDeleteItem(product.purchasedetailid) 
     },
     reject: () => {
+      
       // Optional: Add toast or log cancel
       console.log('Deletion cancelled');
     }
@@ -227,17 +238,23 @@ get grandTotal():number{
         this.mode='add';
         this.selectedRow=null;
         this.visibleDialog=true;
-        setTimeout(() => {
-          this.addInventoryComp.resetForm();
-        });
+        
+        setTimeout(() => 
+          this.addInventoryComp.resetForm(),10
+        );
+        this.OnGetItem()
     }
     openEditDialog(rowData:any){
         this.mode='edit';
         this.selectedRow=rowData||null;
         this.visibleDialog=true;
+       
     }
-    closeDialog(){
+    closeDialog(event:any){
+      console.log(event)
         this.visibleDialog=false;
+        
+        this.OnGetPurcheseItem(this.transationid)
     }
     reset(){
         this.productForm.reset({
@@ -247,8 +264,9 @@ get grandTotal():number{
             invoiceDate:'',
             remark:''
             });
+            // this.transationid='null';
         this.products=[];
-        
+        this.itemOptionslist = [];
         this.first=0;
         this.pagedProducts=[];
         this.childUomStatus=false;
@@ -264,6 +282,7 @@ get grandTotal():number{
 uomOptions: any[] = [];           // For UOM dropdown
 vendorOptions: any[] = [];        // For VENDOR dropdown
 purchaseIdOptions: any[] = [];    // For PURCHASE ID dropdown
+dateTime=new Date()
 
 OnGetDropdown(){
     let payload={
@@ -299,16 +318,40 @@ OnPurchesHeaderCreate(data:any){
     "p_loginuser": "admin",
     "clientcode": "CG01-SE",
     "x-access-token":this.authService.getToken()
-
-
-
 };
 
 this.stockInService.OnPurchesHeaderCreate(payload).subscribe({
     next:(res)=>{
  console.log(res)
- this.transationid=res.data[0].tranpurchaseid
- this.transactionIdOptions=res.data
+ this.transationid=res.data[0].tranpurchaseid;
+ this.transactionIdOptions=res.data;
+ 
+
+const id = Number(res.data[0].tranpurchaseid);
+
+// check if ID already exists in array
+const exists = this.purchaseIdOptions.some(item => item.purchaseid === id);
+
+if (!exists) {
+  // create item
+  const newItem = {
+    invoicedate: null,
+    invoicenumber: "",
+    purchaseid: id,
+    remark: "",
+    vendorid: 0
+  };
+
+  // push only if not exists
+  this.purchaseIdOptions.push(newItem);
+
+}
+this.productForm.patchValue({
+  p_tranpurchaseid: id
+});
+// patch form always
+
+
  this.loadAllDropdowns()
     },
     error:(error)=>{
@@ -342,9 +385,26 @@ if(this.productForm.value){
   this.transationid=event.value
 }
 
-
-
+this.OnGetPurcheseItem(event.value)
+ this.transationid=event.value
+const selectedPurchaseData1=  this.purchaseIdOptions.find(item=>item.purchaseid==event.value)
+console.log(selectedPurchaseData1);
+this.productForm.patchValue({
+  p_vendorid:selectedPurchaseData1.vendorid,
+  p_invoiceno:selectedPurchaseData1.invoicenumber,
+  p_remarks:selectedPurchaseData1.remark,
+p_invoicedate: selectedPurchaseData1.invoicedate
+  ? new Date(selectedPurchaseData1.invoicedate)
+  : null,
+})
+if(this.productForm.value){
+  this.addItemEnabled=true;
+  this.transationid=event.value
 }
+
+this.OnGetPurcheseItem(event.value)
+}
+
 valueReturnToString(value: any) {
   return value != null ? value.toString() : null;
 }
@@ -395,5 +455,94 @@ OnGetPurchaseId() {
     error: (err) => console.log(err)
   });
 }
+OnGetPurcheseItem(id:any) {
+  const payload = {
+    "uname": "admin",
+    "p_username": "admin",
+    "p_returntype": "PURCHASEDETAIL",
+    "p_returnvalue":id.toString(),
+    "clientcode": "CG01-SE",
+    "x-access-token":this.authService.getToken()
+    //"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyY29kZSI6ImFkbWluIiwiaWF0IjoxNzYzMDI3NzU5LCJleHAiOjE3NjMxMTQxNTl9.w9YSCAVi4G5bou6vlR2tjFb2oU4jUAJ1uHSLUTfbxKc"
+};
 
+  this.stockInService.Getreturndropdowndetails(payload).subscribe({
+    next: (res) =>{
+   this.itemOptionslist=res.data
+    },
+    error: (err) => console.log(err)
+  });
+}
+//Delete stock item
+OnDeleteItem(id:any){
+    const payload = {
+    "uname": "admin",
+    "p_username": "admin",
+    "p_returntype": "PURCHASEDETAIL",
+     "p_purchasedetailid":id,
+    "clientcode": "CG01-SE",
+    "x-access-token":this.authService.getToken()
+    //"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyY29kZSI6ImFkbWluIiwiaWF0IjoxNzYzMDI3NzU5LCJleHAiOjE3NjMxMTQxNTl9.w9YSCAVi4G5bou6vlR2tjFb2oU4jUAJ1uHSLUTfbxKc"
+};
+  this.stockInService.DeletStockinitem(payload).subscribe({
+    next:(res)=>{
+      this.showSuccess(res.data[0].msg)
+      this.OnGetPurcheseItem(this.transationid)
+      this.OnGetItem();
+      
+    }
+  })
+}
+// onchildUOM(id:any){
+//     const payload = {
+//     "uname": "admin",
+//     "p_username": "admin",
+//     "p_returntype": "CHILDUOM",
+//      "p_returnvalue":id.toString(),
+//     "clientcode": "CG01-SE",
+//     "x-access-token":this.authService.getToken()
+   
+// };
+//   this.stockInService.Getreturndropdowndetails(payload).subscribe({
+//     next:(res)=>{
+//       this.showSuccess(res.data[0].msg)
+//       this.OnGetPurcheseItem(this.transationid)
+      
+//     }
+//   })
+// }
+viewItem(id: number) {
+  console.log(id)
+
+  const payload = {
+    uname: "admin",
+    p_username: "admin",
+    p_returntype: "CHILDUOM",
+    p_returnvalue:id.toString(),
+    clientcode: "CG01-SE",
+    "x-access-token": this.authService.getToken()
+  };
+
+  this.stockInService.Getreturndropdowndetails(payload).subscribe({
+    next: (res: any) => {
+
+      if (!res.data || res.data.length === 0) {
+      //  this.showError("No Child UOM Data Available");
+        return;
+      }
+
+      this.childUOMList = res.data; // assign data
+      this.childUomDialog = true;   // open popup
+    },
+    error: (err) => {
+     // this.showError("Failed to load Child UOM Details");
+      console.error(err);
+    }
+  });
+
+}
+
+  showSuccess(message: string) {
+        this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
+    }
 }

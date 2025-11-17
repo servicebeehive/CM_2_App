@@ -1,149 +1,396 @@
 <div class="card p-6">
-    <div>
-        <form [formGroup]="salesForm" (ngSubmit)="onSubmit()" class="space-y-8">
-            <div class="flex justify-between items-center mb-6">
-                <span class="block text-surface-900 font-bold text-xl mb-6">Sales</span>
-                <!-- Buttons -->
-                <div class="flex gap-4">
-                    <button pButton type="button" label="Add" class="p-button-secondary" (click)="addItem()"></button>
-                    <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
-                    <button pButton type="button" label="Print" class="p-button-secondary" (click)="print()"></button>
-                    <button pButton type="submit" label="Submit" class="p-button-warning"></button>
-                </div>
-            </div>
 
-            <!-- 🏷 Product Info Section -->
-            <div>
-                <!-- ✅ Changed to a 2-column grid for half-width fields -->
-                <!-- <div class="flex mb-3">
-                    <input type="text" pInputText placeholder="Search..." class="w-full p-inputtext" formControlName="globalFilter" (input)="applyGlobalFilter()" />
-                </div> -->
-                 <div *ngIf="showGlobalSearch" class="mb-3">
-                        <app-global-filter  [(value)]="globalFilter" placeholder="Search Items..." (valueChange)="applyGlobalFilter()"></app-global-filter>
-                     </div>
-                <!-- Bill no -->
-                <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
-                    <div class="flex flex-col">
-                        <label class="font-medium mb-1">Bill No</label>
-                        <p-dropdown [options]="billNoOptions" optionLabel="label" optionValue="value" [filter]="true" filterPlaceholder="Search Bill No." formControlName="billNo" placeholder="Bill No."> </p-dropdown>
-                        <small class="text-red-500 ms-3 mt-1" *ngIf="salesForm.get('billNo')?.touched">
-                            <span *ngIf="salesForm.get('billNo')?.errors?.['required']">Bill No is required</span>
-                        </small>
-                    </div>
+  <!-- ================================
+       SALES FORM SECTION
+  ================================= -->
+  <form [formGroup]="salesForm" (ngSubmit)="onSubmit()" class="space-y-8">
 
-                    <!-- Transaction Date -->
-                    <div class="flex flex-col">
-                        <label class="font-medium mb-1">Transaction Date</label>
-                       <p-datepicker fluid formControlName="transactionDate" [showIcon]="true" placeholder="Transaction Date" [maxDate]="today"></p-datepicker>
-                       <!-- <small class="text-red-500" *ngIf="salesForm.get('date')?.hasError('futureDateNotAllowed')">Future dates are not allowed.</small> -->
-                    </div>
+    <!-- ================================
+         HEADER + ACTION BUTTONS
+    ================================= -->
+    <div class="flex justify-between items-center mb-6">
+      <span class="block text-surface-900 font-bold text-xl mb-6">Sales</span>
 
-                    <!-- Customer Name -->
-                    <div class="flex flex-col">
-                        <label class="font-medium mb-1">Customer Name</label>
-                        <input pInputText formControlName="customerName" placeholder="Customer Name" />
-                    </div>
+      <div class="flex gap-4">
 
-                    <!-- Mobile No. -->
-                    <div class="flex flex-col">
-                        <label class="font-medium mb-1">Mobile No.</label>
-                        <input pInputText type="number" formControlName="mobile" placeholder="Mobile No." />
-                        <small class="text-red-500 ms-3 mt-1" *ngIf="salesForm.get('mobile')?.errors?.['pattern']">
-                            <span *ngIf="salesForm.get('mobile')?.errors?.['pattern']">Please enter a valid 10-digit mobile number</span>
-                        </small>
-                    </div>
-                </div>
-                <div class="mt-6">
-                    <p-table
-                        [value]="filteredProducts"
-                        [globalFilterFields]="['name']"
-                        [filters]="{ global: { value: globalFilter, matchMode: 'contains' } }"
-                        dataKey="code"
-                        [paginator]="true"
-                        [rows]="10"
-                        [rowsPerPageOptions]="[5, 10, 20, 50]"
-                        [responsiveLayout]="'scroll'"
-                        class="p-datatable-gridlines mt-6"
-                    >
-                        <ng-template #header>
-                            <tr class="bg-yellow-400">
-                                <!-- <th class="text-center"><p-checkbox formControlName="update.selection" binary="true"></p-checkbox></th> -->
-                                <th style="width: 4rem"><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
-                                <th>Item Code</th>
-                                <th>Item Name</th>
-                                <th>Current Stock</th>
-                                <th>UOM</th>
-                                <th>Qty</th>
-                                <th>MRP</th>
-                                <th>Total</th>
-                                <!-- <th>Discount</th> -->
-                                <th>Warranty (in Mon)</th>
-                                <th>Location</th>
-                                <th class="text-center">Action</th>
-                            </tr>
-                        </ng-template>
-                        <ng-template #body let-update>
-                            <tr>
-                                <!-- <td class="text-center"><p-checkbox [(ngModel)]="update.selection"  binary="true"></p-checkbox></td> -->
-                                <td><p-tableCheckbox [value]="update" /></td>
-                                <td>{{ update.code }}</td>
-                                <td>{{ update.name }}</td>
-                                <td>{{ update.curStock }}</td>
-                                <td>{{ update.uom }}</td>
-                                <td><input type="number" pInputText [(ngModel)]="update.quantity" [ngModelOptions]="{ standalone: true }" placeholder="Quantity" (ngModelChange)="updateTotal(update)" /></td>
-                                <td>{{ update.mrp }}</td>
-                                <td>{{ update.total }}</td>
-                                <!-- <td>{{ update.discount }}</td> -->
-                                <td>{{ update.warPeriod }}</td>
-                                <td>{{ update.location }}</td>
-                                <td class="text-center">
-                                    <i class="pi pi-trash ms-2 cursor-pointer text-red-500" (click)="deleteItem(update)"></i>
-                                </td>
-                            </tr>
-                        </ng-template>
-                        <ng-template pTemplate="paginatorleft">
-                            <div class="text-gray-600 ms-2">Total Items:{{ filteredProducts?.length || 0 }}</div>
-                        </ng-template>
-                    </p-table>
-                </div>
-                <div class="grid grid-cols-5 gap-x-8 gap-y-4">
-                   
+        <!-- RESET -->
+        <button
+          pButton
+          type="button"
+          label="Reset"
+          class="p-button-secondary"
+          (click)="onReset()">
+        </button>
 
-                    <!-- Total Cost -->
-                    <div class="flex flex-col">
-                        <label class="font-medium mb-1">Total Cost</label>
-                        <input pInputText formControlName="totalCost" placeholder="Total Cost" readonly />
-                    </div>
+        <!-- PRINT -->
+        <button
+          pButton
+          type="button"
+          ngxPrint
+          printSectionId="invoicePrintSection"
+          label="Print"
+          class="p-button-secondary"
+          [disabled]="isSubmitDisabled()">
+        </button>
 
- <!--MRP Total -->
-                    <div class="flex flex-col">
-                        <label class="font-medium mb-1">MRP Total</label>
-                        <input pInputText formControlName="mrpTotal" placeholder="MRP Total" readonly />
-                    </div>
+        <!-- SUBMIT -->
+        <button
+          pButton
+          type="submit"
+          label="Submit"
+          class="p-button-warning"
+          [disabled]="isSubmitDisabled()">
+        </button>
 
-                    <!-- Discount -->
-                    <div class="flex flex-col">
-                        <label class="font-medium mb-1">Discount %</label>
-                        <input pInputText formControlName="discountLabel" placeholder="Discount" (keypress)="allowOnlyNumbers($event)" />
-                    </div>
-
-                    <!-- Round Off -->
-                    <div class="flex flex-col">
-                        <label class="font-medium mb-1">Round Off</label>
-                        <input pInputText formControlName="roundOff" placeholder="Round Off" readonly />
-                    </div>
-
-                    <!-- Final Payable -->
-                    <div class="flex flex-col">
-                        <label class="font-medium mb-1">Final Payable</label>
-                        <input pInputText formControlName="finalPayable" placeholder="Grand Total" readonly />
-                    </div>
-                </div>
-            </div>
-        </form>
+      </div>
     </div>
-    <p-dialog header="{{ mode === 'add' ? 'Add Item' : 'Edit Item' }}" [(visible)]="visibleDialog" [modal]="true" [style]="{ width: '80vw' }">
-        <app-addinventory [editData]="selectedRow" [mode]="mode" (close)="closeDialog()" (save)="onSave($event)" (childUom)="onChildUom($event)"> </app-addinventory>
-    </p-dialog>
-    <p-confirmDialog></p-confirmDialog>
+
+
+    <!-- ================================
+         ITEM SELECT SECTION
+    ================================= -->
+    <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
+
+      <!-- ITEM DROPDOWN -->
+      <div class="flex flex-col">
+        <label>Item</label>
+
+        <p-select
+          #itemSel
+          class="w-full mb-4"
+          [options]="itemOptions"
+          optionLabel="itemcombine"
+          optionValue="itemid"
+          formControlName="p_itemdata"
+          [filter]="true"
+          filterBy="itemcombine"
+          placeholder="Select Item"
+          [showClear]="true"
+          (onChange)="OnItemChange($event)">
+
+          <!-- Selected Template -->
+          <ng-template #selectedItem let-item>
+            <div class="flex items-center gap-2">
+              <div>{{ item.itemcombine }}</div>
+            </div>
+          </ng-template>
+
+          <!-- Dropdown Template -->
+          <ng-template #item let-details>
+            <div class="flex items-center gap-2">
+              <div>{{ details.itemcombine }}</div>
+            </div>
+          </ng-template>
+
+        </p-select>
+      </div>
+
+    </div>
+
+
+    <!-- ================================
+         BILL DETAILS + CUSTOMER INFO
+    ================================= -->
+    <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
+
+      <!-- BILL NO -->
+      <div class="flex flex-col">
+        <label class="font-medium mb-1">Bill No</label>
+
+        <p-dropdown
+          [options]="billNoOptions"
+          optionLabel="billno"
+          optionValue="billno"
+          placeholder="Bill No."
+          formControlName="p_billno"
+          [filter]="true"
+          filterPlaceholder="Search Bill No."
+          [showClear]="true"
+          (onChange)="onBillDetails($event)">
+        </p-dropdown>
+
+        <small class="text-red-500 mt-1" *ngIf="salesForm.get('p_billno')?.touched">
+          <span *ngIf="salesForm.get('p_billno')?.errors?.['required']">
+            Bill No is required
+          </span>
+        </small>
+      </div>
+
+      <!-- TRANSACTION DATE -->
+      <div class="flex flex-col">
+        <label class="font-medium mb-1">Transaction Date <span class="text-red-500">*</span></label>
+        <p-datepicker
+          fluid
+          formControlName="p_transactiondate"
+          dateFormat="dd-mm-yy"
+          [showIcon]="true"
+          placeholder="Transaction Date"
+          [maxDate]="today">
+        </p-datepicker>
+      </div>
+
+      <!-- CUSTOMER NAME -->
+      <div class="flex flex-col">
+        <label class="font-medium mb-1">Customer Name <span class="text-red-500">*</span></label>
+        <input
+          pInputText
+          placeholder="Customer Name"
+          formControlName="p_customername" />
+      </div>
+
+      <!-- MOBILE -->
+      <div class="flex flex-col">
+        <label class="font-medium mb-1">Mobile No. <span class="text-red-500">*</span></label>
+        <input
+          pInputText
+          type="number"
+          placeholder="Mobile No."
+          formControlName="p_mobileno" />
+
+        <small class="text-red-500 mt-1" *ngIf="salesForm.get('p_mobileno')?.errors?.['pattern']">
+          Please enter a valid 10-digit mobile number
+        </small>
+      </div>
+
+      <!-- GST CHECKBOX -->
+      <div class="flex flex-col">
+        <div class="flex items-center gap-2">
+          <p-checkbox binary="true" variant="filled" formControlName="p_gsttran"></p-checkbox>
+          <label>Is GST Return</label>
+        </div>
+      </div>
+
+    </div>
+
+
+    <!-- ================================
+         SALES TABLE (FormArray)
+    ================================= -->
+    <div class="mt-6">
+
+      <p-table
+        [value]="saleArray.controls"
+        dataKey="ItemId"
+        [responsiveLayout]="'scroll'"
+        class="p-datatable-gridlines mt-6">
+
+        <!-- HEADER -->
+        <ng-template pTemplate="header">
+          <tr class="bg-yellow-400">
+            <th>Item Code</th>
+            <th>Item Name</th>
+            <th>Current Stock</th>
+            <th>UOM</th>
+            <th>Qty</th>
+            <th>MRP</th>
+            <th>Total</th>
+            <th>Warranty</th>
+            <th>Location</th>
+            <th class="text-center">Action</th>
+          </tr>
+        </ng-template>
+
+        <!-- ROWS -->
+        <ng-template pTemplate="body" let-row let-i="rowIndex">
+          <tr [formGroup]="row">
+
+            <td>{{ row.get('itemsku')?.value }}</td>
+            <td>{{ row.get('ItemName')?.value }}</td>
+            <td>{{ row.get('curStock')?.value }}</td>
+            <td>{{ row.get('UOMId')?.value }}</td>
+
+            <!-- QUANTITY INPUT -->
+            <td>
+              <input
+                pInputText
+                type="number"
+                formControlName="Quantity"
+                min="1"
+                step="1"
+                class="w-full"
+                (keypress)="blockDecimal($event)"
+                (input)="updateTotal(i)"
+                [ngClass]="{ 'border-red-500': row.get('Quantity')?.errors?.['maxStock'] }" />
+            </td>
+
+            <td>{{ row.get('MRP')?.value }}</td>
+            <td>{{ row.get('totalPayable')?.value }}</td>
+            <td>{{ row.get('warPeriod')?.value }}</td>
+            <td>{{ row.get('location')?.value }}</td>
+
+            <!-- DELETE -->
+            <td class="text-center">
+              <i
+                class="pi pi-trash text-red-500 cursor-pointer"
+                (click)="removeItem(i)">
+              </i>
+            </td>
+
+          </tr>
+        </ng-template>
+
+        <!-- FOOTER TEXT -->
+        <ng-template pTemplate="paginatorleft">
+          <div class="text-gray-600 ms-2">
+            Total Items: {{ saleArray.length }}
+          </div>
+        </ng-template>
+
+      </p-table>
+    </div>
+
+
+    <!-- ================================
+         SUMMARY SECTION
+    ================================= -->
+    <div class="grid grid-cols-6 gap-x-8 gap-y-4 m-3 mt-4">
+
+      <!-- Total Cost -->
+      <div class="flex flex-col">
+        <label>Total Cost</label>
+        <input pInputText readonly type="number" formControlName="p_totalcost" />
+      </div>
+
+      <!-- MRP Total -->
+      <div class="flex flex-col">
+        <label>MRP Total</label>
+        <input pInputText readonly type="number" formControlName="p_totalsale" />
+      </div>
+
+      <!-- Discount -->
+      <div class="flex flex-col">
+        <label>Discount %</label>
+        <input pInputText type="number" formControlName="p_overalldiscount" (input)="applyDiscount()" />
+      </div>
+
+      <!-- Round Off -->
+      <div class="flex flex-col">
+        <label>Round Off</label>
+        <input pInputText readonly type="number" formControlName="p_roundoff" />
+      </div>
+
+      <!-- Total Sale -->
+      <div class="flex flex-col">
+        <label>Total Sale</label>
+        <input pInputText readonly type="number" formControlName="p_totalsale" />
+      </div>
+
+      <!-- Final Payable -->
+      <div class="flex flex-col">
+        <label>Final Payable</label>
+        <input pInputText readonly type="number" formControlName="p_totalpayable" />
+      </div>
+
+    </div>
+
+  </form>
+
+  <p-confirmDialog></p-confirmDialog>
+
+</div>
+
+
+<!-- ================================
+     PRINT SECTION (INVOICE)
+================================= -->
+<div id="invoicePrintSection">
+
+  <div class="invoice-container" style="width:800px;margin:auto;font-family:Arial;">
+
+    <h2 style="text-align:center;margin-bottom:5px;">SHRISTI ELECTRICAL</h2>
+
+    <p style="text-align:center;margin:0;">
+      SHOP NO.-7 SAPNA TALKIES COMPLEX,<br>
+      NANDINI ROAD, BHILAI<br>
+      GSTIN : 22AOCPY0439F1Z5 | State Code: 22<br>
+      Email : {{'shristielectricalgw@gmail.com'}}
+    </p>
+
+    <hr />
+
+    <h3 style="text-align:center;margin:0;">TAX INVOICE</h3>
+
+    <!-- HEADER INFO -->
+    <table width="100%" style="margin-top:15px;">
+      <tr>
+        <td>
+          <strong>Invoice No:</strong> {{ salesForm.get('p_transactionid')?.value }}<br>
+          <strong>Date:</strong> {{ salesForm.get('p_transactiondate')?.value | date:'dd/MM/yyyy' }}
+        </td>
+
+        <td>
+          <strong>Buyer (Bill To):</strong><br>
+          {{ salesForm.get('p_customername')?.value }}<br>
+          Mobile: {{ salesForm.get('p_mobileno')?.value }}
+        </td>
+      </tr>
+    </table>
+
+    <hr />
+
+    <!-- PRINT TABLE -->
+    <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;">
+      <thead>
+        <tr style="background:#f0f0f0;">
+          <th>#</th>
+          <th>Description</th>
+          <th>HSN</th>
+          <th>Qty</th>
+          <th>Rate</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let item of saleRows; let i = index">
+          <td>{{ i + 1 }}</td>
+          <td>{{ item.get('ItemName')?.value }}</td>
+          <td>—</td>
+          <td>{{ item.get('Quantity')?.value }}</td>
+          <td>{{ item.get('MRP')?.value }}</td>
+          <td>{{ item.get('totalPayable')?.value }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <hr />
+
+    <!-- PRINT SUMMARY -->
+    <table width="100%" style="margin-top:10px;">
+
+      <tr>
+        <td><strong>Total Cost:</strong></td>
+        <td>₹ {{ salesForm.get('p_totalcost')?.value }}</td>
+      </tr>
+
+      <tr>
+        <td><strong>Total Sale:</strong></td>
+        <td>₹ {{ salesForm.get('p_totalsale')?.value }}</td>
+      </tr>
+
+      <tr>
+        <td><strong>Discount:</strong></td>
+        <td>{{ salesForm.get('p_overalldiscount')?.value }} %</td>
+      </tr>
+
+      <tr>
+        <td><strong>Round Off:</strong></td>
+        <td>₹ {{ salesForm.get('p_roundoff')?.value }}</td>
+      </tr>
+
+      <tr>
+        <td><strong>Final Payable:</strong></td>
+        <td><strong>₹ {{ salesForm.get('p_totalpayable')?.value }}</strong></td>
+      </tr>
+
+    </table>
+
+    <hr />
+
+    <p style="text-align:right;margin-top:50px;">
+      <strong>Authorized Signatory</strong>
+    </p>
+
+  </div>
+
 </div>

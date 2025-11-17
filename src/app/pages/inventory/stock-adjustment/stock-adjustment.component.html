@@ -2,83 +2,147 @@
     <div>
         <form [formGroup]="updateForm" (ngSubmit)="onSubmit()" class="space-y-8">
             <div class="flex justify-between items-center mb-6">
-                <span class="block text-surface-900 font-bold text-xl mb-6">Stock Adjustment</span>
-                <!-- Buttons -->
-                <div class="flex gap-4">
-                    <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
-                      <button pButton type="submit" label="Save" class="p-button-warning"></button>
-                </div>
+                <span class="block text-surface-900 font-bold text-xl">Stock Adjustment</span>
             </div>
 
-            <!-- 🏷 Product Info Section -->
             <div>
-                <!-- ✅ Changed to a 2-column grid for half-width fields -->
-                <!-- <div class="flex mb-3">
-                    <input type="text" pInputText placeholder="Search..." class="w-full p-inputtext" formControlName="globalFilter" (input)="applyGlobalFilter()" />
-                </div> -->
-                <div *ngIf="showGlobalSearch" class="mb-3">
-                    <app-global-filter [(value)]="globalFilter" placeholder="Search Items..." (valueChange)="applyGlobalFilter()"></app-global-filter>
-                </div>
-                <!-- Category -->
-                <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
-                    <div class="flex flex-col">
-                        <label class="font-medium mb-1">Category</label>
-                        <p-dropdown [options]="categoryOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search Category" formControlName="category" placeholder="Category" (onChange)="applyGlobalFilter()"> </p-dropdown>
-                        <small class="text-red-500 ms-3 mt-1" *ngIf="updateForm.get('category')?.touched || updateForm.get('category')?.touched">
-                            <span *ngIf="updateForm.get('category')?.errors?.['required']">Category is required</span>
-                        </small>
-                    </div>
+                <div class="flex justify-between items-end w-full gap-6">
+                    <!-- LEFT SIDE -->
+                    <div class="grid grid-cols-3 gap-6 flex-grow">
+                        <!-- Category -->
+                        <div class="flex flex-col">
+                            <label class="font-medium mb-1">Category</label>
+                            <p-dropdown
+                                [options]="categoryOptions"
+                                optionLabel="fieldname"
+                                optionValue="fieldid"
+                                [filter]="true"
+                                filterPlaceholder="Search Category"
+                                formControlName="category"
+                                placeholder="Category"
+                                [showClear]="true"
+                                (onChange)="applyGlobalFilter()"
+                            >
+                            </p-dropdown>
+                        </div>
 
-                    <!-- Item -->
-                    <div class="flex flex-col">
-                        <label class="font-medium mb-1">Item</label>
-                        <p-dropdown [options]="itemOptions" optionLabel="itemname" optionValue="itemid" [filter]="true" filterPlaceholder="Search Item" formControlName="item" placeholder="Item" (onChange)="applyGlobalFilter()"> </p-dropdown>
-                        <small class="text-red-500 ms-3 mt-1" *ngIf="updateForm.get('item')?.touched">
-                            <span *ngIf="updateForm.get('item')?.errors?.['required']">Item is required</span>
-                        </small>
+                        <!-- Item -->
+                        <div class="flex flex-col">
+                            <label class="font-medium mb-1">Item</label>
+                            <p-dropdown
+                                [options]="itemOptions"
+                                optionLabel="itemcombine"
+                                optionValue="itemid"
+                                [filter]="true"
+                                filterPlaceholder="Search Item"
+                                formControlName="item"
+                                placeholder="Item"
+                                [showClear]="true"
+                                (onChange)="applyGlobalFilter()"
+                            >
+                            </p-dropdown>
+                        </div>
+
+                        <div class="flex flex-col">
+                            <label class="font-medium mb-1 invisible">label</label>
+                            <button pButton type="button" label="Filter" class="p-button-outlined w-[100px]" (click)="Onreturndropdowndetails()"></button>
+                        </div>
+                    </div>
+                    <div class="flex flex-col w-[150px]">
+                        <label class="font-medium mb-1">MRP Update</label>
+                        <p-dropdown [options]="mrpUpdate" optionLabel="label" optionValue="value" [filter]="true" appendTo="body" formControlName="mrpUpdate"> </p-dropdown>
+                    </div>
+                    <!-- RIGHT SIDE (Reset + Save) -->
+                    <div class="flex gap-4 w-[200px]">
+                        <button pButton type="button" label="Reset" class="p-button-secondary w-full" (click)="reset()"></button>
+
+                        <button pButton type="submit" label="Save" [disabled]="updateForm.invalid" class="p-button-warning w-full"></button>
                     </div>
                 </div>
+
+                <!-- TABLE -->
                 <div class="mt-6">
-                    <p-table
-                        [value]="filteredProducts"
-                        [globalFilterFields]="['name', 'category']"
-                        [filters]="{ global: { value: globalFilter, matchMode: 'contains' } }"
-                        dataKey="code"
-                        [paginator]="true"
-                        [rows]="10"
-                        [rowsPerPageOptions]="[5, 10, 20, 50]"
-                        [responsiveLayout]="'scroll'"
-                        class="p-datatable-gridlines mt-6"
-                    >
-                        <ng-template #header>
+                    <p-table [value]="filteredProducts" dataKey="code" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 20, 50]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines mt-6">
+                        <!-- HEADER -->
+                        <ng-template pTemplate="header">
                             <tr class="bg-yellow-400">
                                 <th style="width: 4rem"><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
                                 <th>Item Name</th>
                                 <th>Category</th>
-                                 <th>UOM</th>
+                                <th>UOM</th>
                                 <th>Current Stock</th>
+                                <th>Batch Available</th>
+                                <th>Cost/Item</th>
+                                <th>MRP</th>
                                 <th>Adj Type</th>
                                 <th>Quantity</th>
                             </tr>
                         </ng-template>
-                        <ng-template #body let-update>
+
+                        <!-- BODY -->
+                        <ng-template pTemplate="body" let-row let-i="rowIndex">
                             <tr>
-                                <td><p-tableCheckbox [value]="update" /></td>
-                                <td>{{ update.name }}</td>
-                                <td>{{ update.category }}</td>
-                                 <td>{{update.parentUOM}}</td>
-                                <td>{{ update.curStock }}</td>
-                                <td><p-autocomplete [(ngModel)]="update.adjustmentType" [dropdown]="true" [suggestions]="filteredAdjustment" (completeMethod)="search($event)" (onSelect)="onAdjustmentChange($event,update)" placeholder="Increase/Decrease"></p-autocomplete></td>
+                                <td><p-tableCheckbox [value]="row"></p-tableCheckbox></td>
+
+                                <td>{{ row.combine }}</td>
+                                <td>{{ row.categoryname }}</td>
+                                <td>{{ row.uomname }}</td>
+                                <td>{{ row.totalstock }}</td>
+                                <td>{{ row.batch_available }}</td>
+                                <td>{{ row.costprice }}</td>
+                                <td>
+                                    <div class="grid items-center gap-2"><input type="number" pInputText [min]="1" placeholder="{{ row.saleprice }}" [formControl]="row.mrpControl" (keydown)="blockMinus($event)" /></div>
+                                    <!-- <small class="text-red-500" *ngIf="row.mrpControl.touched && row.mrpControl.errors?.['required']"> MRP is required. </small> -->
+
+                                    <!-- Min(1) -->
+                                    <small class="text-red-500" *ngIf="row.mrpControl.touched && row.mrpControl.errors?.['min']"> MRP must be greater than 0. </small>
+                                </td>
+                                <!-- Adj Type -->
                                 <td>
                                     <div class="grid items-center gap-2">
-                                        <input pInputText type="number" [formControl]="update.quantityControl" placeholder="{{ update.quantity }}" />
-                                        <span class="text-red-500" *ngIf="update.quantityControl.touched && update.quantityControl.hasError('greaterThanStock')"> Quantity cannot be greater than current stock ({{ update.curStock }}). </span>
+                                        <p-dropdown [options]="adjustment" optionLabel="label" optionValue="value" [filter]="true" type="number" appendTo="body" [formControl]="row.adjustmentControl" placeholder="{{ row.adjtype }}"> </p-dropdown>
+
+                                        <!-- 
+                                        <span class="text-red-500" 
+                                              *ngIf="row.adjtype.touched && row.quantityControl.hasError('greaterThanStock')">
+                                           Adj type cannot be greater than current stock ({{ row.curStock }}).
+                                        </span> -->
+                                    </div>
+                                    <!-- <input  -->
+                                    <!-- <p-autocomplete
+                                        [(ngModel)]="row.adjustmentType"
+                                        [dropdown]="true"
+                                        [suggestions]="filteredAdjustment"
+                                        (completeMethod)="search($event)"
+                                        (onSelect)="onAdjustmentChange($event, row, i)"
+                                        placeholder="Increase/Decrease">
+                                    </p-autocomplete> -->
+                                </td>
+
+                                <!-- Quantity -->
+                                <td>
+                                    <div class="grid items-center gap-2">
+                                        <input pInputText type="number" [min]="1" [formControl]="row.quantityControl" placeholder="{{ row.quantity }}" (keydown)="blockMinus($event)" />
+
+                                        <!-- <small class="text-red-500" *ngIf="row.quantityControl.touched && row.quantityControl.errors?.['required']"> Quantity is required. </small> -->
+
+                                        <!-- ERROR: Quantity must be greater than 0 -->
+                                        <small class="text-red-500" *ngIf="row.quantityControl.touched && row.quantityControl.errors?.['min']"> Quantity must be greater than 0. </small>
+
+                                        <!-- ERROR: Quantity exceeds batch -->
+                                        <small class="text-red-500" *ngIf="row.quantityControl.touched && row.quantityControl.errors?.['greaterThanBatch']"> Quantity cannot be greater than batch available ({{ row.batch_available }}). </small>
+
+                                        <!--  <span class="text-red-500" 
+                                              *ngIf="row.quantityControl.touched && row.quantityControl.hasError('greaterThanStock')">
+                                            Quantity cannot be greater than current stock ({{ row.curStock }}).
+                                        </span> -->
                                     </div>
                                 </td>
                             </tr>
                         </ng-template>
+
                         <ng-template pTemplate="paginatorleft">
-                            <div class="text-gray-600 ms-2">Total Items:{{ filteredProducts?.length || 0 }}</div>
+                            <div class="text-gray-600 ms-2">Total Items: {{ filteredProducts?.length || 0 }}</div>
                         </ng-template>
                     </p-table>
                 </div>
@@ -86,4 +150,5 @@
         </form>
     </div>
 </div>
+
 <p-confirmDialog></p-confirmDialog>

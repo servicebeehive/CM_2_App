@@ -86,13 +86,19 @@ export class AddinventoryComponent {
     @Input() uomOptions: any[] = [];
     @Input() vendorOptions: any[] = [];
     @Input() purchaseIdOptions: any[] = [];
+    public ChilduomOptions:[]=[]
     public authService = inject(AuthService);
+    copyMessage:string='';
+    showCopyMessage: boolean=false;
     addForm!: FormGroup;
     filteredItemCode: any[] = [];
+    dateTime=new Date()
     // ✅ Move dropdown options into variables
     itemCodeOptions = [];
     parentUOMOptions = [];
     uom = [];
+    uomTableDisabled=false;
+    resetDisabled=false;
     products: any[] = [
         // { childUOM:'', conversion:'', mrpUom:'' }
     ];
@@ -101,7 +107,7 @@ export class AddinventoryComponent {
       {label:'Select Existing Item' , value:1},
         {label:'Add New Item' , value:2}
     ];
-
+     
     filteredUOM: any[] = [];
     searchValue:string='';
     constructor(
@@ -120,18 +126,18 @@ export class AddinventoryComponent {
                 parentUOM: ['', Validators.required],
                 itemName: ['', [Validators.required, Validators.maxLength(500)]],
                 curStock: [''],
-                purchasePrice: ['1135', [Validators.required, Validators.min(1)]],
-                minStock: ['10'],
+                purchasePrice: ['', [Validators.required, Validators.min(1)]],
+                minStock: [''],
                 warPeriod: [''],
-                p_expirydate: [],
-                costPerItem: [{ value: '', disabled: true }],
+                p_expirydate: [null],
+                costPerItem: [''],
                 mrp: ['', [Validators.required, Validators.min(1)]],
                 location: ['', Validators.maxLength(100)],
-                qty: ['', Validators.required],
+                qty: ['', [Validators.required,Validators.min(1)]],
                 discount: [''],
                 activeItem: [true],
                 gstItem: [true],
-                
+                itemSearch:['']
             },
             { validators: this.mrpValidator }
         );
@@ -139,6 +145,7 @@ export class AddinventoryComponent {
         this.addForm.get('qty')?.valueChanges.subscribe(() => this.updateCostPerItem());
         this.resetChildUOMTable();
     }
+
     resetChildUOMTable() {
         this.products = [];
     }
@@ -161,6 +168,11 @@ export class AddinventoryComponent {
         }
         return null;
     };
+blockMinus(event: KeyboardEvent) {
+  if (event.key === '-' || event.key === 'Minus') {
+    event.preventDefault();
+  }
+}
 
     updateCostPerItem(): void {
         const purchasePrice = parseFloat(this.addForm.get('purchasePrice')?.value);
@@ -168,9 +180,9 @@ export class AddinventoryComponent {
 
         if (!isNaN(purchasePrice) && !isNaN(qty) && qty > 0) {
             const cost = purchasePrice / qty;
-            this.addForm.get('costPerItem')?.setValue(cost.toFixed(2), { emitEvent: false });
+           this.addForm.get('costPerItem')?.setValue(cost.toFixed(2), { emitEvent: false });
         } else {
-            this.addForm.get('costPerItem')?.setValue('', { emitEvent: false });
+          this.addForm.get('costPerItem')?.setValue('', { emitEvent: false });
         }
     }
    
@@ -178,57 +190,140 @@ export class AddinventoryComponent {
     this.searchValue=event.filter || '';
    }
 
-   addNewItem(select:any){
-    const code = this.searchValue?.trim();
-    if(code){
+//    addNewItem(select:any){
+//     const code = this.searchValue?.trim();
+//     if(code){
        
-        select.clear();
-        select.hide();
-        this.addForm.reset();
-    this.addForm.patchValue({
-      itemCode: code,
-      itemName: '',
-      activeItem: true,
-      gstItem: true
-    });
-    this.resetChildUOMTable();
-  } else {
-    this.messageService.add({
-      severity: 'warn',
-      summary: 'Warning',
-      detail: 'Please enter an item code first before adding a new item.'
-    });
-   }
-}
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes['editData'] && this.editData && this.mode === 'edit' && this.addForm) {
-            this.addForm.patchValue({
-                itemCode: this.editData.code,
-                itemName: this.editData.name,
-                category: this.editData.category,
-                curStock: this.editData.curStock,
-                purchasePrice: this.editData.purchasePrice,
-                qty: this.editData.quantity,
-                mrp: this.editData.mrp,
-                minStock: this.editData.minStock,
-                warPeriod: this.editData.warPeriod,
-                costPerItem: this.editData.costPerItem,
-                location: this.editData.location,
-                parentUOM: this.editData.uom,
-                childUom: this.editData.childUOM,
-                conversion: this.editData.conversion,
-                mrpUom: this.editData.mrpUom,
-                discount: this.editData.discount,
-                gstItem: this.editData.gstItem,
-                p_expirydate: this.editData.p_expirydate
-            });
-        } else if (this.mode === 'add' && this.addForm) {
-            this.addForm.reset();
-            this.resetChildUOMTable();
-            this.addForm.get('activeItem')?.setValue(true);
-            this.addForm.get('gstItem')?.setValue(true);
-        }
+//         select.clear();
+//         select.hide();
+//         this.addForm.reset();
+//     this.addForm.patchValue({
+//       itemCode: code,
+//       itemName: '',
+//       activeItem: true,
+//       gstItem: true
+//     });
+//     this.resetChildUOMTable();
+//   } else {
+//     this.messageService.add({
+//       severity: 'warn',
+//       summary: 'Warning',
+//       detail: 'Please enter an item code first before adding a new item.'
+//     });
+//    }
+// }
+enterEditItemMode(itemData: any) {
+    // const costperitem=(itemData.pruchaseprice/itemData.quantity).toFixed(2);
+        // patch form with itemData (same fields as before)
+        console.log('edit',itemData.value);
+        this.addForm.patchValue({
+            itemCode: itemData.itemsku,
+            itemName: itemData.itemname,
+            category: itemData.categoryid,
+            curStock: itemData.currentstock,
+            p_expirydate: itemData.expirydate ? new Date(itemData.expirydate) : null,
+            gstItem: itemData.gstitem === 'Y',
+            activeItem: itemData.isactive === 'Y',
+            location: itemData.location,
+            minStock: itemData.minimumstock,
+            purchasePrice: itemData.costprice * itemData.quantity,
+            mrp: itemData.saleprice,
+            parentUOM: itemData.uomid,
+            qty: itemData.quantity,
+            costPerItem:itemData.costprice,
+            warPeriod: itemData.warrentyperiod
+
+        });
+
+        // load child UOM and master child options
+        this.OnChildOM(itemData.itemid);
+        this.viewItem(itemData.uomid);
+ this.resetDisabled=true;
+        // Disable only the item-related fields (not purchasePrice/mrp/qty)
+        this.disableItemRelatedControls();
+              this.addForm.get('purchasePrice')?.enable();
+    this.addForm.get('mrp')?.enable();
+    this.addForm.get('qty')?.enable();
+          // disable child UOM table & Add UOM button
+        this.uomTableDisabled = true;
+       
     }
+
+enterAddItemMode(itemData: any) {
+        // patch form with itemData (same fields as before)
+        const costperitem=(itemData.pruchaseprice/itemData.quantity).toFixed(2);
+        this.addForm.patchValue({
+            itemCode: itemData.itemsku,
+            itemName: itemData.itemname,
+            category: itemData.categoryid,
+            curStock: itemData.currentstock,
+            p_expirydate: itemData.expirydate ? new Date(itemData.expirydate) : null,
+            gstItem: itemData.gstitem === 'Y',
+            activeItem: itemData.isactive === 'Y',
+            location: itemData.location,
+            minStock: itemData.minimumstock,
+            purchasePrice:this.mode=='add'?0:itemData.pruchaseprice,
+            // purchasePrice:itemData.pruchaseprice,
+            mrp: itemData.saleprice,
+            parentUOM: itemData.uomid,
+            qty: itemData.quantity,
+           // costPerItem:itemData.pruchaseprice,
+          costPerItem:itemData.costprice,
+            warPeriod: itemData.warrentyperiod
+        });
+
+        // load child UOM and master child options
+        this.OnChildOM(itemData.itemid);
+        this.viewItem(itemData.uomid);
+
+        // Disable only the item-related fields (not purchasePrice/mrp/qty)
+        this.disableItemRelatedControls();
+              this.addForm.get('purchasePrice')?.enable();
+    this.addForm.get('mrp')?.enable();
+    this.addForm.get('qty')?.enable();
+  this.addForm.get('itemSearch')?.enable();
+          // disable child UOM table & Add UOM button
+        this.uomTableDisabled = true;
+    }
+
+     enterAddModeReset() {
+        this.uomTableDisabled = false;
+        this.addForm.enable();
+        this.resetChildUOMTable();
+        this.addForm.get('activeItem')?.setValue(true);
+        this.addForm.get('gstItem')?.setValue(true);
+    }
+
+    private disableItemRelatedControls() {
+        // disable fields that should not be editable after selecting an existing item
+        const controls = ['itemCode', 'parentUOM', 'category', 'itemName', 'curStock', 'location', 'minStock', 'warPeriod','p_expirydate','activeItem','gstItem','itemSearch'];
+        controls.forEach(c => this.addForm.get(c)?.disable());
+    }
+
+    ngOnChanges(changes: SimpleChanges): void {
+if (changes['editData'] && this.editData && this.mode === 'edit' && this.addForm) {
+          this.enterEditItemMode(this.editData);
+        } else if (this.mode === 'add' && this.addForm) {
+            this.enterAddModeReset();
+        }        
+    }
+   copy(event:any){
+    const itemCode = this.addForm.get('itemCode')?.value;
+    if(!itemCode || itemCode === ''){
+        this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Select An Item Before Copy'
+        });
+        return;
+    }
+     
+    this.showCopyMessage = true;
+    
+    this.addForm.enable();
+    this.uomTableDisabled=false;
+  
+}
     search(event: any) {
         const query = event.query?.toLowerCase() || '';
         if (!query) {
@@ -276,8 +371,12 @@ export class AddinventoryComponent {
     }
 
     mapFormToPayload(form: any, childUOM: any[]) {
+       console.log(form)
+     //   return
+        
         return {
-            p_operationtype: this.mode === 'add' ? 'PUR_INSERT' : 'PUR_UPDATE',
+            // p_operationtype: this.mode === 'add' ? 'PUR_INSERT' : 'PUR_UPDATE',
+             p_operationtype:'PUR_INSERT',
             p_purchaseid: this.transationid.toString(),
 
             p_itemsku: form.itemCode,
@@ -296,7 +395,7 @@ export class AddinventoryComponent {
             p_currentstock: Number(form.curStock),
 
             // Date Format (dd/MM/yyyy)
-            p_expirydate: this.datePipe.transform(form.expiryDate, 'dd/MM/yyyy'),
+            p_expirydate: this.datePipe.transform(this.addForm.controls['p_expirydate'].value, 'dd/MM/yyyy'),
 
             p_currencyid: Number(form.currencyId || 1),
             p_taxid: Number(form.taxId || 0),
@@ -328,8 +427,9 @@ export class AddinventoryComponent {
         if (this.addForm.invalid || !this.isChildUOMValid()) return;
         this.inventoryService.Oninsertitemdetails(this.mapFormToPayload(this.addForm.getRawValue(), this.products)).subscribe({
             next: (res) => {
-                this.showSuccess(res.data[0].msg);
-                this.close.emit();
+               const msg = res?.data?.[0]?.msg || "Item saved successfully";
+                this.showSuccess(msg);
+                this.close.emit(this.addForm.getRawValue());
             },
             error: (res) => {}
         });
@@ -338,41 +438,134 @@ export class AddinventoryComponent {
         this.close.emit();
         console.log(this.products);
     }
+
     resetForm() {
         this.addForm.reset();
         this.resetChildUOMTable();
         this.addForm.get('activeItem')?.setValue(true);
         this.addForm.get('gstItem')?.setValue(true);
+        this.addForm.enable();
+        this.uomTableDisabled=false;
     }
     onItemCodeChange(event: any) {
-        console.log(event.value);
+         this.showCopyMessage = false;
+    
         const itemnamdata = this.itemOptions.find((item) => item.itemsku === event.value);
       
         console.log('itemnamdata', itemnamdata);
       if (itemnamdata) {
-  const expiry = itemnamdata.expirydate ? new Date(itemnamdata.expirydate) : null;
 
-  this.addForm.patchValue({
-    itemCode:itemnamdata.itemsku,
-    itemName: itemnamdata.itemname,
-    category: itemnamdata.categoryid,
-    curStock: itemnamdata.currentstock,
-    p_expirydate: expiry,
-    gstItem: itemnamdata.gstitem ==='Y' ? true : false,       // ✅ Convert 'Y'/'N' → boolean
-    activeItem: itemnamdata.isactive==='Y' ? true : false,   // ✅ Convert 'Y'/'N' → boolean
-    location: itemnamdata.location,
-    minStock: itemnamdata.minimumstock,
-    purchasePrice: itemnamdata.pruchaseprice,   // ✅ fixed typo (was pruchaseprice)
-    mrp: itemnamdata.saleprice,
-    parentUOM: itemnamdata.uomid,
-    warPeriod: itemnamdata.warrentyperiod
-  });
+//   const expiry = itemnamdata.expirydate ? new Date(itemnamdata.expirydate) : null;
 
-  console.log('✅ Form after patch:', this.addForm.value);
+//   this.addForm.patchValue({
+//     itemCode:itemnamdata.itemsku,
+//     itemName: itemnamdata.itemname,
+//     category: itemnamdata.categoryid,
+//     curStock: itemnamdata.currentstock,
+//     p_expirydate:expiry,
+//     gstItem: itemnamdata.gstitem ==='Y' ? true : false,       // ✅ Convert 'Y'/'N' → boolean
+//     activeItem: itemnamdata.isactive==='Y' ? true : false,   // ✅ Convert 'Y'/'N' → boolean
+//     location: itemnamdata.location,
+//     minStock: itemnamdata.minimumstock,
+//     purchasePrice: itemnamdata.pruchaseprice,   // ✅ fixed typo (was pruchaseprice)
+//     mrp: itemnamdata.saleprice,
+//     parentUOM: itemnamdata.uomid,
+//     qty:itemnamdata.qty,
+
+//     warPeriod: itemnamdata.warrentyperiod
+//   });
+
+//   console.log('✅ Form after patch:', itemnamdata.itemid);
+//   this.OnChildOM(itemnamdata.itemid)
+//   this.viewItem(itemnamdata.uomid)
+this.enterAddItemMode(itemnamdata);
 }
-
     }
+    
     showSuccess(message: string) {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
     }
+OnChildOM(id: number) {
+ 
+    const payload = {
+      uname: "admin",
+      p_username: "admin",
+      p_returntype: "CHILDUOM",
+      p_returnvalue:id.toString(),
+      clientcode: "CG01-SE",
+      "x-access-token": this.authService.getToken()
+    };
+
+    this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+      next: (res: any) => {
+        console.log("CHILD UOM DATA =>", res.data);
+
+        if (!res.data || res.data.length === 0) {
+          // No need to show error now
+          this.products = []; // or keep existing rows
+          return;
+        }
+
+        // ✅ Assign API data into table rows (NO FUNCTIONALITY CHANGES)
+        this.products = res.data.map((x: any) => ({
+          childUOM: x.childuomid,        // bind to dropdown
+          conversion: x.uomconversion,   // number input
+          mrpUom: x.childmrp             // number input
+        }));
+      },
+
+      error: (err) => {
+        console.error(err);
+      }
+    });
+  
+}
+Reset(){
+    this.addForm.reset();
+     this.enterAddModeReset();
+     this.resetChildUOMTable();
+      this.showCopyMessage = false;
+    
+}
+getFilteredChildUOM() {
+  const parent = this.addForm.get('parentUOM')?.value;
+  return this.uomOptions.filter(u => u.fieldid !== parent);
+}
+onItemParentUM(event:any){
+    this.viewItem(event.value)
+
+}
+viewItem(id: number) {
+  console.log(id)
+ this.ChilduomOptions=[]
+
+  const payload = {
+    uname: "admin",
+    p_username: "admin",
+    p_returntype: "CHILDUOMMASTER",
+    p_returnvalue:id.toString(),
+    clientcode: "CG01-SE",
+    "x-access-token": this.authService.getToken()
+  };
+
+  this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+    next: (res: any) => {
+
+      if (!res.data || res.data.length === 0) {
+      //  this.showError("No Child UOM Data Available");
+        return;
+      }
+
+      this.ChilduomOptions = res.data; // assign data
+    //   this.childUomDialog = true;   // open popup
+    },
+    error: (err) => {
+     // this.showError("Failed to load Child UOM Details");
+      console.error(err);
+    }
+  });
+
+}
+
+
 }

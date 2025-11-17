@@ -5,7 +5,7 @@ import { API_ENDPOINTS } from '../config/api-endpoints';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { StockIn } from '@/types/stockin.model';
-import { StockHeader } from '../models/inventory.model';
+import { SaleHeader, StockHeader } from '../models/inventory.model';
 
 @Injectable({ providedIn: 'root' })
 export class InventoryService {
@@ -65,9 +65,27 @@ export class InventoryService {
 
 )
   }
+   OnSalesHeaderCreate(payload:SaleHeader):Observable<any>{
+    console.log(payload)
+    let url=`${this.baseUrl}${API_ENDPOINTS.inventory.inserttransactiondetails}`;
+    return this.http.post<any>(url,payload).pipe(catchError(error=>{
+        return throwError(()=>error)
+    }),
+
+)
+  }
 Oninsertitemdetails(payload:any):Observable<any>{
     console.log(payload)
     let url=`${this.baseUrl}${API_ENDPOINTS.inventory.insertitemdetails}`;
+    return this.http.post<any>(url,payload).pipe(catchError(error=>{
+        return throwError(()=>error)
+    }),
+
+)
+  }
+  OninsertSalesDetails(payload:any):Observable<any>{
+    console.log(payload)
+    let url=`${this.baseUrl}${API_ENDPOINTS.inventory.inserttransactiondetails}`;
     return this.http.post<any>(url,payload).pipe(catchError(error=>{
         return throwError(()=>error)
     }),
@@ -83,6 +101,54 @@ Oninsertitemdetails(payload:any):Observable<any>{
 
 )
   }
+  Getreturndropdowndetails(payload:any):Observable<any>{
+    // console.log(payload)
+    let url=`${this.baseUrl}${API_ENDPOINTS.inventory.returndropdowndetails}`;
+    return this.http.post<any>(url,payload).pipe(catchError(error=>{
+        return throwError(()=>error)
+    }),
+
+)
+  }
+DeletStockinitem(payload:any):Observable<any>{
+    // console.log(payload)
+    let url=`${this.baseUrl}${API_ENDPOINTS.inventory.deletepurchasedetails}`;
+    return this.http.post<any>(url,payload).pipe(catchError(error=>{
+        return throwError(()=>error)
+    }),
+
+)
+  }
+getadjustmentdata(payload:any):Observable<any>{
+    // console.log(payload)
+    let url=`${this.baseUrl}${API_ENDPOINTS.inventory.adjustmentlist}`;
+    return this.http.post<any>(url,payload).pipe(catchError(error=>{
+        return throwError(()=>error)
+    }),
+
+)
+}
+
+getupdatedata(payload:any):Observable<any>{
+    // console.log(payload)
+    let url=`${this.baseUrl}${API_ENDPOINTS.inventory.updateitemlist}`;
+    return this.http.post<any>(url,payload).pipe(catchError(error=>{
+        return throwError(()=>error)
+    }),
+
+)
+}
+
+
+updatestockadjustment(payload:any):Observable<any>{
+    // console.log(payload)
+    let url=`${this.baseUrl}${API_ENDPOINTS.inventory.updatestockadjustment}`;
+    return this.http.post<any>(url,payload).pipe(catchError(error=>{
+        return throwError(()=>error)
+    }),
+
+)
+}
 
   /** 🔹 Common error handler */
   private handleError(error: HttpErrorResponse): Observable<never> {
