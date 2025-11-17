@@ -15,4 +15,5 @@ export interface StockIn {
   warPeriod?: number;
   location?: string;
   action?: string;
+  itemid?:number
 }

@@ -130,7 +130,7 @@ export class AddinventoryComponent {
                 minStock: [''],
                 warPeriod: [''],
                 p_expirydate: [null],
-                costPerItem: [{ value: '', disabled: true }],
+                costPerItem: [''],
                 mrp: ['', [Validators.required, Validators.min(1)]],
                 location: ['', Validators.maxLength(100)],
                 qty: ['', [Validators.required,Validators.min(1)]],
@@ -180,9 +180,9 @@ blockMinus(event: KeyboardEvent) {
 
         if (!isNaN(purchasePrice) && !isNaN(qty) && qty > 0) {
             const cost = purchasePrice / qty;
-            this.addForm.get('costPerItem')?.setValue(cost.toFixed(2), { emitEvent: false });
+           // this.addForm.get('costPerItem')?.setValue(cost.toFixed(2), { emitEvent: false });
         } else {
-            this.addForm.get('costPerItem')?.setValue('', { emitEvent: false });
+          //  this.addForm.get('costPerItem')?.setValue('', { emitEvent: false });
         }
     }
    
@@ -262,11 +262,13 @@ enterAddItemMode(itemData: any) {
             activeItem: itemData.isactive === 'Y',
             location: itemData.location,
             minStock: itemData.minimumstock,
-            purchasePrice: itemData.pruchaseprice,
+            purchasePrice:this.mode=='add'?0:itemData.pruchaseprice,
+            // purchasePrice:itemData.pruchaseprice,
             mrp: itemData.saleprice,
             parentUOM: itemData.uomid,
             qty: itemData.quantity,
-            costPerItem:itemData.costprice,
+            costPerItem:itemData.pruchaseprice,
+          //  costPerItem:itemData.costprice itemData.pruchaseprice,
             warPeriod: itemData.warrentyperiod
         });
 
