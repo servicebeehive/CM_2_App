@@ -129,6 +129,16 @@ getadjustmentdata(payload:any):Observable<any>{
 )
 }
 
+getupdatedata(payload:any):Observable<any>{
+    // console.log(payload)
+    let url=`${this.baseUrl}${API_ENDPOINTS.inventory.updateitemlist}`;
+    return this.http.post<any>(url,payload).pipe(catchError(error=>{
+        return throwError(()=>error)
+    }),
+
+)
+}
+
 
 updatestockadjustment(payload:any):Observable<any>{
     // console.log(payload)

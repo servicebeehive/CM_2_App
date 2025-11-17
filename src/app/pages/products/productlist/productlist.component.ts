@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { ChipModule } from 'primeng/chip';
 import { EditorModule } from 'primeng/editor';
@@ -19,7 +19,7 @@ import { DialogModule } from 'primeng/dialog';
 import { StockIn } from '@/types/stockin.model';
 import { InventoryService } from '@/core/services/inventory.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ConfirmationService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { CheckboxModule } from 'primeng/checkbox';
 import { AddinventoryComponent } from '@/pages/inventory/addinventory/addinventory.component';
 import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
@@ -78,24 +78,28 @@ export class ProductlistComponent {
         private confirmationService: ConfirmationService,
         private inventoryService:InventoryService,
         private authService:AuthService,
+        private messageService: MessageService
     ) {}
 
     ngOnInit(): void {
-        this.loadAllDropdowns();
-        this.onGetStockIn();
+       
         this.updateForm = this.fb.group({
             category: [''],
             item: [''],
+             p_stock: this.fb.array([])
         });
-        this.updateForm.valueChanges.subscribe(() => {
-            this.filterProducts();
-        });
+       this.loadAllDropdowns();
+        this.onGetStockIn();
+       
+        this.updateForm.get('category')?.valueChanges.subscribe(()=>this.applyGlobalFilter());
+        this.updateForm.get('item')?.valueChanges.subscribe(()=>this.applyGlobalFilter());
     }
 
     onGetStockIn() {
         this.products = this.stockInService.productItem || [];
-        this.products.forEach((p: any) => (p.selection = true));
-        this.filteredProducts = [...this.products];
+        // this.products.forEach((p: any) => (p.selection = true));
+        // this.filteredProducts = [...this.products];
+        this.buildFormArrayFormProducts(this.products);
     }
     allowOnlyNumbers(event:KeyboardEvent){
         const allowedChars=/[0-9]\b/;
@@ -122,18 +126,34 @@ export class ProductlistComponent {
         // this.filteredProducts = this.products.filter((p) => {
         //     return Object.values(p).some((value) => String(value).toLowerCase().includes(searchTerm));
         // });
-        const searchTerm=this.globalFilter?.toLowerCase() || '';
-        this.filteredProducts=this.products.filter((p)=>{
-             Object.values(p).some((value)=>String(value).toLowerCase().includes(searchTerm));
-        });
+        const searchTerm=(this.globalFilter || '')?.toLowerCase().trim();
+       const selectedCategory=this.updateForm.get('category')?.value;
+       const selectedItem=this.updateForm.get('item')?.value;
+       this.filteredProducts=this.products.filter((p:any)=>{
+        const matchesSearch=!searchTerm || String(p.itemcombine ?? p.name ?? '').toLowerCase() .includes(searchTerm) ||
+        String(p.categoryname ?? p.category ?? '').toLowerCase() .includes(searchTerm) ||
+      String(p.curStock ?? p.currentstock ?? '')
+                    .toLowerCase()
+                    .includes(searchTerm);
+
+            const matchesCategory = !selectedCategory || p.category === selectedCategory || p.categoryid === selectedCategory;
+            const matchesItem = !selectedItem || p.name === selectedItem || p.itemid === selectedItem;
+
+            return matchesSearch && matchesCategory && matchesItem;
+       });
+       this.buildFormArrayFormProducts(this.filteredProducts);
     }
+   
     onPageChange(event: any) {
         this.first = event.first;
         this.rowsPerPage = event.rows;
         this.updatePagedProducts();
     }
     updatePagedProducts() {
-        this.pagedProducts = this.products.slice(this.first, this.first + this.rowsPerPage);
+        // this.pagedProducts = (this.filterProducts || []).slice(this.first,this.first+this.rowsPerPage);
+    }
+    getStockArray():FormArray{
+        return this.updateForm.get('p_stock') as FormArray;
     }
     openEditDialog(rowData: any) {
     //    const matchedCategory = this.categoryOptions.find(otp=>otp.value===rowData.category);
@@ -172,6 +192,55 @@ export class ProductlistComponent {
     error: (err) => console.log(err)
   });
 }
+private buildFormArrayFormProducts(products:any[]){
+const stockArray = this.getStockArray();
+stockArray.clear();
+products.forEach((p:any)=>{
+  const group=this.fb.group({
+    itemid:[p.itemid],
+    categoryid:[p.categoryid],
+    mrp:[p.mrp],
+    BarCode:[p.BarCode],
+    isactive:[p.active],
+    uon:[p.uom],
+    purchasePrice:[p.purchasePrice]
+  });
+  stockArray.push(group);
+});
+}
+ Onreturndropdowndetails() {
+    const category=this.updateForm.controls['category'].value;
+    const item = this.updateForm.controls['item'].value;
+    if(category || item){
+       const payload = {
+    uname: 'admin',
+    p_categoryid: category || null,
+    p_itemid: item || null,
+    p_username: 'admin',
+    clientcode: 'CG01-SE',
+    'x-access-token': this.authService.getToken()   
+       };
+        this.inventoryService.getupdatedata(payload).subscribe({
+            next:(res:any)=>{
+                console.log("API RESULT:", res.data);
+                this.products=res?.data || [];
+                this.filteredProducts=[...this.products];
+                this.buildFormArrayFormProducts(this.filteredProducts);
+                if(this.products.length==0){
+                    let message='No Data Available for this Category and Item';
+                     this.showSuccess(message);
+                }
+            },
+            error:(err)=>{
+                console.error(err);
+            }
+        });
+    }
+    else{
+        let message='Please select both Category and Item before filtering.';
+        this.errorSuccess(message);
+    }
+ }
     onSave(updatedData: any) {
         const mappedData = {
             selection: true,
@@ -217,5 +286,11 @@ export class ProductlistComponent {
     reset() {
         this.updateForm.reset();
         this.filteredProducts = [...this.products];
+    }
+    showSuccess(message: string) {
+        this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
+    }
+     errorSuccess(message: string) {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: message });
     }
 }

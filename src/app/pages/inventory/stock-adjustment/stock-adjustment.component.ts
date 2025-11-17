@@ -44,7 +44,6 @@ import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.comp
         ConfirmDialogModule,
         CheckboxModule,
         AutoCompleteModule,
-        GlobalFilterComponent
     ],
     templateUrl: './stock-adjustment.component.html',
     styleUrls: ['./stock-adjustment.component.scss'],
