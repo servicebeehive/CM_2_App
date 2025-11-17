@@ -122,7 +122,7 @@ export class AddinventoryComponent {
                 parentUOM: ['', Validators.required],
                 itemName: ['', [Validators.required, Validators.maxLength(500)]],
                 curStock: [''],
-                purchasePrice: ['1135', [Validators.required, Validators.min(1)]],
+                purchasePrice: ['', [Validators.required, Validators.min(1)]],
                 minStock: [''],
                 warPeriod: [''],
                 p_expirydate: [null],
@@ -452,7 +452,7 @@ viewItem(id: number) {
     uname: "admin",
     p_username: "admin",
     p_returntype: "CHILDUOMMASTER",
-    P_returnvalue:id.toString(),
+    p_returnvalue:id.toString(),
     clientcode: "CG01-SE",
     "x-access-token": this.authService.getToken()
   };
