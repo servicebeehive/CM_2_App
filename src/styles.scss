@@ -140,6 +140,16 @@
 }
 .p-datatable-gridlines .p-datatable-tbody>tr:last-child>td{ border-bottom: 1px solid var(--surface-border) !important;}
 
-
+#invoicePrintSection{display: none;}
+@media print {
+  button, .no-print, .header, .sidebar {
+    display: none !important;
+  }
+  
+  #invoicePrintSection {
+    width: 100%; display: block;
+    margin: 0;
+  }
+}
 
 
