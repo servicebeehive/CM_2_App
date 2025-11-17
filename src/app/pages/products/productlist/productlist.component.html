@@ -36,7 +36,7 @@
                     </div>
                     <div class="flex flex-col">
                             <label class="font-medium mb-1 invisible">label</label>
-                            <button pButton type="button" label="Filter" class="p-button-outlined w-[100px]"></button>
+                            <button pButton type="button" label="Filter" class="p-button-outlined w-[100px]" (click)="Onreturndropdowndetails()"></button>
                         </div>
                 </div>
                   <!-- Buttons -->
@@ -50,8 +50,6 @@
                 <div class="mt-6">
                     <p-table
                         [value]="filteredProducts"
-                        [globalFilterFields]="['code', 'name', 'category', 'curStock', 'purchasePrice']"
-                        [filters]="{ global: { value: globalFilter, matchMode: 'contains' } }"
                         dataKey="code"
                         [paginator]="true"
                         [rows]="10"
@@ -59,44 +57,38 @@
                         [responsiveLayout]="'scroll'"
                         class="p-datatable-gridlines mt-6"
                     >
-                        <ng-template #header>
+                        <ng-template pTemplate #header>
                             <tr class="bg-yellow-400">
                                 <!-- <th class="text-center"><p-checkbox formControlName="update.selection" binary="true"></p-checkbox></th> -->
                                 <th style="width: 4rem"><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
-                                <th>Item Code</th>
                                 <th>Item Name</th>
                                 <th>Category</th>
+                                <th>UOM</th>
                                 <th>Current Stock</th>
                                 <th>Purchase Price</th>
-                                <th>UOM</th>
                                 <th>MRP</th>
-                                <th>Discount</th>
-                                <th>Min Stock</th>
-                                <th>Warranty Period</th>
+                                <th>GST Item</th>
+                                <th>Active</th>
                                 <th>BarCode #</th>
-                                <th>Location</th>
                                 
                                 <th class="text-center">Action</th>
                             </tr>
                         </ng-template>
-                        <ng-template #body let-update>
+                        <ng-template pTemplate="body" let-row let-i="rowIndex">
                             <tr>
                                 <!-- <td class="text-center"><p-checkbox [(ngModel)]="update.selection"  binary="true"></p-checkbox></td> -->
-                                 <td><p-tableCheckbox [value]="update" /></td>
-                                <td>{{ update.code }}</td>
-                                <td>{{ update.name }}</td>
-                                <td>{{ update.category }}</td>
-                                <td>{{ update.curStock }}</td>
-                                <td>{{ update.purchasePrice }}</td>
-                                <td>{{ update.uom }}</td>
-                                <td>{{ update.mrp }}</td>
-                                <td>{{ update.discount }}</td>
-                                <td>{{ update.minStock }}</td>
-                                <td>{{ update.warPeriod }}</td>
-                                <td><input pInputText type="text" [(ngModel)]="update.BarCode" maxlength="3" minlength="3" placeholder="{{update.BarCode}}" (keypress)="allowOnlyNumbers($event)"></td>
-                                 <td>{{ update.location }}</td>
+                                 <td><p-tableCheckbox [value]="row" /></td>
+                                <td>{{ row.itemcombine }}</td>
+                                <td>{{ row.categoryname }}</td>
+                                <td>{{ row.uomname }}</td>
+                                <td>{{ row.currentstock }}</td>
+                                <td>{{ row.pruchaseprice }}</td>
+                                <td>{{ row.saleprice }}</td>
+                               <td>{{row.gstitem}}</td>
+                                <td>{{ row.isactive }}</td>
+                                <td><input pInputText type="text"  maxlength="3" minlength="3" (keypress)="allowOnlyNumbers($event)"></td>
                                 <td class="text-center">
-                                    <i class="pi pi-pencil cursor-pointer text-blue-500" (click)="openEditDialog(update)"></i>
+                                    <i class="pi pi-pencil cursor-pointer text-blue-500" (click)="openEditDialog(row)"></i>
                                     <!-- <i class="pi pi-trash ms-2 cursor-pointer text-red-500" (click)="deleteItem(update)"></i> -->
                                 </td>
                             </tr>
