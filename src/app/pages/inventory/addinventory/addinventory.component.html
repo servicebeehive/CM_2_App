@@ -10,7 +10,7 @@
   <label class="font-medium mb-1">Item Search</label>
 
   <!-- 🔽 Select Dropdown -->
-  <p-select #itemSelect (onChange)="onItemCodeChange($event)"  [options]="itemOptions"  optionLabel="itemcombine" optionValue="itemsku" formControlName="itemCode" [filter]="true" filterBy="itemcombine" [showClear]="true" placeholder="Select Item" (onFilter)="onItemSearch($event)">
+  <p-select #itemSelect (onChange)="onItemCodeChange($event)"  [options]="itemOptions"  optionLabel="itemcombine" optionValue="itemsku" formControlName="itemSearch" [filter]="true" filterBy="itemcombine" [showClear]="true" placeholder="Select Item" (onFilter)="onItemSearch($event)">
     <ng-template #selectedItem let-item>
         <div class="flex items-center gap-2">
           
@@ -23,7 +23,8 @@
             <div>{{ details.itemcombine}}</div>
         </div>
     </ng-template>
-    
+  
+
     <!-- <ng-template #footer>
         <div class="p-3 p-button-primary p-button-sm" (click)="$event.stopPropagation()">
             <button pButton type="button" label="Add New Item" fluid severity="primary" text size="small" icon="pi pi-plus" (click)="addNewItem(itemSelect)"></button>
@@ -31,16 +32,21 @@
     </ng-template> -->
   </p-select>
 </div>
-<div class="flex justify-start ">
-     <button pButton type="button" label="Reset" class="p-button-secondary mt-6"  (click)="Reset()"></button>
 
+<div class="flex justify-start gap-3">
+     <button pButton type="button" label="Reset" class="p-button-secondary mt-6" [class.disabled]="resetDisabled" (click)="Reset()"></button>
+       <button pButton type="button" label="Copy" class="p-button-secondary mt-6" [class.disabled]="resetDisabled" (click)="copy($event)"></button>
 </div>
      </div>
 
     <!-- 🧩 Product Details -->
     <div>
+        <div class="flex gap-5 items-center">
  <h3 class="text-lg font-semibold mb-3 text-gray-700 border-b pb-2">Product Details</h3>
-       
+  <div class="mb-5" *ngIf="showCopyMessage">
+    <p-message  severity="error" variant="simple">Enter a unique Item code to proceed with item creation</p-message>
+</div>
+       </div>
    <!-- Item Code -->
         <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
               <!-- <div class="flex flex-col">
@@ -195,7 +201,7 @@
             <div class="flex-1">
                 <p-table [value]="products" class="w-full">
                     <ng-template #header>
-                        <tr class="bg-yellow-400">
+                        <tr [class.disabled]="uomTableDisabled" class="bg-yellow-400">
                             <th>Child UOM</th>
                             <th>Conversion</th>
                             <th>MRP</th>
@@ -203,7 +209,7 @@
                         </tr>
                     </ng-template>
                     <ng-template #body let-product>
-<tr>
+<tr [class.disabled]="uomTableDisabled">
   <td>
     <p-dropdown
     [options]="this.ChilduomOptions"
@@ -249,7 +255,7 @@
             </div>
 
             <div class="flex flex-col gap-3">
-                <button pButton type="button" label="Add UOM" class="p-button-warning" (click)="addRow()"></button>
+                <button pButton type="button" label="Add UOM" [class.disabled]="uomTableDisabled" class="p-button-warning" (click)="addRow()"></button>
             </div>
         </div>
     </div>

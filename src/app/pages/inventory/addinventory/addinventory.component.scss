@@ -14,3 +14,7 @@
     background-color: #eaf1f7 !important;
     color: #6c757d !important;
 }
+.disabled {
+  pointer-events: none;
+  opacity: 0.6;
+}
