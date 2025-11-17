@@ -180,9 +180,9 @@ blockMinus(event: KeyboardEvent) {
 
         if (!isNaN(purchasePrice) && !isNaN(qty) && qty > 0) {
             const cost = purchasePrice / qty;
-           // this.addForm.get('costPerItem')?.setValue(cost.toFixed(2), { emitEvent: false });
+           this.addForm.get('costPerItem')?.setValue(cost.toFixed(2), { emitEvent: false });
         } else {
-          //  this.addForm.get('costPerItem')?.setValue('', { emitEvent: false });
+          this.addForm.get('costPerItem')?.setValue('', { emitEvent: false });
         }
     }
    
@@ -267,8 +267,8 @@ enterAddItemMode(itemData: any) {
             mrp: itemData.saleprice,
             parentUOM: itemData.uomid,
             qty: itemData.quantity,
-            costPerItem:itemData.pruchaseprice,
-          //  costPerItem:itemData.costprice itemData.pruchaseprice,
+           // costPerItem:itemData.pruchaseprice,
+          costPerItem:itemData.costprice,
             warPeriod: itemData.warrentyperiod
         });
 
