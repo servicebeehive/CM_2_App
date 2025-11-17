@@ -300,6 +300,7 @@ export class SalesComponent {
 
       this.salesForm.patchValue({
         p_transactionid: billDetails.transactionid,
+        p_customername:billDetails.customername,
         p_transactiondate: billDetails.transactiondate ? new Date(billDetails.transactiondate) : null,
         p_mobileno: billDetails.mobileno,
         p_totalcost: billDetails.totalcost,
