@@ -5,9 +5,9 @@
                 <span class="block text-surface-900 font-bold text-xl mb-6">Sales</span>
                 <!-- Buttons -->
                 <div class="flex gap-4">
-                    <button pButton type="button" label="Add" class="p-button-secondary" (click)="addItem()"></button>
-                    <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
-                    <button pButton type="button" label="Print" class="p-button-secondary" (click)="print()"></button>
+            
+                    <button pButton type="button" label="Reset" class="p-button-secondary" ></button>
+                    <button pButton type="button" label="Print" class="p-button-secondary"></button>
                     <button pButton type="submit" label="Submit" class="p-button-warning"></button>
                 </div>
             </div>
@@ -24,17 +24,20 @@
 
                <!-- 🔽 Select Dropdown -->
                 
-  <p-select
+  
+ <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
+                    <div class="flex flex-col">
+                        <label>Item</label>
+<p-select
     #itemSel
     [options]="itemOptions"
-    optionLabel="itemcombine"
-    optionValue="itemsku"
+    optionLabel="itemcombine" (onChange)="OnItemChange($event)"
+    optionValue="itemid"
     [filter]="true"
     filterBy="itemcombine"
     [showClear]="true"
     placeholder="Select Item"
-    (onFilter)="onItemSearch($event)"
-    (onChange)="onItemSelect($event)"
+    
     class="w-full mb-4"
   >
 
@@ -53,129 +56,176 @@
     </ng-template>
 
   </p-select>
+                        </div>
+
+  </div>
                 <!-- Bill no -->
                 <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Bill No</label>
-                        <p-dropdown [options]="billNoOptions" optionLabel="billno" optionValue="billno" [filter]="true" filterPlaceholder="Search Bill No." formControlName="billNo" placeholder="Bill No." (onChange)="saleIdDetail($event)"> </p-dropdown>
-                        <small class="text-red-500 ms-3 mt-1" *ngIf="salesForm.get('billNo')?.touched">
-                            <span *ngIf="salesForm.get('billNo')?.errors?.['required']">Bill No is required</span>
+                        <p-dropdown [options]="billNoOptions" optionLabel="billno" optionValue="billno" (onChange)="onBillDetails($event)" [filter]="true" filterPlaceholder="Search Bill No." formControlName="p_billno" placeholder="Bill No." (onChange)="saleIdDetail($event)"> </p-dropdown>
+                        <small class="text-red-500 ms-3 mt-1" *ngIf="salesForm.get('p_billno')?.touched">
+                            <span *ngIf="salesForm.get('p_billno')?.errors?.['required']">Bill No is required</span>
                         </small>
                     </div>
 
                     <!-- Transaction Date -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Transaction Date</label>
-                       <p-datepicker fluid formControlName="transactionDate" [showIcon]="true" placeholder="Transaction Date" [maxDate]="today"></p-datepicker>
+                       <p-datepicker fluid formControlName="p_transactiondate" dateFormat="dd-mm-yy" [showIcon]="true" placeholder="Transaction Date" [maxDate]="today"></p-datepicker>
                        <!-- <small class="text-red-500" *ngIf="salesForm.get('date')?.hasError('futureDateNotAllowed')">Future dates are not allowed.</small> -->
                     </div>
 
                     <!-- Customer Name -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Customer Name</label>
-                        <input pInputText formControlName="customerName" placeholder="Customer Name" />
+                        <input pInputText formControlName="p_customername" placeholder="Customer Name" />
                     </div>
 
                     <!-- Mobile No. -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Mobile No.</label>
-                        <input pInputText type="number" formControlName="mobile" placeholder="Mobile No." />
-                        <small class="text-red-500 ms-3 mt-1" *ngIf="salesForm.get('mobile')?.errors?.['pattern']">
-                            <span *ngIf="salesForm.get('mobile')?.errors?.['pattern']">Please enter a valid 10-digit mobile number</span>
+                        <input pInputText type="number" formControlName="p_mobileno" placeholder="Mobile No." />
+                        <small class="text-red-500 ms-3 mt-1" *ngIf="salesForm.get('p_mobileno')?.errors?.['pattern']">
+                            <span *ngIf="salesForm.get('p_mobileno')?.errors?.['pattern']">Please enter a valid 10-digit mobile number</span>
                         </small>
                     </div>
+                      <div class="flex flex-col">
+                        <div class="flex items-center gap-2">
+                         <p-checkbox formControlName="p_gsttran" [binary]="true" variant="filled" />
+                         <label>Is GST Return</label>
+                         </div>
+                      </div>
+                   
                 </div>
                 <div class="mt-6">
-                    <p-table
-                        [value]="filteredProducts"
-                        [globalFilterFields]="['name']"
-                        [filters]="{ global: { value: globalFilter, matchMode: 'contains' } }"
-                        dataKey="saleIdDetail"
-                        [paginator]="true"
-                        [rows]="10"
-                        [rowsPerPageOptions]="[5, 10, 20, 50]"
-                        [responsiveLayout]="'scroll'"
-                        class="p-datatable-gridlines mt-6"
-                    >
-                        <ng-template #header>
-                            <tr class="bg-yellow-400">
-                                <!-- <th class="text-center"><p-checkbox formControlName="update.selection" binary="true"></p-checkbox></th> -->
-                                <th style="width: 4rem"><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
-                                <th>Item Code</th>
-                                <th>Item Name</th>
-                                <th>Current Stock</th>
-                                <th>UOM</th>
-                                <th>Qty</th>
-                                <th>MRP</th>
-                                <th>Total</th>
-                                <!-- <th>Discount</th> -->
-                                <th>Warranty (in Mon)</th>
-                                <th>Location</th>
-                                <th class="text-center">Action</th>
-                            </tr>
-                        </ng-template>
-                        <ng-template #body let-update>
-                            <tr>
-                                <!-- <td class="text-center"><p-checkbox [(ngModel)]="update.selection"  binary="true"></p-checkbox></td> -->
-                                <td><p-tableCheckbox [value]="update" /></td>
-                                <td>{{ update.code }}</td>
-                                <td>{{ update.name }}</td>
-                                <td>{{ update.curStock }}</td>
-                                <td>{{ update.uom }}</td>
-                                <td><input type="number" pInputText [(ngModel)]="update.quantity" [ngModelOptions]="{ standalone: true }" placeholder="Quantity" (ngModelChange)="updateTotal(update)" /></td>
-                                <td>{{ update.mrp }}</td>
-                                <td>{{ update.total }}</td>
-                                <!-- <td>{{ update.discount }}</td> -->
-                                <td>{{ update.warPeriod }}</td>
-                                <td>{{ update.location }}</td>
-                                <td class="text-center">
-                                    <i class="pi pi-trash ms-2 cursor-pointer text-red-500" (click)="deleteItem(update)"></i>
-                                </td>
-                            </tr>
-                        </ng-template>
-                        <ng-template pTemplate="paginatorleft">
-                            <div class="text-gray-600 ms-2">Total Items:{{ itemOptions?.length || 0 }}</div>
-                        </ng-template>
-                    </p-table>
+                  <p-table 
+  [value]="saleArray.controls"
+  dataKey="ItemId"
+  [responsiveLayout]="'scroll'"
+  class="p-datatable-gridlines mt-6">
+
+  <!-- ============================
+       TABLE HEADER
+  ============================= -->
+  <ng-template pTemplate="header">
+    <tr class="bg-yellow-400">
+      <th>Item Code</th>
+      <th>Item Name</th>
+      <th>Current Stock</th>
+      <th>UOM</th>
+      <th>Qty</th>
+      <th>MRP</th>
+      <th>Total</th>
+      <th>Warranty (Mon)</th>
+      <th>Location</th>
+      <th class="text-center">Action</th>
+    </tr>
+  </ng-template>
+
+  <!-- ============================
+       TABLE BODY (FormArray Rows)
+  ============================= -->
+  <ng-template pTemplate="body" let-row let-i="rowIndex">
+    <tr [formGroup]="row">
+
+      <!-- Item Code -->
+      <td>{{ row.get('itemsku')?.value }}</td>
+
+      <!-- Item Name -->
+      <td>{{ row.get('ItemName')?.value }}</td>
+
+      <!-- Current Stock -->
+      <td>{{ row.get('curStock')?.value }}</td>
+
+      <!-- UOM -->
+      <td>{{ row.get('UOMId')?.value }}</td>
+
+      <!-- ONLY ONE INPUT: Quantity -->
+      <td>
+        <input
+          type="number"
+          pInputText
+          formControlName="Quantity"
+          min="1"
+          class="w-full"
+          (input)="updateTotal(i)"
+        />
+      </td>
+
+      <!-- MRP -->
+      <td>{{ row.get('MRP')?.value }}</td>
+
+      <!-- Total Payable -->
+      <td>{{ row.get('totalPayable')?.value }}</td>
+
+      <!-- Warranty -->
+      <td>{{ row.get('warPeriod')?.value }}</td>
+
+      <!-- Location -->
+      <td>{{ row.get('location')?.value }}</td>
+
+      <!-- Delete -->
+      <td class="text-center">
+        <i class="pi pi-trash text-red-500 cursor-pointer"
+           (click)="removeItem(i)">
+        </i>
+      </td>
+
+    </tr>
+  </ng-template>
+
+  <!-- Optional Pagination Footer -->
+  <ng-template pTemplate="paginatorleft">
+    <div class="text-gray-600 ms-2">
+      Total Items: {{ saleArray.length }}
+    </div>
+  </ng-template>
+
+</p-table>
+
                 </div>
-                <div class="grid grid-cols-5 gap-x-8 gap-y-4">
+                <div class="grid grid-cols-5 m-3 gap-x-8 gap-y-4">
                    
 
                     <!-- Total Cost -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Total Cost</label>
-                        <input pInputText formControlName="totalCost" placeholder="Total Cost" readonly />
+                        <input pInputText type="number" [min]="1"  formControlName="p_totalcost" placeholder="Total Cost" readonly />
                     </div>
 
  <!--MRP Total -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">MRP Total</label>
-                        <input pInputText formControlName="mrpTotal" placeholder="MRP Total" readonly />
+                        <input pInputText type="number" [min]="1" formControlName="p_totalsale" placeholder="MRP Total" readonly />
                     </div>
 
                     <!-- Discount -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Discount %</label>
-                        <input pInputText formControlName="discountLabel" placeholder="Discount" (keypress)="allowOnlyNumbers($event)" />
+                        <input pInputText  type="number" [min]="1" formControlName="p_overalldiscount" placeholder="Discount"  (input)="applyDiscount()" />
                     </div>
 
                     <!-- Round Off -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Round Off</label>
-                        <input pInputText formControlName="roundOff" placeholder="Round Off" readonly />
+                        <input pInputText formControlName="p_roundoff" type="number" [min]="1" placeholder="Round Off" readonly />
                     </div>
+                      <div class="flex flex-col">
+                        <label class="font-medium mb-1">Total Sale</label>
+                        <input pInputText formControlName="p_totalsale" type="number" [min]="1" placeholder="Round Off" readonly />
+                    </div>
+                   
 
                     <!-- Final Payable -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Final Payable</label>
-                        <input pInputText formControlName="finalPayable" placeholder="Grand Total" readonly />
+                        <input pInputText formControlName="p_totalpayable" type="number" [min]="1" placeholder="Grand Total" readonly />
                     </div>
                 </div>
             </div>
         </form>
     </div>
-    <p-dialog header="{{ mode === 'add' ? 'Add Item' : 'Edit Item' }}" [(visible)]="visibleDialog" [modal]="true" [style]="{ width: '80vw' }">
-        <app-addinventory [editData]="selectedRow" [mode]="mode" (close)="closeDialog()" (save)="onSave($event)" (childUom)="onChildUom($event)"> </app-addinventory>
-    </p-dialog>
+  
     <p-confirmDialog></p-confirmDialog>
 </div>
