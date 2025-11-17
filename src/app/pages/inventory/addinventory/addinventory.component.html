@@ -93,7 +93,21 @@
                 </small>
             </div>
 
-            <!-- Purchase Price -->
+             <!-- Parent UOM -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Parent UOM <span class="text-red-500">*</span></label>
+                <p-dropdown [options]="uomOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true"  (onChange)="onItemParentUM($event)" filterPlaceholder="Search Parent UOM" formControlName="parentUOM" placeholder="Parent UOM" [readonly]="mode==='edit'"> </p-dropdown>
+                <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('parentUOM')?.touched">
+                    <span *ngIf="addForm.get('parentUOM')?.errors?.['required']">Parent UOM is required</span>
+                </small>
+            </div>
+
+            <!-- Minimum Stock -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Min Stock</label>
+                <input pInputText formControlName="minStock"  placeholder="Min Stock" (keypress)="allowOnlyNumbers($event)" />
+            </div>
+<!-- Purchase Price -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Purchase Price <span class="text-red-500">*</span></label>
                 <input pInputText type="number" min="1" formControlName="purchasePrice" placeholder="Purchase Price"  (keydown)="blockMinus($event)"/>
@@ -103,21 +117,7 @@
                 </small>
             </div>
 
-            <!-- Minimum Stock -->
-            <div class="flex flex-col">
-                <label class="font-medium mb-1">Min Stock</label>
-                <input pInputText formControlName="minStock"  placeholder="Min Stock" (keypress)="allowOnlyNumbers($event)" />
-            </div>
-
-            <!-- Parent UOM -->
-            <div class="flex flex-col">
-                <label class="font-medium mb-1">Parent UOM <span class="text-red-500">*</span></label>
-                <p-dropdown [options]="uomOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true"  (onChange)="onItemParentUM($event)" filterPlaceholder="Search Parent UOM" formControlName="parentUOM" placeholder="Parent UOM" [readonly]="mode==='edit'"> </p-dropdown>
-                <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('parentUOM')?.touched">
-                    <span *ngIf="addForm.get('parentUOM')?.errors?.['required']">Parent UOM is required</span>
-                </small>
-            </div>
-
+           
             <!-- Warranty Period -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Warranty Period (in months)</label>

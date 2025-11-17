@@ -82,8 +82,8 @@ export class StockAdjustmentComponent {
     { label: 'Decrease', value: 'decrease' }
   ];
   mrpUpdate=[
-     { label: 'Batch', value: 'batch' },
-    { label: 'Item', value: 'item' }
+     { label: 'Batch', value: 'B' },
+    { label: 'Item', value: 'I' }
   ]
   filteredAdjustment: any[] = [];
 
@@ -99,7 +99,7 @@ export class StockAdjustmentComponent {
     this.updateForm = this.fb.group({
       category: [''],
       item: [''],
-      mrpupdate:['batch'],
+      mrpUpdate:['B'],
       p_stock: this.fb.array([]) // formArray for rows
     });
 
@@ -315,6 +315,7 @@ batchValidator(maxBatch: number): ValidatorFn {
         p_categoryid: category || null,
         p_itemid: item || null,
         p_username: 'admin',
+        p_updatetype: this.updateForm.controls['mrpUpdate'].value,
         clientcode: 'CG01-SE',
         'x-access-token': this.authService.getToken()
       };
@@ -404,7 +405,7 @@ batchValidator(maxBatch: number): ValidatorFn {
     // this.buildFormArrayFromProducts(this.products);
      this.updateForm.reset();
  this.updateForm.patchValue({
-    mrpupdate: 'batch'
+    mrpUpdate: 'B'
   });
   // Clear FormArray
   // this.getStockArray().clear();
