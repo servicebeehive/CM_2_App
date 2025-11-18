@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { ChipModule } from 'primeng/chip';
@@ -157,13 +157,17 @@ export class ProductlistComponent {
     }
     openEditDialog(rowData: any) {
     //    const matchedCategory = this.categoryOptions.find(otp=>otp.value===rowData.category);
-       const matchedUOM = rowData.uom?{label:rowData.uom , value:rowData.uom} : null; 
-       this.selectedRow={
-        ...rowData,
-        // category:matchedCategory? matchedCategory.value :rowData.category,
-        parentUOM:matchedUOM?matchedUOM.value:rowData.uom
-       }
-        this.visibleDialog = true;
+    //    const matchedUOM = rowData.uom?{label:rowData.uom , value:rowData.uom} : null; 
+    //    this.selectedRow={
+    //     ...rowData,
+    //     // category:matchedCategory? matchedCategory.value :rowData.category,
+    //     parentUOM:matchedUOM?matchedUOM.value:rowData.uom
+    //    }
+    //     this.visibleDialog = true;
+    this.mode='edit';
+    this.selectedRow=rowData|| null;
+    this.visibleDialog=true;
+    console.log("selectedrow",this.selectedRow);
     }
   createDropdownPayload(returnType: string) {
   return {
@@ -269,23 +273,10 @@ products.forEach((p:any)=>{
     saveAllChanges() {
         // this.stockInService.productItem = [...this.filteredProducts];
     }
-    onSubmit() {
-        console.log(this.updateForm.value);
-        this.confirmationService.confirm({
-            message: 'Are you sure you want to make changes?',
-            header: 'Confirm',
-            acceptLabel: 'Yes',
-            rejectLabel: 'Cancel',
-            accept: () => {
-                this.saveAllChanges();
-            },
-            reject: () => {}
-        });
-    }
 
     reset() {
         this.updateForm.reset();
-        this.filteredProducts = [...this.products];
+        this.filteredProducts = [];
     }
     showSuccess(message: string) {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });

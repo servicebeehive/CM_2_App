@@ -29,8 +29,9 @@
           ngxPrint
           printSectionId="invoicePrintSection"
           label="Print"
-          class="p-button-secondary"
-          [disabled]="isSubmitDisabled()">
+          class="p-button-primary"
+          [disabled]="isPrintDisabled"
+          >
         </button>
 
         <!-- SUBMIT -->
@@ -39,7 +40,7 @@
           type="submit"
           label="Submit"
           class="p-button-warning"
-          [disabled]="isSubmitDisabled()">
+          [disabled]="isSubmitDisabled() || submitDisabledByBill">
         </button>
 
       </div>
@@ -66,7 +67,8 @@
           filterBy="itemcombine"
           placeholder="Select Item"
           [showClear]="true"
-          (onChange)="OnItemChange($event)">
+          (onChange)="OnItemChange($event)"
+          [disabled]="submitDisabledByBill">
 
           <!-- Selected Template -->
           <ng-template #selectedItem let-item>
@@ -84,7 +86,13 @@
 
         </p-select>
       </div>
-
+  <!-- GST CHECKBOX -->
+      <div class="flex flex-col mt-8">
+        <div class="flex items-center gap-2">
+          <p-checkbox binary="true" variant="filled" formControlName="p_gsttran"></p-checkbox>
+          <label>GST Transaction</label>
+        </div>
+      </div>
     </div>
 
 
@@ -118,7 +126,7 @@
 
       <!-- TRANSACTION DATE -->
       <div class="flex flex-col">
-        <label class="font-medium mb-1">Transaction Date <span class="text-red-500">*</span></label>
+        <label class="font-medium mb-1">Transaction Date</label>
         <p-datepicker
           fluid
           formControlName="p_transactiondate"
@@ -129,9 +137,10 @@
         </p-datepicker>
       </div>
 
+
       <!-- CUSTOMER NAME -->
       <div class="flex flex-col">
-        <label class="font-medium mb-1">Customer Name <span class="text-red-500">*</span></label>
+        <label class="font-medium mb-1">Customer Name</label>
         <input
           pInputText
           placeholder="Customer Name"
@@ -140,25 +149,21 @@
 
       <!-- MOBILE -->
       <div class="flex flex-col">
-        <label class="font-medium mb-1">Mobile No. <span class="text-red-500">*</span></label>
+        <label class="font-medium mb-1">Mobile No.</label>
         <input
           pInputText
           type="number"
           placeholder="Mobile No."
-          formControlName="p_mobileno" />
+          maxlength="10"
+          formControlName="p_mobileno" 
+          (keypress)="allowOnlyNumbers($event)"/>
 
-        <small class="text-red-500 mt-1" *ngIf="salesForm.get('p_mobileno')?.errors?.['pattern']">
+        <small class="text-red-500 mt-1" *ngIf="salesForm.get('p_mobileno')?.errors?.['pattern'] ">
           Please enter a valid 10-digit mobile number
         </small>
       </div>
 
-      <!-- GST CHECKBOX -->
-      <div class="flex flex-col">
-        <div class="flex items-center gap-2">
-          <p-checkbox binary="true" variant="filled" formControlName="p_gsttran"></p-checkbox>
-          <label>Is GST Return</label>
-        </div>
-      </div>
+    
 
     </div>
 

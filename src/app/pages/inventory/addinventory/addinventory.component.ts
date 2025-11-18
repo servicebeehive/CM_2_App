@@ -217,7 +217,7 @@ enterEditItemMode(itemData: any) {
         // patch form with itemData (same fields as before)
         console.log('edit',itemData.value);
         this.addForm.patchValue({
-            itemCode: itemData.itemsku,
+            itemCode: itemData.itemsku || itemData.itemid,
             itemName: itemData.itemname,
             category: itemData.categoryid,
             curStock: itemData.currentstock,
@@ -288,10 +288,12 @@ enterAddItemMode(itemData: any) {
 
      enterAddModeReset() {
         this.uomTableDisabled = false;
+        this.enableAllControls(this.addForm);
         this.addForm.enable();
         this.resetChildUOMTable();
         this.addForm.get('activeItem')?.setValue(true);
         this.addForm.get('gstItem')?.setValue(true);
+         this.showCopyMessage = false;
     }
 
     private disableItemRelatedControls() {
@@ -299,6 +301,17 @@ enterAddItemMode(itemData: any) {
         const controls = ['itemCode', 'parentUOM', 'category', 'itemName', 'curStock', 'location', 'minStock', 'warPeriod','p_expirydate','activeItem','gstItem','itemSearch'];
         controls.forEach(c => this.addForm.get(c)?.disable());
     }
+enableAllControls(form: FormGroup) {
+  Object.keys(form.controls).forEach(key => {
+    const control = form.get(key);
+ if (!control) return;
+    if (control instanceof FormGroup) {
+      this.enableAllControls(control);
+    } else {
+      control.enable({ emitEvent: false });
+    }
+  });
+}
 
     ngOnChanges(changes: SimpleChanges): void {
 if (changes['editData'] && this.editData && this.mode === 'edit' && this.addForm) {
