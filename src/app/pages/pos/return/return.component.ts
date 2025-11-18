@@ -1,6 +1,6 @@
-import { CommonModule } from '@angular/common';
-import { Component, ViewChild, viewChild } from '@angular/core';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { CommonModule, DatePipe } from '@angular/common';
+import { Component, inject, ViewChild, viewChild } from '@angular/core';
+import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { ChipModule } from 'primeng/chip';
 import { EditorModule } from 'primeng/editor';
@@ -19,10 +19,11 @@ import { DialogModule } from 'primeng/dialog';
 import { StockIn } from '@/types/stockin.model';
 import { InventoryService } from '@/core/services/inventory.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ConfirmationService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { CheckboxModule } from 'primeng/checkbox';
 import { AddinventoryComponent } from '@/pages/inventory/addinventory/addinventory.component';
 import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
+import { AuthService } from '@/core/services/auth.service';
 @Component({
     selector: 'app-retrun',
     imports: [
@@ -62,6 +63,8 @@ export class ReturnComponent {
     rowsPerPage: number = 5;
     products: StockIn[] = [];
     filteredProducts: StockIn[] = [];
+    filteredCustomerName: any[] = [];
+  filteredMobile: any[] = [];
     selectedProducts:any[]=[];
     globalFilter: string = '';
     childUomStatus: boolean = false;
@@ -69,30 +72,32 @@ export class ReturnComponent {
     //for testing
       @ViewChild(AddinventoryComponent) addInventoryComp!: AddinventoryComponent;
  // ✅ Move dropdown options into variables
-    returnBillNoOptions = [
-        { label: 'Return Bill 1', value: 'rerunBill1' },
-        { label: 'Return Bill 2', value: 'rerunBill2' },
-        { label: 'Return Bill 3', value: 'rerunBill3' }
-    ];
+    returnBillNoOptions:any[] = [];
 
     // ✅ Move dropdown options into variables
-    billNoOptions = [
-        { label: 'Bill 1', value: 'bill1' },
-        { label: 'Bill 2', value: 'bill2' },
-        { label: 'Bill 3', value: 'bill3' }
-    ];
-
+    billNoOptions: any[] = [];
+public authService = inject(AuthService);
+  public getUserDetails = {
+    "uname": "admin",
+    "p_username": "admin",
+    "clientcode": "CG01-SE",
+    "x-access-token": this.authService.getToken(),
+  };
     constructor(
         private fb: FormBuilder,
         private stockInService: InventoryService,
-        private confirmationService: ConfirmationService
+        private confirmationService: ConfirmationService,
+        private returnService: InventoryService,
+        private messageService:MessageService,
+        // public datepipe: DatePipe
     ) {}
 
     ngOnInit(): void {
+        this.loadAllDropdowns();
         this.onGetStockIn();
         this.returnForm = this.fb.group({
             returnBillNo: ['', Validators.required],
-            billNo: ['', Validators.required],
+            p_billno: ['', Validators.required],
             customerName: [''],
             mobile: ['', [Validators.pattern(/^[0-9]{10}$/)]],
             transId: ['', Validators.required],
@@ -117,7 +122,72 @@ export class ReturnComponent {
             event.preventDefault();
         }
     }
+    
+     get saleArray(): FormArray {
+    return this.returnForm.get('p_sale') as FormArray;
+  }
+     mapSaleItems(apiItems: any[]) {
+    this.saleArray.clear(); // Remove old rows if any
 
+    apiItems.forEach(item => {
+      this.saleArray.push(
+        this.fb.group({
+          TransactiondetailId: item.transactiondetailid || 0,
+          ItemId: item.itemsku || 0,    // use itemsku when itemid not present
+          ItemName: item.itemname || '',
+          UOMId: item.uomid || 0,
+          Quantity: item.quantity || 1,
+          itemcost: item.itemcost || 0,
+          MRP: item.mrp || 0,
+          totalPayable: (item.quantity || 1) * (item.mrp || 0),
+          // p_totalcost:item.
+          // Additional fields used in UI
+          curStock: item.current_stock || 0,
+          warPeriod: 0,
+          location: "",
+          itemsku: item.itemsku || ''
+        })
+      );
+    });
+
+    // If items were added, update totals for the last row and overall summary
+    const index = this.saleArray.length - 1;
+    this.updateTotal(index);
+    // this.calculateSummary();
+  }
+    SaleDetails(data: any) {
+    const apibody = {
+      ...this.getUserDetails,
+      "p_returntype": "SALEDETAIL",
+      "p_returnvalue": data.transactionid,
+    };
+
+    this.stockInService.Getreturndropdowndetails(apibody).subscribe({
+      next: (res) => {
+        this.mapSaleItems(res.data);
+      }
+    });
+  }
+ onBillDetails(event: any) {
+    console.log(event.value);
+    const billDetails = this.billNoOptions.find(billitem => billitem.billno === event.value);
+    console.log('bill',billDetails);
+    if (billDetails) {
+      this.SaleDetails(billDetails);
+
+      this.returnForm.patchValue({
+        p_transactionid: billDetails.transactionid,
+        p_customername:billDetails.customername,
+        p_transactiondate: billDetails.transactiondate ? new Date(billDetails.transactiondate) : null,
+        p_mobileno: billDetails.mobileno,
+        p_totalcost: billDetails.totalcost,
+        p_totalsale: billDetails.totalsale,
+        p_overalldiscount: billDetails.discount,
+        p_roundoff: billDetails.roundoff,
+        p_totalpayable: billDetails.totalpayable
+      });
+    }
+  }
     onGetStockIn() {
         this.products = this.stockInService.productItem || [];
         this.products.forEach((p: any) => {
@@ -299,4 +369,36 @@ export class ReturnComponent {
             { emitEvent: false }
         );
     }
+createDropdownPayload(returnType: string) {
+    return {
+      p_returntype: returnType,
+      ...this.getUserDetails,
+    };
+  }
+    OnGetBillNo() {
+    const payload = this.createDropdownPayload("NEWTRANSACTIONID");
+    this.returnService.getdropdowndetails(payload).subscribe({
+      next: (res) => {
+        const billdata: any = res.data;
+        this.billNoOptions = billdata.filter((item: { billno: null; }) => item.billno != null);
+      },
+      error: (err) => console.log(err)
+    });
+  }
+   OnGetReturnBillNo() {
+    const payload = this.createDropdownPayload("RETURNTRANSACTIONID");
+    this.returnService.getdropdowndetails(payload).subscribe({
+      next: (res) => {
+        const billdata: any = res.data;
+        this.returnBillNoOptions = billdata.filter((item: { billno: null; }) => item.billno != null);
+      },
+      error: (err) => console.log(err)
+    });
+  }
+
+    loadAllDropdowns() {
+    this.OnGetBillNo();
+    this.OnGetReturnBillNo();
+  }
+
 }

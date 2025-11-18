@@ -17,10 +17,10 @@
                 <!-- <div class="flex mb-3">
                     <input type="text" pInputText placeholder="Search..." class="w-full p-inputtext" formControlName="globalFilter" (input)="applyGlobalFilter()" />
                 </div> -->
-                <div *ngIf="showGlobalSearch" class="mb-5">
+                <!-- <div *ngIf="showGlobalSearch" class="mb-5">
                         <app-global-filter  [(value)]="globalFilter" placeholder="Search Items..." (valueChange)="applyGlobalFilter()"></app-global-filter>
-                     </div>
-                <!-- Bill no -->
+                     </div> -->
+                <!-- Return Bill no -->
                 <div class="grid grid-cols-2 gap-x-8 gap-y-4 mb-2 w-full">
                      <div class="flex flex-col mb-1">
                         <label class="font-medium">Return Bill No</label>
@@ -29,11 +29,12 @@
                             <span *ngIf="returnForm.get('returnBillNo')?.errors?.['required']">Return Bill No is required</span>
                         </small>
                     </div>
+                    <!-- Bill no -->
                     <div class="flex flex-col mb-1">
                         <label class="font-medium">Bill No</label>
-                        <p-dropdown [options]="billNoOptions" optionLabel="label" optionValue="value" [filter]="true" filterPlaceholder="Search Bill No." formControlName="billNo" placeholder="Bill No."> </p-dropdown>
-                        <small class="text-red-500 ms-3 mt-1" *ngIf="returnForm.get('billNo')?.touched">
-                            <span *ngIf="returnForm.get('billNo')?.errors?.['required']">Bill No is required</span>
+                        <p-dropdown [options]="billNoOptions" optionLabel="billno" optionValue="billno" [filter]="true" filterPlaceholder="Search Bill No." [showClear]="true" formControlName="p_billno" placeholder="Bill No."  (onChange)="onBillDetails($event)"> </p-dropdown>
+                        <small class="text-red-500 ms-3 mt-1" *ngIf="returnForm.get('p_billno')?.touched">
+                            <span *ngIf="returnForm.get('p_billno')?.errors?.['required']">Bill No is required</span>
                         </small>
                     </div>
                 
@@ -68,7 +69,7 @@
                         [responsiveLayout]="'scroll'"
                         class="p-datatable-gridlines mt-6"
                     >
-                        <ng-template #header>
+                        <ng-template pTemplate="header">
                             <tr class="bg-yellow-400">
                                 <!-- <th class="text-center"><p-checkbox formControlName="update.selection" binary="true"></p-checkbox></th> -->
                                 <th style="width: 4rem"><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
@@ -79,28 +80,26 @@
                                 <th>Qty</th>
                                 <th>MRP</th>
                                 <th>Total</th>
-                                <!-- <th>Discount</th> -->
                                 <th>Warranty (in Mon)</th>
                                 <th>Location</th>
                                 <th class="text-center">Action</th>
                             </tr>
                         </ng-template>
-                        <ng-template #body let-update>
-                            <tr>
+                        <ng-template pTemplate="body" let-row let-i="rowIndex">
+                            <tr [formGroup]="row">
                                 <!-- <td class="text-center"><p-checkbox [(ngModel)]="update.selection"  binary="true"></p-checkbox></td> -->
-                                <td><p-tableCheckbox [value]="update" ></p-tableCheckbox></td>
-                                <td>{{ update.code }}</td>
-                                <td>{{ update.name }}</td>
-                                <td>{{ update.curStock }}</td>
-                                 <td>{{ update.uom }}</td>
-                                <td><input type="number" pInputText [(ngModel)]="update.quantity" [ngModelOptions]="{standalone:true}" placeholder="Quantity" (ngModelChange)="updateTotal(update)" [readOnly]="!selectedProducts.includes(update)" /></td>
-                                <td>{{ update.mrp }}</td>
-                                <td>{{ update.total }}</td>
-                                <!-- <td>{{ update.discount }}</td> -->
-                                <td>{{ update.warPeriod }}</td>
-                                <td>{{ update.location }}</td>
+                                <td><p-tableCheckbox [value]="row" ></p-tableCheckbox></td>
+                                <td>{{ row.code }}</td>
+                                <td>{{ row.name }}</td>
+                                <td>{{ row.curStock }}</td>
+                                <td>{{ row.uom }}</td>
+                                <td><input type="number" pInputText formControlName="row.quantity" placeholder="Quantity" (input)="updateTotal(i)" [readOnly]="!selectedProducts.includes(row)" /></td>
+                                <td>{{ row.mrp }}</td>
+                                <td>{{ row.total }}</td>
+                                <td>{{ row.warPeriod }}</td>
+                                <td>{{ row.location }}</td>
                                 <td class="text-center">
-                                    <i class="pi pi-trash ms-2 cursor-pointer text-red-500" (click)="deleteItem(update)"></i>
+                                    <i class="pi pi-trash ms-2 cursor-pointer text-red-500" (click)="deleteItem(row)"></i>
                                 </td>
                             </tr>
                         </ng-template>

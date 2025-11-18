@@ -288,7 +288,7 @@ enterAddItemMode(itemData: any) {
 
      enterAddModeReset() {
         this.uomTableDisabled = false;
-        this.enableAllControls(this.addForm);
+        this.resetDisabled = false; 
         this.addForm.enable();
         this.resetChildUOMTable();
         this.addForm.get('activeItem')?.setValue(true);
@@ -301,17 +301,6 @@ enterAddItemMode(itemData: any) {
         const controls = ['itemCode', 'parentUOM', 'category', 'itemName', 'curStock', 'location', 'minStock', 'warPeriod','p_expirydate','activeItem','gstItem','itemSearch'];
         controls.forEach(c => this.addForm.get(c)?.disable());
     }
-enableAllControls(form: FormGroup) {
-  Object.keys(form.controls).forEach(key => {
-    const control = form.get(key);
- if (!control) return;
-    if (control instanceof FormGroup) {
-      this.enableAllControls(control);
-    } else {
-      control.enable({ emitEvent: false });
-    }
-  });
-}
 
     ngOnChanges(changes: SimpleChanges): void {
 if (changes['editData'] && this.editData && this.mode === 'edit' && this.addForm) {
@@ -535,6 +524,7 @@ OnChildOM(id: number) {
 }
 Reset(){
     this.addForm.reset();
+     this.enterAddModeReset();
      this.enterAddModeReset();
      this.resetChildUOMTable();
       this.showCopyMessage = false;
