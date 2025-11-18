@@ -22,7 +22,7 @@
                      </div> -->
                 <!-- Return Bill no -->
                 <div class="grid grid-cols-2 gap-x-8 gap-y-4 mb-2 w-full">
-                     <div class="flex flex-col mb-1">
+                    <div class="flex flex-col mb-1">
                         <label class="font-medium">Return Bill No</label>
                         <p-dropdown [options]="returnBillNoOptions" optionLabel="label" optionValue="value" [filter]="true" filterPlaceholder="Search Return Bill No." formControlName="returnBillNo" placeholder="Return Bill No."> </p-dropdown>
                         <small class="text-red-500 ms-3 mt-1" *ngIf="returnForm.get('returnBillNo')?.touched">
@@ -32,22 +32,33 @@
                     <!-- Bill no -->
                     <div class="flex flex-col mb-1">
                         <label class="font-medium">Bill No</label>
-                        <p-dropdown [options]="billNoOptions" optionLabel="billno" optionValue="billno" [filter]="true" filterPlaceholder="Search Bill No." [showClear]="true" formControlName="p_billno" placeholder="Bill No."  (onChange)="onBillDetails($event)"> </p-dropdown>
+                        <p-dropdown
+                            [options]="billNoOptions"
+                            optionLabel="billno"
+                            optionValue="billno"
+                            [filter]="true"
+                            filterPlaceholder="Search Bill No."
+                            [showClear]="true"
+                            formControlName="p_billno"
+                            placeholder="Bill No."
+                            (onChange)="onBillDetails($event)"
+                        >
+                        </p-dropdown>
                         <small class="text-red-500 ms-3 mt-1" *ngIf="returnForm.get('p_billno')?.touched">
                             <span *ngIf="returnForm.get('p_billno')?.errors?.['required']">Bill No is required</span>
                         </small>
                     </div>
-                
+
                     <!-- Customer Name -->
                     <div class="flex flex-col mb-1">
                         <label class="font-medium mb-1">Customer Name</label>
-                        <input pInputText formControlName="customerName" placeholder="Customer Name" />
+                        <input pInputText formControlName="p_customername" placeholder="Customer Name" />
                     </div>
 
                     <!-- Mobile No. -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Mobile No.</label>
-                        <input pInputText type="number" formControlName="mobile" placeholder="Mobile No." />
+                        <input pInputText type="number" formControlName="p_mobileno" placeholder="Mobile No." />
                         <small class="text-red-500 ms-3 mt-1" *ngIf="returnForm.get('mobile')?.errors?.['pattern']">
                             <span *ngIf="returnForm.get('mobile')?.errors?.['pattern']">Please enter a valid 10-digit mobile number</span>
                         </small>
@@ -55,8 +66,8 @@
                 </div>
                 <div class="mt-6">
                     <p-table
-                        [value]="filteredProducts"
-                        [globalFilterFields]="[ 'name']"
+                        [value]="saleArray.controls"
+                        [globalFilterFields]="['name']"
                         [filters]="{ global: { value: globalFilter, matchMode: 'contains' } }"
                         dataKey="code"
                         selectionMode="multiple"
@@ -88,19 +99,16 @@
                         <ng-template pTemplate="body" let-row let-i="rowIndex">
                             <tr [formGroup]="row">
                                 <!-- <td class="text-center"><p-checkbox [(ngModel)]="update.selection"  binary="true"></p-checkbox></td> -->
-                                <td><p-tableCheckbox [value]="row" ></p-tableCheckbox></td>
-                                <td>{{ row.code }}</td>
-                                <td>{{ row.name }}</td>
-                                <td>{{ row.curStock }}</td>
-                                <td>{{ row.uom }}</td>
-                                <td><input type="number" pInputText formControlName="row.quantity" placeholder="Quantity" (input)="updateTotal(i)" [readOnly]="!selectedProducts.includes(row)" /></td>
-                                <td>{{ row.mrp }}</td>
-                                <td>{{ row.total }}</td>
-                                <td>{{ row.warPeriod }}</td>
-                                <td>{{ row.location }}</td>
-                                <td class="text-center">
-                                    <i class="pi pi-trash ms-2 cursor-pointer text-red-500" (click)="deleteItem(row)"></i>
-                                </td>
+                                <td><p-tableCheckbox [value]="row"></p-tableCheckbox></td>
+                                <td>{{ row.get('itemsku')?.value }}</td>
+                                <td>{{ row.get('ItemName')?.value }}</td>
+                                <td>{{ row.get('curStock')?.value }}</td>
+                                <td>{{ row.get('UOMId')?.value }}</td>
+                                <td><input type="number" pInputText formControlName="Quantity" placeholder="Quantity" (input)="updateTotal(i)" [readOnly]="!selectedProducts.includes(row)" /></td>
+                                <td>{{ row.get('MRP')?.value }}</td>
+                                <td>{{ row.get('totalPayable')?.value }}</td>
+                                <td>{{ row.get('warPeriod')?.value }}</td>
+                                <td>{{ row.get('location')?.value }}</td>
                             </tr>
                         </ng-template>
                         <ng-template pTemplate="paginatorleft">
@@ -108,54 +116,40 @@
                         </ng-template>
                     </p-table>
                 </div>
-                 <div class="grid grid-cols-5 gap-x-8 gap-y-4">
+                <div class="grid grid-cols-5 gap-x-8 gap-y-4">
+                    <!-- Total Cost -->
+                    <div class="flex flex-col">
+                        <label class="font-medium mb-1">Total Cost</label>
+                        <input pInputText formControlName="totalcost" placeholder="Total Cost" readonly />
+                    </div>
+                    <!--MRP Total -->
+                    <div class="flex flex-col">
+                        <label class="font-medium mb-1">MRP Total</label>
+                        <input pInputText formControlName="totalsale" placeholder="Grand Total" readonly />
+                    </div>
 
- <!-- Total Cost -->
-                            <div class="flex flex-col">
-                                <label class="font-medium mb-1">Total Cost</label>
-                                <input pInputText formControlName="totalCost" placeholder="Total Cost" readonly />
-                            </div>
-                                <!--MRP Total -->
-                            <div class="flex flex-col">
-                                <label class="font-medium mb-1">MRP Total</label>
-                                <input pInputText formControlName="mrpTotal" placeholder="Grand Total" readonly />
-                            </div>
+                    <!-- Discount -->
+                    <div class="flex flex-col">
+                        <label class="font-medium mb-1">Discount %</label>
+                        <input pInputText formControlName="discount" placeholder="Discount" (keypress)="allowOnlyNumbers($event)" readonly />
+                    </div>
+                    <!-- Round Off -->
+                    <div class="flex flex-col">
+                        <label class="font-medium mb-1">Round Off</label>
+                        <input pInputText formControlName="roundoff" placeholder="Round Off" readonly />
+                    </div>
 
-                              <!-- Discount -->
-                            <div class="flex flex-col">
-                                <label class="font-medium mb-1">Discount %</label>
-                                <input pInputText formControlName="discountLabel" placeholder="Discount" (keypress)="allowOnlyNumbers($event)" readonly/>
-                            </div>
-                              <!-- Round Off -->
-                            <div class="flex flex-col">
-                                <label class="font-medium mb-1">Round Off</label>
-                                <input pInputText formControlName="roundOff" placeholder="Round Off" readonly/>
-                            </div>
-
-                              <!-- Final Payable -->
-                            <div class="flex flex-col">
-                                <label class="font-medium mb-1">Final Receiveable</label>
-                                <input pInputText formControlName="finalPayable" placeholder="Final Receiveable" readonly/>
-                            </div>
-                        </div>
+                    <!-- Final Payable -->
+                    <div class="flex flex-col">
+                        <label class="font-medium mb-1">Final Receiveable</label>
+                        <input pInputText formControlName="totalpayable" placeholder="Final Receiveable" readonly />
+                    </div>
+                </div>
             </div>
         </form>
     </div>
-    <p-dialog
-    header="{{ mode === 'add' ? 'Add Item' : 'Edit Item' }}"
-    [(visible)]="visibleDialog"
-    [modal]="true"
-    [style]="{ width: '80vw' }"
-  >
-    <app-addinventory
-      [editData]="selectedRow"
-      [mode]="mode"
-      (close)="closeDialog()"
-      (save)="onSave($event)"
-      (childUom)="onChildUom($event)"
-     >
-    </app-addinventory>
-  </p-dialog>
-  <p-confirmDialog></p-confirmDialog>
+    <p-dialog header="{{ mode === 'add' ? 'Add Item' : 'Edit Item' }}" [(visible)]="visibleDialog" [modal]="true" [style]="{ width: '80vw' }">
+        <app-addinventory [editData]="selectedRow" [mode]="mode" (close)="closeDialog()" (save)="onSave($event)" (childUom)="onChildUom($event)"> </app-addinventory>
+    </p-dialog>
+    <p-confirmDialog></p-confirmDialog>
 </div>
-
