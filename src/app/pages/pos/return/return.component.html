@@ -103,7 +103,14 @@
                                 <td>{{ row.get('ItemName')?.value }}</td>
                                 <td>{{ row.get('curStock')?.value }}</td>
                                 <td>{{ row.get('UOMId')?.value }}</td>
-                                <td><input type="number" pInputText formControlName="Quantity" placeholder="Quantity" (input)="updateTotal(i)" [readOnly]="!selectedProducts.includes(row)" /></td>
+                                <td>
+                                    <div class="flex flex-col">
+                                    <input type="number" pInputText formControlName="Quantity" placeholder="Quantity" (input)="updateTotal(i)" [readOnly]="!selectedProducts.includes(row)" (keypress)="blockDecimal($event)"  [ngClass]="{ 'border-red-500': row.get('Quantity')?.errors?.['maxStock'] }"  />
+                                    <small class="text-red-500 mt-1"
+               *ngIf="row.get('Quantity')?.touched && row.get('Quantity')?.errors?.['maxStock']">
+            Quantity exceeds the available sale quantity ({{row.get('curStock')?.value + 1}}).
+        </small>
+                                    </div>
                                 <td>{{ row.get('MRP')?.value }}</td>
                                 <td>{{ row.get('totalPayable')?.value }}</td>
                                 <td>{{ row.get('warPeriod')?.value }}</td>
@@ -130,12 +137,12 @@
                     <!-- Discount type -->
         <div class="flex flex-col">
           <label>Disc(%)</label>
-          <p-checkbox class="mt-2" binary="true" variant="filled" formControlName="p_disctype"></p-checkbox>
+          <p-checkbox class="mt-2" binary="true" variant="filled" formControlName="p_disctype" readonly></p-checkbox>
         </div>
                     <!-- Discount -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Discount %</label>
-                        <input pInputText formControlName="p_overalldiscount" placeholder="Discount" (keypress)="allowOnlyNumbers($event)" readonly />
+                        <input pInputText formControlName="p_overalldiscount" [placeholder]="discountplace" readonly />
                     </div>
                     </div>
                     <!-- Round Off -->

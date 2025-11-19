@@ -70,6 +70,7 @@ export class ReturnComponent {
     globalFilter: string = '';
     childUomStatus: boolean = false;
     showGlobalSearch:boolean=true;
+    discountplace:string='Enter Amount';
     //for testing
       @ViewChild(AddinventoryComponent) addInventoryComp!: AddinventoryComponent;
  // ✅ Move dropdown options into variables
@@ -95,39 +96,47 @@ public authService = inject(AuthService);
 
     ngOnInit(): void {
         this.loadAllDropdowns();
-        this.onGetStockIn();
+        // this.onGetStockIn();
         this.returnForm = this.fb.group({
             returnBillNo: ['', Validators.required],
             p_billno: ['', Validators.required],
             p_customername: [''],
             p_mobileno: ['', [Validators.pattern(/^[0-9]{10}$/)]],
-            transactionid: ['', Validators.required],
-            totalcost: [''],
-            totalsale: [''],
-            roundoff: [''],
-            discount: [''],
-            totalpayable: [''],
+            p_transactionid: ['', Validators.required],
+            p_totalcost: [''],
+            p_totalsale: [''],
+            p_roundoff: [''],
+            p_overalldiscount: [''],
+            p_totalpayable: [''],
             p_sale: this.fb.array([]),
 
-        });
-        this.returnForm.valueChanges.subscribe(() => {
-            this.filterProducts();
         });
         this.returnForm.get('discountLabel')?.valueChanges.subscribe(() => {
             this.updatedFinalAmount();
         });
+        this.returnForm.get('p_disctype')?.valueChanges.subscribe(value=>{
+      if(!value){
+   this.discountplace="Enter Amount";
+}
+else{
+  this.discountplace="Enter %";
+}
+ this.returnForm.get('p_overalldiscount')?.setValue('', { emitEvent: false });
+ this.applyDiscount();
+    });
     }
 
-    allowOnlyNumbers(event: KeyboardEvent) {
-        const allowedChars = /[0-9]\b/;
-        const inputChar = String.fromCharCode(event.key.charCodeAt(0));
-        if (!allowedChars.test(inputChar)) {
-            event.preventDefault();
-        }
+  blockDecimal(event: KeyboardEvent) {
+    if (event.key === '.' || event.key === ',') {
+      event.preventDefault();  // block decimal
     }
+  }
     
      get saleArray(): FormArray {
     return this.returnForm.get('p_sale') as FormArray;
+  }
+   get saleRows(): FormGroup[] {
+    return this.saleArray.controls as FormGroup[];
   }
      mapSaleItems(apiItems: any[]) {
     this.saleArray.clear(); // Remove old rows if any
@@ -157,7 +166,7 @@ public authService = inject(AuthService);
     // If items were added, update totals for the last row and overall summary
     const index = this.saleArray.length - 1;
     this.updateTotal(index);
-    // this.calculateSummary();
+    this.calculateSummary();
   }
     SaleDetails(data: any) {
     const apibody = {
@@ -193,30 +202,65 @@ public authService = inject(AuthService);
     }
     
   }
-    onGetStockIn() {
-        this.products = this.stockInService.productItem || [];
-        this.products.forEach((p: any) => {
-            p.selection = true;
-            // p.quantity = 0;
-            p.total = 0;
+ cleanRequestBody(body: any) {
+    return {
+      ...this.getUserDetails,
+      p_transactiontype: "SALE",
+      p_transactionid: body.p_transactionid ?? 0,
+      p_customername: body.p_customername || "",
+      p_mobileno: body.p_mobileno || "",
+      p_totalcost: Number(body.p_totalcost) || 0,
+      p_totalsale: Number(body.p_totalsale) || 0,
+      p_overalldiscount: Number(body.p_overalldiscount) || 0,
+      p_roundoff: body.p_roundoff ? body.p_roundoff.toString() : "0.00",
+      p_totalpayable: Number(body.p_totalpayable) || 0,
+      p_currencyid: Number(body.p_currencyid) || 0,
+      p_gsttran: body.p_gsttran === true ? "Y" :
+        body.p_gsttran === false ? "N" : "N",
+      p_status: body.p_status || "Complete",
+      p_isactive: "Y",
+      p_linktransactionid: 0,
+      // p_replacesimilir: body.p_replacesimilir || "",
+       p_replacesimilir:body.p_disctype === true ?"Y" : "N",
+      p_creditnoteno: body.p_creditnoteno || "",
+      p_paymentmode: body.p_paymentmode || "Cash",
+      p_paymentdue: Number(body.p_paymentdue) || 0,
+      p_sale: (body.p_sale || []).map((x: any) => ({
+        TransactiondetailId: x.TransactiondetailId || 0,
+        ItemId: x.ItemId,
+        ItemName: x.ItemName,
+        UOMId: x.UOMId,
+        Quantity: x.Quantity,
+        itemcost: x.itemcost,
+        MRP: x.MRP,
+        totalPayable: x.totalPayable
+      }))
+    };
+  }
+OnSalesHeaderCreate(data: any) {
+    const apibody = this.cleanRequestBody(this.returnForm.value);
+
+    this.stockInService.Getreturndropdowndetails(apibody).subscribe({
+      next: (res) => {
+        console.log(res.data);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: 'Sales saved successfully!',
+          life: 3000
         });
-        this.filteredProducts = [...this.products];
-    }
-    filterProducts() {
-        const searchTerm = this.globalFilter?.toLowerCase() || '';
-       this.filteredProducts = this.itemOptions.map(item => this.fb.group({
-    itemsku: [item.itemsku],
-    ItemName: [item.ItemName],
-    curStock: [item.curStock],
-    UOMId: [item.UOMId],
-    Quantity: [0],
-    MRP: [item.MRP],
-    totalPayable: [0],
-    warPeriod: [item.warPeriod],
-    location: [item.location]
-}));
-       
-    }
+      },
+      error: (err) => {
+        console.error(err);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to save sales. Please try again.',
+          life: 3000
+        });
+      }
+    });
+  }
 
     applyGlobalFilter() {
         const searchTerm = this.globalFilter?.toLowerCase() || '';
@@ -228,8 +272,17 @@ public authService = inject(AuthService);
         const row=this.saleArray.at(index) as FormGroup;
 
         const qty = Number(row.get('Quantity')?.value ||0);
+        const stock=Number(row.get('curStock')?.value || 0);
         const mrp = Number(row.get('MRP')?.value || 0);
         const total = +(mrp * qty).toFixed(2);
+        if(qty>(stock+1)){
+          row.get('Quantity')?.setErrors({maxStock:true});
+      return;
+    } else {
+      // Clear error if valid
+      row.get('Quantity')?.setErrors(null);
+    }
+
         row.patchValue({totalPayable: total});
         this.calculateSummary();
         this.updateSelectedTotal();
@@ -299,11 +352,17 @@ public authService = inject(AuthService);
         return this.childUomStatus;
     }
      applyDiscount() {
-    const discountPercent = Number(this.returnForm.get('p_overalldiscount')?.value || 0);
-    const totalMRP = Number(this.returnForm.get('p_totalsale')?.value || 0);
+    const totalSale = Number(this.returnForm.get('p_totalsale')?.value || 0) ;
+    const discountValue = Number(this.returnForm.get('p_overalldiscount')?.value || 0);
+    const isPresent = this.returnForm.get('p_disctype')?.value;
+   let discountAmount=0;
 
-    const discountAmount = (totalMRP * discountPercent) / 100;
-    let finalPayable = totalMRP - discountAmount;
+    if(isPresent){
+      discountAmount=(totalSale*discountValue)/100;
+    }else{
+      discountAmount=discountValue;
+    }
+    let finalPayable = totalSale - discountAmount;
 
     // Round off to 2 decimals difference and then round to integer for payable
     const roundOff = +(finalPayable - Math.floor(finalPayable)).toFixed(2);
@@ -330,10 +389,10 @@ public authService = inject(AuthService);
 
     // Assign summary values
     this.returnForm.patchValue({
-      p_totalcost: totalCost,
-      p_totalsale: totalMRP,
+      p_totalcost: (totalCost).toFixed(2),
+      p_totalsale: (totalMRP).toFixed(2),
       p_roundoff: 0,
-      p_totalpayable: totalMRP
+      p_totalpayable: (totalMRP).toFixed(2)
     });
 
     // Apply discount/rounding adjustments
