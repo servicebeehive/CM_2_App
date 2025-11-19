@@ -77,7 +77,7 @@ export class AddinventoryComponent {
     @Input() transationid: any = null;
     @Output() close = new EventEmitter<void>();
     @Input() editData: any;
-    @Input() mode: 'add' | 'edit' = 'add';
+    @Input() mode: 'add' | 'edit'|'itemedit' = 'add';
     @Output() save = new EventEmitter<any>();
     @Output() childUom = new EventEmitter<boolean>();
 
@@ -303,7 +303,7 @@ enterAddItemMode(itemData: any) {
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-if (changes['editData'] && this.editData && this.mode === 'edit' && this.addForm) {
+if ((changes['editData'] && this.editData && this.mode === 'edit' && this.addForm)||(changes['editData'] && this.editData && this.mode === 'itemedit' && this.addForm)) {
           this.enterEditItemMode(this.editData);
         } else if (this.mode === 'add' && this.addForm) {
             this.enterAddModeReset();
@@ -378,8 +378,8 @@ if (changes['editData'] && this.editData && this.mode === 'edit' && this.addForm
         
         return {
             // p_operationtype: this.mode === 'add' ? 'PUR_INSERT' : 'PUR_UPDATE',
-             p_operationtype:'PUR_INSERT',
-            p_purchaseid: this.transationid.toString(),
+             p_operationtype:this.mode=='itemedit'?'ITEM_UPD':'PUR_INSERT',
+            p_purchaseid:this.mode=='itemedit'?"0":this.transationid.toString(),
 
             p_itemsku: form.itemCode,
             p_itemname: form.itemName,
@@ -427,6 +427,19 @@ if (changes['editData'] && this.editData && this.mode === 'edit' && this.addForm
 
     onSubmit() {
         if (this.addForm.invalid || !this.isChildUOMValid()) return;
+        if(this.mode=='itemedit'){
+            this.inventoryService.Oninsertitemdetails(this.mapFormToPayload(this.addForm.getRawValue(), this.products)).subscribe({
+            next: (res) => {
+               const msg = res?.data?.[0]?.msg || "Item saved successfully";
+                this.showSuccess(msg);
+                this.close.emit(this.addForm.getRawValue());
+            },
+            error: (res) => {}
+        });
+        }
+        else{
+
+       
         this.inventoryService.Oninsertitemdetails(this.mapFormToPayload(this.addForm.getRawValue(), this.products)).subscribe({
             next: (res) => {
                const msg = res?.data?.[0]?.msg || "Item saved successfully";
@@ -435,6 +448,7 @@ if (changes['editData'] && this.editData && this.mode === 'edit' && this.addForm
             },
             error: (res) => {}
         });
+         }
     }
     onCancel() {
         this.close.emit();

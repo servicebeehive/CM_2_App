@@ -483,7 +483,7 @@ export class StockAdjustmentComponent {
       p_updatetype: this.updateForm.controls['mrpUpdate'].value,
       'x-access-token': this.authService.getToken()
     };
-    console.log('📌 Payload Sent:', payload);
+  
     // call API
     this.inventoryService.updatestockadjustment(payload).subscribe({
       next: (res: any) => {

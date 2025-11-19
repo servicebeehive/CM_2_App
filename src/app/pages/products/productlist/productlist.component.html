@@ -29,7 +29,7 @@
                     <!-- Item -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Item</label>
-                        <p-dropdown [options]="itemOptions" optionLabel="itemname" optionValue="itemid" [filter]="true" [showClear]="true" filterPlaceholder="Search Item" formControlName="item" placeholder="Item"> </p-dropdown>
+                        <p-dropdown [options]="itemOptions" optionLabel="itemcombine" optionValue="itemid" [filter]="true" [showClear]="true" filterPlaceholder="Search Item" formControlName="item" placeholder="Item"> </p-dropdown>
                         <!-- <small class="text-red-500 ms-3 mt-1" *ngIf="updateForm.get('item')?.touched">
                             <span *ngIf="updateForm.get('item')?.errors?.['required']">Item is required</span>
                         </small> -->
@@ -101,7 +101,10 @@
         </form>
     </div>
 <p-dialog header="{{ 'Edit Item' }}" [(visible)]="visibleDialog" [modal]="true" [style]="{ width: '80vw' }">
-    <app-addinventory [editData]="selectedRow" [mode]="mode" (close)="closeDialog()" (save)="onSave($event)"></app-addinventory>
+    <app-addinventory  [itemOptions]="itemOptions"
+      [categoryOptions]="categoryOptions"
+      [uomOptions]="uomOptions"
+       [editData]="selectedRow" [mode]="mode" (close)="closeDialog()" (save)="onSave($event)"></app-addinventory>
 </p-dialog>
 <p-confirmDialog></p-confirmDialog>
 </div>

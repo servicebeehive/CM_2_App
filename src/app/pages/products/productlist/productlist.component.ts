@@ -59,7 +59,7 @@ export class ProductlistComponent {
     visibleDialog = false;
     selectedRow: any = null;
     selection: boolean = true;
-    mode: 'add' | 'edit' = 'edit';
+    mode: 'add' | 'itemedit' = 'itemedit';
     pagedProducts: StockIn[] = [];
     first: number = 0;
     rowsPerPage: number = 5;
@@ -67,6 +67,7 @@ export class ProductlistComponent {
     filteredProducts: StockIn[] = [];
     globalFilter: string = '';
     showGlobalSearch: boolean =true;
+    uomOptions: any[] = [];  
     // ✅ Move dropdown options into variables
    categoryOptions = [];
 
@@ -164,7 +165,7 @@ export class ProductlistComponent {
     //     parentUOM:matchedUOM?matchedUOM.value:rowData.uom
     //    }
     //     this.visibleDialog = true;
-    this.mode='edit';
+    this.mode='itemedit';
     this.selectedRow=rowData|| null;
     this.visibleDialog=true;
     console.log("selectedrow",this.selectedRow);
@@ -181,7 +182,9 @@ export class ProductlistComponent {
     loadAllDropdowns(){
         this.OnGetItem();
         this.OnGetCategory();
-    }
+        this.OnGetUOM();
+}
+    
     OnGetItem() {
   const payload = this.createDropdownPayload("ITEM");
   this.inventoryService.getdropdowndetails(payload).subscribe({
@@ -245,7 +248,16 @@ products.forEach((p:any)=>{
         this.errorSuccess(message);
     }
  }
+ OnGetUOM() {
+  const payload = this.createDropdownPayload("UOM");
+  this.stockInService.getdropdowndetails(payload).subscribe({
+    next: (res) => this.uomOptions = res.data,
+    error: (err) => console.log(err)
+  });
+}
     onSave(updatedData: any) {
+        console.log(updatedData)
+        return
         const mappedData = {
             selection: true,
             code: updatedData.itemCode.label || updatedData.itemCode,
