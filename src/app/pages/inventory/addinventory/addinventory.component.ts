@@ -97,6 +97,7 @@ export class AddinventoryComponent {
     itemCodeOptions = [];
     parentUOMOptions = [];
     uom = [];
+  
     uomTableDisabled=false;
     resetDisabled=false;
     products: any[] = [
@@ -248,10 +249,50 @@ enterEditItemMode(itemData: any) {
         this.uomTableDisabled = true;
        
     }
+    enterItemUpdateMode(itemData: any) {
+    // const costperitem=(itemData.pruchaseprice/itemData.quantity).toFixed(2);
+        // patch form with itemData (same fields as before)
+        console.log('edit',itemData.value);
+        this.addForm.patchValue({
+            itemCode: itemData.itemsku || itemData.itemid,
+            itemName: itemData.itemname,
+            category: itemData.categoryid,
+            curStock: itemData.currentstock,
+            p_expirydate: itemData.expirydate ? new Date(itemData.expirydate) : null,
+            gstItem: itemData.gstitem === 'Y',
+            activeItem: itemData.isactive === 'Y',
+            location: itemData.location,
+            minStock: itemData.minimumstock,
+            purchasePrice: itemData.costprice * itemData.quantity,
+            mrp: itemData.saleprice,
+            parentUOM: itemData.uomid,
+            qty: itemData.quantity,
+            costPerItem:itemData.costprice,
+            warPeriod: itemData.warrentyperiod
+
+        });
+
+        // load child UOM and master child options
+        this.OnChildOM(itemData.itemid);
+        this.viewItem(itemData.uomid);
+ this.resetDisabled=true;
+ this.addForm.disable(); 
+ 
+        // Disable only the item-related fields (not purchasePrice/mrp/qty)
+        this.disableItemRelatedControls();
+              this.addForm.get('category')?.enable();
+    this.addForm.get('minStock')?.enable();
+    this.addForm.get('warPeriod')?.enable();
+     this.addForm.get('p_expirydate')?.enable();
+      this.addForm.get('location')?.enable();
+      this.addForm.get('gstItem')?.enable();
+      this.addForm.get('activeItem')?.enable();
+       
+    }
 
 enterAddItemMode(itemData: any) {
         // patch form with itemData (same fields as before)
-        const costperitem=(itemData.pruchaseprice/itemData.quantity).toFixed(2);
+        // const costperitem=(itemData.pruchaseprice/itemData.quantity).toFixed(2);
         this.addForm.patchValue({
             itemCode: itemData.itemsku,
             itemName: itemData.itemname,
@@ -303,11 +344,21 @@ enterAddItemMode(itemData: any) {
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-if ((changes['editData'] && this.editData && this.mode === 'edit' && this.addForm)||(changes['editData'] && this.editData && this.mode === 'itemedit' && this.addForm)) {
-          this.enterEditItemMode(this.editData);
-        } else if (this.mode === 'add' && this.addForm) {
-            this.enterAddModeReset();
-        }        
+        const hasEditDataChange = !!changes['editData'] && !!this.editData;
+        const formReady=!!this.addForm;
+if (hasEditDataChange && formReady) {
+    if (this.mode === 'edit') {
+      this.enterEditItemMode(this.editData);
+      return;
+    }
+    if (this.mode === 'itemedit') {
+      this.enterItemUpdateMode(this.editData);
+      return;
+    }
+  }
+    if (this.mode === 'add' && formReady) {
+    this.enterAddModeReset();
+  }   
     }
    copy(event:any){
     const itemCode = this.addForm.get('itemCode')?.value;

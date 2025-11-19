@@ -144,14 +144,14 @@ else{
     apiItems.forEach((item,i) => {
       this.saleArray.push(
         this.fb.group({
-          TransactiondetailId: item.transactiondetailid || 0,
+            TransactiondetailId: item.transactiondetailid || 0,
           ItemId: item.itemsku || 0,    // use itemsku when itemid not present
           ItemName: item.itemname || '',
           UOMId: item.uomid || 0,
-          Quantity: item.Quantity || 1,
+          Quantity: item.quantity || 1,
           itemcost: item.itemcost || 0,
-          MRP: item.mrp || 0,
-          totalPayable: (item.Quantity || 1) * (item.mrp || 0),
+          MRP: (item.mrp || 0).toFixed(2),
+          totalPayable: ((item.quantity || 1) * (item.mrp || 0)).toFixed(2),
           // p_totalcost:item.
           // Additional fields used in UI
           curStock: item.current_stock || 0,
