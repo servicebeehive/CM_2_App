@@ -104,56 +104,88 @@ export class StockAdjustmentComponent {
         return this.updateForm.get('p_stock') as FormArray;
     }
     blockMinus(event: KeyboardEvent) {
+        console.log(event)
         if (event.key === '-' || event.key === 'Minus') {
             event.preventDefault();
         }
     }
 
     // Rebuild formArray from a list of product objects
-    private buildFormArrayFromProducts(products: any[]) {
-        const stockArray = this.getStockArray();
-        stockArray.clear();
-        products.forEach((p: any) => {
-            // Keep adjustment type on the plain product for validators that reference it
-            p.adjustmentType = p.adjustmentType || 'increase';
+  private buildFormArrayFromProducts(products: any[]) {
+    const stockArray = this.getStockArray();
+    stockArray.clear();
 
-            const group = this.fb.group({
-                ItemId: [p.itemid ?? p.ItemId],
-                // UOMId: [p.uomid ?? p.UOMId],
-                BatchId: [p.batchid ?? p.BatchId],
-                mrpvalue: [p.mrpvalue ?? p.saleprice ?? null, [Validators.min(1)]],
-                Quantity: [
-                    p.Quantity ?? null,
-                    [
-                        // Validators.required,
-                        Validators.min(1),
-                        this.batchValidator(p.batch_available),
-                        this.quantityValidator(p.curStock ?? p.curStock ?? 0, () => p.adjustmentType)
-                    ]
-                ],
-                adjtype: [p.adjustmentType]
-            });
+    products.forEach((p: any) => {
 
-            // bind controls to product so template can use row.quantityControl and row.adjustmentControl
-            p.mrpControl = group.get('mrpvalue') as AbstractControl;
-            p.quantityControl = group.get('Quantity') as AbstractControl;
-            p.adjustmentControl = group.get('adjtype') as AbstractControl;
+        p.adjustmentType = p.adjustmentType || 'increase';
 
-            stockArray.push(group);
+        const group = this.fb.group({
+            ItemId: [p.itemid ?? p.ItemId],
+            BatchId: [p.batchid ?? p.BatchId],
+
+            mrpvalue: [
+                p.mrpvalue ?? p.saleprice ?? null,
+                [Validators.min(1)]
+            ],
+
+            Quantity: [
+                p.Quantity ?? null,
+                [
+                    Validators.min(1),
+                    this.quantityBatchValidator(p) // <===== only one validator
+                ]
+            ],
+
+            adjtype: [p.adjustmentType]
         });
 
-        // if table is paged, update pagedProducts
-        this.filteredProducts = [...products];
-        this.updatePagedProducts();
-    }
+        // bind controls to product
+        p.mrpControl = group.get('mrpvalue');
+        p.quantityControl = group.get('Quantity');
+        p.adjustmentControl = group.get('adjtype');
+
+        // update validator when Adj Type changes
+        p.adjustmentControl.valueChanges.subscribe(() => {
+            p.quantityControl.updateValueAndValidity();
+        });
+
+        stockArray.push(group);
+    });
+
+    this.filteredProducts = [...products];
+    this.updatePagedProducts();
+}
+// -------------------- VALIDATOR --------------------
+quantityBatchValidator(row: any): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+        const qty = Number(control.value);
+        const adjType = row.adjustmentControl?.value;
+        const batch = row.batch_available;
+
+        if (!qty || qty < 1) return null;
+
+        // No validation for Increase
+        if (adjType === 'increase') {
+            return null;
+        }
+
+        // Validation for Decrease only
+        if (adjType === 'decrease' && qty > batch) {
+            return { greaterThanBatch: true };
+        }
+
+        return null;
+    };
+}
+
 
     // ---------- Initial load ----------
     onGetStockIn() {
         // Use inventoryService.productItem if present else API call
-        this.products = this.inventoryService.productItem || [];
+     //this.products = this.inventoryService.productItem || [];
 
         // Ensure each product has expected fields and controls
-        this.buildFormArrayFromProducts(this.products);
+     //this.buildFormArrayFromProducts(this.products);
     }
 
     // ---------- Filtering ----------
