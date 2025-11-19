@@ -93,7 +93,6 @@
                                 <th>Total</th>
                                 <th>Warranty (in Mon)</th>
                                 <th>Location</th>
-                                <th class="text-center">Action</th>
                             </tr>
                         </ng-template>
                         <ng-template pTemplate="body" let-row let-i="rowIndex">
@@ -120,29 +119,35 @@
                     <!-- Total Cost -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Total Cost</label>
-                        <input pInputText formControlName="totalcost" placeholder="Total Cost" readonly />
+                        <input pInputText formControlName="p_totalcost" placeholder="Total Cost" readonly />
                     </div>
                     <!--MRP Total -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">MRP Total</label>
-                        <input pInputText formControlName="totalsale" placeholder="Grand Total" readonly />
+                        <input pInputText formControlName="p_totalsale" placeholder="Grand Total" readonly />
                     </div>
-
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Discount type -->
+        <div class="flex flex-col">
+          <label>Disc(%)</label>
+          <p-checkbox class="mt-2" binary="true" variant="filled" formControlName="p_disctype"></p-checkbox>
+        </div>
                     <!-- Discount -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Discount %</label>
-                        <input pInputText formControlName="discount" placeholder="Discount" (keypress)="allowOnlyNumbers($event)" readonly />
+                        <input pInputText formControlName="p_overalldiscount" placeholder="Discount" (keypress)="allowOnlyNumbers($event)" readonly />
+                    </div>
                     </div>
                     <!-- Round Off -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Round Off</label>
-                        <input pInputText formControlName="roundoff" placeholder="Round Off" readonly />
+                        <input pInputText formControlName="p_roundoff" placeholder="Round Off" readonly />
                     </div>
 
                     <!-- Final Payable -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Final Receiveable</label>
-                        <input pInputText formControlName="totalpayable" placeholder="Final Receiveable" readonly />
+                        <input pInputText formControlName="p_totalpayable" placeholder="Final Receiveable" readonly />
                     </div>
                 </div>
             </div>

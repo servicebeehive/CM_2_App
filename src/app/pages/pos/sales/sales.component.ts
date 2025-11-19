@@ -90,6 +90,7 @@ export class SalesComponent {
   showGlobalSearch: boolean = true;
   today: Date = new Date();
   submitDisabledByBill:boolean=false;
+  discountplace:string='Enter Amount';
   public authService = inject(AuthService);
   public getUserDetails = {
     "uname": "admin",
@@ -134,7 +135,8 @@ export class SalesComponent {
       p_mobileno: ['',[Validators.pattern(/^[6-9]\d{9}$/)]],
       p_totalcost: [0],
       p_totalsale: [0],
-      p_overalldiscount: [0],
+      p_disctype:[false],
+      p_overalldiscount: [''],
       p_roundoff: [''],
       p_totalpayable: [0],
       p_currencyid: [0],
@@ -147,7 +149,6 @@ export class SalesComponent {
       p_creditnoteno: [''],
       p_paymentmode: [''],
       p_paymentdue: [0],
-
       // FormArray for sale rows
       p_sale: this.fb.array([])
     });
@@ -158,7 +159,18 @@ export class SalesComponent {
       else{
         this.enableItemSearchAndSubmit();
       }
-    })
+    });
+    this.salesForm.get('p_disctype')?.valueChanges.subscribe(value=>{
+      if(!value){
+   this.discountplace="Enter Amount";
+}
+else{
+  this.discountplace="Enter %";
+}
+ this.salesForm.get('p_overalldiscount')?.setValue('', { emitEvent: false });
+ this.applyDiscount();
+    });
+
   }
 
   // -----------------------------
@@ -226,8 +238,8 @@ get isPrintDisabled(): boolean {
           UOMId: item.uomid || 0,
           Quantity: item.quantity || 1,
           itemcost: item.itemcost || 0,
-          MRP: item.mrp || 0,
-          totalPayable: (item.quantity || 1) * (item.mrp || 0),
+          MRP: (item.mrp || 0).toFixed(2),
+          totalPayable: ((item.quantity || 1) * (item.mrp || 0)).toFixed(2),
           // p_totalcost:item.
           // Additional fields used in UI
           curStock: item.current_stock || 0,
@@ -343,11 +355,11 @@ allowOnlyNumbers(event: any) {
         p_customername:billDetails.customername,
         p_transactiondate: billDetails.transactiondate ? new Date(billDetails.transactiondate) : null,
         p_mobileno: billDetails.mobileno,
-        p_totalcost: billDetails.totalcost,
-        p_totalsale: billDetails.totalsale,
+        p_totalcost: (billDetails.totalcost).toFixed(2),
+        p_totalsale: (billDetails.totalsale).toFixed(2),
         p_overalldiscount: billDetails.discount,
         p_roundoff: billDetails.roundoff,
-        p_totalpayable: billDetails.totalpayable
+        p_totalpayable: (billDetails.totalpayable).toFixed(2),
       });
     }
   }
@@ -485,10 +497,10 @@ allowOnlyNumbers(event: any) {
 
     // Assign summary values
     this.salesForm.patchValue({
-      p_totalcost: totalCost,
-      p_totalsale: totalMRP,
+      p_totalcost: (totalCost).toFixed(2),
+      p_totalsale: (totalMRP).toFixed(2),
       p_roundoff: 0,
-      p_totalpayable: totalMRP
+      p_totalpayable: (totalMRP).toFixed(2)
     });
 
     // Apply discount/rounding adjustments
@@ -530,11 +542,17 @@ allowOnlyNumbers(event: any) {
 
   // Apply overall discount & round off
   applyDiscount() {
-    const discountPercent = Number(this.salesForm.get('p_overalldiscount')?.value || 0);
-    const totalMRP = Number(this.salesForm.get('p_totalsale')?.value || 0);
+    const totalSale = Number(this.salesForm.get('p_totalsale')?.value || 0) ;
+    const discountValue = Number(this.salesForm.get('p_overalldiscount')?.value || 0);
+    const isPresent = this.salesForm.get('p_disctype')?.value;
+   let discountAmount=0;
 
-    const discountAmount = (totalMRP * discountPercent) / 100;
-    let finalPayable = totalMRP - discountAmount;
+    if(isPresent){
+      discountAmount=(totalSale*discountValue)/100;
+    }else{
+      discountAmount=discountValue;
+    }
+    let finalPayable = totalSale - discountAmount;
 
     // Round off to 2 decimals difference and then round to integer for payable
     const roundOff = +(finalPayable - Math.floor(finalPayable)).toFixed(2);
@@ -573,7 +591,8 @@ allowOnlyNumbers(event: any) {
       p_status: body.p_status || "Complete",
       p_isactive: "Y",
       p_linktransactionid: 0,
-      p_replacesimilir: body.p_replacesimilir || "",
+      // p_replacesimilir: body.p_replacesimilir || "",
+       p_replacesimilir:body.p_disctype === true ?"Y" : "N",
       p_creditnoteno: body.p_creditnoteno || "",
       p_paymentmode: body.p_paymentmode || "Cash",
       p_paymentdue: Number(body.p_paymentdue) || 0,
