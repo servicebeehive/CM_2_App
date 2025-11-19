@@ -217,7 +217,7 @@ enterEditItemMode(itemData: any) {
         // patch form with itemData (same fields as before)
         console.log('edit',itemData.value);
         this.addForm.patchValue({
-            itemCode: itemData.itemsku,
+            itemCode: itemData.itemsku || itemData.itemid,
             itemName: itemData.itemname,
             category: itemData.categoryid,
             curStock: itemData.currentstock,
@@ -288,10 +288,12 @@ enterAddItemMode(itemData: any) {
 
      enterAddModeReset() {
         this.uomTableDisabled = false;
+        this.resetDisabled = false; 
         this.addForm.enable();
         this.resetChildUOMTable();
         this.addForm.get('activeItem')?.setValue(true);
         this.addForm.get('gstItem')?.setValue(true);
+         this.showCopyMessage = false;
     }
 
     private disableItemRelatedControls() {
@@ -522,6 +524,7 @@ OnChildOM(id: number) {
 }
 Reset(){
     this.addForm.reset();
+     this.enterAddModeReset();
      this.enterAddModeReset();
      this.resetChildUOMTable();
       this.showCopyMessage = false;

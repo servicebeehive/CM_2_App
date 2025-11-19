@@ -35,7 +35,7 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { AddinventoryComponent } from '@/pages/inventory/addinventory/addinventory.component';
 import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
 import { AuthService } from '@/core/services/auth.service';
-import { NgxPrintModule } from 'ngx-print';
+// import { NgxPrintModule } from 'ngx-print';
 
 @Component({
   selector: 'app-sales',
@@ -59,7 +59,7 @@ import { NgxPrintModule } from 'ngx-print';
     DialogModule,
     ConfirmDialogModule,
     CheckboxModule,
-    NgxPrintModule
+    // NgxPrintModule
     // AddinventoryComponent,
     // GlobalFilterComponent
   ],
@@ -89,6 +89,7 @@ export class SalesComponent {
   childUomStatus: boolean = false;
   showGlobalSearch: boolean = true;
   today: Date = new Date();
+  submitDisabledByBill:boolean=false;
   public authService = inject(AuthService);
   public getUserDetails = {
     "uname": "admin",
@@ -128,9 +129,9 @@ export class SalesComponent {
       p_itemid: [null],
       p_billno: [null],
       p_transactionid: [0],
-      p_transactiondate: [''],
-      p_customername: ['', [Validators.required]],
-      p_mobileno: ['', [Validators.required]],
+      p_transactiondate: [this.today,[Validators.required]],
+      p_customername: [''],
+      p_mobileno: ['',[Validators.pattern(/^[6-9]\d{9}$/)]],
       p_totalcost: [0],
       p_totalsale: [0],
       p_overalldiscount: [0],
@@ -150,6 +151,14 @@ export class SalesComponent {
       // FormArray for sale rows
       p_sale: this.fb.array([])
     });
+    this.salesForm.get('p_billno')?.valueChanges.subscribe(value=>{
+      if(value){
+        this.disableItemSearchSubmit();
+      }
+      else{
+        this.enableItemSearchAndSubmit();
+      }
+    })
   }
 
   // -----------------------------
@@ -164,6 +173,21 @@ export class SalesComponent {
   get saleRows(): FormGroup[] {
     return this.saleArray.controls as FormGroup[];
   }
+disableItemSearchSubmit(){
+  this.salesForm.get('itemSearch')?.disable();
+  this.submitDisabledByBill=true;
+}
+enableItemSearchAndSubmit() {
+  this.salesForm.get('itemSearch')?.enable();
+  this.submitDisabledByBill = false;
+}
+get isPrintDisabled(): boolean {
+  const billNo = this.salesForm.get('p_billno')?.value;
+ const hasItem = this.saleArray.length > 0;
+
+  // Disable print if BOTH are empty
+  return !(billNo || hasItem);
+}
 
   // -----------------------------
   //  Row Creation / Mapping
@@ -204,7 +228,7 @@ export class SalesComponent {
           itemcost: item.itemcost || 0,
           MRP: item.mrp || 0,
           totalPayable: (item.quantity || 1) * (item.mrp || 0),
-
+          // p_totalcost:item.
           // Additional fields used in UI
           curStock: item.current_stock || 0,
           warPeriod: 0,
@@ -219,6 +243,22 @@ export class SalesComponent {
     this.updateTotal(index);
     this.calculateSummary();
   }
+allowOnlyNumbers(event: any) {
+  const input = event.target as HTMLInputElement;
+
+  // Block if length is already 10
+  if (input.value.length >= 10) {
+    event.preventDefault();
+    return;
+  }
+
+  const char = String.fromCharCode(event.which);
+
+  // Block if not a number (0-9)
+  if (!/^[0-9]$/.test(char)) {
+    event.preventDefault();
+  }
+}
 
   // -----------------------------
   //  Dropdown / Data Loading
@@ -294,7 +334,7 @@ export class SalesComponent {
   onBillDetails(event: any) {
     console.log(event.value);
     const billDetails = this.billNoOptions.find(billitem => billitem.billno === event.value);
-    console.log(billDetails);
+    console.log('bill',billDetails);
     if (billDetails) {
       this.SaleDetails(billDetails);
 
@@ -373,8 +413,8 @@ export class SalesComponent {
     }
 
     // 3) Required header fields missing
-    if (!this.salesForm.get('p_customername')?.value) return true;
-    if (!this.salesForm.get('p_mobileno')?.value) return true;
+    // if (!this.salesForm.get('p_customername')?.value) return true;
+    // if (!this.salesForm.get('p_mobileno')?.value) return true;
     if (!this.salesForm.get('p_transactiondate')?.value) return true;
 
     // 4) Per-row validation: qty cannot be 0 and cannot exceed stock
@@ -420,12 +460,7 @@ export class SalesComponent {
   onReset() {
     this.salesForm.reset();
     this.saleArray.clear();
-    this.messageService.add({
-      severity: 'info',
-      summary: 'Reset',
-      detail: 'Form reset successfully.',
-      life: 2000
-    });
+     this.salesForm.get('p_transactiondate')?.setValue(this.today);
   }
 
   // -----------------------------
