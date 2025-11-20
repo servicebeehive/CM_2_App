@@ -183,7 +183,7 @@ blockMinus(event: KeyboardEvent) {
             const cost = purchasePrice / qty;
            this.addForm.get('costPerItem')?.setValue(cost.toFixed(2), { emitEvent: false });
         } else {
-          this.addForm.get('costPerItem')?.setValue('', { emitEvent: false });
+          this.addForm.get('costPerItem')?.setValue(this.addForm.get('costPerItem')?.value, { emitEvent: false });
         }
     }
    
@@ -291,6 +291,7 @@ enterEditItemMode(itemData: any) {
     }
 
 enterAddItemMode(itemData: any) {
+    console.log(itemData)
         // patch form with itemData (same fields as before)
         // const costperitem=(itemData.pruchaseprice/itemData.quantity).toFixed(2);
         console.log('add item:',itemData);
