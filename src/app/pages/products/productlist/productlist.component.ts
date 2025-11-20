@@ -75,8 +75,6 @@ export class ProductlistComponent {
 
     constructor(
         private fb: FormBuilder,
-        private stockInService: InventoryService,
-        private confirmationService: ConfirmationService,
         private inventoryService:InventoryService,
         private authService:AuthService,
         private messageService: MessageService
@@ -97,7 +95,7 @@ export class ProductlistComponent {
     }
 
     onGetStockIn() {
-        this.products = this.stockInService.productItem || [];
+        this.products = this.inventoryService.productItem || [];
         // this.products.forEach((p: any) => (p.selection = true));
         // this.filteredProducts = [...this.products];
         this.buildFormArrayFormProducts(this.products);
@@ -157,14 +155,6 @@ export class ProductlistComponent {
         return this.updateForm.get('p_stock') as FormArray;
     }
     openEditDialog(rowData: any) {
-    //    const matchedCategory = this.categoryOptions.find(otp=>otp.value===rowData.category);
-    //    const matchedUOM = rowData.uom?{label:rowData.uom , value:rowData.uom} : null; 
-    //    this.selectedRow={
-    //     ...rowData,
-    //     // category:matchedCategory? matchedCategory.value :rowData.category,
-    //     parentUOM:matchedUOM?matchedUOM.value:rowData.uom
-    //    }
-    //     this.visibleDialog = true;
     this.mode='itemedit';
     this.selectedRow=rowData|| null;
     this.visibleDialog=true;
@@ -251,7 +241,7 @@ products.forEach((p:any)=>{
  }
  OnGetUOM() {
   const payload = this.createDropdownPayload("UOM");
-  this.stockInService.getdropdowndetails(payload).subscribe({
+  this.inventoryService.getdropdowndetails(payload).subscribe({
     next: (res) => this.uomOptions = res.data,
     error: (err) => console.log(err)
   });
@@ -284,7 +274,7 @@ products.forEach((p:any)=>{
         this.visibleDialog = false;
     }
     saveAllChanges() {
-        // this.stockInService.productItem = [...this.filteredProducts];
+        // this.inventoryService.productItem = [...this.filteredProducts];
     }
 
     reset() {

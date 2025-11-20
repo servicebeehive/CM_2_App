@@ -173,7 +173,14 @@ else{
   // -----------------------------
   //  FormArray Getters / Helpers
   // -----------------------------
-
+// similarDiscount(){
+//     const discounttype=this.replaceForm.get('p_disctype');
+//     const similar=this.replaceForm.get('p_similar')?.valueChanges.subscribe(value=>{
+//         if(value){
+//             discounttype=true;
+//         }
+//     })
+// }
   get saleArray(): FormArray {
     return this.replaceForm.get('p_sale') as FormArray;
   }
