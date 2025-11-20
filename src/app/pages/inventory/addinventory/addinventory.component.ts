@@ -170,7 +170,7 @@ export class AddinventoryComponent {
         return null;
     };
 blockMinus(event: KeyboardEvent) {
-  if (event.key === '-' || event.key === 'Minus'|| event.key==='e') {
+  if (event.key === '-' || event.key === 'Minus'|| event.key==='e' || event.key === 'e') {
     event.preventDefault();
   }
 }
@@ -252,7 +252,7 @@ enterEditItemMode(itemData: any) {
     enterItemUpdateMode(itemData: any) {
     // const costperitem=(itemData.pruchaseprice/itemData.quantity).toFixed(2);
         // patch form with itemData (same fields as before)
-        console.log('update data ',itemData.value);
+        console.log('update data',itemData);
         this.addForm.patchValue({
             itemCode: itemData.itemsku || itemData.itemid,
             itemName: itemData.itemname,
@@ -263,7 +263,7 @@ enterEditItemMode(itemData: any) {
             activeItem: itemData.isactive === 'Y',
             location: itemData.location,
             minStock: itemData.minimumstock,
-            purchasePrice: itemData.costprice * itemData.quantity,
+            // purchasePrice: itemData.costprice * itemData.quantity,
             mrp: itemData.saleprice,
             parentUOM: itemData.uomid,
             qty: itemData.quantity,
@@ -293,7 +293,7 @@ enterEditItemMode(itemData: any) {
 enterAddItemMode(itemData: any) {
         // patch form with itemData (same fields as before)
         // const costperitem=(itemData.pruchaseprice/itemData.quantity).toFixed(2);
-        console.log('add item:',itemData.value);
+        console.log('add item:',itemData);
         this.addForm.patchValue({
             itemCode: itemData.itemsku,
             itemName: itemData.itemname,
