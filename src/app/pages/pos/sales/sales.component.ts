@@ -344,9 +344,7 @@ allowOnlyNumbers(event: any) {
 
   // Called when bill dropdown value changes
   onBillDetails(event: any) {
-    console.log(event.value);
-    const billDetails = this.billNoOptions.find(billitem => billitem.billno === event.value);
-    console.log('bill',billDetails);
+    const billDetails = this.billNoOptions.find(billitem => billitem.billno === event.value); 
     if (billDetails) {
       this.SaleDetails(billDetails);
 
@@ -405,7 +403,7 @@ allowOnlyNumbers(event: any) {
 
   // Prevent decimal input in quantity field (keyboard)
   blockDecimal(event: KeyboardEvent) {
-    if (event.key === '.' || event.key === ',') {
+    if (event.key === '.' || event.key === ',' || event.key === 'e' || event.key === 'E') {
       event.preventDefault();  // block decimal
     }
   }

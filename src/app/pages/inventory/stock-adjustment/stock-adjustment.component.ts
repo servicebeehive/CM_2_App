@@ -146,7 +146,7 @@ export class StockAdjustmentComponent {
   blockMinus(event: KeyboardEvent) {
     // prevents '-' from being typed in numeric inputs used for quantity/mrp
     console.log(event);
-    if (event.key === '-' || event.key === 'Minus' || event.key ==='e') {
+    if (event.key === '-' || event.key === 'Minus' || event.key ==='e' || event.key === 'E') {
       event.preventDefault();
     }
   }

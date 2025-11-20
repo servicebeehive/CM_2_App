@@ -126,9 +126,9 @@ this.model = [
             routerLink: ['/layout/pos/list'],
           },
            {
-            label: 'Credit Note',
+            label: 'Debit/Credit Link',
             icon: 'pi pi-fw pi-credit-card',
-            routerLink: ['/layout/reports/credit-note'],
+            routerLink: ['/layout/pos/credit-note'],
           }
            
         ]

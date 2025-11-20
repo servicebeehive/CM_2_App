@@ -127,7 +127,7 @@ else{
     }
 
   blockDecimal(event: KeyboardEvent) {
-    if (event.key === '.' || event.key === ',') {
+    if (event.key === '.' || event.key === ',' || event.key === 'e' || event.key === 'E') {
       event.preventDefault();  // block decimal
     }
   }
@@ -201,6 +201,24 @@ else{
       });
     }
     
+  }
+  
+  onReturnBillDetails(event:any){
+    const returnBillDetails= this.returnBillNoOptions.find(returnbillitem =>returnbillitem.billno === event.value);
+    if(returnBillDetails){
+      this.SaleDetails(returnBillDetails);
+      this.returnForm.patchValue({
+          p_transactionid: returnBillDetails.transactionid,
+        p_customername:returnBillDetails.customername,
+        p_transactiondate: returnBillDetails.transactiondate ? new Date(returnBillDetails.transactiondate) : null,
+        p_mobileno: returnBillDetails.mobileno,
+        p_totalcost: (returnBillDetails.totalcost).toFixed(2),
+        p_totalsale: (returnBillDetails.totalsale).toFixed(2),
+        p_overalldiscount: returnBillDetails.discount,
+        p_roundoff: returnBillDetails.roundoff,
+        p_totalpayable: (returnBillDetails.totalpayable).toFixed(2),
+      });
+    }
   }
  cleanRequestBody(body: any) {
     return {
@@ -429,19 +447,25 @@ OnSalesHeaderCreate(data: any) {
         this.calculateTotals();
         this.closeDialog();
     }
-
-    saveAllChanges() {
-        // this.stockInService.productItem = [...this.filteredProducts];
-    }
+    
     onSubmit() {
-        console.log(this.returnForm.value);
+    //    if (this.isSubmitDisabled()) {
+    //   this.messageService.add({
+    //     severity: 'error',
+    //     summary: 'Validation Failed',
+    //     detail: 'Please correct all errors before submitting.',
+    //     life: 2500
+    //   });
+    //   return;
+    // }
+
         this.confirmationService.confirm({
             message: 'Are you sure you want to make changes?',
             header: 'Confirm',
             acceptLabel: 'Yes',
             rejectLabel: 'Cancel',
             accept: () => {
-                this.saveAllChanges();
+                this.OnSalesHeaderCreate(this.returnForm.value);
             },
             reject: () => {}
         });
@@ -481,7 +505,7 @@ createDropdownPayload(returnType: string) {
     });
   }
    OnGetReturnBillNo() {
-    const payload = this.createDropdownPayload("RETURNTRANSACTIONID");
+    const payload = this.createDropdownPayload("RETURN");
     this.returnService.getdropdowndetails(payload).subscribe({
       next: (res) => {
         const billdata: any = res.data;
@@ -495,5 +519,4 @@ createDropdownPayload(returnType: string) {
     this.OnGetBillNo();
     this.OnGetReturnBillNo();
   }
-
 }
