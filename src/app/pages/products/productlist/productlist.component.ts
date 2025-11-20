@@ -201,6 +201,7 @@ export class ProductlistComponent {
 }
 private buildFormArrayFormProducts(products:any[]){
 const stockArray = this.getStockArray();
+console.log('stock arrary',stockArray);
 stockArray.clear();
 products.forEach((p:any)=>{
   const group=this.fb.group({
@@ -210,7 +211,7 @@ products.forEach((p:any)=>{
     BarCode:[p.BarCode],
     isactive:[p.active],
     uon:[p.uom],
-    purchasePrice:[p.purchasePrice]
+    purchaseprice:[p.purchaseprice] 
   });
   stockArray.push(group);
 });
