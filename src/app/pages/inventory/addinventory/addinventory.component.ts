@@ -291,6 +291,7 @@ enterEditItemMode(itemData: any) {
     }
 
 enterAddItemMode(itemData: any) {
+    console.log(itemData)
         // patch form with itemData (same fields as before)
         // const costperitem=(itemData.pruchaseprice/itemData.quantity).toFixed(2);
         this.addForm.patchValue({
