@@ -183,7 +183,7 @@ blockMinus(event: KeyboardEvent) {
             const cost = purchasePrice / qty;
            this.addForm.get('costPerItem')?.setValue(cost.toFixed(2), { emitEvent: false });
         } else {
-          this.addForm.get('costPerItem')?.setValue('', { emitEvent: false });
+          this.addForm.get('costPerItem')?.setValue(this.addForm.get('costPerItem')?.value, { emitEvent: false });
         }
     }
    

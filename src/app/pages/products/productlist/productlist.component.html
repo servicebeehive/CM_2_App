@@ -61,7 +61,7 @@
                                 <!-- <th class="text-center"><p-checkbox formControlName="update.selection" binary="true"></p-checkbox></th> -->
                                 <th style="width: 4rem"><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
                                 <th>Item Name</th>
-                                <th>Category</th>
+                                <th class="!min-w-[100px]">Category</th>
                                 <th>UOM</th>
                                 <th>Current Stock</th>
                                 <th>Purchase Price</th>
@@ -78,14 +78,14 @@
                                 <!-- <td class="text-center"><p-checkbox [(ngModel)]="update.selection"  binary="true"></p-checkbox></td> -->
                                  <td><p-tableCheckbox [value]="row" /></td>
                                 <td>{{ row.itemcombine }}</td>
-                                <td>{{ row.categoryname }}</td>
+                                <td class="!min-w-[100px]">{{ row.categoryname }}</td>
                                 <td>{{ row.uomname }}</td>
                                 <td>{{ row.currentstock }}</td>
                                 <td>{{ row.costprice }}</td>
                                 <td>{{ row.saleprice }}</td>
                                <td>{{row.gstitem}}</td>
                                 <td>{{ row.isactive }}</td>
-                                <td><input pInputText type="text"  maxlength="3" minlength="3" (keypress)="allowOnlyNumbers($event)"></td>
+                                <td><input pInputText type="text" class="w-[50px]"  maxlength="3" minlength="3" (keypress)="allowOnlyNumbers($event)"></td>
                                 <td class="text-center">
                                     <i class="pi pi-pencil cursor-pointer text-blue-500" (click)="openEditDialog(row)"></i>
                                     <!-- <i class="pi pi-trash ms-2 cursor-pointer text-red-500" (click)="deleteItem(update)"></i> -->
@@ -107,4 +107,5 @@
        [editData]="selectedRow" [mode]="mode" (close)="closeDialog()" (save)="onSave($event)"></app-addinventory>
 </p-dialog>
 <p-confirmDialog></p-confirmDialog>
+
 </div>
