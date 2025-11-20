@@ -170,7 +170,7 @@ export class AddinventoryComponent {
         return null;
     };
 blockMinus(event: KeyboardEvent) {
-  if (event.key === '-' || event.key === 'Minus') {
+  if (event.key === '-' || event.key === 'Minus'|| event.key==='e') {
     event.preventDefault();
   }
 }
@@ -252,7 +252,7 @@ enterEditItemMode(itemData: any) {
     enterItemUpdateMode(itemData: any) {
     // const costperitem=(itemData.pruchaseprice/itemData.quantity).toFixed(2);
         // patch form with itemData (same fields as before)
-        console.log('edit',itemData.value);
+        console.log('update data ',itemData.value);
         this.addForm.patchValue({
             itemCode: itemData.itemsku || itemData.itemid,
             itemName: itemData.itemname,
@@ -294,6 +294,7 @@ enterAddItemMode(itemData: any) {
     console.log(itemData)
         // patch form with itemData (same fields as before)
         // const costperitem=(itemData.pruchaseprice/itemData.quantity).toFixed(2);
+        console.log('add item:',itemData.value);
         this.addForm.patchValue({
             itemCode: itemData.itemsku,
             itemName: itemData.itemname,

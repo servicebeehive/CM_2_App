@@ -106,14 +106,14 @@ this.model = [
         routerLink: ['/layout/pos/overview'],
         items: [
           {
-            label: 'Credit Note',
-            icon: 'pi pi-fw pi-credit-card',
-            routerLink: ['/layout/reports/credit-note'],
+            label: 'Sales',
+            icon: 'pi pi-fw pi-dollar',
+            routerLink: ['/layout/pos/sales'],
           },
           {
-            label: 'Invoice',
-            icon: 'pi pi-fw pi-file',
-            routerLink: ['/layout/pos/list'],
+            label: 'Return',
+            icon: 'pi pi-fw pi-arrow-left',
+            routerLink: ['/layout/pos/return'],
           },
           {
             label: 'Replace',
@@ -121,15 +121,16 @@ this.model = [
             routerLink: ['/layout/pos/replace'],
           },
           {
-            label: 'Return',
-            icon: 'pi pi-fw pi-arrow-left',
-            routerLink: ['/layout/pos/return'],
+            label: 'Invoice',
+            icon: 'pi pi-fw pi-file',
+            routerLink: ['/layout/pos/list'],
           },
            {
-            label: 'Sales',
-            icon: 'pi pi-fw pi-dollar',
-            routerLink: ['/layout/pos/sales'],
-          },
+            label: 'Credit Note',
+            icon: 'pi pi-fw pi-credit-card',
+            routerLink: ['/layout/reports/credit-note'],
+          }
+           
         ]
       }
     ]
