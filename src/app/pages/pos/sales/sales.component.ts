@@ -94,7 +94,7 @@ export class SalesComponent {
   public authService = inject(AuthService);
   public getUserDetails = {
     "uname": "admin",
-    "p_username": "admin",
+    "p_loginuser": "admin",
     "clientcode": "CG01-SE",
     "x-access-token": this.authService.getToken(),
   };
@@ -617,7 +617,46 @@ allowOnlyNumbers(event: any) {
   OnSalesHeaderCreate(data: any) {
     const apibody = this.cleanRequestBody(this.salesForm.value);
 
-    this.stockInService.Getreturndropdowndetails(apibody).subscribe({
+    // const datada={
+    // "uname": "admin",
+    // "p_transactiontype": "SALE",
+    // "p_transactionid": 0,
+    // "p_transactiondate": "08/11/2025",
+    // "p_customername": "Chittaranjan",
+    // "p_mobileno": "9871757006",
+    // "p_totalcost": 1000,
+    // "p_totalsale": 1200,
+    // "p_overalldiscount": 10,
+    // "p_roundoff": "0.20",
+    // "p_totalpayable": 1080,
+    // "p_currencyid": 0,
+    // "p_gsttran": "N",
+    // "p_status": "Complete",
+    // "p_isactive": "Y",
+    // "p_loginuser": "admin",
+    // "p_linktransactionid": 0,
+    // "p_replacesimilir": "Y",
+    // "p_creditnoteno": "",
+    // "p_paymentmode": "Cash",
+    // "p_paymentdue": 0,
+    // "p_sale": [
+    //     {
+    //         "TransactiondetailId": 0,
+    //         "ItemId": 25,
+    //         "ItemName": "Switch 3 socket",
+    //         "UOMId": 1,
+    //         "Quantity":1,
+    //         "itemcost":220,
+    //         "MRP":240,
+    //         "totalPayable":240
+    //     }
+    // ],
+    // "clientcode": "CG01-SE",
+    // "x-access-token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyY29kZSI6ImFkbWluIiwiaWF0IjoxNzYzNjQyOTY4LCJleHAiOjE3NjM3MjkzNjh9.2yeOGtpWD24Fl1Ske4iVv4D0yy3o_JQ1eMyaXY_Zu_U"
+
+    // }
+
+    this.stockInService.OninsertSalesDetails(apibody).subscribe({
       next: (res) => {
         console.log(res.data);
         this.messageService.add({
