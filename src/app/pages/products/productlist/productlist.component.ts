@@ -324,7 +324,7 @@ openBarcodeDialog() {
   // ✔ Step 2: Convert text to barcode (SVG Base64)
   generateBarcode(code: string) {
     const canvas = document.createElement("canvas");
-    JsBarcode(canvas, code, { format: "CODE128", width: 3, height: 60 });
+    JsBarcode(canvas, code, { format: "CODE128", width: 3, height:50 });
     return canvas.toDataURL("image/png");
   }
 
