@@ -215,7 +215,7 @@
                 formControlName="Quantity"
                 min="1"
                 step="1"
-                class="w-full"
+                class="w-[70px]"
                 (keypress)="blockDecimal($event)"
                 (input)="updateTotal(i)"
                 [ngClass]="{ 'border-red-500': row.get('Quantity')?.errors?.['maxStock'] }" />

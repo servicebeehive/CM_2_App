@@ -172,6 +172,7 @@ onSave(updatedData:any){
     p_expirydate: new Date (updatedData.expirydate) ,
     location: updatedData.location,
     gstItem:updatedData.gstItem===true?'Yes':'No',
+    activeItem:updatedData.activeItem===true?'Yes':'No',
     };
     if(this.mode==='edit' && this.selectedRow){
         const index=this.products.findIndex(p=>p.code === this.selectedRow.code);

@@ -84,7 +84,6 @@ export class StockAdjustmentComponent {
   products: any[] = []; // full data list (raw objects)
   filteredProducts: any[] = []; // current visible list used by p-table
   globalFilter: string = '';
-
   // Dropdown options
   categoryOptions: any[] = [];
   itemOptions: any[] = [];
@@ -489,7 +488,7 @@ export class StockAdjustmentComponent {
       next: (res: any) => {
         this.showSuccess((res?.data && res.data[0]?.msg) || 'Stock updated successfully');
         // optionally refresh data
-        this.onGetStockIn();
+       this.Onreturndropdowndetails();
       },
       error: (err) => console.error(err)
     });

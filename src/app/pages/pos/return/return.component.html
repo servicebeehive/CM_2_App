@@ -105,7 +105,7 @@
                                 <td>{{ row.get('UOMId')?.value }}</td>
                                 <td>
                                     <div class="flex flex-col">
-                                    <input type="number" pInputText formControlName="Quantity" placeholder="quantity" (input)="updateTotal(i)" [readOnly]="!selectedProducts.includes(row)" (keypress)="blockDecimal($event)"  [ngClass]="{ 'border-red-500': row.get('Quantity')?.errors?.['maxStock'] }"  />
+                                    <input class="w-[70px]" type="number" pInputText formControlName="Quantity" placeholder="quantity" (input)="updateTotal(i)" [readOnly]="!selectedProducts.includes(row)" (keypress)="blockDecimal($event)"  [ngClass]="{ 'border-red-500': row.get('Quantity')?.errors?.['maxStock'] }"  />
                                     <small class="text-red-500 mt-1"
                *ngIf="row.get('Quantity')?.touched && row.get('Quantity')?.errors?.['maxStock']">
             Quantity exceeds the available sale quantity ({{row.get('curStock')?.value + 1}}).

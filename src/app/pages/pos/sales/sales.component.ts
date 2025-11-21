@@ -656,7 +656,8 @@ allowOnlyNumbers(event: any) {
 
     this.stockInService.OninsertSalesDetails(apibody).subscribe({
       next: (res) => {
-        console.log(res.data);
+        console.log('res',res);
+        
         this.messageService.add({
           severity: 'success',
           summary: 'Success',

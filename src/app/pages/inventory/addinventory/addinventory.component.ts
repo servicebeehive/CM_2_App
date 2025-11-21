@@ -377,7 +377,7 @@ if (hasEditDataChange && formReady) {
     
     this.addForm.enable();
     this.uomTableDisabled=false;
-  
+   this.addForm.get('curStock')?.setValue(0);
 }
     search(event: any) {
         const query = event.query?.toLowerCase() || '';

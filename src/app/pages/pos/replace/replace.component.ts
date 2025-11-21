@@ -577,7 +577,7 @@ allowOnlyNumbers(event: any) {
     );
     return {
       ...this.getUserDetails,
-      p_transactiontype: "SALE",
+      p_transactiontype: "REPLACE",
       p_transactionid: body.p_transactionid ?? 0,
       p_transactiondate: formattedDate || "",
       p_customername: body.p_customername || "",
@@ -625,7 +625,7 @@ allowOnlyNumbers(event: any) {
         this.messageService.add({
           severity: 'success',
           summary: 'Success',
-          detail: 'Sales saved successfully!',
+          detail: 'Replace done successfully!',
           life: 3000
         });
       },
@@ -634,7 +634,7 @@ allowOnlyNumbers(event: any) {
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail: 'Failed to save sales. Please try again.',
+          detail: 'Failed to save replace. Please try again.',
           life: 3000
         });
       }

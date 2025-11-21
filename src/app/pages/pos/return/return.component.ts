@@ -24,6 +24,7 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { AddinventoryComponent } from '@/pages/inventory/addinventory/addinventory.component';
 import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
 import { AuthService } from '@/core/services/auth.service';
+
 @Component({
     selector: 'app-retrun',
     imports: [
@@ -47,11 +48,12 @@ import { AuthService } from '@/core/services/auth.service';
         ConfirmDialogModule,
         CheckboxModule,
         AddinventoryComponent,
+         DatePipe,
         // GlobalFilterComponent
     ],
     templateUrl: './return.component.html',
     styleUrl: './return.component.scss',
-    providers: [ConfirmationService]
+    providers: [ConfirmationService,DatePipe]
 })
 export class ReturnComponent {
     returnForm!: FormGroup;
@@ -70,6 +72,7 @@ export class ReturnComponent {
     globalFilter: string = '';
     childUomStatus: boolean = false;
     showGlobalSearch:boolean=true;
+    today: Date = new Date();
     discountplace:string='Enter Amount';
     //for testing
       @ViewChild(AddinventoryComponent) addInventoryComp!: AddinventoryComponent;
@@ -81,7 +84,7 @@ export class ReturnComponent {
 public authService = inject(AuthService);
   public getUserDetails = {
     "uname": "admin",
-    "p_username": "admin",
+    "p_loginuser": "admin",
     "clientcode": "CG01-SE",
     "x-access-token": this.authService.getToken(),
   };
@@ -91,7 +94,7 @@ public authService = inject(AuthService);
         private confirmationService: ConfirmationService,
         private returnService: InventoryService,
         private messageService:MessageService,
-        // public datepipe: DatePipe
+        public datepipe: DatePipe
     ) {}
 
     ngOnInit(): void {
@@ -99,15 +102,30 @@ public authService = inject(AuthService);
         // this.onGetStockIn();
         this.returnForm = this.fb.group({
             returnBillNo: ['', Validators.required],
-            p_billno: ['', Validators.required],
-            p_customername: [''],
-            p_mobileno: ['', [Validators.pattern(/^[0-9]{10}$/)]],
-            p_transactionid: ['', Validators.required],
-            p_totalcost: [''],
-            p_totalsale: [''],
-            p_roundoff: [''],
-            p_overalldiscount: [''],
-            p_totalpayable: [''],
+            p_itemdata: [null],
+      p_transactiontype: [''],
+      p_itemid: [null],
+      p_billno: [null],
+      p_transactionid: [0],
+      p_transactiondate: [this.today,[Validators.required]],
+      p_customername: [''],
+      p_mobileno: ['',[Validators.pattern(/^[6-9]\d{9}$/)]],
+      p_totalcost: [0],
+      p_totalsale: [0],
+      p_disctype:[false],
+      p_overalldiscount: [''],
+      p_roundoff: [''],
+      p_totalpayable: [0],
+      p_currencyid: [0],
+      p_gsttran: [true],
+      p_status: [''],
+      p_isactive: [''],
+      p_loginuser: [''],
+      p_linktransactionid: [0],
+      p_replacesimilir: [''],
+      p_creditnoteno: [''],
+      p_paymentmode: [''],
+      p_paymentdue: [0],
             p_sale: this.fb.array([]),
 
         });
@@ -221,10 +239,15 @@ else{
     }
   }
  cleanRequestBody(body: any) {
+   const formattedDate = this.datepipe.transform(
+      body.p_transactiondate,
+      'dd/MM/yyyy'
+    );
     return {
       ...this.getUserDetails,
-      p_transactiontype: "SALE",
-      p_transactionid: body.p_transactionid ?? 0,
+      p_transactiontype: "RETURN",
+      p_transactionid:  0,
+      p_transactiondate: formattedDate || "",
       p_customername: body.p_customername || "",
       p_mobileno: body.p_mobileno || "",
       p_totalcost: Number(body.p_totalcost) || 0,
@@ -237,14 +260,14 @@ else{
         body.p_gsttran === false ? "N" : "N",
       p_status: body.p_status || "Complete",
       p_isactive: "Y",
-      p_linktransactionid: 0,
+      p_linktransactionid:body.p_transactionid ?? 0,
       // p_replacesimilir: body.p_replacesimilir || "",
        p_replacesimilir:body.p_disctype === true ?"Y" : "N",
       p_creditnoteno: body.p_creditnoteno || "",
       p_paymentmode: body.p_paymentmode || "Cash",
       p_paymentdue: Number(body.p_paymentdue) || 0,
       p_sale: (body.p_sale || []).map((x: any) => ({
-        TransactiondetailId: x.TransactiondetailId || 0,
+        TransactiondetailId:0,
         ItemId: x.ItemId,
         ItemName: x.ItemName,
         UOMId: x.UOMId,
@@ -258,7 +281,7 @@ else{
 OnSalesHeaderCreate(data: any) {
     const apibody = this.cleanRequestBody(this.returnForm.value);
 
-    this.stockInService.Getreturndropdowndetails(apibody).subscribe({
+    this.stockInService.OninsertSalesDetails(apibody).subscribe({
       next: (res) => {
         console.log(res.data);
         this.messageService.add({
