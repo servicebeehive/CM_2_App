@@ -24,6 +24,8 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { AddinventoryComponent } from '@/pages/inventory/addinventory/addinventory.component';
 import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
 import { AuthService } from '@/core/services/auth.service';
+import JsBarcode from 'jsbarcode';
+
 @Component({
     selector: 'app-productlist',
     imports: [
@@ -70,7 +72,7 @@ export class ProductlistComponent {
     uomOptions: any[] = [];  
     // ✅ Move dropdown options into variables
    categoryOptions = [];
-
+printList:any[]=[]
     itemOptions = [];
 
     constructor(
@@ -79,7 +81,8 @@ export class ProductlistComponent {
         private authService:AuthService,
         private messageService: MessageService
     ) {}
-
+ barcodeDialog: boolean = false;
+  selectedItems: any[] = [];
     ngOnInit(): void {
        
         this.updateForm = this.fb.group({
@@ -100,13 +103,13 @@ export class ProductlistComponent {
         // this.filteredProducts = [...this.products];
         this.buildFormArrayFormProducts(this.products);
     }
-    allowOnlyNumbers(event:KeyboardEvent){
-        const allowedChars=/[0-9]\b/;
-        const inputChar=String.fromCharCode(event.key.charCodeAt(0));
-        if(!allowedChars.test(inputChar)){
-            event.preventDefault();
-        }
-    }
+    // allowOnlyNumbers(event:KeyboardEvent){
+    //     const allowedChars=/[0-9]\b/;
+    //     const inputChar=String.fromCharCode(event.key.charCodeAt(0));
+    //     if(!allowedChars.test(inputChar)){
+    //         event.preventDefault();
+    //     }
+    // }
     filterProducts() {
         const category = this.updateForm.get('category')?.value;
         const item = this.updateForm.get('item')?.value;
@@ -287,4 +290,119 @@ products.forEach((p:any)=>{
      errorSuccess(message: string) {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: message });
     }
+     allowOnlyNumbers(event: any) {
+    const charCode = event.which ? event.which : event.keyCode;
+    if (charCode < 48 || charCode > 57) {
+      event.preventDefault();
+    }
+  }
+
+  // ✔ Step 1: Open barcode dialog
+openBarcodeDialog() {
+  console.log("Selected Rows:", this.selectedItems);
+
+  if (!this.selectedItems || this.selectedItems.length === 0) {
+    alert("Please select at least one item.");
+    return;
+  }
+
+  // Print list contains each selected item ONCE
+  this.printList = this.selectedItems.map(item => ({
+    itemcombine: item.itemcombine,
+    barcode: item.itembarcode
+  }));
+
+  console.log("Final Print List:", this.printList);
+
+  this.currentPage = 1; // reset page
+  this.barcodeDialog = true;
+}
+
+
+
+
+  // ✔ Step 2: Convert text to barcode (SVG Base64)
+  generateBarcode(code: string) {
+    const canvas = document.createElement("canvas");
+    JsBarcode(canvas, code, { format: "CODE128", width: 3, height: 60 });
+    return canvas.toDataURL("image/png");
+  }
+
+  // ✔ Step 3: Print barcode dialog content
+  printBarcodes() {
+    const printContents = document.getElementById("print-barcode-area")?.innerHTML;
+    const popup = window.open('', '_blank', 'width=800,height=600');
+
+    popup!.document.open();
+    popup!.document.write(`
+      <html>
+        <head>
+          <title>Print Barcodes</title>
+          <style>
+            body { font-family: Arial; text-align:center; }
+            img { margin-top:0px; }
+            div { margin-bottom:0px; }
+          </style>
+        </head>
+        <body onload="window.print(); window.close();">
+          ${printContents}
+        </body>
+      </html>
+    `);
+    //popup!.document.close();
+  }
+  currentPage = 1;
+itemsPerPage = 10;
+
+get totalPages() {
+  return Math.ceil(this.printList.length / this.itemsPerPage);
+}
+
+get paginatedItems() {
+  const start = (this.currentPage - 1) * this.itemsPerPage;
+  return this.printList.slice(start, start + this.itemsPerPage);
+}
+
+nextPage() {
+  if (this.currentPage < this.totalPages) {
+    this.currentPage++;
+  }
+}
+
+prevPage() {
+  if (this.currentPage > 1) {
+    this.currentPage--;
+  }
+}
+
+goToPage(page: number) {
+  this.currentPage = page;
+}
+printSingleBarcode(row: any) {
+  const barcodeImage = this.generateBarcode(row.itembarcode);
+
+  const popup = window.open('', '_blank', 'width=400,height=600');
+
+  popup!.document.open();
+  popup!.document.write(`
+    <html>
+      <head>
+        <title>Print Barcode</title>
+        <style>
+          body { text-align: center; font-family: Arial; padding: 20px; }
+          img { width: 250px; height: auto; margin-top:0px; }
+          h4 { margin-bottom:0px; font-size:18px; }
+        </style>
+      </head>
+      <body onload="window.print(); window.close();">
+        <h4>${row.itemcombine}</h4>
+        <img src="${barcodeImage}" />
+      
+      </body>
+    </html>
+  `);
+
+ // popup!.document.close();
+}
+
 }
