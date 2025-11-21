@@ -478,7 +478,7 @@ export class StockAdjustmentComponent {
     const payload = {
       uname: 'admin',
       p_stock: trimmed,
-      p_username: 'admin',
+      "p_loginuser": "admin",
       clientcode: 'CG01-SE',
       p_updatetype: this.updateForm.controls['mrpUpdate'].value,
       'x-access-token': this.authService.getToken()
