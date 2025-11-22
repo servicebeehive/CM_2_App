@@ -2,6 +2,12 @@
   <!-- Header Row: Stock In + Buttons -->
   <div class="flex justify-between items-center mb-6">
     <span class="block text-surface-900 font-bold text-2xl">Item Report</span>
+     <!-- Add and Display Buttons -->
+      <div class="flex gap-6">
+         <button pButton type="submit" label="Display" class="p-button-warning"(click)="Onreturndropdowndetails()" ></button>
+          <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
+        <button pButton type="button" label="Download" icon="pi pi-download" iconPos="right" class="p-button-warning" (click)="exportToExcel()"></button>
+      </div>
   </div>
 
   <form [formGroup]="reportForm"  class="space-y-8">
@@ -27,6 +33,7 @@
             <span *ngIf="reportForm.get('vendorName')?.errors?.['required']">Vendor Name is required</span>
           </small> -->
         </div>
+        
 </div>
 <div class="flex justify-between items-end w-full gap-6">
 <div class="grid grid-cols-2 gap-6 flex-grow">
@@ -41,13 +48,7 @@
                 <label class="font-medium mb-1">Item Name</label>
                 <p-dropdown [options]="itemOptions" optionLabel="itemcombine" optionValue="itemid" [filter]="true" [showClear]="true" filterPlaceholder="Search Item" formControlName="item" placeholder="Item"> </p-dropdown>
             </div>
-</div>
-      <!-- Add and Display Buttons -->
-      <div class="flex gap-6">
-         <button pButton type="submit" label="Display" class="p-button-warning"(click)="Onreturndropdowndetails()" ></button>
-          <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
-        <button pButton type="button" label="Download" icon="pi pi-download" iconPos="right" class="p-button-warning" (click)="exportToExcel()"></button>
-      </div>
+          </div>
      
     </div>
 </div>
