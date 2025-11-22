@@ -19,11 +19,11 @@ interface Week {
         <div class="flex items-start justify-between mb-12">
             <span
                 class="text-surface-900 dark:text-surface-0 text-xl font-semibold"
-                >Revenue Overview</span
+                >Trend Sale</span
             >
             <p-select
-                [options]="weeks"
-                [(ngModel)]="selectedWeek"
+                [options]="month"
+                [(ngModel)]="selectedMonth"
                 class="w-40"
                 optionLabel="label"
                 (onChange)="onWeekChange()"
@@ -38,9 +38,9 @@ interface Week {
     </div>`,
 })
 export class RevenueOverViewWidget {
-    weeks: Week[] = [
+    month: Week[] = [
         {
-            label: 'Last Week',
+            label: 'Last Month',
             value: 0,
             data: [
                 [65, 59, 80, 81, 56, 55, 40],
@@ -48,7 +48,7 @@ export class RevenueOverViewWidget {
             ],
         },
         {
-            label: 'This Week',
+            label: 'This Month',
             value: 1,
             data: [
                 [35, 19, 40, 61, 16, 55, 30],
@@ -57,7 +57,7 @@ export class RevenueOverViewWidget {
         },
     ];
 
-    selectedWeek: Week = this.weeks[0];
+    selectedMonth: Week = this.month[0];
 
     barData: any;
 
@@ -75,7 +75,7 @@ export class RevenueOverViewWidget {
 
     ngOnInit() {
         this.initChart();
-        this.selectedWeek = this.weeks[0];
+        this.selectedMonth = this.month[0];
     }
 
     initChart() {
@@ -88,7 +88,7 @@ export class RevenueOverViewWidget {
             documentStyle.getPropertyValue('--surface-border');
 
         this.barData = {
-            labels: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'],
+            labels: ['JAN','FEB','MAR','JUN','JULY','AUG','SEP','OCT','NOV','DEC'],
             datasets: [
                 {
                     label: 'Revenue',
@@ -96,7 +96,7 @@ export class RevenueOverViewWidget {
                         documentStyle.getPropertyValue('--p-primary-500'),
                     barThickness: 12,
                     borderRadius: 12,
-                    data: this.selectedWeek?.data[0],
+                    data: this.selectedMonth?.data[0],
                 },
                 {
                     label: 'Profit',
@@ -104,7 +104,7 @@ export class RevenueOverViewWidget {
                         documentStyle.getPropertyValue('--p-primary-200'),
                     barThickness: 12,
                     borderRadius: 12,
-                    data: this.selectedWeek?.data[1],
+                    data: this.selectedMonth?.data[1],
                 },
             ],
         };
@@ -156,8 +156,8 @@ export class RevenueOverViewWidget {
 
     onWeekChange() {
         let newBarData = { ...this.barData };
-        newBarData.datasets[0].data = this.selectedWeek.data[0];
-        newBarData.datasets[1].data = this.selectedWeek.data[1];
+        newBarData.datasets[0].data = this.selectedMonth.data[0];
+        newBarData.datasets[1].data = this.selectedMonth.data[1];
         this.barData = newBarData;
         this.initChart();
     }

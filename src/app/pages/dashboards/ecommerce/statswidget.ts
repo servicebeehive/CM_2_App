@@ -9,7 +9,7 @@ import { FormsModule } from '@angular/forms';
     imports: [CommonModule, KnobModule, FormsModule],
     template: ` <div class="col-span-12 md:col-span-6 xl:col-span-3">
             <div class="card h-full">
-                <span class="font-semibold text-lg">Total Purchase</span>
+                <span class="font-semibold text-lg">Total Stock Count</span>
                 <div class="flex justify-between items-start mt-4">
                     <div class="w-6/12">
                         <span class="text-4xl font-bold text-surface-900 dark:text-surface-0">1,00,000</span>
@@ -35,7 +35,7 @@ import { FormsModule } from '@angular/forms';
         </div>
         <div class="col-span-12 md:col-span-6 xl:col-span-3">
             <div class="card h-full">
-                <span class="font-semibold text-lg">Total Sale</span>
+                <span class="font-semibold text-lg">Total Cost ₹ </span>
                 <div class="flex justify-between items-start mt-4">
                     <div class="w-6/12">
                         <span class="text-4xl font-bold text-surface-900 dark:text-surface-0">1,50,000</span>
@@ -60,7 +60,7 @@ import { FormsModule } from '@angular/forms';
         </div>
         <div class="col-span-12 md:col-span-6 xl:col-span-3">
             <div class="card h-full">
-                <span class="font-semibold text-lg">Sale Trend</span>
+                <span class="font-semibold text-lg">Total Value</span>
                 <div class="flex justify-between items-start mt-4">
                     <div class="w-6/12">
                         <span class="text-4xl font-bold text-surface-900 dark:text-surface-0">360</span>
@@ -85,14 +85,14 @@ import { FormsModule } from '@angular/forms';
         </div>
         <div class="col-span-12 md:col-span-6 xl:col-span-3">
             <div class="card h-full">
-                <span class="font-semibold text-lg">Stock</span>
+                <span class="font-semibold text-lg">Total Sale</span>
                 <div class="flex justify-between items-start mt-4">
                     <div class="w-6/12">
                         <span class="text-4xl font-bold text-surface-900 dark:text-surface-0">164</span>
-                        <div class="text-green-500">
+                        <!-- <div class="text-green-500">
                             <span class="font-medium">+30%</span>
                             <i class="pi pi-arrow-up text-xs ml-2"></i>
-                        </div>
+                        </div> -->
                     </div>
                     <div class="w-6/12 text-right">
                         <p-knob [(ngModel)]="knobValue" valueTemplate="90%" readonly [strokeWidth]="2" [size]="90" styleClass="-mt-8 ml-8" />

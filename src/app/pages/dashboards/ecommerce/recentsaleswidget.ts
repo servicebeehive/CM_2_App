@@ -11,6 +11,7 @@ import { InputIconModule } from 'primeng/inputicon';
 import { FilterMatchMode } from 'primeng/api';
 import { TooltipModule } from 'primeng/tooltip';
 import { TagModule } from 'primeng/tag';
+import { SelectModule } from 'primeng/select';
 
 interface Column {
     field: string;
@@ -37,6 +38,7 @@ interface ExportColumn {
         FormsModule,
         TooltipModule,
         TagModule,
+        SelectModule
     ],
     template: ` <div class="card">
         <div
@@ -48,7 +50,7 @@ interface ExportColumn {
                 Recent Sales
             </div>
             <div class="inline-flex items-center">
-                <p-iconfield>
+                <!-- <p-iconfield>
                     <p-inputicon class="pi pi-search" />
                     <input
                         pInputText
@@ -58,14 +60,21 @@ interface ExportColumn {
                         [style]="{ borderRadius: '2rem' }"
                         class="w-full"
                     />
-                </p-iconfield>
-                <p-button
+                </p-iconfield> -->
+                <!-- <p-button
                     icon="pi pi-upload"
                     class="mx-4 export-target-button"
                     rounded
                     pTooltip="Export"
                     (click)="dt.exportCSV()"
-                />
+                /> -->
+                 <p-select 
+                        [options]="filterOptions" 
+                        [(ngModel)]="filter" 
+                        class="w-full"
+                        optionLabel="label"
+                        placeholder="Filter">
+                    </p-select>
             </div>
         </div>
         <p-table
@@ -86,21 +95,21 @@ interface ExportColumn {
             <ng-template #header>
                 <tr>
                     <th pSortableColumn="type">
-                        <span class="flex items-center gap-2">Type <p-sortIcon field="type"></p-sortIcon></span>
+                        <span class="flex items-center gap-2">Item <p-sortIcon field="type"></p-sortIcon></span>
                     </th>
                     <th pSortableColumn="billDate">
-                        <span class="flex items-center gap-2">Bill Date <p-sortIcon field="billDate"></p-sortIcon></span>
+                        <span class="flex items-center gap-2">Category <p-sortIcon field="billDate"></p-sortIcon></span>
                     </th>
                     <th pSortableColumn="billNo">
-                        <span class="flex items-center gap-2">Bill No <p-sortIcon field="billNo"></p-sortIcon></span>
+                        <span class="flex items-center gap-2">Stock <p-sortIcon field="billNo"></p-sortIcon></span>
                     </th>
                     <th pSortableColumn="totalQty">
-                        <span class="flex items-center gap-2">Total Qty <p-sortIcon field="totalQty"></p-sortIcon></span>
+                        <span class="flex items-center gap-2">UOM <p-sortIcon field="totalQty"></p-sortIcon></span>
                     </th>
-                    <th pSortableColumn="totalSale">
+                    <!-- <th pSortableColumn="totalSale">
                         <span class="flex items-center gap-2">Total Sale <p-sortIcon field="totalSale"></p-sortIcon></span>
                     </th>
-                    <th>View</th>
+                    <th>View</th> -->
                 </tr>
             </ng-template>
             <ng-template #body let-product>
@@ -115,16 +124,16 @@ interface ExportColumn {
                         {{ product.price | currency: 'USD' }}
                     </td>
                     <td style="width: 35%; min-width: 8rem;">
-                        <p-tag
+                        <!-- <p-tag
                             [severity]="
                                 getBadgeSeverity(product.inventoryStatus)
                             "
                             >{{ product.inventoryStatus }}</p-tag
-                        >
+                        > -->
                     </td>
-                    <td style="width: 15%;">
+                    <!-- <td style="width: 15%;">
                         <p-button icon="pi pi-search" outlined rounded />
-                    </td>
+                    </td> -->
                 </tr>
             </ng-template>
         </p-table>
@@ -134,10 +143,16 @@ interface ExportColumn {
 export class RecentSalesWidget {
     products!: Product[];
 
-    filterSalesTable = {
-        global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-    };
-
+    // filterSalesTable = {
+    //     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    // };
+    filterOptions: any[]=[
+        {label:'Out of Stock'},
+        {label:'Low of Stock'},
+        {label:'Most Salable'},
+        {label:'Non-Active'}
+    ];
+    filter:string='';
     cols!: Column[];
 
     exportColumns!: ExportColumn[];
