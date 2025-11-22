@@ -37,7 +37,7 @@
         <div class="flex gap-4">
             <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
             <!-- <button pButton type="button" label="Delete All" class="p-button-danger" (click)="deleteAll()"></button> -->
-            <button pButton type="button" label="BarCode Print" class="p-button-secondary"></button>
+            <button pButton type="button" label="BarCode Print" (click)="openBarcodeDialog()" class="p-button-secondary"></button>
         </div>
                 </div>
                 <div class="mt-6">
@@ -45,7 +45,8 @@
                         [value]="filteredProducts"
                         dataKey="code"
                         [paginator]="true"
-                        [rows]="10"
+                         [(selection)]="selectedItems"
+                        [rows]="10" selectionMode="multiple"
                         [rowsPerPageOptions]="[5, 10, 20, 50]"
                         [responsiveLayout]="'scroll'"
                         class="p-datatable-gridlines mt-6"
@@ -56,7 +57,7 @@
                                 <th style="width: 4rem"><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
                                 <th>Item Name</th>
                                 <th class="!min-w-[100px]">Category</th>
-                                <th>UOM</th>
+                                <!-- <th>UOM</th> -->
                                 <th>Current Stock</th>
                                 <th>Purchase Price</th>
                                 <th>MRP</th>
@@ -73,15 +74,35 @@
                                  <td><p-tableCheckbox [value]="row" /></td>
                                 <td>{{ row.itemcombine }}</td>
                                 <td class="!min-w-[100px]">{{ row.categoryname }}</td>
-                                <td>{{ row.uomname }}</td>
+                                <!-- <td>{{ row.uomname }}</td> -->
                                 <td>{{ row.currentstock }}</td>
                                 <td>{{ row.costprice }}</td>
                                 <td>{{ row.saleprice }}</td>
                                <td>{{row.gstitem}}</td>
                                 <td>{{ row.isactive }}</td>
-                                <td><input pInputText type="text" class="w-[50px]"  maxlength="3" minlength="3" (keypress)="allowOnlyNumbers($event)"></td>
+                                <td>
+                                     <img [src]="generateBarcode(row.itembarcode)" alt="barcode"/>
+                                    <!-- <input pInputText type="text" class="w-[50px]"  maxlength="3" minlength="3"    [attr.data-id]="row.itemid" (keypress)="allowOnlyNumbers($event)"> -->
+                                </td>
                                 <td class="text-center">
-                                    <i class="pi pi-pencil cursor-pointer text-blue-500" (click)="openEditDialog(row)"></i>
+                                    <div class="flex g-2">
+                                        <button 
+    pButton 
+    type="button" 
+    icon="pi pi-print" 
+    class="p-button-text p-button-sm"
+    (click)="printSingleBarcode(row)">
+  </button>
+   <button 
+    pButton 
+    type="button" 
+    icon="pi pi-pencil" 
+    class="p-button-text p-button-sm text-red-500"
+    (click)="openEditDialog(row)">
+  </button>
+                                    </div>
+                                     
+                                    
                                     <!-- <i class="pi pi-trash ms-2 cursor-pointer text-red-500" (click)="deleteItem(update)"></i> -->
                                 </td>
                             </tr>
@@ -103,3 +124,61 @@
 <p-confirmDialog></p-confirmDialog>
 
 </div>
+<!-- BARCODE PRINT DIALOG -->
+<p-dialog 
+  header="Print Barcodes" 
+  [(visible)]="barcodeDialog" 
+  [modal]="true"
+  [style]="{ width: '600px' }"
+  [contentStyle]="{ 'max-height': '75vh', overflow: 'auto' }">
+
+  <div id="print-barcode-area">
+
+      <div *ngFor="let item of paginatedItems" 
+           class="flex flex-col items-center mb-2 p-3">
+
+          <h4 style="margin: 0">{{ item.itemcombine }}</h4>
+          <img style="margin:0" [src]="generateBarcode(item.barcode)" alt="barcode"/>
+
+      </div>
+
+  </div>
+
+  <ng-template pTemplate="footer">
+    
+      <!-- PAGINATION -->
+       <div class="flex justify-between w-100">
+        <!-- <div class="flex justify-center items-center gap-3 mt-4">
+          <button 
+            pButton 
+            icon="pi pi-angle-left" 
+            (click)="prevPage()" 
+            [disabled]="currentPage === 1">
+          </button>
+
+          <span>Page {{ currentPage }} of {{ totalPages }}</span>
+
+          <button 
+            pButton 
+            icon="pi pi-angle-right" 
+            (click)="nextPage()" 
+            [disabled]="currentPage === totalPages">
+          </button>
+      </div> -->
+      <div class=" flex gap-2">
+         <button pButton label="Close" class="p-button-secondary" (click)="barcodeDialog=false"></button>
+      <button pButton label="Print" icon="pi pi-print" (click)="printBarcodes()"></button>
+      </div>
+
+       </div>
+      
+
+      <!-- ACTION BUTTONS -->
+     
+
+  </ng-template>
+
+</p-dialog>
+
+
+
