@@ -235,7 +235,7 @@ get isPrintDisabled(): boolean {
           TransactiondetailId: item.transactiondetailid || 0,
           ItemId: item.itemsku || 0,    // use itemsku when itemid not present
           ItemName: item.itemname || '',
-          UOMId: item.uomid || 0,
+          UOMId: item.uomname || 0,
           Quantity: item.quantity || 1,
           itemcost: item.itemcost || 0,
           MRP: (item.mrp || 0).toFixed(2),
@@ -347,7 +347,7 @@ allowOnlyNumbers(event: any) {
     const billDetails = this.billNoOptions.find(billitem => billitem.billno === event.value); 
     if (billDetails) {
       this.SaleDetails(billDetails);
-
+ 
       this.salesForm.patchValue({
         p_transactionid: billDetails.transactionid,
         p_customername:billDetails.customername,
@@ -355,6 +355,7 @@ allowOnlyNumbers(event: any) {
         p_mobileno: billDetails.mobileno,
         p_totalcost: (billDetails.totalcost).toFixed(2),
         p_totalsale: (billDetails.totalsale).toFixed(2),
+         p_disctype: (billDetails.discounttype==='Y'),
         p_overalldiscount: billDetails.discount,
         p_roundoff: billDetails.roundoff,
         p_totalpayable: (billDetails.totalpayable).toFixed(2),
@@ -377,7 +378,12 @@ allowOnlyNumbers(event: any) {
 
     this.stockInService.Getreturndropdowndetails(apibody).subscribe({
       next: (res) => {
-        this.mapSaleItems(res.data);
+        this.mapSaleItems(res.data );
+        if(res.data && res.data.length>0 && res.data[0].discounttype){
+          this.salesForm.patchValue({
+            p_disctype:(res.data[0].discounttype==='Y')
+          });
+        }
       }
     });
   }
@@ -591,6 +597,7 @@ allowOnlyNumbers(event: any) {
       p_linktransactionid: 0,
       // p_replacesimilir: body.p_replacesimilir || "",
        p_replacesimilir:body.p_disctype === true ?"Y" : "N",
+       p_discounttype:body.p_disctype === true ?"Y" : "N",
       p_creditnoteno: body.p_creditnoteno || "",
       p_paymentmode: body.p_paymentmode || "Cash",
       p_paymentdue: Number(body.p_paymentdue) || 0,
@@ -602,7 +609,8 @@ allowOnlyNumbers(event: any) {
         Quantity: x.Quantity,
         itemcost: x.itemcost,
         MRP: x.MRP,
-        totalPayable: x.totalPayable
+        totalPayable: x.totalPayable,
+          currentstock:x.curStock,
       }))
     };
   }
