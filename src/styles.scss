@@ -141,6 +141,12 @@
 .p-datatable-gridlines .p-datatable-tbody>tr:last-child>td{ border-bottom: 1px solid var(--surface-border) !important;}
 
 #invoicePrintSection{display: none;}
+.libre-barcode-39-regular {
+  font-family: "Libre Barcode 39", system-ui;
+  font-weight: 400;
+  font-style: normal;
+}
+
 @media print {
   button, .no-print, .header, .sidebar {
     display: none !important;

@@ -14,7 +14,7 @@ export const appRoutes: Routes = [
             {
                 path: 'dashboard',
                 loadComponent: () => import('./app/pages/dashboards/ecommercedashboard').then((c) => c.EcommerceDashboard),
-                canActivate:[AuthGuard,RoleGaurd],
+                canActivate:[AuthGuard],
                 data: { breadcrumb: 'E-Commerce Dashboard',expectedRole:'admin'},
             },
             // {

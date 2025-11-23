@@ -74,7 +74,6 @@ interface Image {
     AutoCompleteModule,
     ConfirmDialogModule,
     CheckboxModule,
-    RouterLink,
 ],
     templateUrl: './stock-in.component.html',
     styleUrl: './stock-in.component.scss',
@@ -152,6 +151,7 @@ onSave(updatedData:any){
    if(!updatedData) return;
     const hasChildUOM= updatedData.childUOMDetails?.some((u:any)=> u.childUOM || u.conversion || u.mrp);
     const costPerItem=updatedData.qty && updatedData.purchasePrice ? (updatedData.purchasePrice/updatedData.qty).toFixed(2) : 0;
+
     const mappedData={
         selection:true,
      code: updatedData.itemCode.label ||updatedData.itemCode,
@@ -168,8 +168,10 @@ onSave(updatedData:any){
     discount:updatedData.discount,
     minStock: updatedData.minStock,
     warPeriod: updatedData.warPeriod,
+    p_expirydate: new Date (updatedData.expirydate) ,
     location: updatedData.location,
     gstItem:updatedData.gstItem===true?'Yes':'No',
+    activeItem:updatedData.activeItem===true?'Yes':'No',
     };
     if(this.mode==='edit' && this.selectedRow){
         const index=this.products.findIndex(p=>p.code === this.selectedRow.code);
@@ -229,6 +231,8 @@ get grandTotal():number{
             rejectLabel:'Cancel',
             rejectButtonStyleClass:'p-button-secondary',
             accept:()=>{
+              let message = 'Header Information Saved Successfully';
+            this.showSuccess(message);
              this.addItemEnabled=true;
              this.OnPurchesHeaderCreate(this.productForm.value)
             }

@@ -35,7 +35,7 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { AddinventoryComponent } from '@/pages/inventory/addinventory/addinventory.component';
 import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
 import { AuthService } from '@/core/services/auth.service';
-import { NgxPrintModule } from 'ngx-print';
+// import { NgxPrintModule } from 'ngx-print';
 
 @Component({
   selector: 'app-sales',
@@ -59,7 +59,7 @@ import { NgxPrintModule } from 'ngx-print';
     DialogModule,
     ConfirmDialogModule,
     CheckboxModule,
-    NgxPrintModule
+    // NgxPrintModule
     // AddinventoryComponent,
     // GlobalFilterComponent
   ],
@@ -89,10 +89,12 @@ export class SalesComponent {
   childUomStatus: boolean = false;
   showGlobalSearch: boolean = true;
   today: Date = new Date();
+  submitDisabledByBill:boolean=false;
+  discountplace:string='Enter Amount';
   public authService = inject(AuthService);
   public getUserDetails = {
     "uname": "admin",
-    "p_username": "admin",
+    "p_loginuser": "admin",
     "clientcode": "CG01-SE",
     "x-access-token": this.authService.getToken(),
   };
@@ -128,12 +130,13 @@ export class SalesComponent {
       p_itemid: [null],
       p_billno: [null],
       p_transactionid: [0],
-      p_transactiondate: [''],
-      p_customername: ['', [Validators.required]],
-      p_mobileno: ['', [Validators.required]],
+      p_transactiondate: [this.today,[Validators.required]],
+      p_customername: [''],
+      p_mobileno: ['',[Validators.pattern(/^[6-9]\d{9}$/)]],
       p_totalcost: [0],
       p_totalsale: [0],
-      p_overalldiscount: [0],
+      p_disctype:[false],
+      p_overalldiscount: [''],
       p_roundoff: [''],
       p_totalpayable: [0],
       p_currencyid: [0],
@@ -146,10 +149,28 @@ export class SalesComponent {
       p_creditnoteno: [''],
       p_paymentmode: [''],
       p_paymentdue: [0],
-
       // FormArray for sale rows
       p_sale: this.fb.array([])
     });
+    this.salesForm.get('p_billno')?.valueChanges.subscribe(value=>{
+      if(value){
+        this.disableItemSearchSubmit();
+      }
+      else{
+        this.enableItemSearchAndSubmit();
+      }
+    });
+    this.salesForm.get('p_disctype')?.valueChanges.subscribe(value=>{
+      if(!value){
+   this.discountplace="Enter Amount";
+}
+else{
+  this.discountplace="Enter %";
+}
+ this.salesForm.get('p_overalldiscount')?.setValue('', { emitEvent: false });
+ this.applyDiscount();
+    });
+
   }
 
   // -----------------------------
@@ -164,6 +185,21 @@ export class SalesComponent {
   get saleRows(): FormGroup[] {
     return this.saleArray.controls as FormGroup[];
   }
+disableItemSearchSubmit(){
+  this.salesForm.get('itemSearch')?.disable();
+  this.submitDisabledByBill=true;
+}
+enableItemSearchAndSubmit() {
+  this.salesForm.get('itemSearch')?.enable();
+  this.submitDisabledByBill = false;
+}
+get isPrintDisabled(): boolean {
+  const billNo = this.salesForm.get('p_billno')?.value;
+ const hasItem = this.saleArray.length > 0;
+
+  // Disable print if BOTH are empty
+  return !(billNo || hasItem);
+}
 
   // -----------------------------
   //  Row Creation / Mapping
@@ -202,9 +238,9 @@ export class SalesComponent {
           UOMId: item.uomid || 0,
           Quantity: item.quantity || 1,
           itemcost: item.itemcost || 0,
-          MRP: item.mrp || 0,
-          totalPayable: (item.quantity || 1) * (item.mrp || 0),
-
+          MRP: (item.mrp || 0).toFixed(2),
+          totalPayable: ((item.quantity || 1) * (item.mrp || 0)).toFixed(2),
+          // p_totalcost:item.
           // Additional fields used in UI
           curStock: item.current_stock || 0,
           warPeriod: 0,
@@ -219,6 +255,22 @@ export class SalesComponent {
     this.updateTotal(index);
     this.calculateSummary();
   }
+allowOnlyNumbers(event: any) {
+  const input = event.target as HTMLInputElement;
+
+  // Block if length is already 10
+  if (input.value.length >= 10) {
+    event.preventDefault();
+    return;
+  }
+
+  const char = String.fromCharCode(event.which);
+
+  // Block if not a number (0-9)
+  if (!/^[0-9]$/.test(char)) {
+    event.preventDefault();
+  }
+}
 
   // -----------------------------
   //  Dropdown / Data Loading
@@ -292,9 +344,7 @@ export class SalesComponent {
 
   // Called when bill dropdown value changes
   onBillDetails(event: any) {
-    console.log(event.value);
-    const billDetails = this.billNoOptions.find(billitem => billitem.billno === event.value);
-    console.log(billDetails);
+    const billDetails = this.billNoOptions.find(billitem => billitem.billno === event.value); 
     if (billDetails) {
       this.SaleDetails(billDetails);
 
@@ -303,11 +353,11 @@ export class SalesComponent {
         p_customername:billDetails.customername,
         p_transactiondate: billDetails.transactiondate ? new Date(billDetails.transactiondate) : null,
         p_mobileno: billDetails.mobileno,
-        p_totalcost: billDetails.totalcost,
-        p_totalsale: billDetails.totalsale,
+        p_totalcost: (billDetails.totalcost).toFixed(2),
+        p_totalsale: (billDetails.totalsale).toFixed(2),
         p_overalldiscount: billDetails.discount,
         p_roundoff: billDetails.roundoff,
-        p_totalpayable: billDetails.totalpayable
+        p_totalpayable: (billDetails.totalpayable).toFixed(2),
       });
     }
   }
@@ -353,7 +403,7 @@ export class SalesComponent {
 
   // Prevent decimal input in quantity field (keyboard)
   blockDecimal(event: KeyboardEvent) {
-    if (event.key === '.' || event.key === ',') {
+    if (event.key === '.' || event.key === ',' || event.key === 'e' || event.key === 'E') {
       event.preventDefault();  // block decimal
     }
   }
@@ -373,8 +423,8 @@ export class SalesComponent {
     }
 
     // 3) Required header fields missing
-    if (!this.salesForm.get('p_customername')?.value) return true;
-    if (!this.salesForm.get('p_mobileno')?.value) return true;
+    // if (!this.salesForm.get('p_customername')?.value) return true;
+    // if (!this.salesForm.get('p_mobileno')?.value) return true;
     if (!this.salesForm.get('p_transactiondate')?.value) return true;
 
     // 4) Per-row validation: qty cannot be 0 and cannot exceed stock
@@ -420,12 +470,7 @@ export class SalesComponent {
   onReset() {
     this.salesForm.reset();
     this.saleArray.clear();
-    this.messageService.add({
-      severity: 'info',
-      summary: 'Reset',
-      detail: 'Form reset successfully.',
-      life: 2000
-    });
+     this.salesForm.get('p_transactiondate')?.setValue(this.today);
   }
 
   // -----------------------------
@@ -450,10 +495,10 @@ export class SalesComponent {
 
     // Assign summary values
     this.salesForm.patchValue({
-      p_totalcost: totalCost,
-      p_totalsale: totalMRP,
+      p_totalcost: (totalCost).toFixed(2),
+      p_totalsale: (totalMRP).toFixed(2),
       p_roundoff: 0,
-      p_totalpayable: totalMRP
+      p_totalpayable: (totalMRP).toFixed(2)
     });
 
     // Apply discount/rounding adjustments
@@ -495,11 +540,17 @@ export class SalesComponent {
 
   // Apply overall discount & round off
   applyDiscount() {
-    const discountPercent = Number(this.salesForm.get('p_overalldiscount')?.value || 0);
-    const totalMRP = Number(this.salesForm.get('p_totalsale')?.value || 0);
+    const totalSale = Number(this.salesForm.get('p_totalsale')?.value || 0) ;
+    const discountValue = Number(this.salesForm.get('p_overalldiscount')?.value || 0);
+    const isPresent = this.salesForm.get('p_disctype')?.value;
+   let discountAmount=0;
 
-    const discountAmount = (totalMRP * discountPercent) / 100;
-    let finalPayable = totalMRP - discountAmount;
+    if(isPresent){
+      discountAmount=(totalSale*discountValue)/100;
+    }else{
+      discountAmount=discountValue;
+    }
+    let finalPayable = totalSale - discountAmount;
 
     // Round off to 2 decimals difference and then round to integer for payable
     const roundOff = +(finalPayable - Math.floor(finalPayable)).toFixed(2);
@@ -538,7 +589,8 @@ export class SalesComponent {
       p_status: body.p_status || "Complete",
       p_isactive: "Y",
       p_linktransactionid: 0,
-      p_replacesimilir: body.p_replacesimilir || "",
+      // p_replacesimilir: body.p_replacesimilir || "",
+       p_replacesimilir:body.p_disctype === true ?"Y" : "N",
       p_creditnoteno: body.p_creditnoteno || "",
       p_paymentmode: body.p_paymentmode || "Cash",
       p_paymentdue: Number(body.p_paymentdue) || 0,
@@ -563,9 +615,49 @@ export class SalesComponent {
   OnSalesHeaderCreate(data: any) {
     const apibody = this.cleanRequestBody(this.salesForm.value);
 
-    this.stockInService.Getreturndropdowndetails(apibody).subscribe({
+    // const datada={
+    // "uname": "admin",
+    // "p_transactiontype": "SALE",
+    // "p_transactionid": 0,
+    // "p_transactiondate": "08/11/2025",
+    // "p_customername": "Chittaranjan",
+    // "p_mobileno": "9871757006",
+    // "p_totalcost": 1000,
+    // "p_totalsale": 1200,
+    // "p_overalldiscount": 10,
+    // "p_roundoff": "0.20",
+    // "p_totalpayable": 1080,
+    // "p_currencyid": 0,
+    // "p_gsttran": "N",
+    // "p_status": "Complete",
+    // "p_isactive": "Y",
+    // "p_loginuser": "admin",
+    // "p_linktransactionid": 0,
+    // "p_replacesimilir": "Y",
+    // "p_creditnoteno": "",
+    // "p_paymentmode": "Cash",
+    // "p_paymentdue": 0,
+    // "p_sale": [
+    //     {
+    //         "TransactiondetailId": 0,
+    //         "ItemId": 25,
+    //         "ItemName": "Switch 3 socket",
+    //         "UOMId": 1,
+    //         "Quantity":1,
+    //         "itemcost":220,
+    //         "MRP":240,
+    //         "totalPayable":240
+    //     }
+    // ],
+    // "clientcode": "CG01-SE",
+    // "x-access-token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyY29kZSI6ImFkbWluIiwiaWF0IjoxNzYzNjQyOTY4LCJleHAiOjE3NjM3MjkzNjh9.2yeOGtpWD24Fl1Ske4iVv4D0yy3o_JQ1eMyaXY_Zu_U"
+
+    // }
+
+    this.stockInService.OninsertSalesDetails(apibody).subscribe({
       next: (res) => {
-        console.log(res.data);
+        console.log('res',res);
+        
         this.messageService.add({
           severity: 'success',
           summary: 'Success',

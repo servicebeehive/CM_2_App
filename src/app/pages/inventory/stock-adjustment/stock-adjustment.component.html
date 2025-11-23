@@ -56,7 +56,7 @@
                     <div class="flex gap-4 w-[200px]">
                         <button pButton type="button" label="Reset" class="p-button-secondary w-full" (click)="reset()"></button>
 
-                        <button pButton type="submit" label="Save" [disabled]="updateForm.invalid" class="p-button-warning w-full"></button>
+                        <button pButton type="submit" label="Save" [disabled]="updateForm.invalid&&filteredProducts.length>0" class="p-button-warning w-full"></button>
                     </div>
                 </div>
 
@@ -67,11 +67,12 @@
                         <ng-template pTemplate="header">
                             <tr class="bg-yellow-400">
                                 <th style="width: 4rem"><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
-                                <th>Item Name</th>
-                                <th>Category</th>
+                                <th class="w-[250px]">Item Name</th>
+                                <th class="w-[150px]">Category</th>
                                 <th>UOM</th>
                                 <th>Current Stock</th>
                                 <th>Batch Available</th>
+                                <th>Batch Date</th>
                                 <th>Cost/Item</th>
                                 <th>MRP</th>
                                 <th>Adj Type</th>
@@ -84,14 +85,15 @@
                             <tr>
                                 <td><p-tableCheckbox [value]="row"></p-tableCheckbox></td>
 
-                                <td>{{ row.combine }}</td>
-                                <td>{{ row.categoryname }}</td>
+                                <td class="w-[250px]">{{ row.combine }}</td>
+                                <td class="w-[150px]">{{ row.categoryname }}</td>
                                 <td>{{ row.uomname }}</td>
                                 <td>{{ row.totalstock }}</td>
                                 <td>{{ row.batch_available }}</td>
+                                <td>{{ row.batchdate | date:'dd-MM-yyyy'}}</td>
                                 <td>{{ row.costprice }}</td>
                                 <td>
-                                    <div class="grid items-center gap-2"><input type="number" pInputText [min]="1" placeholder="{{ row.saleprice }}" [formControl]="row.mrpControl" (keydown)="blockMinus($event)" /></div>
+                                    <div class="grid items-center gap-2"><input class="w-[70px]" type="number" pInputText [min]="1" placeholder="{{ row.saleprice }}" [formControl]="row.mrpControl" (keydown)="blockMinus($event)" /></div>
                                     <!-- <small class="text-red-500" *ngIf="row.mrpControl.touched && row.mrpControl.errors?.['required']"> MRP is required. </small> -->
 
                                     <!-- Min(1) -->
@@ -100,7 +102,7 @@
                                 <!-- Adj Type -->
                                 <td>
                                     <div class="grid items-center gap-2">
-                                        <p-dropdown [options]="adjustment" optionLabel="label" optionValue="value" [filter]="true" type="number" appendTo="body" [formControl]="row.adjustmentControl" placeholder="{{ row.adjtype }}"> </p-dropdown>
+                                        <p-dropdown class="w-[120px]" [options]="adjustment" optionLabel="label" optionValue="value" [filter]="true" type="number" appendTo="body" [formControl]="row.adjustmentControl" placeholder="{{ row.adjtype }}"> </p-dropdown>
 
                                         <!-- 
                                         <span class="text-red-500" 
@@ -122,7 +124,7 @@
                                 <!-- Quantity -->
                                 <td>
                                     <div class="grid items-center gap-2">
-                                        <input pInputText type="number" [min]="1" [formControl]="row.quantityControl" placeholder="{{ row.quantity }}" (keydown)="blockMinus($event)" />
+                                        <input pInputText type="number" class="w-[70px]" [min]="1" [formControl]="row.quantityControl" placeholder="{{ row.quantity }}" (keydown)="blockMinus($event)" />
 
                                         <!-- <small class="text-red-500" *ngIf="row.quantityControl.touched && row.quantityControl.errors?.['required']"> Quantity is required. </small> -->
 
