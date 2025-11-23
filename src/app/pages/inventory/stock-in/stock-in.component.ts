@@ -74,7 +74,6 @@ interface Image {
     AutoCompleteModule,
     ConfirmDialogModule,
     CheckboxModule,
-    RouterLink,
 ],
     templateUrl: './stock-in.component.html',
     styleUrl: './stock-in.component.scss',

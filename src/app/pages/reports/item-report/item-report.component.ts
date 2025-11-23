@@ -235,11 +235,11 @@ export class ItemReportComponent {
         });
     }
     OnGetReport() {
-        // const payload = this.createDropdownPayload('ITEM');
-        // this.inventoryService.getdropdowndetails(payload).subscribe({
-        //     next: (res) => (this.itemOptions = res.data),
-        //     error: (err) => console.log(err)
-        // });
+        const payload = this.createDropdownPayload('ITEM');
+        this.inventoryService.getdropdowndetails(payload).subscribe({
+            next: (res) => (this.itemOptions = res.data),
+            error: (err) => console.log(err)
+        });
     }
     OnGetCategory() {
         const payload = this.createDropdownPayload('CATEGORY');
