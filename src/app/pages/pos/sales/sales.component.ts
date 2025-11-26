@@ -35,6 +35,7 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { AddinventoryComponent } from '@/pages/inventory/addinventory/addinventory.component';
 import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
 import { AuthService } from '@/core/services/auth.service';
+import { OrderService } from '@/core/services/order.service';
 // import { NgxPrintModule } from 'ngx-print';
 
 @Component({
@@ -102,6 +103,7 @@ export class SalesComponent {
   itemOptions: any[] = [];
   transactionIdOptions = [];
   public itemOptionslist: [] = [];
+  public uomlist:any[]=[]
   @ViewChild(AddinventoryComponent) addInventoryComp!: AddinventoryComponent;
 
   // Dropdowns / lists
@@ -116,6 +118,7 @@ export class SalesComponent {
     private confirmationService: ConfirmationService,
     private salesService: InventoryService,
     private messageService: MessageService,
+    private orderService:OrderService,
     public datepipe: DatePipe
   ) { }
 
@@ -331,16 +334,45 @@ allowOnlyNumbers(event: any) {
   // -----------------------------
 
   // Called when an item is selected from the item dropdown
-  OnItemChange(event: any) {
-    const latetData = this.itemOptions.find(item => item.itemid == event.value);
-    console.log(latetData);
-    if (latetData) {
-      // Push new row and update totals
-      this.saleArray.push(this.createSaleItem(latetData));
-      const index = this.saleArray.length - 1;
-      this.updateTotal(index);
-    }
+OnItemChange(event: any) {
+  const latetData = this.itemOptions.find(item => item.itemid == event.value);
+  if (!latetData) return;
+
+  // 🔥 CHECK IF ITEM ALREADY EXISTS IN TABLE
+  const alreadyExists = this.saleArray.controls.some(row =>
+    row.get('ItemId')?.value === latetData.itemid
+  );
+
+  if (alreadyExists) {
+    this.messageService.add({
+      severity: 'warn',
+      summary: 'Duplicate Item',
+      detail: `${latetData.itemname} is already added.`,
+      life: 2000
+    });
+
+    // 🧹 Clear dropdown selection
+    this.salesForm.get('p_itemdata')?.setValue(null, { emitEvent: false });
+
+    return;
   }
+
+  // ✅ Add item (no duplicate)
+  this.saleArray.push(this.createSaleItem(latetData));
+
+  const index = this.saleArray.length - 1;
+
+  // update totals
+  this.updateTotal(index);
+
+  // load UOM list for this row only
+  this.OnUMO(event.value, index);
+
+  // 🧹 Clear dropdown after add
+  this.salesForm.get('p_itemdata')?.setValue(null, { emitEvent: false });
+  this.calculateSummary()
+}
+
 
   // Called when bill dropdown value changes
   onBillDetails(event: any) {
@@ -355,11 +387,12 @@ allowOnlyNumbers(event: any) {
         p_mobileno: billDetails.mobileno,
         p_totalcost: (billDetails.totalcost).toFixed(2),
         p_totalsale: (billDetails.totalsale).toFixed(2),
-         p_disctype: (billDetails.discounttype==='Y'),
+        p_disctype: billDetails.discounttype=='Y'?true:false,
         p_overalldiscount: billDetails.discount,
         p_roundoff: billDetails.roundoff,
         p_totalpayable: (billDetails.totalpayable).toFixed(2),
       });
+     
     }
   }
 
@@ -394,18 +427,25 @@ allowOnlyNumbers(event: any) {
 
   // Remove a row from FormArray and update totals
   removeItem(i: number) {
-    this.saleArray.removeAt(i);
+  // Remove row from FormArray
+  this.saleArray.removeAt(i);
 
-    // If no items left → reset summary
-    if (this.saleArray.length === 0) {
-      this.calculateSummary();
-      return;
-    }
-
-    // Otherwise update totals based on last valid row
-    const index = this.saleArray.length - 1;
-    this.updateTotal(index);
+  // 🔥 FIX: Remove its UOM list to keep index sync
+  if (this.uomlist && Array.isArray(this.uomlist)) {
+    this.uomlist.splice(i, 1);
   }
+
+  // If no items left → reset summary
+  if (this.saleArray.length === 0) {
+    this.calculateSummary();
+    return;
+  }
+
+  // Otherwise update totals based on last valid row
+  const index = this.saleArray.length - 1;
+  this.updateTotal(index);
+}
+
 
   // Prevent decimal input in quantity field (keyboard)
   blockDecimal(event: KeyboardEvent) {
@@ -664,6 +704,9 @@ allowOnlyNumbers(event: any) {
 
     this.stockInService.OninsertSalesDetails(apibody).subscribe({
       next: (res) => {
+        const billno=res.data[0]?.billno
+        this.OnGetBillNo()
+      this.salesForm.controls['p_billno'].setValue(billno)
         console.log('res',res);
         
         this.messageService.add({
@@ -692,4 +735,108 @@ allowOnlyNumbers(event: any) {
   showSuccess(message: string) {
     this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
   }
+
+  OnUMO(value:any,index:number){
+    let apibody={
+      ...this.getUserDetails,
+         
+    "p_returntype": "SALEUOM",
+    "p_returnvalue":value,
+  
+   
+    }
+    this.salesService.Getreturndropdowndetails(apibody).subscribe({
+     
+      next:(res)=>{
+       //  this.OngetcalculatedMRP()
+        console.log(res.data)
+        this.uomlist[index]=res.data
+      },
+      error:(res)=>{
+
+      }
+  })
+  
+   
+  }
+
+
+  OngetcalculatedMRP(data: any, index: number) {
+  const row = this.saleArray.at(index);
+
+  const qty = Number(row.get('Quantity')?.value || 0);
+
+  let apibody = {
+    ...this.getUserDetails,
+    p_itemid: data.ItemId,
+    p_qty: qty,
+    p_uomid: data.UOMId,
+  };
+
+  // remove login user
+  delete (apibody as any).p_loginuser;
+
+  this.orderService.getcalculatedMRP(apibody).subscribe({
+    next: (res: any) => {
+      console.log(res.data);
+
+      // Example: res.data = { totalmrp: 200, totalcost: 100 }
+
+      // ✅ Update only the selected row
+      row.patchValue({
+        MRP: res.data.totalmrp,
+        totalPayable: res.data.totalcost
+      });
+     // this.updateTotal(index)
+      // If your UI needs recalculation based on Quantity:
+      // this.updateTotal(index);
+      this.calculateSummary();
+    },
+    error: (err) => {
+      console.error(err);
+    }
+  });
+}
+
+  UOMId(event:any,index:number){
+    console.log(event)
+    this.OngetcalculatedMRP(event.value,index)
+  }
+  calculateMRP(index: number) {
+  const row = this.saleArray.at(index);
+
+  const qty = Number(row.get('Quantity')?.value || 0);
+  const uomid = row.get('UOMId')?.value;
+  const itemId = row.get('ItemId')?.value;  // use row item id
+
+  if (!uomid || qty <= 0) return; // stop API call if invalid
+
+  let apibody = {
+    ...this.getUserDetails,
+    p_itemid: itemId,
+   // p_itemid:42,
+    p_qty: qty,
+    p_uomid: uomid
+  };
+
+  delete (apibody as any).p_loginuser;
+
+  this.orderService.getcalculatedMRP(apibody).subscribe({
+    next: (res: any) => {
+      console.log("API Result:", res.data);
+     
+
+      row.patchValue({
+        MRP: res.data.totalmrp,
+        totalPayable: res.data.totalcost
+      });
+      this.calculateSummary();
+      // this.updateTotal(index)
+    }
+  });
+}
+OnQtyChange(index: number) {
+  this.calculateMRP(index);
+}
+
 }
