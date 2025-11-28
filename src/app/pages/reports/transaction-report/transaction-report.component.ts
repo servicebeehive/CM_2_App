@@ -69,7 +69,6 @@ interface Image {
     AutoCompleteModule,
     ConfirmDialogModule,
     CheckboxModule,
-    RouterLink
 ],
     templateUrl: './transaction-report.component.html',
     styleUrl: './transaction-report.component.scss',
@@ -86,7 +85,6 @@ export class TransactionReportComponent {
      rowsPerPage:number=5;
     globalFilter: string = '';
         // ✅ Move dropdown options into variables
-        reportTypeOptions = [];
         categoryOptions = [];
         itemOptions = [];
         products: StockIn[] = [];
@@ -97,12 +95,18 @@ export class TransactionReportComponent {
             private authService: AuthService,
             private messageService: MessageService
         ) {}
-
+ reportTypeOptions:any[]= [
+    {label:'Sale', value:'Sale'},
+    {label:'Return', value:'Return'},
+    {label:'Replace', value:'Replace'},
+    {label:'Purchase', value:'Purchase'},
+    {label:'Credit Note', value:'Credit Note'},
+ ];
     ngOnInit(): void {
         this.reportForm = this.fb.group(
             {
                 item: [''],
-                reportType: [''],
+               
                 fromDate: [''],
                 toDate:[''],
                 category:[''],
@@ -239,13 +243,13 @@ export class TransactionReportComponent {
             error: (err) => console.log(err)
         });
     }
-    OnGetReport() {
-        // const payload = this.createDropdownPayload('ITEM');
-        // this.inventoryService.getdropdowndetails(payload).subscribe({
-        //     next: (res) => (this.itemOptions = res.data),
-        //     error: (err) => console.log(err)
-        // });
-    }
+    // OnGetReport() {
+    //     // const payload = this.createDropdownPayload('ITEM');
+    //     // this.inventoryService.getdropdowndetails(payload).subscribe({
+    //     //     next: (res) => (this.itemOptions = res.data),
+    //     //     error: (err) => console.log(err)
+    //     // });
+    // }
     OnGetCategory() {
         const payload = this.createDropdownPayload('CATEGORY');
         this.inventoryService.getdropdowndetails(payload).subscribe({
@@ -254,7 +258,7 @@ export class TransactionReportComponent {
         });
     }
     loadAllDropdowns() {
-        this.OnGetReport();
+        // this.OnGetReport();
         this.OnGetCategory();
         this.OnGetItem();
     }
