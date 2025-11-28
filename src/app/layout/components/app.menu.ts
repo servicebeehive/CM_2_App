@@ -111,11 +111,6 @@ this.model = [
             routerLink: ['/layout/pos/sales'],
           },
           {
-            label: 'Invoice',
-            icon: 'pi pi-fw pi-file',
-            routerLink: ['/layout/pos/list'],
-          },
-          {
             label: 'Return',
             icon: 'pi pi-fw pi-arrow-left',
             routerLink: ['/layout/pos/return'],
@@ -124,7 +119,18 @@ this.model = [
             label: 'Replace',
             icon: 'pi pi-fw pi-arrow-right-arrow-left',
             routerLink: ['/layout/pos/replace'],
+          },
+          {
+            label: 'Invoice',
+            icon: 'pi pi-fw pi-file',
+            routerLink: ['/layout/pos/list'],
+          },
+           {
+            label: 'Debit/Credit Link',
+            icon: 'pi pi-fw pi-credit-card',
+            routerLink: ['/layout/pos/credit-note'],
           }
+           
         ]
       }
     ]
@@ -161,11 +167,7 @@ this.model = [
         icon: 'pi pi-fw pi-chart-bar',
         routerLink: ['/layout/reports/overview'],
         items: [
-           {
-            label: 'Credit Note',
-            icon: 'pi pi-fw pi-credit-card',
-            routerLink: ['/layout/reports/credit-note'],
-          },
+           
           {
             label: 'Item Report',
             icon: 'pi pi-fw pi-box',

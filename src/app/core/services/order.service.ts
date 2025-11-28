@@ -12,5 +12,14 @@ export class OrderService {
   constructor(public httpClient:HttpClient) {
 
   }
+    getcalculatedMRP(payload:any):Observable<any>{
+    // console.log(payload)
+    let url=`${this.baseUrl}${API_ENDPOINTS.sales.getcalculatedMRP}`;
+    return this.httpClient.post<any>(url,payload).pipe(catchError(error=>{
+        return throwError(()=>error)
+    }),
+
+)
+  }
 
 }

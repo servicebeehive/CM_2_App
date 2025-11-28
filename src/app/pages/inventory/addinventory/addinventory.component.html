@@ -35,7 +35,7 @@
 
 <div class="flex justify-start gap-3">
      <button pButton type="button" label="Reset" class="p-button-secondary mt-6" [class.disabled]="resetDisabled" (click)="Reset()"></button>
-       <button pButton type="button" label="Copy" class="p-button-secondary mt-6" [class.disabled]="resetDisabled" (click)="copy($event)"></button>
+       <button pButton type="button" label="Copy" class="p-button-primary mt-6" [class.disabled]="resetDisabled" (click)="copy($event)"></button>
 </div>
      </div>
 
@@ -143,7 +143,7 @@
             <!-- Expiry Date -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Expiry Date</label>
-                          <p-datepicker  fluid formControlName="p_expirydate" dateFormat="dd-mm-yy" [minDate]="dateTime" placeholder="Warranty Period" [showIcon]="true" placeholder="Invoice Date"></p-datepicker>
+                          <p-datepicker  fluid formControlName="p_expirydate" dateFormat="dd-mm-yy" [minDate]="dateTime" placeholder="Warranty Period" [showIcon]="true" placeholder="Expiry Date"></p-datepicker>
                 <!-- <input pInputText formControlName="warPeriod" placeholder="Warranty Period" (keypress)="allowOnlyNumbers($event)" /> -->
             </div>
 
@@ -151,7 +151,7 @@
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Cost/Item</label>
                
-                <input pInputText formControlName="costPerItem" placeholder="Cost/Item" [disabled]="false"  class="grayout"/>
+                <input pInputText formControlName="costPerItem" placeholder="Cost/Item" [disabled]="false" readonly  class="grayout"/>
             </div>
 
             <!-- Location -->
@@ -180,7 +180,7 @@
            
               <div class="flex gap-6">
                 <!-- Active -->
-                    <!-- GST Item -->
+                    <!-- ACTIVE Item -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Active Item</label>
                 <p-checkbox formControlName="activeItem" [binary]="true"></p-checkbox>

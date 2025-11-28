@@ -111,11 +111,15 @@ export class CreditNoteComponent {
                 itemName: ['', [Validators.maxLength(50)]],
                 reportType: ['',Validators.required],
                 category:['',[Validators.required]],
+      p_sale: this.fb.array([])
+
             }
         );
        
     }
-
+ get saleArray(): FormArray {
+    return this.reportForm.get('p_sale') as FormArray;
+  }
  onGetStockIn() {
  this.products=this.stockInService.productItem;
  console.log('item',this.products);
@@ -177,5 +181,8 @@ get grandTotal():number{
         this.products=[];
         this.first=0;
         this.pagedProducts=[];
+    }
+    removeItem(event:any){
+
     }
 }

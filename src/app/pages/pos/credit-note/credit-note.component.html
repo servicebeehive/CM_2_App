@@ -1,10 +1,10 @@
 <div class="card p-6">
   <!-- Header Row: Stock In + Buttons -->
   <div class="flex justify-between items-center mb-6">
-    <span class="block text-surface-900 font-bold text-2xl">Credit Note</span>
+    <span class="block text-surface-900 font-bold text-2xl">Debit/Credit Link</span>
         <div class="flex  gap-4">
-        <button pButton type="button" label="Generate CN" class="p-button-secondary" (click)="generateCN()"></button> 
-        <button pButton type="button" label="Settle CN" class="p-button-secondary" (click)="settleCN()"></button>
+        <button pButton type="button" label="Generate DN" class="p-button-secondary" (click)="generateCN()"></button> 
+        <button pButton type="button" label="Link CN" class="p-button-secondary" (click)="settleCN()"></button>
         <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
     </div>
   </div>
@@ -15,35 +15,34 @@
       <!-- Two-column grid layout -->
       <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
 
-        <!-- Report Type -->
+        <!-- DEBIT NOTE -->
          
         <div class="flex flex-col">
-          <label class="font-medium mb-1">Credit Note</label>
+          <label class="font-medium mb-1">Debit Note</label>
+          <input
+          pInputText
+          placeholder="Debit Note"
+          formControlName="p_debitNote" />
+        </div>
+         <!-- CREDIT NOTE -->
+      <div class="flex flex-col">
+        <label class="font-medium mb-1">Credit Note</label>
            <p-dropdown
             [options]="creditNoteOptions"
             optionLabel="label"
             optionValue="value"
             [filter]="true"
             filterPlaceholder="Select Credit Note"
-            formControlName="reportType"
+            formControlName="p_creditNote"
             placeholder="Credit Note">
           </p-dropdown>
-          <!-- <small class="text-red-500 ms-3 mt-1" *ngIf="reportForm.get('vendorName')?.touched">
-            <span *ngIf="reportForm.get('vendorName')?.errors?.['required']">Vendor Name is required</span>
-          </small> -->
-        </div>
-
-      <!-- Add and Display Buttons -->
-      <div class="flex items-end">
-         <button pButton type="submit" label="Print" class="p-button-warning"></button>
       </div>
 </div>
     <!-- Product Table with Pagination -->
     <div>
       <p-table
-        [value]="products"
-        dataKey="code"
-        [tableStyle]="{'min-width': '50rem'}"
+        [value]="saleArray.controls"
+        dataKey="ItemId"
         [paginator]="true"
         [rows]="10"
         [rowsPerPageOptions]="[5, 10, 20, 50]"
@@ -53,34 +52,39 @@
         <ng-template #header>
           <tr class="bg-yellow-400">
             <th><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
-            <th>Item Code</th>
+             <th>Item Code</th>
             <th>Item Name</th>
-            <th>Category</th>
-            <th>Purchase Price</th>
-            <th>Qty</th>
-           <th>Total</th>
+            <th>Current Stock</th>
             <th>UOM</th>
+            <th>Qty</th>
             <th>MRP</th>
-            <th>Waranty Period</th>
+            <th>Total</th>
+            <th>Warranty</th>
+            <th>Location</th>
+            <th class="text-center">Action</th>
           </tr>
         </ng-template>
 
-        <ng-template #body let-product>
-          <tr>
+        <ng-template pTemplate="body" let-row let-i="rowIndex">
+          <tr [formGroup]="row">
+             <td>{{ row.get('itemsku')?.value }}</td>
+            <td>{{ row.get('ItemName')?.value }}</td>
+            <td>{{ row.get('curStock')?.value }}</td>
+            <td>{{ row.get('UOMId')?.value }}</td>
+            <td>{{row.get('Quantity')?.value}}</td>
+            <td>{{ row.get('MRP')?.value }}</td>
+            <td>{{ row.get('totalPayable')?.value }}</td>
+            <td>{{ row.get('warPeriod')?.value }}</td>
+            <td>{{ row.get('location')?.value }}</td>
+
+            <!-- DELETE -->
             <td class="text-center">
-             <p-tableCheckbox [value]="product" />
+              <i
+                class="pi pi-trash text-red-500 cursor-pointer"
+                (click)="removeItem(i)">
+              </i>
             </td>
-            <td class="flex justify-between gap-2">{{ product.code}}
-               <!-- <span class=" pi pi-copy cursor-pointer "></span> -->
-              </td>
-            <td>{{ product.itemName }}</td>
-            <td>{{ product.category }}</td>
-            <td>{{ product.purchasePrice }}</td>
-            <td>{{ product.qty }}</td>
-            <td>{{ product.total}}</td>
-            <td>{{ product.uom }}</td>
-            <td>{{ product.mrp}}</td>
-            <td>{{ product.warantyPeriod}}</td>
+
           </tr>
         </ng-template>
 

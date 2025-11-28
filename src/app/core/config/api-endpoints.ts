@@ -22,6 +22,9 @@ export const API_ENDPOINTS = {
     updatestockadjustment:'/updatestockadjustment',
     inserttransactiondetails:'/inserttransactiondetails',
   },
+  sales:{
+    getcalculatedMRP:'/getcalculatedMRP'
+  },
   orders: {
     base: '/orders',
     byId: (id: number) => `/orders/${id}`
