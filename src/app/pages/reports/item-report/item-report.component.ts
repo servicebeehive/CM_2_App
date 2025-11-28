@@ -68,8 +68,7 @@ interface Image {
         DialogModule,
         AutoCompleteModule,
         ConfirmDialogModule,
-        CheckboxModule,
-        RouterLink
+        CheckboxModule
     ],
     templateUrl: './item-report.component.html',
     styleUrl: './item-report.component.scss',
@@ -86,7 +85,6 @@ export class ItemReportComponent {
     rowsPerPage: number = 5;
     globalFilter: string = '';
     // ✅ Move dropdown options into variables
-    reportTypeOptions = [];
     categoryOptions = [];
     itemOptions = [];
     products: StockIn[] = [];
@@ -97,12 +95,19 @@ export class ItemReportComponent {
         private authService: AuthService,
         private messageService: MessageService
     ) {}
-
+ reportTypeOptions: any[] = [
+        { label: 'Item List',value:'Item List' },
+        { label: 'Out of Stock',value:'Out of Stock' },
+        { label: 'Low Stock',value:'Low Stock' },
+        { label: 'Most Salable',value:'Most Salable' },
+        { label: 'Non Active',value:'Non Active' },
+        { label: 'Active Stock',value:'Active Stock' },
+    ];
     ngOnInit(): void {
        
         this.reportForm = this.fb.group({
             item: [''],
-            reportType: [''],
+          
             category: [''],
              p_stock: this.fb.array([])
         });

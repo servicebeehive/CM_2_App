@@ -88,7 +88,7 @@ export class RevenueOverViewWidget {
             documentStyle.getPropertyValue('--surface-border');
 
         this.barData = {
-            labels: ['JAN','FEB','MAR','JUN','JULY','AUG','SEP','OCT','NOV','DEC'],
+            labels: ['JAN','FEB','MAR','JUN','JULY','AUG','SEP','OCT','NOV','DEC','JAN'],
             datasets: [
                 {
                     label: 'Revenue',

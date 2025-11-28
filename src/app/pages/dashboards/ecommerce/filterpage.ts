@@ -75,7 +75,7 @@ import { SelectModule } from 'primeng/select';
 export class FilterPage {
     // Filter 1 Options (Weeks)
     warehouseOptions: any[] = [
-        { label: 'Warehouse 1' },
+        { label: 'Shristi Electricals' },
         { label: 'Warehouse 2' },
     ];
     
