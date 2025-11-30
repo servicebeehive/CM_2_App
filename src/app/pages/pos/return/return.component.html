@@ -1,3 +1,4 @@
+
 <div class="card p-6">
     <div>
         <form [formGroup]="returnForm" (ngSubmit)="onSubmit()" class="space-y-8">
@@ -24,18 +25,7 @@
                 <div class="grid grid-cols-2 gap-x-8 gap-y-4 mb-2 w-full">
                     <div class="flex flex-col mb-1">
                         <label class="font-medium">Return Bill No</label>
-                        <p-dropdown
-                            [options]="returnBillNoOptions"
-                            optionLabel="billno"
-                            optionValue="billno"
-                            [filter]="true"
-                            filterPlaceholder="Search Return Bill No."
-                            formControlName="returnBillNo"
-                            placeholder="Return Bill No."
-                            [showClear]="true"
-                            (onChange)="onReturnBillDetails($event)"
-                        >
-                        </p-dropdown>
+                        <p-dropdown [options]="returnBillNoOptions" optionLabel="billno" optionValue="billno" [filter]="true" filterPlaceholder="Search Return Bill No." formControlName="returnBillNo" placeholder="Return Bill No." [showClear]="true" (onChange)="onReturnBillDetails($event)"> </p-dropdown>
                         <small class="text-red-500 ms-3 mt-1" *ngIf="returnForm.get('returnBillNo')?.touched">
                             <span *ngIf="returnForm.get('returnBillNo')?.errors?.['required']">Return Bill No is required</span>
                         </small>
@@ -102,7 +92,7 @@
                                 <th>Qty</th>
                                 <th>MRP</th>
                                 <th>Total</th>
-                                <th>Warranty (Mon)</th>
+                                <th>Warranty (in Mon)</th>
                                 <th>Location</th>
                             </tr>
                         </ng-template>
@@ -116,21 +106,12 @@
                                 <td>{{ row.get('UOMId')?.value }}</td>
                                 <td>
                                     <div class="flex flex-col">
-                                        <input
-                                            class="w-[70px]"
-                                            type="number"
-                                            pInputText
-                                            formControlName="Quantity"
-                                            placeholder="quantity"
-                                            (input)="updateTotal(i)"
-                                            [readOnly]="!selectedProducts.includes(row)"
-                                            (keypress)="blockDecimal($event)"
-                                            [ngClass]="{ 'border-red-500': row.get('Quantity')?.errors?.['maxStock'] }"
-                                        />
-                                        <small class="text-red-500 mt-1" *ngIf="row.get('Quantity')?.touched && row.get('Quantity')?.errors?.['maxStock']"> Quantity exceeds the available sale quantity ({{ row.get('curStock')?.value + 1 }}). </small>
+                                    <input class="w-[70px]" type="number" pInputText formControlName="Quantity" placeholder="quantity" (input)="updateTotal(i)" [readOnly]="!selectedProducts.includes(row)" (keypress)="blockDecimal($event)"  [ngClass]="{ 'border-red-500': row.get('Quantity')?.errors?.['maxStock'] }"  />
+                                    <small class="text-red-500 mt-1"
+               *ngIf="row.get('Quantity')?.touched && row.get('Quantity')?.errors?.['maxStock']">
+            Quantity exceeds the available sale quantity ({{row.get('curStock')?.value + 1}}).
+        </small>
                                     </div>
-                                </td>
-
                                 <td>{{ row.get('MRP')?.value }}</td>
                                 <td>{{ row.get('totalPayable')?.value }}</td>
                                 <td>{{ row.get('warPeriod')?.value }}</td>
@@ -153,18 +134,18 @@
                         <label class="font-medium mb-1">MRP Total</label>
                         <input pInputText formControlName="p_totalsale" placeholder="Grand Total" readonly />
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <!-- Discount type -->
-                        <div class="flex flex-col">
-                            <label>Disc(%)</label>
-                            <p-checkbox class="mt-2" binary="true" variant="filled" formControlName="p_disctype" readonly></p-checkbox>
-                        </div>
-                        <!-- Discount -->
-                        <div class="flex flex-col">
-                            <label>Discount</label>
-                            <input class="w-40" pInputText type="number" formControlName="p_overalldiscount" (input)="applyDiscount()" [placeholder]="discountplace" readonly />
-                        </div>
-                    </div>
+                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <!-- Discount type -->
+        <div class="flex flex-col">
+          <label>Disc(%)</label>
+          <p-checkbox class="mt-2" binary="true" variant="filled" formControlName="p_disctype" readonly></p-checkbox>
+        </div>
+      <!-- Discount -->
+      <div class="flex flex-col ">
+        <label>Discount</label>
+        <input class="w-40" pInputText type="number" formControlName="p_overalldiscount" (input)="applyDiscount()" [placeholder]="discountplace" readonly />
+      </div>
+</div>
                     <!-- Round Off -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Round Off</label>

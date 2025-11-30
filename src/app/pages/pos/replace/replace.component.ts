@@ -91,7 +91,7 @@ export class ReplaceComponent {
   public authService = inject(AuthService);
   public getUserDetails = {
     "uname": "admin",
-    "p_username": "admin",
+    "p_loginuser": "admin",
     "clientcode": "CG01-SE",
     "x-access-token": this.authService.getToken(),
   };
@@ -345,6 +345,7 @@ allowOnlyNumbers(event: any) {
       this.updateTotal(index);
     }
   }
+
   // Called when bill dropdown value changes
  onReplaceBillDetails(event: any) {
     const billDetails = this.replaceBillNoOptions.find(billitem => billitem.billno === event.value); 
@@ -406,7 +407,7 @@ allowOnlyNumbers(event: any) {
 
   // Prevent decimal input in quantity field (keyboard)
   blockDecimal(event: KeyboardEvent) {
-    if (event.key === '.' || event.key === ',' || event.key === 'e' || event.key === 'E'|| event.key === '-'||event.key === '0') {
+    if (event.key === '.' || event.key === ',' || event.key === 'e' || event.key === 'E') {
       event.preventDefault();  // block decimal
     }
   }
@@ -617,11 +618,15 @@ allowOnlyNumbers(event: any) {
   // Send header (and sale) to API, show toast notifications on result
   OnSalesHeaderCreate(data: any) {
     const apibody = this.cleanRequestBody(this.replaceForm.value);
-
-    this.stockInService.Getreturndropdowndetails(apibody).subscribe({
+  //delete (apibody as any).p_loginuser;
+    this.stockInService.OninsertSalesDetails(apibody).subscribe({
       next: (res) => {
         console.log(res.data);
-        this.messageService.add({
+          this.OnGetBillNo()
+        this.replaceForm.patchValue({
+          p_billno:res.data[0].billno
+        })
+                this.messageService.add({
           severity: 'success',
           summary: 'Success',
           detail: 'Replace done successfully!',
@@ -646,5 +651,8 @@ allowOnlyNumbers(event: any) {
 
   showSuccess(message: string) {
     this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
+  }
+  newSale(){
+
   }
 }
