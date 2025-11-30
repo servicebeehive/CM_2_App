@@ -166,6 +166,7 @@ else{
           ItemId: item.itemid || 0,    // use itemsku when itemid not present
           ItemName: item.itemname || '',
           UOMId: item.uomid || 0,
+          uomname: item.uomname,
           Quantity: item.quantity || 1,
           itemcost: item.itemcost || 0,
           MRP: (item.mrp || 0).toFixed(2),
@@ -248,7 +249,7 @@ else{
     return {
       ...this.getUserDetails,
       p_transactiontype: "RETURN",
-      p_transactionid:  0,
+      p_transactionid: body.p_transactionid ,
       p_transactiondate: formattedDate || "",
       p_customername: body.p_customername || "",
       p_mobileno: body.p_mobileno || "",
@@ -269,7 +270,7 @@ else{
       p_paymentmode: body.p_paymentmode || "Cash",
       p_paymentdue: Number(body.p_paymentdue) || 0,
       p_sale: (body.p_sale || []).map((x: any) => ({
-        TransactiondetailId:0,
+        TransactiondetailId:body.p_transactionid ,
         ItemId: x.ItemId,
         ItemName: x.ItemName,
         UOMId: x.UOMId,

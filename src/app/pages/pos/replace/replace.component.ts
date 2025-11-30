@@ -240,6 +240,7 @@ get isPrintDisabled(): boolean {
           ItemId: item.itemsku || 0,    // use itemsku when itemid not present
           ItemName: item.itemname || '',
           UOMId: item.uomid || 0,
+          uomname:item.uomname,
           Quantity: item.quantity || 1,
           itemcost: item.itemcost || 0,
           MRP: (item.mrp || 0).toFixed(2),
