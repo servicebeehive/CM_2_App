@@ -100,11 +100,11 @@ interface ExportColumn {
                     <th pSortableColumn="billDate">
                         <span class="flex items-center gap-2">Category <p-sortIcon field="billDate"></p-sortIcon></span>
                     </th>
-                    <th pSortableColumn="billNo">
-                        <span class="flex items-center gap-2">Stock <p-sortIcon field="billNo"></p-sortIcon></span>
-                    </th>
                     <th pSortableColumn="totalQty">
                         <span class="flex items-center gap-2">UOM <p-sortIcon field="totalQty"></p-sortIcon></span>
+                    </th>
+                    <th pSortableColumn="billNo">
+                        <span class="flex items-center gap-2">Stock <p-sortIcon field="billNo"></p-sortIcon></span>
                     </th>
                     <!-- <th pSortableColumn="totalSale">
                         <span class="flex items-center gap-2">Total Sale <p-sortIcon field="totalSale"></p-sortIcon></span>
