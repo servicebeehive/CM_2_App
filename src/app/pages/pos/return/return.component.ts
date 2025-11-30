@@ -163,7 +163,7 @@ else{
       this.saleArray.push(
         this.fb.group({
             TransactiondetailId: item.transactiondetailid || 0,
-          ItemId: item.itemsku || 0,    // use itemsku when itemid not present
+          ItemId: item.itemid || 0,    // use itemsku when itemid not present
           ItemName: item.itemname || '',
           UOMId: item.uomid || 0,
           Quantity: item.quantity || 1,
@@ -195,6 +195,7 @@ else{
 
     this.stockInService.Getreturndropdowndetails(apibody).subscribe({
       next: (res) => {
+        console.log(res.data)
         this.mapSaleItems(res.data);
       }
     });
@@ -223,6 +224,7 @@ else{
   
   onReturnBillDetails(event:any){
     const returnBillDetails= this.returnBillNoOptions.find(returnbillitem =>returnbillitem.billno === event.value);
+    console.log(returnBillDetails)
     if(returnBillDetails){
       this.SaleDetails(returnBillDetails);
       this.returnForm.patchValue({
@@ -280,6 +282,7 @@ else{
   }
 OnSalesHeaderCreate(data: any) {
     const apibody = this.cleanRequestBody(this.returnForm.value);
+   //   delete (apibody as any).p_loginuser;
 
     this.stockInService.OninsertSalesDetails(apibody).subscribe({
       next: (res) => {

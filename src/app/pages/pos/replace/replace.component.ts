@@ -91,7 +91,7 @@ export class ReplaceComponent {
   public authService = inject(AuthService);
   public getUserDetails = {
     "uname": "admin",
-    "p_username": "admin",
+    "p_loginuser": "admin",
     "clientcode": "CG01-SE",
     "x-access-token": this.authService.getToken(),
   };
@@ -618,11 +618,15 @@ allowOnlyNumbers(event: any) {
   // Send header (and sale) to API, show toast notifications on result
   OnSalesHeaderCreate(data: any) {
     const apibody = this.cleanRequestBody(this.replaceForm.value);
-
-    this.stockInService.Getreturndropdowndetails(apibody).subscribe({
+  //delete (apibody as any).p_loginuser;
+    this.stockInService.OninsertSalesDetails(apibody).subscribe({
       next: (res) => {
         console.log(res.data);
-        this.messageService.add({
+          this.OnGetBillNo()
+        this.replaceForm.patchValue({
+          p_billno:res.data[0].billno
+        })
+                this.messageService.add({
           severity: 'success',
           summary: 'Success',
           detail: 'Replace done successfully!',

@@ -397,30 +397,34 @@
     <!-- PRINT SUMMARY -->
     <table width="100%" style="margin-top:10px;">
 
-      <tr>
-        <td><strong>Total Cost:</strong></td>
-        <td>₹ {{ salesForm.get('p_totalcost')?.value }}</td>
-      </tr>
+   <tr>
+  <td><strong>Total Cost:</strong></td>
+  <td>₹ {{ salesForm.get('p_totalcost')?.value }}</td>
+</tr>
 
-      <tr>
-        <td><strong>Total Sale:</strong></td>
-        <td>₹ {{ salesForm.get('p_totalsale')?.value }}</td>
-      </tr>
+<tr>
+  <td><strong>Total Sale (MRP Total):</strong></td>
+  <td>₹ {{ salesForm.get('p_totalsale')?.value }}</td>
+</tr>
 
-      <tr>
-        <td><strong>Discount:</strong></td>
-        <td>{{ salesForm.get('p_overalldiscount')?.value }} %</td>
-      </tr>
+<tr>
+  <td><strong>Discount:</strong></td>
+  <td>
+    {{ salesForm.get('p_overalldiscount')?.value }}
+    {{ salesForm.get('p_disctype')?.value ? '%' : '' }}
+  </td>
+</tr>
 
-      <tr>
-        <td><strong>Round Off:</strong></td>
-        <td>₹ {{ salesForm.get('p_roundoff')?.value }}</td>
-      </tr>
+<tr>
+  <td><strong>Round Off:</strong></td>
+  <td>₹ {{ salesForm.get('p_roundoff')?.value }}</td>
+</tr>
 
-      <tr>
-        <td><strong>Final Payable:</strong></td>
-        <td><strong>₹ {{ salesForm.get('p_totalpayable')?.value }}</strong></td>
-      </tr>
+<tr>
+  <td><strong>Final Payable:</strong></td>
+  <td><strong>₹ {{ salesForm.get('p_totalpayable')?.value }}</strong></td>
+</tr>
+
 
     </table>
 
