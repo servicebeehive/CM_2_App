@@ -270,16 +270,16 @@
         <label>MRP Total</label>
         <input pInputText readonly type="number" formControlName="p_totalsale" />
       </div>
- <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+ <div class="grid grid-cols-1 md:grid-cols-2">
       <!-- Discount type -->
         <div class="flex flex-col">
-          <label>Disc(%)</label>
-          <p-checkbox class="mt-2" binary="true" readonly variant="filled" formControlName="p_disctype"></p-checkbox>
+          <label class="font-medium mb-2">Disc(%)</label>
+          <p-checkbox readonly class="w-5 h-5" binary="true" variant="filled" formControlName="p_disctype"></p-checkbox>
         </div>
       <!-- Discount -->
       <div class="flex flex-col ">
-        <label>Discount</label>
-        <input class="w-40" pInputText type="number" readonly formControlName="p_overalldiscount" (input)="applyDiscount()" [placeholder]="discountplace" />
+        <label class="font-medium">Discount</label>
+        <input readonly class="p-inputtext p-component font-small w-full" pInputText type="number" formControlName="p_overalldiscount" (input)="applyDiscount()" [placeholder]="discountplace"/>
       </div>
 </div>
       <!-- Round Off -->

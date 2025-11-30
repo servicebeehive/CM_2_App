@@ -170,7 +170,7 @@ export class SalesComponent {
 else{
   this.discountplace="Enter %";
 }
- this.salesForm.get('p_overalldiscount')?.setValue('', { emitEvent: false });
+//  this.salesForm.get('p_overalldiscount')?.setValue('', { emitEvent: false });
  this.applyDiscount();
     });
 

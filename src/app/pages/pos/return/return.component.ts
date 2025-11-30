@@ -139,7 +139,7 @@ public authService = inject(AuthService);
 else{
   this.discountplace="Enter %";
 }
- this.returnForm.get('p_overalldiscount')?.setValue('', { emitEvent: false });
+//  this.returnForm.get('p_overalldiscount')?.setValue('', { emitEvent: false });
  this.applyDiscount();
     });
     }
@@ -198,6 +198,11 @@ else{
       next: (res) => {
         console.log(res.data)
         this.mapSaleItems(res.data);
+        if(res.data && res.data.length>0 && res.data[0].discounttype){
+          this.returnForm.patchValue({
+            p_disctype:(res.data[0].discounttype==='Y')
+          });
+        }
       }
     });
   }
@@ -215,6 +220,7 @@ else{
         p_mobileno: billDetails.mobileno,
         p_totalcost: billDetails.totalcost,
         p_totalsale: billDetails.totalsale,
+         p_disctype: billDetails.discounttype=='Y'?true:false,
         p_overalldiscount: billDetails.discount,
         p_roundoff: billDetails.roundoff,
         p_totalpayable: billDetails.totalpayable
@@ -235,6 +241,7 @@ else{
         p_mobileno: returnBillDetails.mobileno,
         p_totalcost: (returnBillDetails.totalcost).toFixed(2),
         p_totalsale: (returnBillDetails.totalsale).toFixed(2),
+         p_disctype: returnBillDetails.discounttype=='Y'?true:false,
         p_overalldiscount: returnBillDetails.discount,
         p_roundoff: returnBillDetails.roundoff,
         p_totalpayable: (returnBillDetails.totalpayable).toFixed(2),
