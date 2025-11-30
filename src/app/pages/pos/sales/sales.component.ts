@@ -154,6 +154,9 @@ export class SalesComponent {
       p_paymentdue: [0],
       // FormArray for sale rows
       p_sale: this.fb.array([])
+    },
+  {
+      validators: [this.costGreaterThanSaleValidator()]
     });
     this.salesForm.get('p_billno')?.valueChanges.subscribe(value=>{
       if(value){
@@ -170,11 +173,23 @@ export class SalesComponent {
 else{
   this.discountplace="Enter %";
 }
- this.salesForm.get('p_overalldiscount')?.setValue('', { emitEvent: false });
+
+//  this.salesForm.get('p_overalldiscount')?.setValue('', { emitEvent: false });
  this.applyDiscount();
     });
 
   }
+  costGreaterThanSaleValidator(): ValidatorFn {
+  return (form: AbstractControl): ValidationErrors | null => {
+    const cost = form.get('p_totalcost')?.value;
+    const final = form.get('p_totalpayable')?.value;
+
+    if (cost != null && final != null && Number(cost) > Number(final)) {
+      return { costNotGreater: true };
+    }
+    return null;
+  };
+}
 
   // -----------------------------
   //  FormArray Getters / Helpers
@@ -246,13 +261,13 @@ get isPrintDisabled(): boolean {
           // p_totalcost:item.
           // Additional fields used in UI
           curStock: item.current_stock || 0,
-          warPeriod: 0,
-          location: "",
+          warPeriod: item.warrentyperiod,
+          location: item.location,
           itemsku: item.itemsku || ''
         })
       );
     });
-
+   
     // If items were added, update totals for the last row and overall summary
     const index = this.saleArray.length - 1;
     this.updateTotal(index);
@@ -316,7 +331,24 @@ allowOnlyNumbers(event: any) {
       error: (err) => console.log(err)
     });
   }
-
+// Get UOM placeholder text for a specific row
+getUomPlaceholder(index: number): string {
+  const row = this.saleArray.at(index);
+  const currentUomId = row.get('UOMId')?.value;
+  
+  if (!currentUomId) {
+    return 'Select UOM'; // Default placeholder
+  }
+  
+  // Find the UOM name from the uomlist
+  const uomOptions = this.uomlist[index];
+  if (uomOptions && Array.isArray(uomOptions)) {
+    const selectedUom = uomOptions.find(u =>u.uomid === currentUomId);
+    return selectedUom ? selectedUom.uomname : 'Select UOM';
+  }
+  
+  return 'Select UOM';
+}
   // Load Bill No dropdown
   OnGetBillNo() {
     const payload = this.createDropdownPayload("NEWTRANSACTIONID");
@@ -392,7 +424,6 @@ OnItemChange(event: any) {
         p_roundoff: billDetails.roundoff,
         p_totalpayable: (billDetails.totalpayable).toFixed(2),
       });
-     
     }
   }
 

@@ -345,7 +345,6 @@ allowOnlyNumbers(event: any) {
       this.updateTotal(index);
     }
   }
-
   // Called when bill dropdown value changes
  onReplaceBillDetails(event: any) {
     const billDetails = this.replaceBillNoOptions.find(billitem => billitem.billno === event.value); 
@@ -407,7 +406,7 @@ allowOnlyNumbers(event: any) {
 
   // Prevent decimal input in quantity field (keyboard)
   blockDecimal(event: KeyboardEvent) {
-    if (event.key === '.' || event.key === ',' || event.key === 'e' || event.key === 'E') {
+    if (event.key === '.' || event.key === ',' || event.key === 'e' || event.key === 'E'|| event.key === '-'||event.key === '0') {
       event.preventDefault();  // block decimal
     }
   }
@@ -647,8 +646,5 @@ allowOnlyNumbers(event: any) {
 
   showSuccess(message: string) {
     this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
-  }
-  newSale(){
-
   }
 }

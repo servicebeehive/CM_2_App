@@ -407,13 +407,26 @@ if (hasEditDataChange && formReady) {
     }
     isChildUOMValid(): boolean {
         if (!this.products || this.products.length === 0) return true;
-
+             let parentMrp = Number(this.addForm.get('mrp')?.value || 0);
         let hasAnyValue = false;
         for (const row of this.products) {
             const hasChild = row.childUOM?.toString().trim() !== '';
             const hasConversion = row.conversion?.toString().trim() !== '';
             const hasMrp = row.mrpUom?.toString().trim() !== '';
+            let conv=Number(row.conversion || 0);
+            let mrpUom=Number(row.mrpUom || 0);
+            if(!conv || !mrpUom){
+                row.mrpError = false;
+                continue;
+            }
+             let requiredMinMrpUom = parentMrp / conv;
 
+    // Apply rule: mrpUom > (mrp / conversion)
+    if (mrpUom <= requiredMinMrpUom) {
+      row.mrpError = true;
+    } else {
+      row.mrpError = false;
+    }
             if (hasChild || hasConversion || hasMrp) {
                 hasAnyValue = true;
 

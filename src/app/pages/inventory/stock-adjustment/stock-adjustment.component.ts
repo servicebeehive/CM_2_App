@@ -463,10 +463,10 @@ export class StockAdjustmentComponent {
         // UOMId: r.UOMId,
         batchId: r.BatchId,
         Quantity: r.Quantity,
-        adjtype: r.adjtype,
+        adjtype: r.adjtype || null,
         mrpvalue: r.mrpvalue
       }))
-      .filter((r) => r.Quantity != null && r.adjtype); // keep only filled rows
+      .filter((r) => (r.Quantity != null && r.Quantity>0 && r.adjtype) || (r.mrpvalue!=null && r.mrpvalue !== "")); // keep only filled rows
 
     if (trimmed.length === 0) {
       let message = 'No rows to save. Please enter Quantity and Adjustment Type for at least one row.';
@@ -486,7 +486,7 @@ export class StockAdjustmentComponent {
     // call API
     this.inventoryService.updatestockadjustment(payload).subscribe({
       next: (res: any) => {
-        this.showSuccess((res?.data && res.data[0]?.msg) || 'Stock updated successfully');
+        this.showSuccess((res?.data && res.data[0]?.msg) || 'Stock/MRP updated successfully');
         // optionally refresh data
        this.Onreturndropdowndetails();
       },
