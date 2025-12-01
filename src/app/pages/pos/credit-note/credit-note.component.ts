@@ -74,7 +74,7 @@ interface Image {
     providers: [ConfirmationService]
 })
 export class CreditNoteComponent {
-    reportForm!: FormGroup;
+    CreditForm!: FormGroup;
 
     visibleDialog = false;
     selectedRow: any = null;
@@ -103,22 +103,17 @@ export class CreditNoteComponent {
 
     ngOnInit(): void {
         // this.onGetStockIn();
-        this.reportForm = this.fb.group({
+        this.CreditForm = this.fb.group({
             itemName: ['', [Validators.maxLength(50)]],
            p_debitNote:[''],
            p_creditNote:[''],
-            p_sale: this.fb.array([])
+        p_sale: this.fb.array([])
         });
     }
     get saleArray(): FormArray {
-        return this.reportForm.get('p_sale') as FormArray;
+        return this.CreditForm.get('p_sale') as FormArray;
     }
-    // onGetStockIn() {
-    //     this.products = this.stockInService.productItem;
-    //     console.log('item', this.products);
-    //     this.products.forEach((p) => (p.selection = true));
-    // }
-
+   
     allowOnlyNumbers(event: KeyboardEvent) {
         const allowedChars = /[0-9]\b/;
         const inputChar = String.fromCharCode(event.key.charCodeAt(0));
@@ -127,38 +122,12 @@ export class CreditNoteComponent {
         }
     }
     onSave(updatedData: any) {
-        // const mappedData = {
-        //     selection: true,
-        //     code: updatedData.itemCode.label || updatedData.itemCode,
-        //     itemName: updatedData.itemName,
-        //     category: updatedData.category,
-        //     purchasePrice: updatedData.purchasePrice,
-        //     qty: updatedData.qty,
-        //     total: updatedData.total,
-        //     uom: updatedData.uom,
-        //     mrp: updatedData.mrp,
-        //     warantyPeriod: updatedData.warantyPeriod
-        // };
     }
-
-    // onPageChange(event: any) {
-    //     this.first = event.first;
-    //     this.rowsPerPage = event.rows;
-    //     this.updatePagedProducts();
-    // }
-
-    // updatePagedProducts() {
-    //     this.pagedProducts = this.products.slice(this.first, this.first + this.rowsPerPage);
-    // }
-
-    // get grandTotal(): number {
-    //     return this.products.reduce((sum, p) => sum + (p.total || 0), 0);
-    // }
     print() {}
     generateCN() {}
     settleCN() {}
     reset() {
-        this.reportForm.reset();
+        this.CreditForm.reset();
         this.products = [];
         this.first = 0;
         // this.pagedProducts = [];
