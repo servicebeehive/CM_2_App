@@ -154,6 +154,8 @@ export class SalesComponent {
       p_paymentdue: [0],
       // FormArray for sale rows
       p_sale: this.fb.array([])
+    },{
+      validators: [this.costGreaterThanSaleValidator()]
     });
     this.salesForm.get('p_billno')?.valueChanges.subscribe(value=>{
       if(value){
@@ -376,6 +378,21 @@ OnItemChange(event: any) {
 }
 
 
+costGreaterThanSaleValidator(): ValidatorFn {
+  return (form: AbstractControl): ValidationErrors | null => {
+
+    const totalCost = Number(form.get('p_totalcost')?.value || 0);
+    const finalPayable = Number(form.get('p_totalpayable')?.value || 0);
+
+    // ❗ Condition: final payable must be >= total cost
+    if (finalPayable < totalCost) {
+      return { costNotGreater: true };
+    }
+
+    return null;
+  };
+}
+
 
   // Called when bill dropdown value changes
   onBillDetails(event: any) {
@@ -453,11 +470,23 @@ this.updateTotalCostSummary()
 
   // Prevent decimal input in quantity field (keyboard)
   blockDecimal(event: KeyboardEvent) {
-    if (event.key === '.' || event.key === ',' || event.key === 'e' || event.key === 'E') {
+    if (event.key === '.' || event.key === ',' || event.key === 'e' || event.key === 'E' || event.key === '0'||event.key === '-') {
       event.preventDefault();  // block decimal
     }
   }
-
+// Custom validator to check if total cost exceeds final payable
+costNotExceedPayableValidator(): ValidatorFn {
+    return (formGroup: AbstractControl): ValidationErrors | null => {
+        const totalCost = Number(formGroup.get('p_totalcost')?.value || 0);
+        const finalPayable = Number(formGroup.get('p_totalpayable')?.value || 0);
+        
+        // Only validate if both have values
+        if (totalCost !== null && finalPayable !== null && totalCost < finalPayable) {
+            return { maxCost: true };
+        }
+        return null;
+    };
+}
   // -----------------------------
   //  Validation / Submit helpers
   // -----------------------------
@@ -575,6 +604,7 @@ updateTotal(i: number) {
   });
 
   this.calculateSummary();
+  this.salesForm.updateValueAndValidity();
 }
 
 
@@ -599,6 +629,7 @@ updateTotal(i: number) {
       p_roundoff: roundOff,
       p_totalpayable: Math.round(finalPayable)
     });
+    this.salesForm.updateValueAndValidity();
   }
 
   // -----------------------------
