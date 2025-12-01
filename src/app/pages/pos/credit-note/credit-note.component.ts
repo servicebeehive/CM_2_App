@@ -170,23 +170,20 @@ export class CreditNoteComponent {
 
 
 
-onSave(updatedData: any) {
-    }
-    print() { }
-    generateCN() { }
-    settleCN() { }
     reset() {
         this.CreditForm.reset();
         this.replacecednlist=[]
         this.replacecednlist=this.stroeitemlist
         //
+        let datalist:[]=[]
+        this.onSelectionChange(datalist)
       
         this.saleArray.clear()
         
 
        
     }
-    removeItem(event: any) { }
+
 
     //REPLACEDN
     OnReplicedn() {
@@ -281,8 +278,8 @@ onSave(updatedData: any) {
 
 // ⭐ ADD CONDITION
 if (apibody.p_transactiontype === "CREDITNOTE") {
-    apibody.p_customername =this.replacecednlist[0].cnno;   // add key
-    apibody.p_creditnoteno =this.replacecednlist[0].dnno;   // add 
+    apibody.p_customername =this.replacecednlist[0]?.cnno;   // add key
+    apibody.p_creditnoteno =this.replacecednlist[0]?.dnno;   // add 
 } else {
     delete apibody.p_customername;           // remove key
 }
@@ -320,6 +317,7 @@ if (apibody.p_transactiontype === "CREDITNOTE") {
     }
     RetunCredit(dnndata:any){
         console.log(dnndata)
+        if(dnndata.value==null) return
        // return
         let apibody={
             ...this.getUserDetails,
@@ -331,7 +329,7 @@ if (apibody.p_transactiontype === "CREDITNOTE") {
             next:(res)=>{
                 this.replacecednlist=res.data
                  this.CreditForm.patchValue({
-                    p_creditNote: this.replacecednlist[0].cnno
+                    p_creditNote: this.replacecednlist[0]?.cnno
                     
                 }) 
                 console.log(res.data,this.CreditForm.value)

@@ -1,11 +1,11 @@
 <div class="card p-6">
   <div>
-      <form [formGroup]="CreditForm" (ngSubmit)="print()" class="space-y-8">
+      <form [formGroup]="CreditForm"  class="space-y-8">
   <!-- Header Row: Stock In + Buttons -->
   <div class="flex justify-between items-center mb-6">
     <span class="block text-surface-900 font-bold text-2xl">Debit/Credit Link</span>
         <div class="flex  gap-4">
-        <button pButton type="button" label="Generate DN" class="p-button-primary" [disabled]="saleArray.length === 0||!CreditForm.get('p_debitNote')?.value" (click)="Ganratedn('DEBITNOTE')"></button> 
+  <button pButton type="button" label="Generate DN" class="p-button-primary" [disabled]="saleArray.length === 0 ||CreditForm.get('p_debitNote')?.value" (click)="Ganratedn('DEBITNOTE')"></button> 
         <button pButton type="button" label="Link CN" class="p-button-primary" [disabled]="CreditForm.get('p_debitNote')?.value == null" (click)="Ganratedn('CREDITNOTE')"></button>
         <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
     </div>
@@ -22,13 +22,13 @@
         <div class="flex flex-col">
             <label class="font-medium mb-1">Debit Note</label>
            <p-dropdown (onChange)="RetunCredit($event)"
-            [options]="debittnotList"
+            [options]="debittnotList" 
             optionLabel="fieldid"
-            optionValue="fieldid"
+            optionValue="fieldid" [showClear]="true" 
             [filter]="true" 
             filterPlaceholder="Select Debit Note"
             formControlName="p_debitNote"
-            placeholder="Debit Note">
+            placeholder="Debit Note" (onClear)="reset()">
           </p-dropdown>
         
         </div>
