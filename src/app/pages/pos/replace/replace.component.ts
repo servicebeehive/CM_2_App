@@ -216,6 +216,7 @@ get isPrintDisabled(): boolean {
       ItemId: [data?.itemid || 0],
       ItemName: [data?.itemname || ''],
       UOMId: [data?.uomid || 0],
+      uomname: [data?.uomname || ''],
       Quantity: [1],                        // default qty = 1
       itemcost: [data?.pruchaseprice || 0],
       MRP: [data?.saleprice || 0],
