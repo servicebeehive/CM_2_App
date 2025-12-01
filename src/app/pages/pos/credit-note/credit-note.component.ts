@@ -84,7 +84,7 @@ export class CreditNoteComponent {
     rowsPerPage: number = 5;
     // ✅ Move dropdown options into variables
 
-    creditNoteOptions = [{ label: 'Item List' }, { label: 'Most Saleable' }, { label: 'Non Active Item' }, { label: 'Stock Report' }, { label: 'Zero Stock Report' }];
+    debitNoteOptions = [{ label: 'Item List' }, { label: 'Most Saleable' }, { label: 'Non Active Item' }, { label: 'Stock Report' }, { label: 'Zero Stock Report' }];
 
     categoryOptions = [
         { label: 'Wires & Cables', value: 'Wires & Cables' },
