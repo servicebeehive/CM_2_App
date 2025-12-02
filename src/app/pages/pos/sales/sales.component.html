@@ -28,9 +28,9 @@
           type="button"
           ngxPrint
           printSectionId="invoicePrintSection"
-          label="Print"
+          label="Print" (click)="printInvoice()"
           class="p-button-primary"
-          [disabled]="isPrintDisabled"
+          [disabled]="!this.salesForm.get('p_billno')?.value"
           >
         </button>
 
@@ -337,111 +337,232 @@
 <!-- ================================
      PRINT SECTION (INVOICE)
 ================================= -->
-<div id="invoicePrintSection">
+<div id="invoicePrintSection" style="width:900px; margin:auto; font-family:Arial;">
 
-  <div class="invoice-container" style="width:800px;margin:auto;font-family:Arial;">
+  <h3 style="text-align: center;">TAX INVOICE</h3>
 
-    <h2 style="text-align:center;margin-bottom:5px;">SHRISTI ELECTRICAL</h2>
+  <!-- ================= HEADER SECTION ================= -->
+  <table width="100%" border="1" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
+    <tr>
 
-    <p style="text-align:center;margin:0;">
-      SHOP NO.-7 SAPNA TALKIES COMPLEX,<br>
-      NANDINI ROAD, BHILAI<br>
-      GSTIN : 22AOCPY0439F1Z5 | State Code: 22<br>
-      Email : {{'shristielectricalgw@gmail.com'}}
-    </p>
+      <!-- LEFT SIDE (COMPANY + BUYER INFO) -->
+      <td width="60%" style="vertical-align:top; padding: 6px;">
 
-    <hr />
+        <strong>SHRISTI ELECTRICAL</strong><br>
+        SHOP NO.-7 SAPNA TALKIES COMPLEX,<br>
+        NANDINI ROAD, BHILAI<br>
+        GSTIN/UIN: 22AOCPY0439F1Z5<br>
+        State Name: Chhattisgarh, Code: 22<br>
+        E-Mail : {{'shristielectricalgw@gmail.com'}}
+        <br>
 
-    <h3 style="text-align:center;margin:0;">TAX INVOICE</h3>
+        <hr style="margin:5px 0;">
 
-    <!-- HEADER INFO -->
-    <table width="100%" style="margin-top:15px;">
-      <tr>
-        <td>
-          <strong>Invoice No:</strong> {{ salesForm.get('p_transactionid')?.value }}<br>
-          <strong>Date:</strong> {{ salesForm.get('p_transactiondate')?.value | date:'dd/MM/yyyy' }}
-        </td>
+        <strong>Buyer (Bill to)</strong><br><br>
 
-        <td>
-          <strong>Buyer (Bill To):</strong><br>
-          {{ salesForm.get('p_customername')?.value }}<br>
-          Mobile: {{ salesForm.get('p_mobileno')?.value }}
-        </td>
+        <strong>{{ salesForm.get('p_customername')?.value }}</strong><br>
+        {{ salesForm.get('p_customeraddress')?.value }}<br>
+        Mobile: {{ salesForm.get('p_mobileno')?.value }}<br>
+        <br>
+
+        GSTIN/UIN : {{ salesForm.get('p_customergstin')?.value || '-' }}<br>
+        State Name : {{ salesForm.get('p_customerstate')?.value || '-' }}
+      </td>
+
+      <!-- RIGHT SECTION (INVOICE DETAILS) -->
+      <td width="40%" style="vertical-align:top;">
+        <table width="100%" border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;">
+
+          <tr>
+            <td><strong>Invoice No.</strong></td>
+            <td>{{ salesForm.get('p_transactionid')?.value }}</td>
+          </tr>
+
+          <tr>
+            <td><strong>Dated</strong></td>
+            <td>{{ salesForm.get('p_transactiondate')?.value | date:'dd-MMM-yy' }}</td>
+          </tr>
+
+          <tr>
+            <td>Delivery Note</td>
+            <td>-</td>
+          </tr>
+
+          <tr>
+            <td><strong>Mode/Terms of Payment</strong></td>
+            <td><strong>BALANCE</strong></td>
+          </tr>
+
+          <tr>
+            <td>Reference No. & Date</td>
+            <td>{{ salesForm.get('p_transactionid')?.value }} dt. {{ salesForm.get('p_transactiondate')?.value | date:'dd-MMM-yy' }}</td>
+          </tr>
+
+          <tr>
+            <td>Other References</td>
+            <td>-</td>
+          </tr>
+
+          <tr>
+            <td>Buyer's Order No.</td>
+            <td>-</td>
+          </tr>
+
+          <tr>
+            <td>Dated</td>
+            <td>-</td>
+          </tr>
+
+          <tr>
+            <td>Dispatch Doc No.</td>
+            <td>-</td>
+          </tr>
+
+          <tr>
+            <td>Delivery Note Date</td>
+            <td>-</td>
+          </tr>
+
+          <tr>
+            <td>Dispatched through</td>
+            <td>-</td>
+          </tr>
+
+          <tr>
+            <td>Destination</td>
+            <td>-</td>
+          </tr>
+
+          <tr>
+            <td>Terms of Delivery</td>
+            <td>-</td>
+          </tr>
+
+        </table>
+      </td>
+
+    </tr>
+  </table>
+
+  <!-- ================= ITEM TABLE ================= -->
+  <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;font-size:14px;margin-top:10px;">
+    <thead>
+      <tr style="text-align:center;font-weight:bold;">
+        <td>Sl No.</td>
+        <td>Description of Goods</td>
+        <td>HSN/SAC</td>
+        <td>Quantity</td>
+        <td>Rate</td>
+        <td>per</td>
+        <td>Disc %</td>
+        <td>Amount</td>
       </tr>
-    </table>
+    </thead>
 
-    <hr />
+    <tbody>
 
-    <!-- PRINT TABLE -->
-    <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;">
-      <thead>
-        <tr style="background:#f0f0f0;">
-          <th>#</th>
-          <th>Description</th>
-          <th>HSN</th>
-          <th>Qty</th>
-          <th>Rate</th>
-          <th>Total</th>
-        </tr>
-      </thead>
+      <tr *ngFor="let item of saleRows; let i = index">
+        <td>{{ i + 1 }}</td>
+        <td>{{ item.get('ItemName')?.value }}</td>
+        <td>{{ item.get('HSN')?.value || 8544 }}</td>
+        <td>{{ item.get('Quantity')?.value }} PCS</td>
+        <td>{{ item.get('MRP')?.value | number:'1.2-2' }}</td>
+        <td>PCS</td>
+        <td>{{ item.get('discount')?.value || '' }}</td>
+        <td>{{ item.get('totalPayable')?.value | number:'1.2-2' }}</td>
+      </tr>
 
-      <tbody>
-        <tr *ngFor="let item of saleRows; let i = index">
-          <td>{{ i + 1 }}</td>
-          <td>{{ item.get('ItemName')?.value }}</td>
-          <td>—</td>
-          <td>{{ item.get('Quantity')?.value }}</td>
-          <td>{{ item.get('MRP')?.value }}</td>
-          <td>{{ item.get('totalPayable')?.value }}</td>
-        </tr>
-      </tbody>
-    </table>
+      <!-- SUB TOTAL -->
+      <tr>
+        <td colspan="7" style="text-align:right;font-weight:bold;">Sub Total</td>
+        <td>{{ salesForm.get('p_totalsale')?.value | number:'1.2-2' }}</td>
+      </tr>
 
-    <hr />
+      <!-- CGST -->
+      <tr>
+        <td colspan="7" style="text-align:right;"><b>CGST</b></td>
+        <td>{{ salesForm.get('p_cgst')?.value }}</td>
+      </tr>
 
-    <!-- PRINT SUMMARY -->
-    <table width="100%" style="margin-top:10px;">
+      <!-- SGST -->
+      <tr>
+        <td colspan="7" style="text-align:right;"><b>SGST</b></td>
+        <td>{{ salesForm.get('p_sgst')?.value }}</td>
+      </tr>
 
-   <tr>
-  <td><strong>Total Cost:</strong></td>
-  <td>₹ {{ salesForm.get('p_totalcost')?.value }}</td>
-</tr>
+      <!-- ROUND OFF -->
+      <tr>
+        <td colspan="7" style="text-align:right;"><b>ROUND OFF +/-</b></td>
+        <td>{{ salesForm.get('p_roundoff')?.value }}</td>
+      </tr>
 
-<tr>
-  <td><strong>Total Sale (MRP Total):</strong></td>
-  <td>₹ {{ salesForm.get('p_totalsale')?.value }}</td>
-</tr>
+    </tbody>
 
-<tr>
-  <td><strong>Discount:</strong></td>
-  <td>
-    {{ salesForm.get('p_overalldiscount')?.value }}
-    {{ salesForm.get('p_disctype')?.value ? '%' : '' }}
-  </td>
-</tr>
+    <!-- GRAND TOTAL -->
+    <tfoot>
+      <tr style="font-weight:bold;">
+        <td colspan="3" style="text-align:right;">Total Qty</td>
+        <td>{{ salesForm.get('p_totalqty')?.value }} PCS</td>
+        <td colspan="3"></td>
+        <td>₹ {{ salesForm.get('p_totalpayable')?.value }}</td>
+      </tr>
+    </tfoot>
+  </table>
 
-<tr>
-  <td><strong>Round Off:</strong></td>
-  <td>₹ {{ salesForm.get('p_roundoff')?.value }}</td>
-</tr>
+  <!-- ================= AMOUNT IN WORDS ================= -->
+  <div style="padding:10px;font-size:14px;">
+    <strong>Amount Chargeable (in words):</strong>
+    <!-- {{ amountInWords }} --> -
+  </div>
 
-<tr>
-  <td><strong>Final Payable:</strong></td>
-  <td><strong>₹ {{ salesForm.get('p_totalpayable')?.value }}</strong></td>
-</tr>
+  <!-- ================= GST SUMMARY ================= -->
+  <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;font-size:14px;margin-top:10px;">
+    <tr style="font-weight:bold;text-align:center;">
+      <td>HSN/SAC</td>
+      <td>Taxable Value</td>
+      <td>Rate</td>
+      <td>CGST Amount</td>
+      <td>Rate</td>
+      <td>SGST Amount</td>
+      <td>Total Tax Amount</td>
+    </tr>
 
+    <tr style="text-align:center;">
+      <td>8544</td>
+      <td>{{ salesForm.get('p_totalsale')?.value }}</td>
+      <td>9%</td>
+      <td>{{ salesForm.get('p_cgst')?.value }}</td>
+      <td>9%</td>
+      <td>{{ salesForm.get('p_sgst')?.value }}</td>
+      <td>{{ salesForm.get('p_cgst')?.value + salesForm.get('p_sgst')?.value }}</td>
+    </tr>
+  </table>
 
-    </table>
+  <!-- ================= BANK DETAILS ================= -->
+  <div style="padding:10px;font-size:14px;">
 
-    <hr />
+    <strong>Tax Amount (in words):</strong> 
+    <!-- {{ taxAmountInWords }} --> -
+    <br><br>
 
-    <p style="text-align:right;margin-top:50px;">
-      <strong>Authorized Signatory</strong>
-    </p>
+    <strong>Company's Bank Details</strong><br>
+    Bank Name : <b>BANK OF INDIA</b><br>
+    A/c No. : 930520110000557<br>
+    Branch & IFS Code : POWER HOUSE & BKID0009305<br><br>
+
+    Company's PAN : <b>AOCPY0439F</b>
+    <br><br>
+
+    <strong>Declaration:</strong>
+    We declare that this invoice shows the actual price of the goods described and all particulars are true.
+
+    <br><br>
+    <p style="text-align:right;"><strong>Authorized Signatory</strong></p>
 
   </div>
 
-</div> 
+</div>
+
 
 
 

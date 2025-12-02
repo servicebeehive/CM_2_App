@@ -539,6 +539,8 @@ costNotExceedPayableValidator(): ValidatorFn {
       header: 'Confirm',
       acceptLabel: 'Yes',
       rejectLabel: 'Cancel',
+       acceptButtonStyleClass: 'p-button-primary',
+        rejectButtonStyleClass: 'p-button-secondary',
       accept: () => {
         this.OnSalesHeaderCreate(this.salesForm.value);
       }
@@ -740,6 +742,21 @@ updateTotal(i: number) {
           detail: 'Sales saved successfully!',
           life: 3000
         });
+
+         this.confirmationService.confirm({
+             header: 'Print Invoice',
+             message: 'Are you sure you want to print this invoice?',
+
+            acceptLabel: 'Print Now',
+            rejectLabel: 'Cancel',
+
+           icon: 'pi pi-print',
+       acceptButtonStyleClass: 'p-button-primary',
+        rejectButtonStyleClass: 'p-button-secondary',
+      accept: () => {
+        this.printInvoice()
+      }
+    });
       },
       error: (err) => {
         console.error(err);
@@ -905,6 +922,33 @@ updateTotalCostSummary() {
   });
 }
 
+printInvoice() {
+  const printContents = document.getElementById('invoicePrintSection')?.innerHTML;
+  if (!printContents) return;
+
+  const popupWindow = window.open('', '_blank', 'width=800,height=600');
+  popupWindow!.document.open();
+
+  popupWindow!.document.write(`
+    <html>
+      <head>
+        <title>Invoice Print</title>
+        <style>
+          body { font-family: Arial; padding: 20px; }
+          table { width: 100%; border-collapse: collapse; }
+          th, td { border: 1px solid #000; padding: 6px; }
+          hr { margin: 15px 0; }
+        </style>
+      </head>
+
+      <body onload="window.print(); window.close();">
+        ${printContents}
+      </body>
+    </html>
+  `);
+
+//  popupWindow!.document.close();
+}
 
 
 
