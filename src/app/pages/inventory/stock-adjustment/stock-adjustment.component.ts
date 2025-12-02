@@ -394,7 +394,48 @@ export class StockAdjustmentComponent {
     this.OnGetItem();
     this.OnGetCategory();
   }
+onCategoryItem(event: any) {
+  const categoryId = event.value;
+this.updateForm.get('item')?.setValue(null);
+  // If category is null → load all items
+  if (!categoryId) {
+    this.OnGetItem();     // reload full item list
+    return;
+  }
 
+  // If category has value → load category-specific items
+  this.categoryRelavantItem(categoryId);
+}
+
+ categoryRelavantItem(id:any){
+   console.log('item:',id);
+   this.itemOptions=[];
+   const payload={
+    uname:"admin",
+    p_username:"admin",
+    p_returntype:"CATEGORY",
+    p_returnvalue:id.toString(),
+    clientcode:"CG01-SE",
+    "x-access-token":this.authService.getToken()
+   };
+   this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+    next:(res: any) => {
+    if(!res.data || res.data.length==0){
+         this.itemOptions = [];
+        // Clear filtered products if no items for this category
+        this.filteredProducts = [];
+        this.products = [];
+        // this.buildFormArrayFormProducts([]);
+        this.showSuccess('No items found for this category.');
+        return;
+      }
+      this.itemOptions=res.data;
+    },
+    error:(err)=>{
+      console.error(err);
+    }
+   });
+ }
   OnGetItem() {
     const payload = this.createDropdownPayload('ITEM');
     this.inventoryService.getdropdowndetails(payload).subscribe({
@@ -493,7 +534,16 @@ export class StockAdjustmentComponent {
       error: (err) => console.error(err)
     });
   }
-
+onItemChange(event:any){
+  const itemId = event.value;
+  if(!itemId){
+     this.products = [];
+        this.filteredProducts = [];
+        // this.buildFormArrayFormProducts([]);
+        
+        return;
+  }
+}
   // -------------------------
   // Confirm + submit wrapper
   // -------------------------
@@ -519,7 +569,7 @@ export class StockAdjustmentComponent {
     // Reset the form and clear table data
     this.updateForm.reset();
     this.updateForm.patchValue({
-      mrpUpdate: 'B'
+      mrpUpdate: 'B',
     });
 
     // Clear model lists and pagination
@@ -527,6 +577,8 @@ export class StockAdjustmentComponent {
     this.filteredProducts = [];
     this.pagedProducts = [];
     this.first = 0;
+    this.OnGetItem();
+
   }
 
   showSuccess(message: string) {

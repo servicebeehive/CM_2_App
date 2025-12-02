@@ -131,6 +131,17 @@ printList:any[]=[]
         const searchTerm=(this.globalFilter || '')?.toLowerCase().trim();
        const selectedCategory=this.updateForm.get('category')?.value;
        const selectedItem=this.updateForm.get('item')?.value;
+        if ((!selectedCategory || !selectedItem) && this.products.length > 0) {
+            this.products = [];
+            this.filteredProducts = [];
+            this.buildFormArrayFormProducts(this.filteredProducts);
+            return;
+        }
+        if (!selectedCategory || !selectedItem) {
+            this.filteredProducts = [];
+            this.buildFormArrayFormProducts(this.filteredProducts);
+            return;
+        }
        this.filteredProducts=this.products.filter((p:any)=>{
         const matchesSearch=!searchTerm || String(p.itemcombine ?? p.name ?? '').toLowerCase() .includes(searchTerm) ||
         String(p.categoryname ?? p.category ?? '').toLowerCase() .includes(searchTerm) ||
@@ -177,7 +188,65 @@ printList:any[]=[]
         this.OnGetCategory();
         this.OnGetUOM();
 }
-    
+onItemChange(event:any){
+  const itemId = event.value;
+  if(!itemId){
+     this.products = [];
+        this.filteredProducts = [];
+        this.buildFormArrayFormProducts([]);
+        
+        return;
+  }
+}
+ onCategoryItem(event: any) {
+  const categoryId = event.value;
+  this.updateForm.get('item')?.setValue(null);
+  // If category is null → load all items
+  if (!categoryId) {
+    this.OnGetItem();     // reload full item list
+    this.products = [];
+    this.filteredProducts = [];
+    this.buildFormArrayFormProducts([]);
+    return;
+  }
+
+  // If category has value → load category-specific items
+  this.categoryRelavantItem(categoryId);
+}
+
+ categoryRelavantItem(id:any){
+   console.log('item:',id);
+   this.itemOptions=[];
+   const payload={
+    uname:"admin",
+    p_username:"admin",
+    p_returntype:"CATEGORY",
+    p_returnvalue:id.toString(),
+    clientcode:"CG01-SE",
+    "x-access-token":this.authService.getToken()
+   };
+   this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+    next:(res: any) => {
+      if(!res.data || res.data.length==0){
+         this.itemOptions = [];
+        // Clear filtered products if no items for this category
+        this.filteredProducts = [];
+        this.products = [];
+        this.buildFormArrayFormProducts([]);
+        this.showSuccess('No items found for this category.');
+        return;
+      }
+      this.itemOptions=res.data;
+    },
+    error:(err)=>{
+      console.error(err);
+       this.itemOptions = [];
+      this.filteredProducts = [];
+      this.products = [];
+      this.buildFormArrayFormProducts([]);
+    }
+   });
+ }
     OnGetItem() {
   const payload = this.createDropdownPayload("ITEM");
   this.inventoryService.getdropdowndetails(payload).subscribe({
@@ -209,9 +278,11 @@ products.forEach((p:any)=>{
   stockArray.push(group);
 });
 }
+
  Onreturndropdowndetails() {
     const category=this.updateForm.controls['category'].value;
     const item = this.updateForm.controls['item'].value;
+  
     if(category || item){
        const payload = {
     uname: 'admin',
@@ -283,6 +354,9 @@ products.forEach((p:any)=>{
     reset() {
         this.updateForm.reset();
         this.filteredProducts = [];
+         this.products = [];
+  this.buildFormArrayFormProducts([]);
+         this.OnGetItem();
     }
     showSuccess(message: string) {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });

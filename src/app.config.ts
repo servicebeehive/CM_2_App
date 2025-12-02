@@ -24,10 +24,10 @@ export const appConfig: ApplicationConfig = {
   
 
     // NgRx Root Store
-    provideStore(),
+    // provideStore(),
 
     // Feature States
-    provideState('itemlist', itemlistReducer),
+    // provideState('itemlist', itemlistReducer),
 
     // Effects
     // provideEffects([
@@ -35,9 +35,9 @@ export const appConfig: ApplicationConfig = {
     // ]),
 
     // DevTools
-    provideStoreDevtools({
-      maxAge: 25
-    }),
+    // provideStoreDevtools({
+    //   maxAge: 25
+    // }),
   
 
     MessageService,
