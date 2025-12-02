@@ -91,7 +91,7 @@ export class ReplaceComponent {
   public authService = inject(AuthService);
   public getUserDetails = {
     "uname": "admin",
-    "p_username": "admin",
+    "p_loginuser": "admin",
     "clientcode": "CG01-SE",
     "x-access-token": this.authService.getToken(),
   };
@@ -216,6 +216,7 @@ get isPrintDisabled(): boolean {
       ItemId: [data?.itemid || 0],
       ItemName: [data?.itemname || ''],
       UOMId: [data?.uomid || 0],
+      uomname: [data?.uomname || ''],
       Quantity: [1],                        // default qty = 1
       itemcost: [data?.pruchaseprice || 0],
       MRP: [data?.saleprice || 0],
@@ -240,6 +241,7 @@ get isPrintDisabled(): boolean {
           ItemId: item.itemsku || 0,    // use itemsku when itemid not present
           ItemName: item.itemname || '',
           UOMId: item.uomid || 0,
+          uomname:item.uomname,
           Quantity: item.quantity || 1,
           itemcost: item.itemcost || 0,
           MRP: (item.mrp || 0).toFixed(2),
@@ -618,11 +620,15 @@ allowOnlyNumbers(event: any) {
   // Send header (and sale) to API, show toast notifications on result
   OnSalesHeaderCreate(data: any) {
     const apibody = this.cleanRequestBody(this.replaceForm.value);
-
-    this.stockInService.Getreturndropdowndetails(apibody).subscribe({
+  //delete (apibody as any).p_loginuser;
+    this.stockInService.OninsertSalesDetails(apibody).subscribe({
       next: (res) => {
         console.log(res.data);
-        this.messageService.add({
+          this.OnGetBillNo()
+        this.replaceForm.patchValue({
+          p_billno:res.data[0].billno
+        })
+                this.messageService.add({
           severity: 'success',
           summary: 'Success',
           detail: 'Replace done successfully!',

@@ -1,3 +1,4 @@
+
 <div class="card p-6">
     <div>
         <form [formGroup]="returnForm" (ngSubmit)="onSubmit()" class="space-y-8">
@@ -67,13 +68,9 @@
                 <div class="mt-6">
                     <p-table
                         [value]="saleArray.controls"
-                        [globalFilterFields]="['name']"
-                        [filters]="{ global: { value: globalFilter, matchMode: 'contains' } }"
                         dataKey="ItemId"
                         selectionMode="multiple"
                         [(selection)]="selectedProducts"
-                        (onRowSelect)="updateSelectedTotal()"
-                        (onRowUnselect)="updateSelectedTotal()"
                         [paginator]="true"
                         [rows]="10"
                         [rowsPerPageOptions]="[5, 10, 20, 50]"
@@ -83,7 +80,14 @@
                         <ng-template pTemplate="header">
                             <tr class="bg-yellow-400">
                                 <!-- <th class="text-center"><p-checkbox formControlName="update.selection" binary="true"></p-checkbox></th> -->
-                                <th style="width: 4rem"><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
+                                 <th style="width: 4rem">
+                                    <p-checkbox 
+                                        binary="true" 
+                                        [ngModel]="isAllSelected()"
+                                        (onChange)="toggleSelectAll($event)"
+                                        [ngModelOptions]="{standalone: true}">
+                                    </p-checkbox>
+                                </th>
                                 <th>Item Code</th>
                                 <th>Item Name</th>
                                 <th>Current Stock</th>
@@ -98,11 +102,18 @@
                         <ng-template pTemplate="body" let-row let-i="rowIndex">
                             <tr [formGroup]="row">
                                 <!-- <td class="text-center"><p-checkbox [(ngModel)]="update.selection"  binary="true"></p-checkbox></td> -->
-                                <td><p-tableCheckbox [value]="row"></p-tableCheckbox></td>
+                                <td>
+                                    <p-checkbox 
+                                        binary="true" 
+                                        [ngModel]="isRowSelected(row)"
+                                        (onChange)="toggleRowSelection(row, $event)"
+                                        [ngModelOptions]="{standalone: true}">
+                                    </p-checkbox>
+                                </td>
                                 <td>{{ row.get('itemsku')?.value }}</td>
                                 <td>{{ row.get('ItemName')?.value }}</td>
                                 <td>{{ row.get('curStock')?.value }}</td>
-                                <td>{{ row.get('UOMId')?.value }}</td>
+                                <td>{{ row.get('uomname')?.value }}</td>
                                 <td>
                                     <div class="flex flex-col">
                                     <input class="w-[70px]" type="number" pInputText formControlName="Quantity" placeholder="quantity" (input)="updateTotal(i)" [readOnly]="!selectedProducts.includes(row)" (keypress)="blockDecimal($event)"  [ngClass]="{ 'border-red-500': row.get('Quantity')?.errors?.['maxStock'] }"  />
@@ -133,16 +144,16 @@
                         <label class="font-medium mb-1">MRP Total</label>
                         <input pInputText formControlName="p_totalsale" placeholder="Grand Total" readonly />
                     </div>
-                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                     <div class="grid grid-cols-1 md:grid-cols-2">
       <!-- Discount type -->
         <div class="flex flex-col">
-          <label>Disc(%)</label>
-          <p-checkbox class="mt-2" binary="true" variant="filled" formControlName="p_disctype" readonly></p-checkbox>
+          <label class="font-medium mb-2">Disc(%)</label>
+          <p-checkbox readonly class="w-5 h-5" binary="true" variant="filled" formControlName="p_disctype"></p-checkbox>
         </div>
       <!-- Discount -->
       <div class="flex flex-col ">
-        <label>Discount</label>
-        <input class="w-40" pInputText type="number" formControlName="p_overalldiscount" (input)="applyDiscount()" [placeholder]="discountplace" readonly />
+        <label class="font-medium">Discount</label>
+        <input readonly class="p-inputtext p-component font-small w-full" pInputText type="number" formControlName="p_overalldiscount" (input)="applyDiscount()" [placeholder]="discountplace"/>
       </div>
 </div>
                     <!-- Round Off -->

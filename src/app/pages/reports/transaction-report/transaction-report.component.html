@@ -37,9 +37,9 @@
                 <label class="font-medium mb-1">GST Transaction</label>
             </div>
       </div>
-      </div>
+    
         <!-- Transaction Date From-->
-        <div class="flex flex-col">
+          <div class="flex flex-col">
           <label class="font-medium mb-1">From Date</label>
           <p-datepicker  fluid formControlName="fromDate" [showIcon]="true" placeholder="From Date"></p-datepicker>
         </div>
@@ -50,21 +50,20 @@
           <p-datepicker  fluid formControlName="toDate" [showIcon]="true" placeholder="To Date" ></p-datepicker>
         </div>
         </div>
-
          <div class="flex justify-between items-end w-full gap-6">
 <div class="grid grid-cols-2 gap-6 flex-grow">
          <!-- Category -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Category</label>
-                <p-dropdown [options]="categoryOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" [showClear]="true" filterPlaceholder="Search Category" formControlName="category" placeholder="Category"> </p-dropdown>
+                <p-dropdown [options]="categoryOptions" optionLabel="fieldname" (onChange)="onCategoryItem($event)" optionValue="fieldid" [filter]="true" [showClear]="true" filterPlaceholder="Search Category" formControlName="category" placeholder="Category"> </p-dropdown>
             </div>
 
        <!-- Item Name -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Item Name</label>
-                <p-dropdown [options]="itemOptions" optionLabel="itemcombine" optionValue="itemid" [filter]="true" [showClear]="true" filterPlaceholder="Search Item" formControlName="item" placeholder="Item"> </p-dropdown>
+                <p-dropdown [options]="itemOptions" optionLabel="itemcombine" optionValue="itemid" [filter]="true" [showClear]="true" (onChange)="onItemChange($event)" filterPlaceholder="Search Item" formControlName="item" placeholder="Item"> </p-dropdown>
             </div>
-
+</div>
      
     </div>
 

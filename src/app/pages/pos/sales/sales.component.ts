@@ -154,6 +154,8 @@ export class SalesComponent {
       p_paymentdue: [0],
       // FormArray for sale rows
       p_sale: this.fb.array([])
+    },{
+      validators: [this.costGreaterThanSaleValidator()]
     });
     this.salesForm.get('p_billno')?.valueChanges.subscribe(value=>{
       if(value){
@@ -170,7 +172,7 @@ export class SalesComponent {
 else{
   this.discountplace="Enter %";
 }
- this.salesForm.get('p_overalldiscount')?.setValue('', { emitEvent: false });
+//  this.salesForm.get('p_overalldiscount')?.setValue('', { emitEvent: false });
  this.applyDiscount();
     });
 
@@ -209,24 +211,27 @@ get isPrintDisabled(): boolean {
   // -----------------------------
 
   // Sales Array => Create a FormGroup for a sale item
-  createSaleItem(data?: any): FormGroup {
-    return this.fb.group({
-      TransactiondetailId: this.salesForm.controls['p_transactionid'].value || 0,
-      ItemId: [data?.itemid || 0],
-      ItemName: [data?.itemname || ''],
-      UOMId: [data?.uomid || 0],
-      Quantity: [1],                        // default qty = 1
-      itemcost: [data?.pruchaseprice || 0],
-      MRP: [data?.saleprice || 0],
-      totalPayable: [data ? data.saleprice : 0],
+createSaleItem(data?: any): FormGroup {
+  return this.fb.group({
+    TransactiondetailId: this.salesForm.controls['p_transactionid'].value || 0,
+    ItemId: [data?.itemid || 0],
+    ItemName: [data?.itemname || ''],
+    UOMId: [data?.uomid || 0],
+    Quantity: [1],
+    itemcost: [data?.pruchaseprice || 0],
+    MRP: [data?.saleprice || 0],
+    totalPayable: [data ? data.saleprice : 0],
 
-      // Extra fields shown in table
-      curStock: [data?.currentstock || 0],
-      warPeriod: [data?.warrentyperiod || 0],
-      location: [data?.location || ''],
-      itemsku: [data?.itemsku || '']
-    });
-  }
+    curStock: [data?.currentstock || 0],
+    warPeriod: [data?.warrentyperiod || 0],
+    location: [data?.location || ''],
+    itemsku: [data?.itemsku || ''],
+
+    apiCost: [0]   // ⭐ IMPORTANT ⭐
+  });
+}
+
+
 
   // Map API sale items (array) into the FormArray
   mapSaleItems(apiItems: any[]) {
@@ -338,7 +343,7 @@ OnItemChange(event: any) {
   const latetData = this.itemOptions.find(item => item.itemid == event.value);
   if (!latetData) return;
 
-  // 🔥 CHECK IF ITEM ALREADY EXISTS IN TABLE
+  // Prevent duplicate item
   const alreadyExists = this.saleArray.controls.some(row =>
     row.get('ItemId')?.value === latetData.itemid
   );
@@ -351,26 +356,41 @@ OnItemChange(event: any) {
       life: 2000
     });
 
-    // 🧹 Clear dropdown selection
     this.salesForm.get('p_itemdata')?.setValue(null, { emitEvent: false });
-
     return;
   }
 
-  // ✅ Add item (no duplicate)
+  // Add new row
   this.saleArray.push(this.createSaleItem(latetData));
 
   const index = this.saleArray.length - 1;
 
-  // update totals
-  this.updateTotal(index);
-
-  // load UOM list for this row only
+  // Load UOM list for this item
   this.OnUMO(event.value, index);
 
-  // 🧹 Clear dropdown after add
+  // ⭐ Call calculateMRP immediately after item selection
+  this.calculateMRP(index);
+
+  // Clear dropdown selection
   this.salesForm.get('p_itemdata')?.setValue(null, { emitEvent: false });
-  this.calculateSummary()
+
+  this.calculateSummary();
+}
+
+
+costGreaterThanSaleValidator(): ValidatorFn {
+  return (form: AbstractControl): ValidationErrors | null => {
+
+    const totalCost = Number(form.get('p_totalcost')?.value || 0);
+    const finalPayable = Number(form.get('p_totalpayable')?.value || 0);
+
+    // ❗ Condition: final payable must be >= total cost
+    if (finalPayable < totalCost) {
+      return { costNotGreater: true };
+    }
+
+    return null;
+  };
 }
 
 
@@ -434,9 +454,10 @@ OnItemChange(event: any) {
   if (this.uomlist && Array.isArray(this.uomlist)) {
     this.uomlist.splice(i, 1);
   }
-
+this.updateTotalCostSummary()
   // If no items left → reset summary
   if (this.saleArray.length === 0) {
+   // this.updateTotalCostSummary()
     this.calculateSummary();
     return;
   }
@@ -449,11 +470,23 @@ OnItemChange(event: any) {
 
   // Prevent decimal input in quantity field (keyboard)
   blockDecimal(event: KeyboardEvent) {
-    if (event.key === '.' || event.key === ',' || event.key === 'e' || event.key === 'E') {
+    if (event.key === '.' || event.key === ',' || event.key === 'e' || event.key === 'E' || event.key === '0'||event.key === '-') {
       event.preventDefault();  // block decimal
     }
   }
-
+// Custom validator to check if total cost exceeds final payable
+costNotExceedPayableValidator(): ValidatorFn {
+    return (formGroup: AbstractControl): ValidationErrors | null => {
+        const totalCost = Number(formGroup.get('p_totalcost')?.value || 0);
+        const finalPayable = Number(formGroup.get('p_totalpayable')?.value || 0);
+        
+        // Only validate if both have values
+        if (totalCost !== null && finalPayable !== null && totalCost < finalPayable) {
+            return { maxCost: true };
+        }
+        return null;
+    };
+}
   // -----------------------------
   //  Validation / Submit helpers
   // -----------------------------
@@ -506,6 +539,8 @@ OnItemChange(event: any) {
       header: 'Confirm',
       acceptLabel: 'Yes',
       rejectLabel: 'Cancel',
+       acceptButtonStyleClass: 'p-button-primary',
+        rejectButtonStyleClass: 'p-button-secondary',
       accept: () => {
         this.OnSalesHeaderCreate(this.salesForm.value);
       }
@@ -524,65 +559,56 @@ OnItemChange(event: any) {
   // -----------------------------
 
   // Recalculate totals for entire sale
-  calculateSummary() {
-    let totalCost = 0;
-    let totalMRP = 0;
-    let totalSale = 0;
+calculateSummary() {
+  let totalMRP = 0;
 
-    this.saleArray.controls.forEach((row: AbstractControl) => {
-      const qty = Number(row.get('Quantity')?.value || 0);
-      const cost = Number(row.get('itemcost')?.value || 0);
-      const mrp = Number(row.get('MRP')?.value || 0);
-
-      totalCost += qty * cost;
-      totalMRP += qty * mrp;
-      totalSale += qty * mrp;
-    });
-
-    // Assign summary values
-    this.salesForm.patchValue({
-      p_totalcost: (totalCost).toFixed(2),
-      p_totalsale: (totalMRP).toFixed(2),
-      p_roundoff: 0,
-      p_totalpayable: (totalMRP).toFixed(2)
-    });
-
-    // Apply discount/rounding adjustments
-    this.applyDiscount();
-  }
-
-  // Update a specific row total, ensure stock constraints
-  updateTotal(i: number) {
-    const row = this.saleArray.at(i);
-
+  this.saleArray.controls.forEach((row: AbstractControl) => {
     const qty = Number(row.get('Quantity')?.value || 0);
-    const stock = Number(row.get('curStock')?.value || 0);
     const mrp = Number(row.get('MRP')?.value || 0);
 
-    // If quantity > stock → set error + show warning
-    if (qty > stock) {
-      row.get('Quantity')?.setErrors({ maxStock: true });
+    totalMRP += qty * mrp;
+  });
 
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Stock Limit Exceeded',
-        detail: `Only ${stock} units available.`,
-        life: 2000
-      });
+  this.salesForm.patchValue({
+    p_totalsale: totalMRP.toFixed(2),
+    p_roundoff: 0,
+    p_totalpayable: totalMRP.toFixed(2)
+  });
 
-      return;
-    } else {
-      // Clear error if valid
-      row.get('Quantity')?.setErrors(null);
-    }
+  this.applyDiscount();
+}
 
-    // Update row total and recalc summary
-    row.patchValue({
-      totalPayable: qty * mrp
+
+
+  // Update a specific row total, ensure stock constraints
+updateTotal(i: number) {
+  const row = this.saleArray.at(i);
+
+  const qty = Number(row.get('Quantity')?.value || 0);
+  const stock = Number(row.get('curStock')?.value || 0);
+  const mrp = Number(row.get('MRP')?.value || 0);
+
+  if (qty > stock) {
+    row.get('Quantity')?.setErrors({ maxStock: true });
+    this.messageService.add({
+      severity: 'warn',
+      summary: 'Stock Limit Exceeded',
+      detail: `Only ${stock} units available.`,
+      life: 2000
     });
-
-    this.calculateSummary();
+    return;
+  } else {
+    row.get('Quantity')?.setErrors(null);
   }
+
+  row.patchValue({
+    totalPayable: qty * mrp   // ⭐ FINAL FIX REMAINS
+  });
+
+  this.calculateSummary();
+  this.salesForm.updateValueAndValidity();
+}
+
 
   // Apply overall discount & round off
   applyDiscount() {
@@ -605,6 +631,7 @@ OnItemChange(event: any) {
       p_roundoff: roundOff,
       p_totalpayable: Math.round(finalPayable)
     });
+    this.salesForm.updateValueAndValidity();
   }
 
   // -----------------------------
@@ -715,6 +742,21 @@ OnItemChange(event: any) {
           detail: 'Sales saved successfully!',
           life: 3000
         });
+
+         this.confirmationService.confirm({
+             header: 'Print Invoice',
+             message: 'Are you sure you want to print this invoice?',
+
+            acceptLabel: 'Print Now',
+            rejectLabel: 'Cancel',
+
+           icon: 'pi pi-print',
+       acceptButtonStyleClass: 'p-button-primary',
+        rejectButtonStyleClass: 'p-button-secondary',
+      accept: () => {
+        this.printInvoice()
+      }
+    });
       },
       error: (err) => {
         console.error(err);
@@ -735,86 +777,91 @@ OnItemChange(event: any) {
   showSuccess(message: string) {
     this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
   }
+OnUMO(value: any, index: number) {
 
-  OnUMO(value:any,index:number){
-    let apibody={
-      ...this.getUserDetails,
-         
-    "p_returntype": "SALEUOM",
-    "p_returnvalue":value,
-  
-   
-    }
-    this.salesService.Getreturndropdowndetails(apibody).subscribe({
-     
-      next:(res)=>{
-       //  this.OngetcalculatedMRP()
-        console.log(res.data)
-        this.uomlist[index]=res.data
-      },
-      error:(res)=>{
+  let apibody = {
+    ...this.getUserDetails,
+    p_returntype: "SALEUOM",
+    p_returnvalue: value,
+  };
 
+  this.salesService.Getreturndropdowndetails(apibody).subscribe({
+    next: (res) => {
+      this.uomlist[index] = res.data;
+
+      const row = this.saleArray.at(index);
+
+      // ⭐ Auto-select FIRST UOM
+      if (this.uomlist[index] && this.uomlist[index].length > 0) {
+
+        const firstUom = this.uomlist[index][0];
+
+        row.patchValue({
+          UOMId: firstUom.fieldid
+        });
+
+        // ⭐ Immediately calculate MRP + TOTAL + COST
+        this.calculateMRP(index);
       }
-  })
-  
-   
-  }
+    }
+  });
+}
 
 
-  OngetcalculatedMRP(data: any, index: number) {
+
+OngetcalculatedMRP(data: any, index: number) {
+
   const row = this.saleArray.at(index);
-
-  const qty = Number(row.get('Quantity')?.value || 0);
+  const qty = Number(row.get('Quantity')?.value || 1);
 
   let apibody = {
     ...this.getUserDetails,
     p_itemid: data.ItemId,
     p_qty: qty,
-    p_uomid: data.UOMId,
+    p_uomid: data.UOMId
   };
 
-  // remove login user
   delete (apibody as any).p_loginuser;
 
   this.orderService.getcalculatedMRP(apibody).subscribe({
     next: (res: any) => {
-      console.log(res.data);
 
-      // Example: res.data = { totalmrp: 200, totalcost: 100 }
+      const mrp = Number(res.data.totalmrp || 0);
+      const cost = Number(res.data.totalcost || 0);
 
-      // ✅ Update only the selected row
       row.patchValue({
-        MRP: res.data.totalmrp,
-        totalPayable: res.data.totalcost
+        MRP: mrp,
+        itemcost: cost,             // ⭐ FIXED
+        totalPayable: qty * mrp,
+        apiCost: qty * cost
       });
-     // this.updateTotal(index)
-      // If your UI needs recalculation based on Quantity:
-      // this.updateTotal(index);
+
+      this.updateTotalCostSummary();
       this.calculateSummary();
-    },
-    error: (err) => {
-      console.error(err);
     }
   });
 }
+
+
+
+
 
   UOMId(event:any,index:number){
     console.log(event)
     this.OngetcalculatedMRP(event.value,index)
   }
-  calculateMRP(index: number) {
+calculateMRP(index: number) {
   const row = this.saleArray.at(index);
 
-  const qty = Number(row.get('Quantity')?.value || 0);
+  const qty = Number(row.get('Quantity')?.value || 1);
   const uomid = row.get('UOMId')?.value;
-  const itemId = row.get('ItemId')?.value;  // use row item id
+  const itemId = row.get('ItemId')?.value;
 
-  if (!uomid || qty <= 0) return; // stop API call if invalid
+  if (!uomid || qty <= 0) return;
 
   let apibody = {
     ...this.getUserDetails,
     p_itemid: itemId,
-   // p_itemid:42,
     p_qty: qty,
     p_uomid: uomid
   };
@@ -823,20 +870,119 @@ OnItemChange(event: any) {
 
   this.orderService.getcalculatedMRP(apibody).subscribe({
     next: (res: any) => {
-      console.log("API Result:", res.data);
-     
 
+      const mrp = Number(res.data.totalmrp || 0);
+      const cost = Number(res.data.totalcost || 0);
+
+      // ⭐ IMPORTANT — Update purchase price also
       row.patchValue({
-        MRP: res.data.totalmrp,
-        totalPayable: res.data.totalcost
+        MRP: mrp,
+        itemcost: cost,               // <-- FIXED
+        totalPayable: qty * mrp,
+        apiCost: qty * cost           // <-- used for cost summary
       });
+
+      this.updateTotalCostSummary();
       this.calculateSummary();
-      // this.updateTotal(index)
     }
   });
 }
+
+
+
+
+
 OnQtyChange(index: number) {
   this.calculateMRP(index);
 }
+calculateItemCost(row: AbstractControl, apiCost: number | null | undefined): number {
+  const qty = Number(row.get('Quantity')?.value || 0);
+  const itemcost = Number(row.get('itemcost')?.value || 0);
+
+  // If API sent cost AND it is a valid number → use it
+  if (apiCost !== null && apiCost !== undefined && !isNaN(apiCost)) {
+    return Number(apiCost);
+  }
+
+  // Otherwise fallback → qty × itemcost
+  return qty * itemcost;
+}
+updateTotalCostSummary() {
+  let finalCost = 0;
+
+  this.saleArray.controls.forEach((row: AbstractControl) => {
+    const qty = Number(row.get('Quantity')?.value || 0);
+    const cost = Number(row.get('itemcost')?.value || 0);
+
+    finalCost += qty * cost;   // ⭐ UOM adjusted cost
+  });
+
+  this.salesForm.patchValue({
+    p_totalcost: finalCost.toFixed(2)
+  });
+}
+
+printInvoice() {
+  const printContents = document.getElementById('invoicePrintSection')?.innerHTML;
+  if (!printContents) return;
+
+  const popupWindow = window.open('', '_blank', 'width=900,height=1000');
+  popupWindow!.document.open();
+
+  popupWindow!.document.write(`
+    <html>
+      <head>
+        <title>Invoice Print</title>
+
+        <style>
+
+          /* Force Single Page */
+          @page {
+            size: A4;
+            margin:0;
+          }
+
+          body {
+            font-family: Arial;
+            padding: 10px;
+            zoom: 80%; /* Adjust 60–100% until your invoice fits on one page */
+          }
+
+          table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            page-break-inside: avoid; 
+          }
+
+          th, td { 
+            border: 1px solid #000; 
+            padding: 5px;
+            font-size: 12px;
+          }
+
+          hr { margin: 10px 0; }
+
+          /* Avoid breaking inside elements */
+          .no-break, table, tr, td {
+            page-break-inside: avoid !important;
+          }
+
+        </style>
+      </head>
+
+      <body onload="window.print(); window.close();">
+        <div class="no-break">
+          ${printContents}
+        </div>
+      </body>
+    </html>
+  `);
+
+ // popupWindow!.document.close();
+}
+
+
+
+
 
 }

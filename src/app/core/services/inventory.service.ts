@@ -151,6 +151,7 @@ updatestockadjustment(payload:any):Observable<any>{
     }),
 
 )
+
 }
 
   /** 🔹 Common error handler */

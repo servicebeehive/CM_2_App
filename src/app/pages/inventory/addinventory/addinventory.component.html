@@ -243,7 +243,12 @@
       [ngModelOptions]="{standalone: true}"
       (ngModelChange)="isChildUOMValid()"
       placeholder="MRP"
+      class="min-[]"
       (keypress)="allowOnlyNumbers($event)" />
+      <br>
+      <small class="text-red-500" *ngIf="product.mrpError">
+  MRP/conversion must be greater than {{ (addForm.get('mrp')?.value / product.conversion) | number:'1.2-2' }}
+</small>
   </td>
 
   <td>

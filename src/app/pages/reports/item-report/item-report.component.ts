@@ -107,7 +107,7 @@ export class ItemReportComponent {
        
         this.reportForm = this.fb.group({
             item: [''],
-          
+          reportType:[''],
             category: [''],
              p_stock: this.fb.array([])
         });
@@ -188,7 +188,57 @@ export class ItemReportComponent {
       this.products=this.inventoryService.productItem || [];
       this.buildFormArrayFormProducts(this.products);
     }
+    onItemChange(event:any){
+  const itemId = event.value;
+  if(!itemId){
+     this.products = [];
+        this.filteredProducts = [];
+        this.buildFormArrayFormProducts([]);
+        
+        return;
+  }
+}
+    onCategoryItem(event: any) {
+  const categoryId = event.value;
+this.reportForm.get('item')?.setValue(null);
+  // If category is null → load all items
+  if (!categoryId) {
+    this.OnGetItem();     // reload full item list
+    return;
+  }
+  // If category has value → load category-specific items
+  this.categoryRelavantItem(categoryId);
+}
 
+ categoryRelavantItem(id:any){
+   console.log('item:',id);
+   this.itemOptions=[];
+   const payload={
+    uname:"admin",
+    p_username:"admin",
+    p_returntype:"CATEGORY",
+    p_returnvalue:id.toString(),
+    clientcode:"CG01-SE",
+    "x-access-token":this.authService.getToken()
+   };
+   this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+    next:(res: any) => {
+    if(!res.data || res.data.length==0){
+         this.itemOptions = [];
+        // Clear filtered products if no items for this category
+        this.filteredProducts = [];
+        this.products = [];
+        this.buildFormArrayFormProducts([]);
+        this.showSuccess('No items found for this category.');
+        return;
+      }
+      this.itemOptions=res.data;
+    },
+    error:(err)=>{
+      console.error(err);
+    }
+   });
+ }
     onSave(updatedData: any) {
         const mappedData = {
             selection: true,
@@ -222,6 +272,9 @@ export class ItemReportComponent {
     reset() {
         this.reportForm.reset();
         this.filteredProducts = [];
+         this.products = [];
+  this.buildFormArrayFormProducts([]);
+        this.OnGetItem();
     }
     createDropdownPayload(returnType: string) {
         return {

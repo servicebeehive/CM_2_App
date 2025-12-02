@@ -99,8 +99,11 @@ public authService = inject(AuthService);
 
     ngOnInit(): void {
         this.loadAllDropdowns();
+        this.initializeForm();
         // this.onGetStockIn();
-        this.returnForm = this.fb.group({
+    }
+ initializeForm(): void {
+this.returnForm = this.fb.group({
             returnBillNo: ['', Validators.required],
             p_itemdata: [null],
       p_transactiontype: [''],
@@ -139,13 +142,12 @@ public authService = inject(AuthService);
 else{
   this.discountplace="Enter %";
 }
- this.returnForm.get('p_overalldiscount')?.setValue('', { emitEvent: false });
+//  this.returnForm.get('p_overalldiscount')?.setValue('', { emitEvent: false });
  this.applyDiscount();
     });
-    }
-
+ }
   blockDecimal(event: KeyboardEvent) {
-    if (event.key === '.' || event.key === ',' || event.key === 'e' || event.key === 'E') {
+    if (event.key === '.' || event.key === ',' || event.key === 'e' || event.key === 'E'|| event.key === '0'||event.key === '-') {
       event.preventDefault();  // block decimal
     }
   }
@@ -156,6 +158,74 @@ else{
    get saleRows(): FormGroup[] {
     return this.saleArray.controls as FormGroup[];
   }
+   isRowSelected(row: FormGroup): boolean {
+        return this.selectedProducts.includes(row);
+    }
+
+    // Check if all rows are selected
+    isAllSelected(): boolean {
+        if (this.saleArray.length === 0) return false;
+        return this.selectedProducts.length === this.saleArray.length;
+    }
+
+    // Toggle selection for a single row
+    toggleRowSelection(row: FormGroup, event: any): void {
+        const isChecked = event.checked;
+        
+        if (isChecked) {
+            // Add to selection
+            this.selectedProducts.push(row);
+            
+            // Initialize quantity to 1 if not already set
+            if (!row.get('Quantity')?.value || row.get('Quantity')?.value === 0) {
+                row.get('Quantity')?.setValue(1);
+                this.updateTotal(this.saleArray.controls.indexOf(row));
+            }
+        } else {
+            // Remove from selection
+            const index = this.selectedProducts.indexOf(row);
+            if (index > -1) {
+                this.selectedProducts.splice(index, 1);
+                
+                // Reset quantity to 0 when deselected
+                row.get('Quantity')?.setValue(0);
+                this.updateTotal(this.saleArray.controls.indexOf(row));
+            }
+        }
+        
+        this.updateSelectedTotal();
+    }
+
+    // Toggle select all
+    toggleSelectAll(event: any): void {
+        const isChecked = event.checked;
+        const currentRows = this.saleArray.controls as FormGroup[];
+        
+        if (isChecked) {
+            // Select all rows
+            this.selectedProducts = [...currentRows];
+            currentRows.forEach((row, index) => {
+                // Initialize quantity to 1 for newly selected rows
+                if (!row.get('Quantity')?.value || row.get('Quantity')?.value === 0) {
+                    row.get('Quantity')?.setValue(1);
+                }
+            });
+        } else {
+            // Deselect all rows
+            this.selectedProducts = [];
+            currentRows.forEach(row => {
+                // Reset quantity to 0 for deselected rows
+                row.get('Quantity')?.setValue(0);
+            });
+        }
+        
+        // Update totals for all rows
+        currentRows.forEach((_, index) => {
+            this.updateTotal(index);
+        });
+        
+        this.updateSelectedTotal();
+    }
      mapSaleItems(apiItems: any[]) {
     this.saleArray.clear(); // Remove old rows if any
 
@@ -163,9 +233,10 @@ else{
       this.saleArray.push(
         this.fb.group({
             TransactiondetailId: item.transactiondetailid || 0,
-          ItemId: item.itemsku || 0,    // use itemsku when itemid not present
+          ItemId: item.itemid || 0,    // use itemsku when itemid not present
           ItemName: item.itemname || '',
           UOMId: item.uomid || 0,
+          uomname: item.uomname,
           Quantity: item.quantity || 1,
           itemcost: item.itemcost || 0,
           MRP: (item.mrp || 0).toFixed(2),
@@ -195,7 +266,13 @@ else{
 
     this.stockInService.Getreturndropdowndetails(apibody).subscribe({
       next: (res) => {
+        console.log(res.data)
         this.mapSaleItems(res.data);
+        if(res.data && res.data.length>0 && res.data[0].discounttype){
+          this.returnForm.patchValue({
+            p_disctype:(res.data[0].discounttype==='Y')
+          });
+        }
       }
     });
   }
@@ -213,6 +290,7 @@ else{
         p_mobileno: billDetails.mobileno,
         p_totalcost: billDetails.totalcost,
         p_totalsale: billDetails.totalsale,
+         p_disctype: billDetails.discounttype=='Y'?true:false,
         p_overalldiscount: billDetails.discount,
         p_roundoff: billDetails.roundoff,
         p_totalpayable: billDetails.totalpayable
@@ -223,6 +301,7 @@ else{
   
   onReturnBillDetails(event:any){
     const returnBillDetails= this.returnBillNoOptions.find(returnbillitem =>returnbillitem.billno === event.value);
+    console.log(returnBillDetails)
     if(returnBillDetails){
       this.SaleDetails(returnBillDetails);
       this.returnForm.patchValue({
@@ -232,6 +311,7 @@ else{
         p_mobileno: returnBillDetails.mobileno,
         p_totalcost: (returnBillDetails.totalcost).toFixed(2),
         p_totalsale: (returnBillDetails.totalsale).toFixed(2),
+         p_disctype: returnBillDetails.discounttype=='Y'?true:false,
         p_overalldiscount: returnBillDetails.discount,
         p_roundoff: returnBillDetails.roundoff,
         p_totalpayable: (returnBillDetails.totalpayable).toFixed(2),
@@ -246,7 +326,7 @@ else{
     return {
       ...this.getUserDetails,
       p_transactiontype: "RETURN",
-      p_transactionid:  0,
+      p_transactionid: body.p_transactionid ,
       p_transactiondate: formattedDate || "",
       p_customername: body.p_customername || "",
       p_mobileno: body.p_mobileno || "",
@@ -267,7 +347,7 @@ else{
       p_paymentmode: body.p_paymentmode || "Cash",
       p_paymentdue: Number(body.p_paymentdue) || 0,
       p_sale: (body.p_sale || []).map((x: any) => ({
-        TransactiondetailId:0,
+        TransactiondetailId:body.p_transactionid ,
         ItemId: x.ItemId,
         ItemName: x.ItemName,
         UOMId: x.UOMId,
@@ -280,6 +360,7 @@ else{
   }
 OnSalesHeaderCreate(data: any) {
     const apibody = this.cleanRequestBody(this.returnForm.value);
+   //   delete (apibody as any).p_loginuser;
 
     this.stockInService.OninsertSalesDetails(apibody).subscribe({
       next: (res) => {

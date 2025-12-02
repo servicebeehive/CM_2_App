@@ -124,7 +124,8 @@ childUOMList: any[] = [];
     p_invoiceno: ['', [Validators.maxLength(50)]],
     p_vendorid: [null],
     p_invoicedate: [null],
-    p_remarks:['',[Validators.maxLength(500)]]
+    p_remarks:['',[Validators.maxLength(500)]],
+    grandTotal:[0]
 });
     }
  onGetStockIn() {
@@ -221,7 +222,12 @@ updatePagedProducts() {
 }
 
 get grandTotal():number{
-    return this.products.reduce((sum,p)=>sum+(p.total || 0),0);
+  if(!this.itemOptionslist || this.itemOptionslist.length===0 )return 0;
+    return this.itemOptionslist.reduce((sum,item:any)=>{
+      const quantity=item.quantity || 0;
+      const costPrice=item.costprice || 0;
+      return sum +(quantity*costPrice);
+    },0);
 }
     onSubmit() {
         this.confirmationService.confirm({
@@ -383,6 +389,7 @@ this.productForm.patchValue({
 p_invoicedate: selectedPurchaseData.invoicedate
   ? new Date(selectedPurchaseData.invoicedate)
   : null,
+  grandTotal:this.grandTotal
 })
 if(this.productForm.value){
   this.addItemEnabled=true;
@@ -400,6 +407,7 @@ this.productForm.patchValue({
 p_invoicedate: selectedPurchaseData1.invoicedate
   ? new Date(selectedPurchaseData1.invoicedate)
   : null,
+   grandTotal:this.grandTotal
 })
 if(this.productForm.value){
   this.addItemEnabled=true;
@@ -473,6 +481,10 @@ OnGetPurcheseItem(id:any) {
   this.stockInService.Getreturndropdowndetails(payload).subscribe({
     next: (res) =>{
    this.itemOptionslist=res.data
+   console.log('result:',res.data);
+    this.productForm.patchValue({
+        grandTotal: this.grandTotal
+      });
     },
     error: (err) => console.log(err)
   });

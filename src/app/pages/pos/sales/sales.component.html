@@ -28,9 +28,9 @@
           type="button"
           ngxPrint
           printSectionId="invoicePrintSection"
-          label="Print"
+          label="Print" (click)="printInvoice()"
           class="p-button-primary"
-          [disabled]="isPrintDisabled"
+          [disabled]="!this.salesForm.get('p_billno')?.value"
           >
         </button>
 
@@ -40,7 +40,7 @@
           type="submit"
           label="Submit"
           class="p-button-warning"
-          [disabled]="isSubmitDisabled() || submitDisabledByBill">
+          [disabled]="isSubmitDisabled() || submitDisabledByBill || salesForm.hasError('costNotGreater')">
         </button>
 
       </div>
@@ -195,6 +195,7 @@
         <!-- HEADER -->
         <ng-template pTemplate="header">
           <tr class="bg-yellow-400">
+            <th><p-tableHeaderCheckbox disabled></p-tableHeaderCheckbox></th>
             <th>Item Code</th>
             <th>Item Name</th>
             <th>Current Stock</th>
@@ -211,7 +212,7 @@
         <!-- ROWS -->
         <ng-template pTemplate="body" let-row let-i="rowIndex">
           <tr [formGroup]="row">
-
+              <td class="text-center"><p-tableCheckbox disabled></p-tableCheckbox></td>
             <td>{{ row.get('itemsku')?.value }}</td>
             <td>{{ row.get('ItemName')?.value }}</td>
             <td>{{ row.get('curStock')?.value }}</td>
@@ -290,16 +291,16 @@
         <label>MRP Total</label>
         <input pInputText readonly type="number" formControlName="p_totalsale" />
       </div>
- <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+ <div class="grid grid-cols-1 md:grid-cols-2">
       <!-- Discount type -->
         <div class="flex flex-col">
-          <label>Disc(%)</label>
-          <p-checkbox class="mt-2" binary="true" variant="filled" formControlName="p_disctype"></p-checkbox>
+          <label class="font-medium mb-2">Disc(%)</label>
+          <p-checkbox class="w-5 h-5" binary="true" variant="filled" formControlName="p_disctype"></p-checkbox>
         </div>
       <!-- Discount -->
       <div class="flex flex-col ">
-        <label>Discount</label>
-        <input class="w-40" pInputText type="number" formControlName="p_overalldiscount" (input)="applyDiscount()" [placeholder]="discountplace"/>
+        <label class="font-medium">Discount</label>
+        <input class="p-inputtext p-component font-small w-full" pInputText type="number" formControlName="p_overalldiscount" (input)="applyDiscount()" [placeholder]="discountplace"/>
       </div>
 </div>
       <!-- Round Off -->
@@ -318,6 +319,10 @@
       <div class="flex flex-col">
         <label>Final Payable</label>
         <input pInputText readonly type="number" formControlName="p_totalpayable" />
+        <small class="text-red-500" 
+       *ngIf="salesForm.hasError('costNotGreater')">
+  This Cost must be greater than Total Cost.
+</small>
       </div>
 
     </div>
@@ -332,104 +337,232 @@
 <!-- ================================
      PRINT SECTION (INVOICE)
 ================================= -->
-<div id="invoicePrintSection">
+<div id="invoicePrintSection" style="width:900px; margin:auto; font-family:Arial;">
 
-  <div class="invoice-container" style="width:800px;margin:auto;font-family:Arial;">
+  <h3 style="text-align: center;">TAX INVOICE</h3>
 
-    <h2 style="text-align:center;margin-bottom:5px;">SHRISTI ELECTRICAL</h2>
+  <!-- ================= HEADER SECTION ================= -->
+  <table width="100%" border="1" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
+    <tr>
 
-    <p style="text-align:center;margin:0;">
-      SHOP NO.-7 SAPNA TALKIES COMPLEX,<br>
-      NANDINI ROAD, BHILAI<br>
-      GSTIN : 22AOCPY0439F1Z5 | State Code: 22<br>
-      Email : {{'shristielectricalgw@gmail.com'}}
-    </p>
+      <!-- LEFT SIDE (COMPANY + BUYER INFO) -->
+      <td width="60%" style="vertical-align:top; padding: 6px;">
 
-    <hr />
+        <strong>SHRISTI ELECTRICAL</strong><br>
+        SHOP NO.-7 SAPNA TALKIES COMPLEX,<br>
+        NANDINI ROAD, BHILAI<br>
+        GSTIN/UIN: 22AOCPY0439F1Z5<br>
+        State Name: Chhattisgarh, Code: 22<br>
+        E-Mail : {{'shristielectricalgw@gmail.com'}}
+        <br>
 
-    <h3 style="text-align:center;margin:0;">TAX INVOICE</h3>
+        <hr style="margin:5px 0;">
 
-    <!-- HEADER INFO -->
-    <table width="100%" style="margin-top:15px;">
-      <tr>
-        <td>
-          <strong>Invoice No:</strong> {{ salesForm.get('p_transactionid')?.value }}<br>
-          <strong>Date:</strong> {{ salesForm.get('p_transactiondate')?.value | date:'dd/MM/yyyy' }}
-        </td>
+        <strong>Buyer (Bill to)</strong><br><br>
 
-        <td>
-          <strong>Buyer (Bill To):</strong><br>
-          {{ salesForm.get('p_customername')?.value }}<br>
-          Mobile: {{ salesForm.get('p_mobileno')?.value }}
-        </td>
+        <strong>{{ salesForm.get('p_customername')?.value }}</strong><br>
+        {{ salesForm.get('p_customeraddress')?.value }}<br>
+        Mobile: {{ salesForm.get('p_mobileno')?.value }}<br>
+        <br>
+
+        GSTIN/UIN : {{ salesForm.get('p_customergstin')?.value || '-' }}<br>
+        State Name : {{ salesForm.get('p_customerstate')?.value || '-' }}
+      </td>
+
+      <!-- RIGHT SECTION (INVOICE DETAILS) -->
+      <td width="40%" style="vertical-align:top;">
+        <table width="100%" border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;">
+
+          <tr>
+            <td><strong>Invoice No.</strong></td>
+            <td>{{ salesForm.get('p_transactionid')?.value }}</td>
+          </tr>
+
+          <tr>
+            <td><strong>Dated</strong></td>
+            <td>{{ salesForm.get('p_transactiondate')?.value | date:'dd-MMM-yy' }}</td>
+          </tr>
+
+          <tr>
+            <td>Delivery Note</td>
+            <td>-</td>
+          </tr>
+
+          <tr>
+            <td><strong>Mode/Terms of Payment</strong></td>
+            <td><strong>BALANCE</strong></td>
+          </tr>
+
+          <tr>
+            <td>Reference No. & Date</td>
+            <td>{{ salesForm.get('p_transactionid')?.value }} dt. {{ salesForm.get('p_transactiondate')?.value | date:'dd-MMM-yy' }}</td>
+          </tr>
+
+          <tr>
+            <td>Other References</td>
+            <td>-</td>
+          </tr>
+
+          <tr>
+            <td>Buyer's Order No.</td>
+            <td>-</td>
+          </tr>
+
+          <tr>
+            <td>Dated</td>
+            <td>-</td>
+          </tr>
+
+          <tr>
+            <td>Dispatch Doc No.</td>
+            <td>-</td>
+          </tr>
+
+          <tr>
+            <td>Delivery Note Date</td>
+            <td>-</td>
+          </tr>
+
+          <tr>
+            <td>Dispatched through</td>
+            <td>-</td>
+          </tr>
+
+          <tr>
+            <td>Destination</td>
+            <td>-</td>
+          </tr>
+
+          <tr>
+            <td>Terms of Delivery</td>
+            <td>-</td>
+          </tr>
+
+        </table>
+      </td>
+
+    </tr>
+  </table>
+
+  <!-- ================= ITEM TABLE ================= -->
+  <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;font-size:14px;margin-top:10px;">
+    <thead>
+      <tr style="text-align:center;font-weight:bold;">
+        <td>Sl No.</td>
+        <td>Description of Goods</td>
+        <td>HSN/SAC</td>
+        <td>Quantity</td>
+        <td>Rate</td>
+        <td>per</td>
+        <td>Disc %</td>
+        <td>Amount</td>
       </tr>
-    </table>
+    </thead>
 
-    <hr />
+    <tbody>
 
-    <!-- PRINT TABLE -->
-    <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;">
-      <thead>
-        <tr style="background:#f0f0f0;">
-          <th>#</th>
-          <th>Description</th>
-          <th>HSN</th>
-          <th>Qty</th>
-          <th>Rate</th>
-          <th>Total</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        <tr *ngFor="let item of saleRows; let i = index">
-          <td>{{ i + 1 }}</td>
-          <td>{{ item.get('ItemName')?.value }}</td>
-          <td>—</td>
-          <td>{{ item.get('Quantity')?.value }}</td>
-          <td>{{ item.get('MRP')?.value }}</td>
-          <td>{{ item.get('totalPayable')?.value }}</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <hr />
-
-    <!-- PRINT SUMMARY -->
-    <table width="100%" style="margin-top:10px;">
-
-      <tr>
-        <td><strong>Total Cost:</strong></td>
-        <td>₹ {{ salesForm.get('p_totalcost')?.value }}</td>
+      <tr *ngFor="let item of saleRows; let i = index">
+        <td>{{ i + 1 }}</td>
+        <td>{{ item.get('ItemName')?.value }}</td>
+        <td>{{ item.get('HSN')?.value || 8544 }}</td>
+        <td>{{ item.get('Quantity')?.value }} PCS</td>
+        <td>{{ item.get('MRP')?.value | number:'1.2-2' }}</td>
+        <td>PCS</td>
+        <td>{{ item.get('discount')?.value || '' }}</td>
+        <td>{{ item.get('totalPayable')?.value | number:'1.2-2' }}</td>
       </tr>
 
+      <!-- SUB TOTAL -->
       <tr>
-        <td><strong>Total Sale:</strong></td>
-        <td>₹ {{ salesForm.get('p_totalsale')?.value }}</td>
+        <td colspan="7" style="text-align:right;font-weight:bold;">Sub Total</td>
+        <td>{{ salesForm.get('p_totalsale')?.value | number:'1.2-2' }}</td>
       </tr>
 
+      <!-- CGST -->
       <tr>
-        <td><strong>Discount:</strong></td>
-        <td>{{ salesForm.get('p_overalldiscount')?.value }} %</td>
+        <td colspan="7" style="text-align:right;"><b>CGST</b></td>
+        <td>{{ salesForm.get('p_cgst')?.value }}</td>
       </tr>
 
+      <!-- SGST -->
       <tr>
-        <td><strong>Round Off:</strong></td>
-        <td>₹ {{ salesForm.get('p_roundoff')?.value }}</td>
+        <td colspan="7" style="text-align:right;"><b>SGST</b></td>
+        <td>{{ salesForm.get('p_sgst')?.value }}</td>
       </tr>
 
+      <!-- ROUND OFF -->
       <tr>
-        <td><strong>Final Payable:</strong></td>
-        <td><strong>₹ {{ salesForm.get('p_totalpayable')?.value }}</strong></td>
+        <td colspan="7" style="text-align:right;"><b>ROUND OFF +/-</b></td>
+        <td>{{ salesForm.get('p_roundoff')?.value }}</td>
       </tr>
 
-    </table>
+    </tbody>
 
-    <hr />
+    <!-- GRAND TOTAL -->
+    <tfoot>
+      <tr style="font-weight:bold;">
+        <td colspan="3" style="text-align:right;">Total Qty</td>
+        <td>{{ salesForm.get('p_totalqty')?.value }} PCS</td>
+        <td colspan="3"></td>
+        <td>₹ {{ salesForm.get('p_totalpayable')?.value }}</td>
+      </tr>
+    </tfoot>
+  </table>
 
-    <p style="text-align:right;margin-top:50px;">
-      <strong>Authorized Signatory</strong>
-    </p>
+  <!-- ================= AMOUNT IN WORDS ================= -->
+  <div style="padding:10px;font-size:14px;">
+    <strong>Amount Chargeable (in words):</strong>
+    <!-- {{ amountInWords }} --> -
+  </div>
+
+  <!-- ================= GST SUMMARY ================= -->
+  <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;font-size:14px;margin-top:10px;">
+    <tr style="font-weight:bold;text-align:center;">
+      <td>HSN/SAC</td>
+      <td>Taxable Value</td>
+      <td>Rate</td>
+      <td>CGST Amount</td>
+      <td>Rate</td>
+      <td>SGST Amount</td>
+      <td>Total Tax Amount</td>
+    </tr>
+
+    <tr style="text-align:center;">
+      <td>8544</td>
+      <td>{{ salesForm.get('p_totalsale')?.value }}</td>
+      <td>9%</td>
+      <td>{{ salesForm.get('p_cgst')?.value }}</td>
+      <td>9%</td>
+      <td>{{ salesForm.get('p_sgst')?.value }}</td>
+      <td>{{ salesForm.get('p_cgst')?.value + salesForm.get('p_sgst')?.value }}</td>
+    </tr>
+  </table>
+
+  <!-- ================= BANK DETAILS ================= -->
+  <div style="padding:10px;font-size:14px;">
+
+    <strong>Tax Amount (in words):</strong> 
+    <!-- {{ taxAmountInWords }} --> -
+    <br><br>
+
+    <strong>Company's Bank Details</strong><br>
+    Bank Name : <b>BANK OF INDIA</b><br>
+    A/c No. : 930520110000557<br>
+    Branch & IFS Code : POWER HOUSE & BKID0009305<br><br>
+
+    Company's PAN : <b>AOCPY0439F</b>
+    <br><br>
+
+    <strong>Declaration:</strong>
+    We declare that this invoice shows the actual price of the goods described and all particulars are true.
+
+    <br><br>
+    <p style="text-align:right;"><strong>Authorized Signatory</strong></p>
 
   </div>
 
-</div> 
+</div>
+
+
+
+

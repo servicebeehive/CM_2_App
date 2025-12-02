@@ -41,13 +41,13 @@
          <!-- Category -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Category</label>
-                <p-dropdown [options]="categoryOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" [showClear]="true" filterPlaceholder="Search Category" formControlName="category" placeholder="Category"> </p-dropdown>
+                <p-dropdown [options]="categoryOptions" optionLabel="fieldname" optionValue="fieldid" (onChange)="onCategoryItem($event)" [filter]="true" [showClear]="true" filterPlaceholder="Search Category" formControlName="category" placeholder="Category"> </p-dropdown>
             </div>
 
        <!-- Item Name -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Item Name</label>
-                <p-dropdown [options]="itemOptions" optionLabel="itemcombine" optionValue="itemid" [filter]="true" [showClear]="true" filterPlaceholder="Search Item" formControlName="item" placeholder="Item"> </p-dropdown>
+                <p-dropdown [options]="itemOptions" optionLabel="itemcombine" optionValue="itemid" [filter]="true" [showClear]="true" (onChange)="onItemChange($event)" filterPlaceholder="Search Item" formControlName="item" placeholder="Item"> </p-dropdown>
             </div>
           </div>
      

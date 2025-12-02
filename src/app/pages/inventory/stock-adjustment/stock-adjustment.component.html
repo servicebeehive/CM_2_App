@@ -21,7 +21,7 @@
                                 formControlName="category"
                                 placeholder="Category"
                                 [showClear]="true"
-                                (onChange)="applyGlobalFilter()"
+                                (onChange)="onCategoryItem($event)"
                             >
                             </p-dropdown>
                         </div>
@@ -34,11 +34,12 @@
                                 optionLabel="itemcombine"
                                 optionValue="itemid"
                                 [filter]="true"
+                                (onChange)="onItemChange($event)"
                                 filterPlaceholder="Search Item"
                                 formControlName="item"
                                 placeholder="Item"
                                 [showClear]="true"
-                                (onChange)="applyGlobalFilter()"
+                                
                             >
                             </p-dropdown>
                         </div>
