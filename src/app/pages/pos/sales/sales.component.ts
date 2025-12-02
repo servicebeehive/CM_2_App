@@ -539,6 +539,8 @@ costNotExceedPayableValidator(): ValidatorFn {
       header: 'Confirm',
       acceptLabel: 'Yes',
       rejectLabel: 'Cancel',
+       acceptButtonStyleClass: 'p-button-primary',
+        rejectButtonStyleClass: 'p-button-secondary',
       accept: () => {
         this.OnSalesHeaderCreate(this.salesForm.value);
       }
@@ -740,6 +742,21 @@ updateTotal(i: number) {
           detail: 'Sales saved successfully!',
           life: 3000
         });
+
+         this.confirmationService.confirm({
+             header: 'Print Invoice',
+             message: 'Are you sure you want to print this invoice?',
+
+            acceptLabel: 'Print Now',
+            rejectLabel: 'Cancel',
+
+           icon: 'pi pi-print',
+       acceptButtonStyleClass: 'p-button-primary',
+        rejectButtonStyleClass: 'p-button-secondary',
+      accept: () => {
+        this.printInvoice()
+      }
+    });
       },
       error: (err) => {
         console.error(err);
@@ -903,6 +920,65 @@ updateTotalCostSummary() {
   this.salesForm.patchValue({
     p_totalcost: finalCost.toFixed(2)
   });
+}
+
+printInvoice() {
+  const printContents = document.getElementById('invoicePrintSection')?.innerHTML;
+  if (!printContents) return;
+
+  const popupWindow = window.open('', '_blank', 'width=900,height=1000');
+  popupWindow!.document.open();
+
+  popupWindow!.document.write(`
+    <html>
+      <head>
+        <title>Invoice Print</title>
+
+        <style>
+
+          /* Force Single Page */
+          @page {
+            size: A4;
+            margin:0;
+          }
+
+          body {
+            font-family: Arial;
+            padding: 10px;
+            zoom: 80%; /* Adjust 60–100% until your invoice fits on one page */
+          }
+
+          table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            page-break-inside: avoid; 
+          }
+
+          th, td { 
+            border: 1px solid #000; 
+            padding: 5px;
+            font-size: 12px;
+          }
+
+          hr { margin: 10px 0; }
+
+          /* Avoid breaking inside elements */
+          .no-break, table, tr, td {
+            page-break-inside: avoid !important;
+          }
+
+        </style>
+      </head>
+
+      <body onload="window.print(); window.close();">
+        <div class="no-break">
+          ${printContents}
+        </div>
+      </body>
+    </html>
+  `);
+
+ // popupWindow!.document.close();
 }
 
 
