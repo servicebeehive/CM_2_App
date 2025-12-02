@@ -107,7 +107,7 @@ export class ItemReportComponent {
        
         this.reportForm = this.fb.group({
             item: [''],
-          
+          reportType:[''],
             category: [''],
              p_stock: this.fb.array([])
         });
