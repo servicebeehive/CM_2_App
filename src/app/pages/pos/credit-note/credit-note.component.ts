@@ -278,7 +278,7 @@ export class CreditNoteComponent {
 
 // ⭐ ADD CONDITION
 if (apibody.p_transactiontype === "CREDITNOTE") {
-    apibody.p_customername =this.replacecednlist[0]?.cnno;   // add key
+    apibody.p_customername =this.replacecednlist[0]?.dnno;   // add key
     apibody.p_creditnoteno =this.replacecednlist[0]?.dnno;   // add 
 } else {
     delete apibody.p_customername;           // remove key
