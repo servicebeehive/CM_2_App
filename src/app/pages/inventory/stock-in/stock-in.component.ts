@@ -74,7 +74,6 @@ interface Image {
     AutoCompleteModule,
     ConfirmDialogModule,
     CheckboxModule,
-    RouterLink,
 ],
     templateUrl: './stock-in.component.html',
     styleUrl: './stock-in.component.scss',
@@ -125,7 +124,8 @@ childUOMList: any[] = [];
     p_invoiceno: ['', [Validators.maxLength(50)]],
     p_vendorid: [null],
     p_invoicedate: [null],
-    p_remarks:['',[Validators.maxLength(500)]]
+    p_remarks:['',[Validators.maxLength(500)]],
+    grandTotal:[0]
 });
     }
  onGetStockIn() {
@@ -152,6 +152,7 @@ onSave(updatedData:any){
    if(!updatedData) return;
     const hasChildUOM= updatedData.childUOMDetails?.some((u:any)=> u.childUOM || u.conversion || u.mrp);
     const costPerItem=updatedData.qty && updatedData.purchasePrice ? (updatedData.purchasePrice/updatedData.qty).toFixed(2) : 0;
+
     const mappedData={
         selection:true,
      code: updatedData.itemCode.label ||updatedData.itemCode,
@@ -168,8 +169,10 @@ onSave(updatedData:any){
     discount:updatedData.discount,
     minStock: updatedData.minStock,
     warPeriod: updatedData.warPeriod,
+    p_expirydate: new Date (updatedData.expirydate) ,
     location: updatedData.location,
     gstItem:updatedData.gstItem===true?'Yes':'No',
+    activeItem:updatedData.activeItem===true?'Yes':'No',
     };
     if(this.mode==='edit' && this.selectedRow){
         const index=this.products.findIndex(p=>p.code === this.selectedRow.code);
@@ -219,7 +222,12 @@ updatePagedProducts() {
 }
 
 get grandTotal():number{
-    return this.products.reduce((sum,p)=>sum+(p.total || 0),0);
+  if(!this.itemOptionslist || this.itemOptionslist.length===0 )return 0;
+    return this.itemOptionslist.reduce((sum,item:any)=>{
+      const quantity=item.quantity || 0;
+      const costPrice=item.costprice || 0;
+      return sum +(quantity*costPrice);
+    },0);
 }
     onSubmit() {
         this.confirmationService.confirm({
@@ -229,6 +237,8 @@ get grandTotal():number{
             rejectLabel:'Cancel',
             rejectButtonStyleClass:'p-button-secondary',
             accept:()=>{
+              let message = 'Header Information Saved Successfully';
+            this.showSuccess(message);
              this.addItemEnabled=true;
              this.OnPurchesHeaderCreate(this.productForm.value)
             }
@@ -379,6 +389,7 @@ this.productForm.patchValue({
 p_invoicedate: selectedPurchaseData.invoicedate
   ? new Date(selectedPurchaseData.invoicedate)
   : null,
+  grandTotal:this.grandTotal
 })
 if(this.productForm.value){
   this.addItemEnabled=true;
@@ -396,6 +407,7 @@ this.productForm.patchValue({
 p_invoicedate: selectedPurchaseData1.invoicedate
   ? new Date(selectedPurchaseData1.invoicedate)
   : null,
+   grandTotal:this.grandTotal
 })
 if(this.productForm.value){
   this.addItemEnabled=true;
@@ -469,6 +481,10 @@ OnGetPurcheseItem(id:any) {
   this.stockInService.Getreturndropdowndetails(payload).subscribe({
     next: (res) =>{
    this.itemOptionslist=res.data
+   console.log('result:',res.data);
+    this.productForm.patchValue({
+        grandTotal: this.grandTotal
+      });
     },
     error: (err) => console.log(err)
   });

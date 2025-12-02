@@ -16,4 +16,5 @@ export interface StockIn {
   location?: string;
   action?: string;
   itemid?:number
+  printcount?:number
 }

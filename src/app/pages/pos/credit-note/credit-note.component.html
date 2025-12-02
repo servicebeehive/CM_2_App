@@ -1,0 +1,104 @@
+<div class="card p-6">
+  <div>
+      <form [formGroup]="CreditForm"  class="space-y-8">
+  <!-- Header Row: Stock In + Buttons -->
+  <div class="flex justify-between items-center mb-6">
+    <span class="block text-surface-900 font-bold text-2xl">Debit/Credit Link</span>
+        <div class="flex  gap-4">
+  <button pButton type="button" label="Generate DN" class="p-button-primary" [disabled]="saleArray.length === 0 ||CreditForm.get('p_debitNote')?.value" (click)="Ganratedn('DEBITNOTE')"></button> 
+        <button pButton type="button" label="Link CN" class="p-button-primary" [disabled]="CreditForm.get('p_debitNote')?.value == null" (click)="Ganratedn('CREDITNOTE')"></button>
+        <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
+    </div>
+  </div>
+
+ 
+
+    <!-- 🏷 Product Info Section -->
+      <!-- Two-column grid layout -->
+      <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
+ <!-- CREDIT NOTE -->
+      
+         
+        <div class="flex flex-col">
+            <label class="font-medium mb-1">Debit Note</label>
+           <p-dropdown (onChange)="RetunCredit($event)"
+            [options]="debittnotList" 
+            optionLabel="fieldid"
+            optionValue="fieldid" [showClear]="true" 
+            [filter]="true" 
+            filterPlaceholder="Select Debit Note"
+            formControlName="p_debitNote"
+            placeholder="Debit Note" (onClear)="reset()">
+          </p-dropdown>
+        
+        </div>
+          <!-- DEBIT NOTE -->
+<div class="flex flex-col">
+        <label class="font-medium mb-1">Credit Note</label>
+          <input
+          pInputText
+          placeholder="Credit Note"
+           formControlName="p_creditNote"
+           />
+      </div>
+</div>
+    <!-- Product Table with Pagination -->
+    <div>
+     <p-table
+  [value]="replacecednlist"
+  dataKey="transactiondetailid"
+  [(selection)]="selectedItems"
+  (selectionChange)="onSelectionChange($event)"
+ [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" [responsiveLayout]="'scroll'"
+>
+  <ng-template pTemplate="header">
+    <tr class="bg-yellow-400">
+      <th><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
+      <th>Item Code</th>
+      <th>Item Name</th>
+      <th>Current Stock</th>
+      <th>UOM</th>
+      <th>Qty</th>
+      <th>MRP</th>
+      <th>Total</th>
+    </tr>
+  </ng-template>
+
+  <ng-template pTemplate="body" let-row>
+    <tr>
+      <td><p-tableCheckbox [value]="row"></p-tableCheckbox></td>
+      <td>{{ row.itemsku }}</td>
+      <td>{{ row.itemname }}</td>
+      <td>{{ row.current_stock }}</td>
+      <td>{{ row.uomname }}</td>
+      <td>{{ row.quantity }}</td>
+      <td>{{ row.mrp }}</td>
+      <td>{{ row.quantity * row.mrp }}</td>
+    </tr>
+  </ng-template>
+    <ng-template pTemplate="paginatorleft">
+  <div class="flex w-full justify-between">
+    
+    <span>Total Items: {{ replacecednlist.length }}</span>
+
+    <!-- <p-dropdown
+      [options]="state.rowsPerPageOptions"
+      [(ngModel)]="state.rows"
+      >
+    </p-dropdown> -->
+
+  </div>
+</ng-template>
+</p-table>
+
+    </div>
+
+
+
+  
+  </form>
+
+  </div>
+
+</div>
+  <p-confirmDialog></p-confirmDialog>

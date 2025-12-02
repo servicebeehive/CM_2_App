@@ -9,6 +9,9 @@ import { SaleHeader, StockHeader } from '../models/inventory.model';
 
 @Injectable({ providedIn: 'root' })
 export class InventoryService {
+  getcalculatedMRP(apibody: { p_returntype: string; p_returnvalue: string; clientcode: string; uname: string; p_loginuser: string; "x-access-token": string | null; }) {
+    throw new Error('Method not implemented.');
+  }
   productItem=[];
 
   private baseUrl = environment.baseurl;
@@ -148,6 +151,7 @@ updatestockadjustment(payload:any):Observable<any>{
     }),
 
 )
+
 }
 
   /** 🔹 Common error handler */

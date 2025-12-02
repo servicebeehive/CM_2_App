@@ -7,6 +7,12 @@ import { providePrimeNG } from 'primeng/config';
 import { appRoutes } from './app.routes';
 import { MessageService } from 'primeng/api';
 import { AuthInterceptor } from '@/core/interceptors/auth.interceptor';
+import { provideState, provideStore } from '@ngrx/store';
+import { itemlistReducer } from '@/store/itemlist/itemlist.reducer';
+import { provideEffects } from '@ngrx/effects';
+import { ItemListEffects } from '@/store/itemlist/itemlist.effects';
+import { provideStoreDevtools } from '@ngrx/store-devtools';
+
 
 export const appConfig: ApplicationConfig = {
     providers: [
@@ -14,6 +20,25 @@ export const appConfig: ApplicationConfig = {
         provideHttpClient(withFetch()),
         provideAnimationsAsync(),
         providePrimeNG({ theme: { preset: Aura, options: { darkModeSelector: '.app-dark' } } }),
+     
+  
+
+    // NgRx Root Store
+    // provideStore(),
+
+    // Feature States
+    // provideState('itemlist', itemlistReducer),
+
+    // Effects
+    // provideEffects([
+    //   ItemListEffects
+    // ]),
+
+    // DevTools
+    // provideStoreDevtools({
+    //   maxAge: 25
+    // }),
+  
 
     MessageService,
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
