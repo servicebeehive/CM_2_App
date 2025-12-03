@@ -21,6 +21,7 @@ export const API_ENDPOINTS = {
     deletepurchasedetails:'/deletepurchasedetails',
     updatestockadjustment:'/updatestockadjustment',
     inserttransactiondetails:'/inserttransactiondetails',
+    
   },
   sales:{
     getcalculatedMRP:'/getcalculatedMRP'

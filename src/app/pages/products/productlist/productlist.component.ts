@@ -289,6 +289,7 @@ products.forEach((p:any)=>{
     p_categoryid: category || null,
     p_itemid: item || null,
     p_username: 'admin',
+    p_type: '',
     clientcode: 'CG01-SE',
     'x-access-token': this.authService.getToken()   
        };
