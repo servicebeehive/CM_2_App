@@ -59,7 +59,7 @@ this.model = [
           {
             label: 'Transactions',
             icon: 'pi pi-fw pi-history',
-            routerLink: ['/layout/inventory/transactions'],
+            routerLink: ['/layout/inventory/transaction'],
           },
           // {
           //   label: 'Bulk Import',
@@ -123,7 +123,7 @@ this.model = [
           {
             label: 'Invoice',
             icon: 'pi pi-fw pi-file',
-            routerLink: ['/layout/pos/list'],
+            routerLink: ['/layout/pos/invoice'],
           },
            {
             label: 'Debit/Credit Link',
