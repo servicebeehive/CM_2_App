@@ -146,6 +146,7 @@
   font-weight: 400;
   font-style: normal;
 }
+.dn-container{display: none;}
 
 @media print {
   button, .no-print, .header, .sidebar {
@@ -156,6 +157,7 @@
     width: 100%; display: block;
     margin: 0;
   }
+  .dn-container{display: block;}
 }
 
 

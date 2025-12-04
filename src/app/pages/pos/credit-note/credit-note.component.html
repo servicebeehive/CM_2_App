@@ -8,6 +8,7 @@
   <button pButton type="button" label="Generate DN" class="p-button-primary" [disabled]="saleArray.length === 0 ||CreditForm.get('p_debitNote')?.value" (click)="Ganratedn('DEBITNOTE')"></button> 
         <button pButton type="button" label="Link CN" class="p-button-primary" [disabled]="CreditForm.get('p_debitNote')?.value == null" (click)="Ganratedn('CREDITNOTE')"></button>
         <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
+        <button pButton type="button" label="Print" class="p-button-primary" (click)="print()" [disabled]="!CreditForm.get('p_debitNote')?.value"></button> 
     </div>
   </div>
 
@@ -102,3 +103,144 @@
 
 </div>
   <p-confirmDialog></p-confirmDialog>
+
+
+
+
+
+<div class="dn-container" style="padding:50px;" style="width:720px" id="printSection" >
+  <div class="header">
+    <h1>Debit Note</h1>
+  </div>
+
+  <div class="section" style="padding: 4px;">
+    <div class="company">
+      <div class="left">
+        <div class="label">Company Name:</div>
+        <div class="small">Address: <br/>Phone No: <br/>Email ID: <br/>GSTIN: <br/>State:</div>
+      </div>
+    
+    </div>
+  </div>
+<table width="100%" border="0" cellspacing="0" cellpadding="0" style="border-collapse:collapse;font-size:14px;margin-top:10px;">
+  <tr>
+    <td align="left">  <div class="right">
+        <div style="text-align:left">
+          <div class="label">Return/Debit To:</div>
+          <div class="small">Name:<br/>Address:<br/>Phone Number:<br/>GSTIN:<br/>State: Karnataka</div>
+        </div>
+      </div></td>
+    <td align="right"> <div>
+    <div>
+
+      <div>Shipping To:</div>
+      <div>Name:<br/>Address:<br/>Return/Debit Date:<br/>Return/Debit No:<br/>Invoice No:</div>
+    </div>
+    <div style="text-align:right">
+      <div>Document Info</div>
+      <div>Debit Note No: {{CreditForm.get('p_debitNote')?.value}} <br/>Date: <br/>Place of Supply:</div>
+    </div>
+  </div></td>
+  </tr>
+</table>
+ 
+<div style="padding-top:15px; padding-bottom:15px;">
+  <table width="100%" aria-label="items" border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;font-size:14px;margin-top:10px;">
+
+  <thead>
+    <tr>
+      <th align="left">#</th>
+      <th align="left">Item Name</th>
+      <th align="left">HSN Code</th>
+      <th align="left">Quantity</th>
+      <th align="left">Unit</th>
+      <th align="left">Price/Unit</th>
+      <th align="left">Disc</th>
+      <th align="left">GST</th>
+      <th align="left">Ad. CESS</th>
+      <th align="left">Amount</th>
+    </tr>
+  </thead>
+
+  <tbody>
+   <ng-container *ngFor="let row of replacecednlist; let i=index">
+    <tr>
+      <td>{{i+1}}</td>
+      <td>{{row.itemname}}</td>
+      <td>{{ row.itemsku }}</td>
+      <td>{{ row.current_stock }}</td>
+      <td>{{ row.quantity }}</td>
+     <td>{{ row.uomname }}</td>
+     <td>{{"₹"+row.mrp }}</td>
+       <td></td>
+      <td></td>
+      <td>{{"₹"+ row.quantity * row.mrp }}</td>
+     
+      
+     
+     
+      
+    
+    </tr>
+</ng-container>
+   
+
+  
+
+    <!-- Amount in words & Total Amount block -->
+    <tr>
+      <td  rowspan="3" class="bold">
+        Amount in words:
+      </td>
+      <td colspan="5" rowspan="3" class="bold">
+     
+      </td>
+
+      <td colspan="2" class="bold" style="text-align:right;">
+        Total Amount:
+      </td>
+      <td colspan="2"></td>
+    </tr>
+
+    <tr>
+      <td colspan="2" class="bold" align="right">Payment Mode:</td>
+       <td colspan="2" class="bold" ></td>
+      
+    </tr>
+     <tr>
+       <td colspan="2" class="bold" align="right">Reference No:</td>
+        <td colspan="2" class="bold"></td>
+      </tr>
+   
+
+    <!-- BANK DETAILS + SIGN -->
+    <tr>
+      <td class="bold">Bank Name:</td>
+      <td colspan="5"></td>
+
+   
+      <td rowspan="5" colspan="4" style="text-align:center; vertical-align:bottom;">
+        Company seal and Sign
+      </td>
+    </tr>
+
+    <tr>
+      <td class="bold">Account Number:</td>
+      <td colspan="5"></td>
+    </tr>
+
+    <tr>
+      <td class="bold">IFSC Code:</td>
+      <td colspan="5"></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+  <div class="footer">
+    Note: This is a computer generated debit note and does not require signature.
+  </div>
+</div>
