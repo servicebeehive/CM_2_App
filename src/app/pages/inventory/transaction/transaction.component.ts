@@ -85,8 +85,8 @@ export class TransactionComponent {
      rowsPerPage:number=5;
     globalFilter: string = '';
         // ✅ Move dropdown options into variables
-        categoryOptions = [];
-        itemOptions = [];
+        vendorOptions = [];
+        invoiceOptions = [];
         products: StockIn[] = [];
         filteredProducts: StockIn[] = [];
         constructor(
@@ -95,155 +95,48 @@ export class TransactionComponent {
             private authService: AuthService,
             private messageService: MessageService
         ) {}
- reportTypeOptions:any[]= [
-    {label:'Sale', value:'Sale'},
-    {label:'Return', value:'Return'},
-    {label:'Replace', value:'Replace'},
-    {label:'Purchase', value:'Purchase'},
-    {label:'Credit Note', value:'Credit Note'},
- ];
+ reportTypeOptions:any[]= [];
     ngOnInit(): void {
         this.transactionForm = this.fb.group(
             {
-                item: [''],
+                invoice: [''],
                
-                fromDate: [''],
-                toDate:[''],
-                category:[''],
-               gstTransaction:[true],
-                p_stock: this.fb.array([])
-            }
+                fromDate: ['',Validators.required],
+                toDate:['',Validators.required],
+                p_vendorid:[''],
+            },{validators:this.dateRangeValidator}
         );
        this.loadAllDropdowns();
         this.onGetStockIn();
-        this.transactionForm.get('category')?.valueChanges.subscribe(() => this.applyGlobalFilter());
-        this.transactionForm.get('item')?.valueChanges.subscribe(() => this.applyGlobalFilter());
     }
-
+ dateRangeValidator(form:FormGroup){
+    const fromDate = form.get('fromDate')?.value;
+    const toDate=form.get('toDate')?.value;
+  if(!fromDate || !toDate)
+    return null;
+ const from=new Date(fromDate);
+ const to=new Date(toDate);
+  return to >= from ? null :{ dateRangeInvalid:true }; 
+ }
   getStockArray(): FormArray {
         return this.transactionForm.get('p_stock') as FormArray;
     }
-    Onreturndropdowndetails() {
-        const category = this.transactionForm.controls['category'].value;
-        const item = this.transactionForm.controls['item'].value;
-        console.log('cat', category,item);
-        if (category || item) {
-            const payload = {
-                uname: 'admin',
-                p_categoryid: category || null,
-                p_itemid: item || null,
-                p_username: 'admin',
-                clientcode: 'CG01-SE',
-                'x-access-token': this.authService.getToken()
-            };
-            this.inventoryService.getupdatedata(payload).subscribe({
-                next: (res: any) => {
-                    console.log('API RESULT:', res.data);
-                    this.products = res?.data || [];
-                    this.filteredProducts = [...this.products];
-                    this.buildFormArrayFormProducts(this.filteredProducts);
-                    if (this.products.length == 0) {
-                        let message = 'No Data Available for this Category and Item';
-                        this.showSuccess(message);
-                    }
-                },
-                error: (err) => {
-                    console.error(err);
-                }
-            });
-        } else {
-            let message = 'Please select both Category and Item before filtering.';
-            this.errorSuccess(message);
-        }
-    }
-    private buildFormArrayFormProducts(products: any[]) {
-        const stockArray = this.getStockArray();
-        console.log('stock arrary', stockArray);
-        stockArray.clear();
-        products.forEach((p: any) => {
-            const group = this.fb.group({
-               itemid:[p.itemid],
-    categoryid:[p.categoryid],
-    mrp:[p.mrp],
-    purchaseprice:[p.purchaseprice] 
-            });
-            stockArray.push(group);
-        });
-    }
-    applyGlobalFilter() {
-       const searchTerm=(this.globalFilter || '')?.toLowerCase().trim();
-       const selectedCategory=this.transactionForm.get('category')?.value;
-       const selectedItem=this.transactionForm.get('item')?.value;
-       this.filteredProducts=this.products.filter((p:any)=>{
-        const matchesSearch=!searchTerm || String(p.itemcombine ?? p.name ?? '').toLowerCase() .includes(searchTerm) ||
-        String(p.categoryname ?? p.category ?? '').toLowerCase() .includes(searchTerm) ||
-      String(p.curStock ?? p.currentstock ?? '')
-                    .toLowerCase()
-                    .includes(searchTerm);
-
-            const matchesCategory = !selectedCategory || p.category === selectedCategory || p.categoryid === selectedCategory;
-            const matchesItem = !selectedItem || p.name === selectedItem || p.itemid === selectedItem;
-
-            return matchesSearch && matchesCategory && matchesItem;
-       });
-       this.buildFormArrayFormProducts(this.filteredProducts);
-    }
+    
     onGetStockIn() {
       this.products=this.inventoryService.productItem || [];
-      this.buildFormArrayFormProducts(this.products);
     }
-    onItemChange(event:any){
+    onChangeInvoice(event:any){
   const itemId = event.value;
   if(!itemId){
      this.products = [];
         this.filteredProducts = [];
-        this.buildFormArrayFormProducts([]);
         
         return;
   }
 }
-onCategoryItem(event: any) {
-  const categoryId = event.value;
-this.transactionForm.get('item')?.setValue(null);
-  // If category is null → load all items
-  if (!categoryId) {
-    this.OnGetItem();     // reload full item list
-    return;
-  }
+onChangeVendor(event:any){
 
-  // If category has value → load category-specific items
-  this.categoryRelavantItem(categoryId);
 }
-
- categoryRelavantItem(id:any){
-   console.log('item:',id);
-   this.itemOptions=[];
-   const payload={
-    uname:"admin",
-    p_username:"admin",
-    p_returntype:"CATEGORY",
-    p_returnvalue:id.toString(),
-    clientcode:"CG01-SE",
-    "x-access-token":this.authService.getToken()
-   };
-   this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-    next:(res: any) => {
-    if(!res.data || res.data.length==0){
-         this.itemOptions = [];
-        // Clear filtered products if no items for this category
-        this.filteredProducts = [];
-        this.products = [];
-        this.buildFormArrayFormProducts([]);
-        this.showSuccess('No items found for this category.');
-        return;
-      }
-      this.itemOptions=res.data;
-    },
-    error:(err)=>{
-      console.error(err);
-    }
-   });
- }
     onSave(updatedData: any) {
         const mappedData = {
             selection: true,
@@ -278,8 +171,6 @@ this.transactionForm.get('item')?.setValue(null);
         this.transactionForm.reset();
         this.filteredProducts = [];
          this.products = [];
-  this.buildFormArrayFormProducts([]);
-         this.OnGetItem();
     }
     createDropdownPayload(returnType: string) {
         return {
@@ -290,31 +181,23 @@ this.transactionForm.get('item')?.setValue(null);
             'x-access-token': this.authService.getToken()
         };
     }
-    OnGetItem() {
-        const payload = this.createDropdownPayload('ITEM');
+    OnGetInvoice() {
+        const payload = this.createDropdownPayload('INVOICENO');
         this.inventoryService.getdropdowndetails(payload).subscribe({
-            next: (res) => (this.itemOptions = res.data),
+            next: (res) => (this.invoiceOptions = res.data),
             error: (err) => console.log(err)
         });
     }
-    // OnGetReport() {
-    //     // const payload = this.createDropdownPayload('ITEM');
-    //     // this.inventoryService.getdropdowndetails(payload).subscribe({
-    //     //     next: (res) => (this.itemOptions = res.data),
-    //     //     error: (err) => console.log(err)
-    //     // });
-    // }
-    OnGetCategory() {
-        const payload = this.createDropdownPayload('CATEGORY');
+    OnGetVendor() {
+        const payload = this.createDropdownPayload('VENDOR');
         this.inventoryService.getdropdowndetails(payload).subscribe({
-            next: (res) => (this.categoryOptions = res.data),
+            next: (res) => (this.vendorOptions = res.data),
             error: (err) => console.log(err)
         });
     }
     loadAllDropdowns() {
-        // this.OnGetReport();
-        this.OnGetCategory();
-        this.OnGetItem();
+        this.OnGetVendor();
+        this.OnGetInvoice();
        
     }
     showSuccess(message: string) {

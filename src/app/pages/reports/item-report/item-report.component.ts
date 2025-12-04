@@ -96,39 +96,61 @@ export class ItemReportComponent {
         private messageService: MessageService
     ) {}
  reportTypeOptions: any[] = [
-        { label: 'Item List',value:'Item List' },
-        { label: 'Out of Stock',value:'Out of Stock' },
-        { label: 'Low Stock',value:'Low Stock' },
-        { label: 'Most Salable',value:'Most Salable' },
-        { label: 'Non Active',value:'Non Active' },
-        { label: 'Active Stock',value:'Active Stock' },
-    ];
+    { label: 'Item List', value: 'ITEMLIST' },
+    { label: 'Out of Stock', value: 'OUTSTOCK' },
+    { label: 'Low Stock', value: 'LOWSTOCK' },
+    { label: 'Most Saleable', value: 'MOSTSALEABLE'},
+    { label: 'Non-Active Item', value: 'NONACTIVE' },
+];
     ngOnInit(): void {
        
         this.reportForm = this.fb.group({
-            item: [''],
-          reportType:[''],
-            category: [''],
-             p_stock: this.fb.array([])
-        });
+            item: [{value:'',disabled:true}],
+          reportType:['',Validators.required],
+            category: [{value:'',disabled:true}],
+        },{validators: this.categoryOrItemRequired});
          this.loadAllDropdowns();
         this.onGetStockIn();
-        this.reportForm.get('category')?.valueChanges.subscribe(() => this.applyGlobalFilter());
+       
+        this.reportForm.get('reportType')?.valueChanges.subscribe(selected => {
+      if (selected) {
+        this.reportForm.get('category')?.disable();
+        this.reportForm.get('item')?.disable();
+      } else {
+        this.reportForm.get('category')?.enable();
+        this.reportForm.get('item')?.enable();
+         this.reportForm.patchValue({ category: null, item: null });
+      }
+    });
+     this.reportForm.get('category')?.valueChanges.subscribe(() => this.applyGlobalFilter());
         this.reportForm.get('item')?.valueChanges.subscribe(() => this.applyGlobalFilter());
     }
+    categoryOrItemRequired(control: AbstractControl) {
+  const category = control.get('category')?.value;
+  const item = control.get('item')?.value;
+
+  if (!category && !item) {
+    return { categoryOrItemRequired: true };
+  }
+  return null;
+}
+
     getStockArray(): FormArray {
         return this.reportForm.get('p_stock') as FormArray;
     }
     Onreturndropdowndetails() {
         const category = this.reportForm.controls['category'].value;
         const item = this.reportForm.controls['item'].value;
-        console.log('cat', category,item);
+        const reportType = this.reportForm.controls['reportType'].value;
+       
+        console.log('Filters:', { category, item, reportType });
         if (category || item) {
             const payload = {
                 uname: 'admin',
                 p_categoryid: category || null,
                 p_itemid: item || null,
                 p_username: 'admin',
+                p_type: reportType || 'ITEMLIST',
                 clientcode: 'CG01-SE',
                 'x-access-token': this.authService.getToken()
             };
@@ -170,6 +192,7 @@ export class ItemReportComponent {
        const searchTerm=(this.globalFilter || '')?.toLowerCase().trim();
        const selectedCategory=this.reportForm.get('category')?.value;
        const selectedItem=this.reportForm.get('item')?.value;
+       const selectedReportType = this.reportForm.get('reportType')?.value;
        this.filteredProducts=this.products.filter((p:any)=>{
         const matchesSearch=!searchTerm || String(p.itemcombine ?? p.name ?? '').toLowerCase() .includes(searchTerm) ||
         String(p.categoryname ?? p.category ?? '').toLowerCase() .includes(searchTerm) ||
@@ -192,9 +215,22 @@ export class ItemReportComponent {
   const itemId = event.value;
   if(!itemId){
      this.products = [];
+        // this.filteredProducts = [];
+        // this.buildFormArrayFormProducts([]);
+        // this.reportForm.get('category')?.setValue(null);
+        // this.reportForm.get('reportType')?.setValue(null);
+        // return;
+  }
+
+}
+ onReportChange(event:any){
+  const reportType = event.value;
+  if(!reportType){
+     this.products = [];
         this.filteredProducts = [];
         this.buildFormArrayFormProducts([]);
-        
+         this.reportForm.get('category')?.setValue(null);
+        this.reportForm.get('item')?.setValue(null);
         return;
   }
 }

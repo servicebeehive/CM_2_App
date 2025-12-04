@@ -3,9 +3,8 @@
     <div class="flex justify-between items-center mb-6">
         <span class="block text-surface-900 font-bold text-2xl">Transaction</span>
           <div class="flex justify-end gap-4 mt-8">
-                    <button pButton type="submit" label="Display" class="p-button-warning" (click)="Onreturndropdowndetails()"></button>
+                    <button pButton type="submit" label="Display" class="p-button-warning" [disabled]="transactionForm.invalid" ></button>
                     <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
-                    <button pButton type="button" label="Download" icon="pi pi-download" iconPos="right" class="p-button-warning" (click)="exportToExcel()"></button>
                 </div>
     </div>
 
@@ -16,14 +15,21 @@
             <div class="grid grid-cols-2 gap-x-8 gap-y-2 w-full">
                 <!-- Transaction Date From-->
                 <div class="flex flex-col">
-                    <label class="font-medium mb-1">From Date</label>
+                    <label class="font-medium mb-1">From Date <span class="text-red-500">*</span></label>
                     <p-datepicker fluid formControlName="fromDate" [showIcon]="true" placeholder="From Date"></p-datepicker>
+                    <small class="text-red-500 ms-3 mt-1" *ngIf="transactionForm.get('fromDate')?.touched">
+            <span *ngIf="transactionForm.get('fromDate')?.errors?.['required']">From Date is required</span>
+          </small>
                 </div>
 
                 <!-- Transaction Date To -->
                 <div class="flex flex-col">
-                    <label class="font-medium mb-1">To Date</label>
+                    <label class="font-medium mb-1">To Date <span class="text-red-500">*</span></label>
                     <p-datepicker fluid formControlName="toDate" [showIcon]="true" placeholder="To Date"></p-datepicker>
+                     <small class="text-red-500 ms-3 mt-1" *ngIf="transactionForm.get('toDate')?.touched">
+            <span *ngIf="transactionForm.get('toDate')?.errors?.['required']">To Date is required</span>
+             <span *ngIf="transactionForm.errors?.['dateRangeInvalid'] && transactionForm.get('toDate')?.touched">To Date must be greater than or equal to From Date</span>
+          </small>
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-6 flex-grow mt-4">
@@ -31,14 +37,14 @@
                 <div class="flex flex-col">
                     <label class="font-medium mb-1">Supplier</label>
                     <p-dropdown
-                        [options]="categoryOptions"
+                        [options]="vendorOptions"
                         optionLabel="fieldname"
-                        (onChange)="onCategoryItem($event)"
+                        (onChange)="onChangeVendor($event)"
                         optionValue="fieldid"
                         [filter]="true"
                         [showClear]="true"
                         filterPlaceholder="Search Supplier"
-                        formControlName="category"
+                        formControlName="p_vendorid"
                         placeholder="Supplier"
                     >
                     </p-dropdown>
@@ -48,14 +54,14 @@
                 <div class="flex flex-col">
                     <label class="font-medium mb-1">Invoice No</label>
                     <p-dropdown
-                        [options]="itemOptions"
-                        optionLabel="itemcombine"
-                        optionValue="itemid"
+                        [options]="invoiceOptions"
+                        optionLabel="fieldname"
+                        optionValue="fieldid"
                         [filter]="true"
                         [showClear]="true"
-                        (onChange)="onItemChange($event)"
+                        (onChange)="onChangeInvoice($event)"
                         filterPlaceholder="Search Invoice No"
-                        formControlName="item"
+                        formControlName="invoice"
                         placeholder="Invoice No"
                     >
                     </p-dropdown>

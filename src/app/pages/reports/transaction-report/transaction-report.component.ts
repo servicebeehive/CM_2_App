@@ -107,18 +107,27 @@ export class TransactionReportComponent {
             {
                 item: [''],
                
-                fromDate: [''],
-                toDate:[''],
+                fromDate: ['',[Validators.required]],
+                toDate:['',[Validators.required]],
                 category:[''],
                gstTransaction:[true],
-                p_stock: this.fb.array([])
-            }
+            },{validators: this.dateRangeValidator}
         );
        this.loadAllDropdowns();
         this.onGetStockIn();
         this.reportForm.get('category')?.valueChanges.subscribe(() => this.applyGlobalFilter());
         this.reportForm.get('item')?.valueChanges.subscribe(() => this.applyGlobalFilter());
     }
+
+ dateRangeValidator(form:FormGroup){
+    const fromDate = form.get('fromDate')?.value;
+    const toDate=form.get('toDate')?.value;
+  if(!fromDate || !toDate)
+    return null;
+ const from=new Date(fromDate);
+ const to=new Date(toDate);
+  return to >= from ? null :{ dateRangeInvalid:true }; 
+ }
 
   getStockArray(): FormArray {
         return this.reportForm.get('p_stock') as FormArray;

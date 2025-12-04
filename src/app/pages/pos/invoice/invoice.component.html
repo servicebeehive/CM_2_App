@@ -10,39 +10,53 @@
             <!-- Report Type -->
 
             <div class="grid grid-cols-2 gap-x-8 gap-y-2 w-full">
+                
+                <!-- Customer Mobile -->
                 <div class="flex flex-col">
-                    <label class="font-medium mb-1">Status</label>
-                    <p-dropdown [options]="reportTypeOptions" optionLabel="label" optionValue="value" [filter]="true" filterPlaceholder="Select Status" formControlName="reportType" placeholder="Status"> </p-dropdown>
-                    <!-- <small class="text-red-500 ms-3 mt-1" *ngIf="invoiceForm.get('vendorName')?.touched">
-            <span *ngIf="invoiceForm.get('vendorName')?.errors?.['required']">Vendor Name is required</span>
-          </small> -->
+                    <label class="font-medium mb-1">Customer Mobile</label>
+                    <p-dropdown
+                        [options]="cusMobileOptions"
+                        optionLabel="fieldname"
+                        optionValue="fieldid"
+                        [filter]="true"
+                        [showClear]="true"
+                        filterPlaceholder="Search Customer Mobile"
+                        formControlName="item"
+                        placeholder="Customer Mobile"
+                    >
+                    </p-dropdown>
                 </div>
                 <div class="flex justify-end gap-4 mt-8">
-                    <button pButton type="submit" label="Display" class="p-button-warning" (click)="Onreturndropdowndetails()"></button>
+                    <button pButton type="submit" label="Display" class="p-button-warning" disabled="invoiceForm.invalid"></button>
                     <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
-                    <button pButton type="button" label="Download" icon="pi pi-download" iconPos="right" class="p-button-warning" (click)="exportToExcel()"></button>
                 </div>
 
                 <!-- Transaction Date From-->
                 <div class="flex flex-col">
-                    <label class="font-medium mb-1">From Date</label>
+                    <label class="font-medium mb-1">From Date <span class="text-red-500">*</span></label>
                     <p-datepicker fluid formControlName="fromDate" [showIcon]="true" placeholder="From Date"></p-datepicker>
+                    <small class="text-red-500 ms-3 mt-1" *ngIf="invoiceForm.get('fromDate')?.touched">
+            <span *ngIf="invoiceForm.get('fromDate')?.errors?.['required']">From Date is required</span>
+          </small>
                 </div>
 
                 <!-- Transaction Date To -->
                 <div class="flex flex-col">
-                    <label class="font-medium mb-1">To Date</label>
+                    <label class="font-medium mb-1">To Date <span class="text-red-500">*</span></label>
                     <p-datepicker fluid formControlName="toDate" [showIcon]="true" placeholder="To Date"></p-datepicker>
+                     <small class="text-red-500 ms-3 mt-1" *ngIf="invoiceForm.get('toDate')?.touched">
+            <span *ngIf="invoiceForm.get('toDate')?.errors?.['required']">To Date is required</span>
+             <span *ngIf="invoiceForm.errors?.['dateRangeInvalid'] && invoiceForm.get('toDate')?.touched">To Date must be greater than or equal to From Date</span>
+          </small>
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-6 flex-grow mt-4">
-                <!-- Category -->
+                <!-- Customer Name -->
                 <div class="flex flex-col">
                     <label class="font-medium mb-1">Customer Name</label>
                     <p-dropdown
-                        [options]="categoryOptions"
+                        [options]="cusNameOptions"
                         optionLabel="fieldname"
-                        (onChange)="onCategoryItem($event)"
                         optionValue="fieldid"
                         [filter]="true"
                         [showClear]="true"
@@ -53,21 +67,12 @@
                     </p-dropdown>
                 </div>
 
-                <!-- Item Name -->
                 <div class="flex flex-col">
-                    <label class="font-medium mb-1">Customer Name</label>
-                    <p-dropdown
-                        [options]="itemOptions"
-                        optionLabel="itemcombine"
-                        optionValue="itemid"
-                        [filter]="true"
-                        [showClear]="true"
-                        (onChange)="onItemChange($event)"
-                        filterPlaceholder="Search Customer Name"
-                        formControlName="item"
-                        placeholder="Customer Name"
-                    >
-                    </p-dropdown>
+                    <label class="font-medium mb-1">Status</label>
+                    <p-dropdown [options]="statusOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Select Status" formControlName="reportType" placeholder="Status"> </p-dropdown>
+                    <!-- <small class="text-red-500 ms-3 mt-1" *ngIf="invoiceForm.get('vendorName')?.touched">
+            <span *ngIf="invoiceForm.get('vendorName')?.errors?.['required']">Vendor Name is required</span>
+          </small> -->
                 </div>
             </div>
         </div>
