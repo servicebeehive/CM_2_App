@@ -56,3 +56,21 @@ export interface SaleItem {
   totalPayable: number;
 }
 
+export interface UserHeader {
+  uname: string;
+  p_ufullname: string;
+  p_uname: string;
+  p_pwd: string;
+  p_active: string;
+  p_operationtype: string;
+  p_phone: string;
+  p_utypeid: string;
+  p_email: string;
+  p_loginuser: string;
+  p_oldpwd: string;
+  clientcode: string;
+  "x-access-token": string;
+}
+
+
+

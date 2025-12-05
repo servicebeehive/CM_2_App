@@ -20,6 +20,8 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { RippleModule } from 'primeng/ripple';
 import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
+import { AuthService } from '@/core/services/auth.service';
+import { InventoryService } from '@/core/services/inventory.service';
 
 @Component({
   selector: 'app-user-management',
@@ -64,7 +66,9 @@ export class UserManagementComponent {
 
   constructor(
     private fb: FormBuilder,
-    private confirmationService: ConfirmationService
+    private confirmationService: ConfirmationService,
+    private authService: AuthService,
+    private inventoryService: InventoryService
   ) {}
 
   ngOnInit() {
@@ -117,18 +121,37 @@ export class UserManagementComponent {
     this.selectedUser = user;
     this.userForm.patchValue(user);
   }
-
+  valueReturnToString(value: any) {
+  return value != null ? value.toString() : null;
+}
   closeDialog() {
     this.visibleDialog = false;
   }
 
+  onUserCreation(data:any){
+    const payload:any ={
+    "uname": "admin",
+    "p_operationtype": "INSERT",
+    "p_ufullname": data.userName,
+    "p_uname":data.userName,
+    "p_pwd": data.password,
+    "p_active": "Y",
+    "p_phone": data.mobile,
+    "p_utypeid": data.userRole==null?"" : this.valueReturnToString(data.userRole),
+    "p_email": data.email,
+    "p_loginuser": "admin",
+    "p_oldpwd": "",
+    "clientcode": "CG01-SE",
+    "x-access-token": this.authService.getToken()
+    };
+    // this.inventoryService.
+}
   /** ✅ Submit Form **/
   onSubmit() {
     if (this.userForm.invalid) {
       this.userForm.markAllAsTouched() ;
       return;
     }
-
     const formValue = this.userForm.value  ;
     const newUser = {
       id: this.editMode && this.selectedUser ? this.selectedUser.id : Date.now(),
@@ -138,7 +161,7 @@ export class UserManagementComponent {
       email: formValue.email,
       active: formValue.checked ? 'Yes' : 'No',
     };
-
+    this.onUserCreation(this.userForm.value);
     if (this.editMode) {
       const index = this.user.findIndex(
         (u) => u.id === this.selectedUser.id

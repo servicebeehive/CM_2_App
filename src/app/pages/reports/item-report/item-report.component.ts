@@ -108,32 +108,32 @@ export class ItemReportComponent {
             item: [{value:'',disabled:true}],
           reportType:['',Validators.required],
             category: [{value:'',disabled:true}],
-        },{validators: this.categoryOrItemRequired});
+        });
          this.loadAllDropdowns();
         this.onGetStockIn();
        
         this.reportForm.get('reportType')?.valueChanges.subscribe(selected => {
       if (selected) {
-        this.reportForm.get('category')?.disable();
-        this.reportForm.get('item')?.disable();
-      } else {
         this.reportForm.get('category')?.enable();
         this.reportForm.get('item')?.enable();
+      } else {
+        this.reportForm.get('category')?.disable();
+        this.reportForm.get('item')?.disable();
          this.reportForm.patchValue({ category: null, item: null });
       }
     });
      this.reportForm.get('category')?.valueChanges.subscribe(() => this.applyGlobalFilter());
         this.reportForm.get('item')?.valueChanges.subscribe(() => this.applyGlobalFilter());
     }
-    categoryOrItemRequired(control: AbstractControl) {
-  const category = control.get('category')?.value;
-  const item = control.get('item')?.value;
+//     categoryOrItemRequired(control: AbstractControl) {
+//   const category = control.get('category')?.value;
+//   const item = control.get('item')?.value;
 
-  if (!category && !item) {
-    return { categoryOrItemRequired: true };
-  }
-  return null;
-}
+//   if (!category && !item) {
+//     return { categoryOrItemRequired: true };
+//   }
+//   return null;
+// }
 
     getStockArray(): FormArray {
         return this.reportForm.get('p_stock') as FormArray;
@@ -144,7 +144,7 @@ export class ItemReportComponent {
         const reportType = this.reportForm.controls['reportType'].value;
        
         console.log('Filters:', { category, item, reportType });
-        if (category || item) {
+        if (category || item || reportType) {
             const payload = {
                 uname: 'admin',
                 p_categoryid: category || null,
@@ -159,7 +159,7 @@ export class ItemReportComponent {
                     console.log('API RESULT:', res.data);
                     this.products = res?.data || [];
                     this.filteredProducts = [...this.products];
-                    this.buildFormArrayFormProducts(this.filteredProducts);
+                     
                     if (this.products.length == 0) {
                         let message = 'No Data Available for this Category and Item';
                         this.showSuccess(message);
@@ -174,20 +174,7 @@ export class ItemReportComponent {
             this.errorSuccess(message);
         }
     }
-    private buildFormArrayFormProducts(products: any[]) {
-        const stockArray = this.getStockArray();
-        console.log('stock arrary', stockArray);
-        stockArray.clear();
-        products.forEach((p: any) => {
-            const group = this.fb.group({
-               itemid:[p.itemid],
-    categoryid:[p.categoryid],
-    mrp:[p.mrp],
-    purchaseprice:[p.purchaseprice] 
-            });
-            stockArray.push(group);
-        });
-    }
+    
     applyGlobalFilter() {
        const searchTerm=(this.globalFilter || '')?.toLowerCase().trim();
        const selectedCategory=this.reportForm.get('category')?.value;
@@ -205,11 +192,11 @@ export class ItemReportComponent {
 
             return matchesSearch && matchesCategory && matchesItem;
        });
-       this.buildFormArrayFormProducts(this.filteredProducts);
+        
     }
     onGetStockIn() {
       this.products=this.inventoryService.productItem || [];
-      this.buildFormArrayFormProducts(this.products);
+       
     }
     onItemChange(event:any){
   const itemId = event.value;
@@ -228,7 +215,6 @@ export class ItemReportComponent {
   if(!reportType){
      this.products = [];
         this.filteredProducts = [];
-        this.buildFormArrayFormProducts([]);
          this.reportForm.get('category')?.setValue(null);
         this.reportForm.get('item')?.setValue(null);
         return;
@@ -264,7 +250,6 @@ this.reportForm.get('item')?.setValue(null);
         // Clear filtered products if no items for this category
         this.filteredProducts = [];
         this.products = [];
-        this.buildFormArrayFormProducts([]);
         this.showSuccess('No items found for this category.');
         return;
       }
@@ -275,21 +260,6 @@ this.reportForm.get('item')?.setValue(null);
     }
    });
  }
-    onSave(updatedData: any) {
-        const mappedData = {
-            selection: true,
-            code: updatedData.itemCode.label || updatedData.itemCode,
-            itemName: updatedData.itemName,
-            category: updatedData.category,
-            stock: updatedData.stock,
-            costPrice: updatedData.costPrice,
-            mrp: updatedData.mrp,
-            location: updatedData.location,
-            lastUpdatedBy: updatedData.lastUpdatedBy,
-            lastUpdated: updatedData.lastUpdated
-        };
-    }
-
     onPageChange(event: any) {
         this.first = event.first;
         this.rowsPerPage = event.rows;
@@ -303,13 +273,11 @@ this.reportForm.get('item')?.setValue(null);
     get grandTotal(): number {
         return this.products.reduce((sum, p) => sum + (p.total || 0), 0);
     }
-    exportToExcel() {}
 
     reset() {
         this.reportForm.reset();
         this.filteredProducts = [];
          this.products = [];
-  this.buildFormArrayFormProducts([]);
         this.OnGetItem();
     }
     createDropdownPayload(returnType: string) {

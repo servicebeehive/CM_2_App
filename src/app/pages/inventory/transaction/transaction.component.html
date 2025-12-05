@@ -3,7 +3,7 @@
     <div class="flex justify-between items-center mb-6">
         <span class="block text-surface-900 font-bold text-2xl">Transaction</span>
           <div class="flex justify-end gap-4 mt-8">
-                    <button pButton type="submit" label="Display" class="p-button-warning" [disabled]="transactionForm.invalid" ></button>
+                    <button pButton type="submit" label="Display" class="p-button-warning" [disabled]="transactionForm.invalid" (click)="display()" ></button>
                     <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
                 </div>
     </div>
@@ -39,12 +39,11 @@
                     <p-dropdown
                         [options]="vendorOptions"
                         optionLabel="fieldname"
-                        (onChange)="onChangeVendor($event)"
                         optionValue="fieldid"
                         [filter]="true"
                         [showClear]="true"
                         filterPlaceholder="Search Supplier"
-                        formControlName="p_vendorid"
+                        formControlName="p_vendor"
                         placeholder="Supplier"
                     >
                     </p-dropdown>
@@ -59,7 +58,6 @@
                         optionValue="fieldid"
                         [filter]="true"
                         [showClear]="true"
-                        (onChange)="onChangeInvoice($event)"
                         filterPlaceholder="Search Invoice No"
                         formControlName="invoice"
                         placeholder="Invoice No"
@@ -75,11 +73,13 @@
                 <ng-template #header>
                     <tr class="bg-yellow-400">
                         <th><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
-                        <th>Invoice No</th>
-                        <th>Invoice Date</th>
-                        <th>Customer</th>
+                        <th>Purchase Id</th>
+                        <th>Transaction Date</th>
+                        <th>Vendor Invoice</th>
+                        <th>Vendor Invoice Date</th>
+                        <th>Supplier</th>
+                        <th>Item Count</th>
                         <th>Total Amount</th>
-                        <th>Paid Amount</th>
                         <th>Status</th>
                         <th>Action</th>
                     </tr>
@@ -90,16 +90,17 @@
                         <td class="text-center">
                             <p-tableCheckbox [value]="row" />
                         </td>
-                        <td class="flex justify-between gap-2">
-                            {{ row.itemsku }}
+                        <td>
+                            {{ row.purchaseid }}
                             <!-- <span class=" pi pi-copy cursor-pointer "></span> -->
                         </td>
                         <td>{{ row.transactiondate }}</td>
-                        <td>{{ row.itemname }}</td>
-                        <td>{{ row.categoryname }}</td>
+                        <td>{{ row.vendorinvoice}}</td>
+                        <td>{{ row.vendorinvoicedate }}</td>
+                        <td>{{ row.supplier }}</td>
+                        <td>{{ row.item_count }}</td>
+                        <td>{{ row.total_amount }}</td>
                         <td>{{ row.status }}</td>
-                        <td>{{ row.quantity }}</td>
-                        <td>{{ row.amount }}</td>
                         <td class="text-center w-[60px]">
                             <div class="flex g-2">
                                 <button pButton type="button" icon="pi pi-print" disabled class="p-button-text p-button-sm"></button>
@@ -113,12 +114,6 @@
                     <div class="text-gray-600 ms-2">Total Items: {{ filteredProducts?.length || 0 }}</div>
                 </ng-template>
             </p-table>
-        </div>
-
-        <!-- Grand Total -->
-        <div class="flex justify-end items-center gap-4 mt-6 border-t pt-4">
-            <label class="font-medium">Grand Total</label>
-            <input pInputText type="text" [value]="grandTotal" readonly placeholder="Total" class="w-40 text-right" />
         </div>
     </form>
 

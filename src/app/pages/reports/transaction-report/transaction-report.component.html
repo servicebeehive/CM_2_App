@@ -5,7 +5,7 @@
      <!-- Add and Display Buttons -->
       <div class="flex gap-6">
          <button pButton type="submit" label="Display" class="p-button-warning"(click)="Onreturndropdowndetails()" [disabled]="reportForm.invalid"></button>
-        <button pButton type="button" label="Download" icon="pi pi-download" iconPos="right" class="p-button-warning" (click)="exportToExcel()"></button>
+        <button pButton type="button" label="Download" icon="pi pi-download" iconPos="right" class="p-button-warning"></button>
         <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
       </div>
   </div>
@@ -13,31 +13,74 @@
   <form [formGroup]="reportForm" class="space-y-8">
 
     <!-- 🏷 Product Info Section -->
-    <div>
         <!-- Report Type -->
          <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
         <div class="flex flex-col">
-          <label class="font-medium mb-1">Report Type</label>
+          <label class="font-medium mb-1">Report Type <span class="text-red-500">*</span></label>
            <p-dropdown
             [options]="reportTypeOptions"
             optionLabel="label"
             optionValue="value"
             [filter]="true"
+            [showClear]="true"
             filterPlaceholder="Select Report Type"
             formControlName="reportType"
-            placeholder="Report Type">
+            placeholder="Report Type"
+            (onChange)="onReportChange($event)"
+          >
           </p-dropdown>
           <!-- <small class="text-red-500 ms-3 mt-1" *ngIf="reportForm.get('vendorName')?.touched">
             <span *ngIf="reportForm.get('vendorName')?.errors?.['required']">Vendor Name is required</span>
           </small> -->
         </div>
-        <div class="flex flex-col mt-8">
-        <div class="flex items-center gap-2">
+        
+        <!-- <div class="flex items-center gap-2">
            <p-checkbox formControlName="gstTransaction" [binary]="true"></p-checkbox>
                 <label class="font-medium mb-1">GST Transaction</label>
-            </div>
+            </div> -->
+            @if(reportForm.get('reportType')?.value ==='SALE' || reportForm.get('reportType')?.value ==='RETURN'){
+ <div class="flex flex-wrap mt-6 gap-4">
+   <div class="flex items-center">
+        <p-radiobutton name="gstType1" value="all" [(ngModel)]="gstTransaction" [ngModelOptions]="{standalone: true}" inputId="all" />
+        <label for="all" class="ml-2">All</label>
       </div>
-    
+    <div class="flex items-center">
+        <p-radiobutton name="gstType1" value="Y" [(ngModel)]="gstTransaction" [ngModelOptions]="{standalone: true}" inputId="gst" />
+        <label for="gst" class="ml-2">GST</label>
+    </div>
+
+    <div class="flex items-center">
+        <p-radiobutton name="gstType1" value="N" [(ngModel)]="gstTransaction" [ngModelOptions]="{standalone: true}" inputId="nonGst" />
+        <label for="nonGst" class="ml-2">Non-GST</label>
+    </div>
+    </div>
+            }
+            @else if (reportForm.get('reportType')?.value ==='DEBITNOTE') {
+              <div class="flex flex-wrap mt-6 gap-4">
+                 <div class="flex items-center">
+        <p-radiobutton name="gstType" value="none" [(ngModel)]="gstTransaction" [ngModelOptions]="{standalone: true}" inputId="all" />
+        <label for="all" class="ml-2">All</label>
+      </div>
+    <div class="flex items-center">
+        <p-radiobutton name="gstType1" value="N" [(ngModel)]="gstTransaction" [ngModelOptions]="{standalone: true}" inputId="dn" />
+        <label for="dn" class="ml-2">DN</label>
+    </div>
+
+    <div class="flex items-center">
+        <p-radiobutton name="gstType" value="Y" [(ngModel)]="gstTransaction" [ngModelOptions]="{standalone: true}" inputId="cn" />
+        <label for="cn" class="ml-2">CN</label>
+    </div>
+      <div class="flex items-center">
+        <p-radiobutton name="gstType" value="all" [(ngModel)]="gstTransaction" [ngModelOptions]="{standalone: true}" inputId="none" />
+        <label for="nondn" class="ml-2">No DN</label>
+      </div>
+    </div>
+            }
+            @else{
+               <div class="flex flex-col"></div>
+            }
+           
+   
         <!-- Transaction Date From-->
           <div class="flex flex-col">
           <label class="font-medium mb-1">From Date <span class="text-red-500">*</span></label>
@@ -56,26 +99,20 @@
              <span *ngIf="reportForm.errors?.['dateRangeInvalid'] && reportForm.get('toDate')?.touched">To Date must be greater than or equal to From Date</span>
           </small>
         </div>
-        </div>
-         <div class="flex justify-between items-end w-full gap-6">
-<div class="grid grid-cols-2 gap-6 flex-grow">
+
          <!-- Category -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Category</label>
-                <p-dropdown [options]="categoryOptions" optionLabel="fieldname" (onChange)="onCategoryItem($event)" optionValue="fieldid" [filter]="true" [showClear]="true" filterPlaceholder="Search Category" formControlName="category" placeholder="Category"> </p-dropdown>
+                <p-dropdown [options]="categoryOptions" optionLabel="fieldname" (onChange)="onCategoryItem($event)" optionValue="fieldid" [filter]="true" [showClear]="true" filterPlaceholder="Search Category" formControlName="category" placeholder="Category" [disabled]="!reportForm.get('reportType')?.value"> </p-dropdown>
             </div>
 
        <!-- Item Name -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Item Name</label>
-                <p-dropdown [options]="itemOptions" optionLabel="itemcombine" optionValue="itemid" [filter]="true" [showClear]="true" (onChange)="onItemChange($event)" filterPlaceholder="Search Item" formControlName="item" placeholder="Item"> </p-dropdown>
+                <p-dropdown [options]="itemOptions" optionLabel="itemcombine" optionValue="itemid" [filter]="true" [showClear]="true" (onChange)="onItemChange($event)" filterPlaceholder="Search Item" formControlName="item" placeholder="Item" [disabled]="!reportForm.get('reportType')?.value"> </p-dropdown>
             </div>
 </div>
-     
-    </div>
-
-      
-      </div>
+    
 
     <!-- Product Table with Pagination -->
     <div>
@@ -91,13 +128,15 @@
       >
         <ng-template #header>
           <tr class="bg-yellow-400">
-            <th><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
+           
             <th>Transaction Id</th>
             <th>Transaction Date</th>
             <th>Item Name</th>
-            <th>Category</th>     
+            <th>Category</th>  
+            <th>UOM</th>   
            <th>Status</th>
            <th>Qty</th>
+           <th>MRP</th>
            <th>Amount</th>
             <th>Discount</th>
             <th>Total</th>
@@ -106,20 +145,20 @@
 
          <ng-template pTemplate="body" let-row let-i="rowIndex">
           <tr>
-            <td class="text-center">
-             <p-tableCheckbox [value]="row" />
-            </td>
-            <td class="flex justify-between gap-2">{{ row.itemsku}}
+            
+            <td class="flex justify-between gap-2">{{ row.invoiceno}}
                <!-- <span class=" pi pi-copy cursor-pointer "></span> -->
               </td>
-            <td>{{ row.transactiondate }}</td>
-            <td>{{ row.itemname }}</td>
-            <td>{{ row.categoryname}}</td>
+            <td>{{ row.invoicedate }}</td>
+            <td>{{ row.item }}</td>
+            <td>{{ row.category}}</td>
+            <td>{{ row.uom}}</td>
             <td>{{ row.status}}</td>
-            <td>{{ row.quantity }}</td>
+            <td>{{ row.qty }}</td>
+            <td>{{ row.mrp}}</td>
             <td>{{ row.amount}}</td>
-            <td>{{ row.discount}}</td>
-            <td>{{ row.total}}</td>
+            <td>{{ row.overalldiscount}}</td>
+            <td>{{ row.grandtotal}}</td>
           </tr>
         </ng-template>
 
@@ -129,11 +168,6 @@
       </p-table>
     </div>
 
-    <!-- Grand Total -->
-    <div class="flex justify-end items-center gap-4 mt-6 border-t pt-4">
-      <label class="font-medium">Grand Total</label>
-      <input pInputText type="text" [value]="grandTotal" readonly placeholder="Total" class="w-40 text-right" />
-    </div>
   </form>
 
   <!-- Confirm Dialog -->

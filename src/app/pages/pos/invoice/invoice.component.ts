@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { Component, ViewChild } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -72,7 +72,7 @@ interface Image {
 ],
     templateUrl: './invoice.component.html',
     styleUrl: './invoice.component.scss',
-    providers:[ConfirmationService]
+    providers:[ConfirmationService,DatePipe]
 })
 export class InvoiceComponent {
     invoiceForm!: FormGroup;
@@ -82,6 +82,7 @@ export class InvoiceComponent {
      selection:boolean=true;
      pagedProducts:StockIn[]=[];
      first:number=0;
+      today: Date = new Date();
      rowsPerPage:number=5;
     globalFilter: string = '';
         // ✅ Move dropdown options into variables
@@ -94,19 +95,18 @@ export class InvoiceComponent {
             private fb: FormBuilder,
             private inventoryService: InventoryService,
             private authService: AuthService,
-            private messageService: MessageService
+            private messageService: MessageService,
+            public datepipe:DatePipe
         ) {}
  
     ngOnInit(): void {
         this.invoiceForm = this.fb.group(
             {
-                item: [''],
-               
-                fromDate: ['',Validators.required],
-                toDate:['',Validators.required],
-                category:[''],
-               gstTransaction:[true],
-                p_stock: this.fb.array([])
+                p_mobile: [''],
+               p_cusname:[''],
+                fromDate: [this.today,Validators.required],
+                toDate:[this.today,Validators.required],
+                status:['']
             },{validators:this.dateRangeValidator}
         );
        this.loadAllDropdowns();
@@ -128,21 +128,45 @@ dateRangeValidator(form:FormGroup){
     onGetStockIn() {
       this.products=this.inventoryService.productItem || [];
     }
+    
+     display(){
+        const p_mobile = this.invoiceForm.controls['p_mobile'].value;
+        const p_cusname = this.invoiceForm.controls['p_cusname'].value;
+        const startDate = this.invoiceForm.controls['fromDate'].value;
+        const endDate = this.invoiceForm.controls['toDate'].value;
+        const status = this.invoiceForm.controls['status'].value;
 
-    onSave(updatedData: any) {
-        const mappedData = {
-            selection: true,
-            code: updatedData.itemCode.label || updatedData.itemCode,
-            itemName: updatedData.itemName,
-            category: updatedData.category,
-            stock: updatedData.stock,
-            costPrice: updatedData.costPrice,
-            mrp: updatedData.mrp,
-            location: updatedData.location,
-            lastUpdatedBy: updatedData.lastUpdatedBy,
-            lastUpdated: updatedData.lastUpdated
-        };
-    }
+        if((startDate && endDate) || (p_cusname || p_mobile || status) ){
+            const payload={
+                uname:'admin',
+                p_startdate: this.datepipe.transform(startDate,'yyyy/MM/dd'),
+                p_enddate: this.datepipe.transform(endDate,'yyyy/MM/dd'),
+                p_mobile: p_mobile || null,
+                p_customer: p_cusname || null,
+                status: status || null,
+                p_username:'admin',
+                clientcode: 'CG01-SE',
+                'x-access-token': this.authService.getToken()
+            };
+            this.inventoryService.getinvoicedetail(payload).subscribe({
+                next :(res:any) =>{
+                    console.log('API RESEULT:',res.data);
+                    this.products=res?.data || [];
+                    this.filteredProducts = [...this.products];
+                    if(this.products.length===0){
+                        let message = 'No Data Available for this Category and Item';
+                        this.showSuccess(message);
+                    }
+                },
+                error:(err)=>{
+                    console.log(err);
+                }
+            });
+        } else{
+            let message='Please select date';
+             this.errorSuccess(message);
+        }
+     }
 
     onPageChange(event: any) {
         this.first = event.first;
@@ -157,10 +181,12 @@ dateRangeValidator(form:FormGroup){
     get grandTotal(): number {
         return this.products.reduce((sum, p) => sum + (p.total || 0), 0);
     }
-    exportToExcel() {}
 
     reset() {
-        this.invoiceForm.reset();
+        this.invoiceForm.reset({
+            fromDate: new Date(),
+            toDate: new Date()
+        });
         this.filteredProducts = [];
          this.products = [];
     }

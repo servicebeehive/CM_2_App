@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { Component, ViewChild } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -72,7 +72,7 @@ interface Image {
 ],
     templateUrl: './transaction.component.html',
     styleUrl: './transaction.component.scss',
-    providers:[ConfirmationService]
+    providers:[ConfirmationService,DatePipe]
 })
 export class TransactionComponent {
     transactionForm!: FormGroup;
@@ -84,6 +84,7 @@ export class TransactionComponent {
      first:number=0;
      rowsPerPage:number=5;
     globalFilter: string = '';
+    today:Date =new Date();
         // ✅ Move dropdown options into variables
         vendorOptions = [];
         invoiceOptions = [];
@@ -93,17 +94,17 @@ export class TransactionComponent {
             private fb: FormBuilder,
             private inventoryService: InventoryService,
             private authService: AuthService,
-            private messageService: MessageService
+            private messageService: MessageService,
+            public datepipe : DatePipe
         ) {}
  reportTypeOptions:any[]= [];
     ngOnInit(): void {
         this.transactionForm = this.fb.group(
             {
                 invoice: [''],
-               
-                fromDate: ['',Validators.required],
-                toDate:['',Validators.required],
-                p_vendorid:[''],
+                fromDate: [this.today,Validators.required],
+                toDate:[this.today,Validators.required],
+                p_vendor:[''],
             },{validators:this.dateRangeValidator}
         );
        this.loadAllDropdowns();
@@ -125,32 +126,44 @@ export class TransactionComponent {
     onGetStockIn() {
       this.products=this.inventoryService.productItem || [];
     }
-    onChangeInvoice(event:any){
-  const itemId = event.value;
-  if(!itemId){
-     this.products = [];
-        this.filteredProducts = [];
-        
-        return;
-  }
-}
-onChangeVendor(event:any){
+  
+ display(){
+  const invoice = this.transactionForm.controls['invoice'].value;
+  const p_vendor=this.transactionForm.controls['p_vendor'].value;
+  const startDate = this.transactionForm.controls['fromDate'].value;
+  const endDate = this.transactionForm.controls['toDate'].value;
 
-}
-    onSave(updatedData: any) {
-        const mappedData = {
-            selection: true,
-            code: updatedData.itemCode.label || updatedData.itemCode,
-            itemName: updatedData.itemName,
-            category: updatedData.category,
-            stock: updatedData.stock,
-            costPrice: updatedData.costPrice,
-            mrp: updatedData.mrp,
-            location: updatedData.location,
-            lastUpdatedBy: updatedData.lastUpdatedBy,
-            lastUpdated: updatedData.lastUpdated
-        };
-    }
+  if((startDate && endDate) || p_vendor || invoice){
+    const payload={
+        uname:'admin',
+        p_invoicestart: this.datepipe.transform(startDate,'yyyy/MM/dd'),
+        p_invoiceend:this.datepipe.transform(endDate,'yyyy/MM/dd'),
+        p_vendor:p_vendor||null,
+        // p_invoicenumber:invoice||null,
+        p_username:'admin',
+        clientcode:'CG01-SE',
+        'x-access-token':this.authService.getToken()
+    };
+    this.inventoryService.gettransactiondetail(payload).subscribe({
+        next:(res:any)=>{
+          console.log('API RESULT:', res.data);
+          this.products=res?.data || [];
+          this.filteredProducts=[...this.products];
+          if(this.products.length ==0){
+             let message = 'No Data Available for this Category and Item';
+                        this.showSuccess(message);
+          }  
+        },
+        error:(err)=>{
+            console.error(err);
+        }
+    });
+  }
+ else{
+     let message = 'Please select both Category and Item before filtering.';
+            this.errorSuccess(message);
+        }
+ }  
 
     onPageChange(event: any) {
         this.first = event.first;
@@ -162,13 +175,11 @@ onChangeVendor(event:any){
         // this.pagedProducts = this.products.slice(this.first, this.first + this.rowsPerPage);
     }
 
-    get grandTotal(): number {
-        return this.products.reduce((sum, p) => sum + (p.total || 0), 0);
-    }
-    exportToExcel() {}
-
     reset() {
-        this.transactionForm.reset();
+        this.transactionForm.reset({
+            fromDate : new Date(),
+            toDate : new Date()
+        });
         this.filteredProducts = [];
          this.products = [];
     }
