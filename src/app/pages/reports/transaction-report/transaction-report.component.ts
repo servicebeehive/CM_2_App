@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { Component, ViewChild } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -25,6 +25,7 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { Paginator } from 'primeng/paginator';
 import { RouterLink } from "@angular/router";
 import { AuthService } from '@/core/services/auth.service';
+import { RadioButtonModule } from 'primeng/radiobutton';
 interface Product {
     name: string;
     price: string;
@@ -69,10 +70,11 @@ interface Image {
     AutoCompleteModule,
     ConfirmDialogModule,
     CheckboxModule,
+    RadioButtonModule
 ],
     templateUrl: './transaction-report.component.html',
     styleUrl: './transaction-report.component.scss',
-    providers:[ConfirmationService]
+    providers:[ConfirmationService,DatePipe]
 })
 export class TransactionReportComponent {
     reportForm!: FormGroup;
@@ -83,6 +85,8 @@ export class TransactionReportComponent {
      pagedProducts:StockIn[]=[];
      first:number=0;
      rowsPerPage:number=5;
+     today:Date = new Date();
+     gstTransaction: string = 'all';
     globalFilter: string = '';
         // ✅ Move dropdown options into variables
         categoryOptions = [];
@@ -93,32 +97,71 @@ export class TransactionReportComponent {
             private fb: FormBuilder,
             private inventoryService: InventoryService,
             private authService: AuthService,
-            private messageService: MessageService
+            private messageService: MessageService,
+            public datepipe:DatePipe
         ) {}
  reportTypeOptions:any[]= [
-    {label:'Sale', value:'Sale'},
-    {label:'Return', value:'Return'},
-    {label:'Replace', value:'Replace'},
-    {label:'Purchase', value:'Purchase'},
-    {label:'Credit Note', value:'Credit Note'},
+    {label:'Sale', value:'SALE'},
+    {label:'Return', value:'RETURN'},
+    {label:'Replace', value:'REPLACE'},
+    {label:'Purchase', value:'PURCHASE'},
+    {label:'Debit Note', value:'DEBITNOTE'},
  ];
     ngOnInit(): void {
         this.reportForm = this.fb.group(
             {
-                item: [''],
-               
-                fromDate: [''],
-                toDate:[''],
-                category:[''],
-               gstTransaction:[true],
-                p_stock: this.fb.array([])
-            }
+                item: [{value:'',disable:true}],
+                fromDate: [this.today,[Validators.required]],
+                toDate:[this.today,[Validators.required]],
+                category:[{value:'',disable:true}],
+                reportType:['',Validators.required],
+            },{validators: this.dateRangeValidator}
         );
+        this.gstTransaction = 'all';
+          this.reportForm.get('category')?.disable();
+        this.reportForm.get('item')?.disable();
        this.loadAllDropdowns();
-        this.onGetStockIn();
+        this.onGetStockIn(); 
+         
+        this.reportForm.get('reportType')?.valueChanges.subscribe(selected=>{
+            if(selected){
+                this.reportForm.get('category')?.enable();
+                this.reportForm.get('item')?.enable();
+            }
+             else {
+        this.reportForm.get('category')?.disable();
+        this.reportForm.get('item')?.disable();
+         this.reportForm.patchValue({ category: null, item: null });
+      }
+        });
+
         this.reportForm.get('category')?.valueChanges.subscribe(() => this.applyGlobalFilter());
         this.reportForm.get('item')?.valueChanges.subscribe(() => this.applyGlobalFilter());
     }
+
+private resetGstTransaction(reportType:string){
+    if(reportType === 'SALE' || reportType === 'RETURN'){
+        this.gstTransaction='all';
+    }
+    else if(reportType === 'DEBITNOTE'){
+        this.gstTransaction='none';
+    }
+    else{
+        this.gstTransaction='all';
+    }
+}
+
+ dateRangeValidator(form:FormGroup){
+    const fromDate = form.get('fromDate')?.value;
+    const toDate=form.get('toDate')?.value;
+  if(!fromDate || !toDate)
+    return null;
+ const from=new Date(fromDate);
+ const to=new Date(toDate);
+  return to >= from ? null :{ dateRangeInvalid:true }; 
+ }
+
+
 
   getStockArray(): FormArray {
         return this.reportForm.get('p_stock') as FormArray;
@@ -126,22 +169,30 @@ export class TransactionReportComponent {
     Onreturndropdowndetails() {
         const category = this.reportForm.controls['category'].value;
         const item = this.reportForm.controls['item'].value;
-        console.log('cat', category,item);
-        if (category || item) {
+        const reportType= this.reportForm.controls['reportType'].value;
+        const fromDate = this.reportForm.controls['fromDate'].value;
+        const toDate = this.reportForm.controls['toDate'].value;
+        const gstType = this.gstTransaction;
+        
+        if ( (fromDate && toDate && reportType )|| category || item || gstType) {
             const payload = {
                 uname: 'admin',
                 p_categoryid: category || null,
                 p_itemid: item || null,
-                p_username: 'admin',
+                p_fromdate: this.datepipe.transform(fromDate,'yyyy/MM/dd'),
+                p_todate: this.datepipe.transform(toDate,'yyyy/MM/dd'),
+                p_username:'admin',
+                p_gsttran: ((reportType==='DEBITNOTE')?(gstType ==='none' ? null : gstType) : (gstType === 'all' ? null : gstType)),
+                p_reporttype: reportType || 'SALE',
                 clientcode: 'CG01-SE',
                 'x-access-token': this.authService.getToken()
             };
-            this.inventoryService.getupdatedata(payload).subscribe({
+            this.inventoryService.gettransactionreportdetail(payload).subscribe({
                 next: (res: any) => {
                     console.log('API RESULT:', res.data);
                     this.products = res?.data || [];
                     this.filteredProducts = [...this.products];
-                    this.buildFormArrayFormProducts(this.filteredProducts);
+                    // this.buildFormArrayFormProducts(this.filteredProducts);
                     if (this.products.length == 0) {
                         let message = 'No Data Available for this Category and Item';
                         this.showSuccess(message);
@@ -156,20 +207,20 @@ export class TransactionReportComponent {
             this.errorSuccess(message);
         }
     }
-    private buildFormArrayFormProducts(products: any[]) {
-        const stockArray = this.getStockArray();
-        console.log('stock arrary', stockArray);
-        stockArray.clear();
-        products.forEach((p: any) => {
-            const group = this.fb.group({
-               itemid:[p.itemid],
-    categoryid:[p.categoryid],
-    mrp:[p.mrp],
-    purchaseprice:[p.purchaseprice] 
-            });
-            stockArray.push(group);
-        });
-    }
+    // private buildFormArrayFormProducts(products: any[]) {
+    //     const stockArray = this.getStockArray();
+    //     console.log('stock arrary', stockArray);
+    //     stockArray.clear();
+    //     products.forEach((p: any) => {
+    //         const group = this.fb.group({
+    //            itemid:[p.itemid],
+    // categoryid:[p.categoryid],
+    // mrp:[p.mrp],
+    // purchaseprice:[p.purchaseprice] 
+    //         });
+    //         stockArray.push(group);
+    //     });
+    // }
     applyGlobalFilter() {
        const searchTerm=(this.globalFilter || '')?.toLowerCase().trim();
        const selectedCategory=this.reportForm.get('category')?.value;
@@ -186,22 +237,23 @@ export class TransactionReportComponent {
 
             return matchesSearch && matchesCategory && matchesItem;
        });
-       this.buildFormArrayFormProducts(this.filteredProducts);
+    //    this.buildFormArrayFormProducts(this.filteredProducts);
     }
     onGetStockIn() {
       this.products=this.inventoryService.productItem || [];
-      this.buildFormArrayFormProducts(this.products);
+    //   this.buildFormArrayFormProducts(this.products);
     }
     onItemChange(event:any){
   const itemId = event.value;
   if(!itemId){
      this.products = [];
         this.filteredProducts = [];
-        this.buildFormArrayFormProducts([]);
+        // this.buildFormArrayFormProducts([]);
         
         return;
   }
 }
+
 onCategoryItem(event: any) {
   const categoryId = event.value;
 this.reportForm.get('item')?.setValue(null);
@@ -214,7 +266,19 @@ this.reportForm.get('item')?.setValue(null);
   // If category has value → load category-specific items
   this.categoryRelavantItem(categoryId);
 }
-
+onReportChange(event:any){
+   const reportType=event.value;
+   if(!reportType){
+  this.products = [];
+        this.filteredProducts = [];
+         this.reportForm.get('category')?.setValue(null);
+        this.reportForm.get('item')?.setValue(null);
+        this.reportForm.get('fromDate')?.setValue(this.today);
+        this.reportForm.get('toDate')?.setValue(this.today);
+        return;
+   } 
+   this.resetGstTransaction(reportType);
+}
  categoryRelavantItem(id:any){
    console.log('item:',id);
    this.itemOptions=[];
@@ -233,7 +297,7 @@ this.reportForm.get('item')?.setValue(null);
         // Clear filtered products if no items for this category
         this.filteredProducts = [];
         this.products = [];
-        this.buildFormArrayFormProducts([]);
+        // this.buildFormArrayFormProducts([]);
         this.showSuccess('No items found for this category.');
         return;
       }
@@ -244,21 +308,6 @@ this.reportForm.get('item')?.setValue(null);
     }
    });
  }
-    onSave(updatedData: any) {
-        const mappedData = {
-            selection: true,
-            code: updatedData.itemCode.label || updatedData.itemCode,
-            itemName: updatedData.itemName,
-            category: updatedData.category,
-            stock: updatedData.stock,
-            costPrice: updatedData.costPrice,
-            mrp: updatedData.mrp,
-            location: updatedData.location,
-            lastUpdatedBy: updatedData.lastUpdatedBy,
-            lastUpdated: updatedData.lastUpdated
-        };
-    }
-
     onPageChange(event: any) {
         this.first = event.first;
         this.rowsPerPage = event.rows;
@@ -269,16 +318,22 @@ this.reportForm.get('item')?.setValue(null);
         // this.pagedProducts = this.products.slice(this.first, this.first + this.rowsPerPage);
     }
 
-    get grandTotal(): number {
-        return this.products.reduce((sum, p) => sum + (p.total || 0), 0);
-    }
-    exportToExcel() {}
-
     reset() {
-        this.reportForm.reset();
+        this.reportForm.reset({
+         fromDate : new Date(),
+    toDate : new Date()
+        });
         this.filteredProducts = [];
          this.products = [];
-  this.buildFormArrayFormProducts([]);
+//   this.buildFormArrayFormProducts([]);
+ this.reportForm.get('category')?.disable();
+    this.reportForm.get('item')?.disable();
+    const currentReportType = this.reportForm.get('reportType')?.value;
+        if (currentReportType) {
+            this.resetGstTransaction(currentReportType);
+        } else {
+            this.gstTransaction = 'all';
+        }
          this.OnGetItem();
     }
     createDropdownPayload(returnType: string) {

@@ -80,7 +80,7 @@
         <!-- User Name -->
         <div class="flex flex-col">
           <label class="font-medium mb-1">User Name <span class="text-red-500">*</span></label>
-          <input pInputText formControlName="userName" placeholder="User Name" />
+          <input pInputText formControlName="p_uname" placeholder="User Name" />
           <small class="text-red-500 mt-1" *ngIf="userForm.get('userName')?.touched && userForm.get('userName')?.invalid">
             User Name is required
           </small>
@@ -93,7 +93,7 @@
             [options]="userRoleOptions"
             optionLabel="label"
             optionValue="value"
-            formControlName="userRole"
+            formControlName="p_utypeid"
             placeholder="Select Role"
           ></p-dropdown>
           <small class="text-red-500 mt-1" *ngIf="userForm.get('userRole')?.touched && userForm.get('userRole')?.invalid">
@@ -107,12 +107,12 @@
           <input
             pInputText
             type="text"
-            formControlName="mobile"
+            formControlName="p_phone"
             maxlength="10"
-            placeholder="Mobile"
+            placeholder="mobile"
             (keypress)="allowOnlyDigits($event)"
           />
-          <small class="text-red-500 mt-1" *ngIf="userForm.get('mobile')?.touched && userForm.get('mobile')?.invalid">
+          <small class="text-red-500 mt-1" *ngIf="userForm.get('p_phone')?.touched && userForm.get('p_phone')?.invalid">
             Enter a valid 10-digit mobile number
           </small>
         </div>
@@ -120,8 +120,8 @@
         <!-- Email -->
         <div class="flex flex-col">
           <label class="font-medium mb-1">Email <span class="text-red-500">*</span></label>
-          <input pInputText type="email" formControlName="email" placeholder="Email" />
-          <small class="text-red-500 mt-1" *ngIf="userForm.get('email')?.touched && userForm.get('email')?.invalid">
+          <input pInputText type="email" formControlName="p_email" placeholder="Email" />
+          <small class="text-red-500 mt-1" *ngIf="userForm.get('p_email')?.touched && userForm.get('p_email')?.invalid">
             Enter a valid email address
           </small>
         </div>
@@ -133,7 +133,7 @@
             <input
               pInputText
               [type]="showPassword ? 'text' : 'password'"
-              formControlName="password"
+              formControlName="p_pwd"
               placeholder="Password"
               class="w-full pr-10"
             />
@@ -144,7 +144,7 @@
               style="position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer;"
             ></i>
           </div>
-          <small class="text-red-500 mt-1" *ngIf="userForm.get('password')?.touched && userForm.get('password')?.invalid">
+          <small class="text-red-500 mt-1" *ngIf="userForm.get('p_pwd')?.touched && userForm.get('p_pwd')?.invalid">
             Password must contain uppercase, lowercase, number, and special character
           </small>
         </div>

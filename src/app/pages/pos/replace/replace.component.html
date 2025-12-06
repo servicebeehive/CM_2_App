@@ -12,6 +12,14 @@
       <span class="block text-surface-900 font-bold text-xl mb-6">Replace </span>
 
       <div class="flex gap-4">
+ <!-- SUBMIT -->
+        <button
+          pButton
+          type="submit"
+          label="Submit"
+          class="p-button-warning"
+          [disabled]="isSubmitDisabled() || submitDisabledByBill">
+        </button>
 
         <!-- RESET -->
         <button
@@ -22,24 +30,7 @@
           (click)="onReset()">
         </button>
 
-        <!-- NEW SALE -->
-        <button
-          pButton
-          type="button"
-          label="New Sale"
-          class="p-button-secondary"
-          (click)="newSale()">
-        </button>
-
-        <!-- SUBMIT -->
-        <button
-          pButton
-          type="submit"
-          label="Submit"
-          class="p-button-warning"
-          [disabled]="isSubmitDisabled() || submitDisabledByBill">
-        </button>
-
+       
       </div>
     </div>
 

@@ -18,10 +18,12 @@ export const API_ENDPOINTS = {
     returndropdowndetails:'/returndropdowndetails',
     adjustmentlist:'/getstockadjustment',
     updateitemlist:'/getitemdetails',
+    getinvoicedetail:'/getinvoicedetails',
     deletepurchasedetails:'/deletepurchasedetails',
     updatestockadjustment:'/updatestockadjustment',
     inserttransactiondetails:'/inserttransactiondetails',
-    
+    gettransactiondetails:'/gettrasnactiondetails',
+    gettransactionreport:'/gettrasnactionreport'
   },
   sales:{
     getcalculatedMRP:'/getcalculatedMRP'
@@ -38,6 +40,9 @@ export const API_ENDPOINTS = {
   },
 
 
+  user:{
+    getuserdetails:'/getuserdetails'
+  }
 
 };
 

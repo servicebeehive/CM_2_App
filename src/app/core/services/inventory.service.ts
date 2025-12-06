@@ -68,6 +68,16 @@ export class InventoryService {
 
 )
   }
+
+  OnUserHeaderCreate(payload:StockHeader):Observable<any>{
+    console.log(payload)
+    let url=`${this.baseUrl}${API_ENDPOINTS.user.getuserdetails}`;
+    return this.http.post<any>(url,payload).pipe(catchError(error=>{
+        return throwError(()=>error)
+    }),
+
+)
+  }
    OnSalesHeaderCreate(payload:SaleHeader):Observable<any>{
     console.log(payload)
     let url=`${this.baseUrl}${API_ENDPOINTS.inventory.inserttransactiondetails}`;
@@ -141,7 +151,30 @@ getupdatedata(payload:any):Observable<any>{
 
 )
 }
+getinvoicedetail(payload:any):Observable<any>{
+    // console.log(payload)
+    let url=`${this.baseUrl}${API_ENDPOINTS.inventory.getinvoicedetail}`;
+    return this.http.post<any>(url,payload).pipe(catchError(error=>{
+        return throwError(()=>error)
+    }),
 
+)
+}
+
+gettransactiondetail(payload:any):Observable<any>{
+  let url=`${this.baseUrl}${API_ENDPOINTS.inventory.gettransactiondetails}`;
+  return this.http.post<any>(url,payload).pipe(catchError(error=>{
+    return throwError(()=>error)
+  }),
+  )
+}
+gettransactionreportdetail(payload:any):Observable<any>{
+  let url=`${this.baseUrl}${API_ENDPOINTS.inventory.gettransactionreport}`;
+  return this.http.post<any>(url,payload).pipe(catchError(error=>{
+    return throwError(()=>error)
+  }),
+  )
+}
 
 updatestockadjustment(payload:any):Observable<any>{
     // console.log(payload)

@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { Component, ViewChild } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -72,7 +72,7 @@ interface Image {
 ],
     templateUrl: './invoice.component.html',
     styleUrl: './invoice.component.scss',
-    providers:[ConfirmationService]
+    providers:[ConfirmationService,DatePipe]
 })
 export class InvoiceComponent {
     invoiceForm!: FormGroup;
@@ -82,182 +82,91 @@ export class InvoiceComponent {
      selection:boolean=true;
      pagedProducts:StockIn[]=[];
      first:number=0;
+      today: Date = new Date();
      rowsPerPage:number=5;
     globalFilter: string = '';
         // ✅ Move dropdown options into variables
-        categoryOptions = [];
-        itemOptions = [];
+        cusMobileOptions = [];
+        cusNameOptions = [];
+        statusOptions:any[]= [];
         products: StockIn[] = [];
         filteredProducts: StockIn[] = [];
         constructor(
             private fb: FormBuilder,
             private inventoryService: InventoryService,
             private authService: AuthService,
-            private messageService: MessageService
+            private messageService: MessageService,
+            public datepipe:DatePipe
         ) {}
- reportTypeOptions:any[]= [
-    {label:'Sale', value:'Sale'},
-    {label:'Return', value:'Return'},
-    {label:'Replace', value:'Replace'},
-    {label:'Purchase', value:'Purchase'},
-    {label:'Credit Note', value:'Credit Note'},
- ];
+ 
     ngOnInit(): void {
         this.invoiceForm = this.fb.group(
             {
-                item: [''],
-               
-                fromDate: [''],
-                toDate:[''],
-                category:[''],
-               gstTransaction:[true],
-                p_stock: this.fb.array([])
-            }
+                p_mobile: [''],
+               p_cusname:[''],
+                fromDate: [this.today,Validators.required],
+                toDate:[this.today,Validators.required],
+                status:['']
+            },{validators:this.dateRangeValidator}
         );
        this.loadAllDropdowns();
         this.onGetStockIn();
-        this.invoiceForm.get('category')?.valueChanges.subscribe(() => this.applyGlobalFilter());
-        this.invoiceForm.get('item')?.valueChanges.subscribe(() => this.applyGlobalFilter());
     }
-
+dateRangeValidator(form:FormGroup){
+    const fromDate = form.get('fromDate')?.value;
+    const toDate=form.get('toDate')?.value;
+  if(!fromDate || !toDate)
+    return null;
+ const from=new Date(fromDate);
+ const to=new Date(toDate);
+  return to >= from ? null :{ dateRangeInvalid:true }; 
+ }
   getStockArray(): FormArray {
         return this.invoiceForm.get('p_stock') as FormArray;
     }
-    Onreturndropdowndetails() {
-        const category = this.invoiceForm.controls['category'].value;
-        const item = this.invoiceForm.controls['item'].value;
-        console.log('cat', category,item);
-        if (category || item) {
-            const payload = {
-                uname: 'admin',
-                p_categoryid: category || null,
-                p_itemid: item || null,
-                p_username: 'admin',
+   
+    onGetStockIn() {
+      this.products=this.inventoryService.productItem || [];
+    }
+    
+     display(){
+        const p_mobile = this.invoiceForm.controls['p_mobile'].value;
+        const p_cusname = this.invoiceForm.controls['p_cusname'].value;
+        const startDate = this.invoiceForm.controls['fromDate'].value;
+        const endDate = this.invoiceForm.controls['toDate'].value;
+        const status = this.invoiceForm.controls['status'].value;
+
+        if((startDate && endDate) || (p_cusname || p_mobile || status) ){
+            const payload={
+                uname:'admin',
+                p_startdate: this.datepipe.transform(startDate,'yyyy/MM/dd'),
+                p_enddate: this.datepipe.transform(endDate,'yyyy/MM/dd'),
+                p_mobile: p_mobile || null,
+                p_customer: p_cusname || null,
+                status: status || null,
+                p_username:'admin',
                 clientcode: 'CG01-SE',
                 'x-access-token': this.authService.getToken()
             };
-            this.inventoryService.getupdatedata(payload).subscribe({
-                next: (res: any) => {
-                    console.log('API RESULT:', res.data);
-                    this.products = res?.data || [];
+            this.inventoryService.getinvoicedetail(payload).subscribe({
+                next :(res:any) =>{
+                    console.log('API RESEULT:',res.data);
+                    this.products=res?.data || [];
                     this.filteredProducts = [...this.products];
-                    this.buildFormArrayFormProducts(this.filteredProducts);
-                    if (this.products.length == 0) {
+                    if(this.products.length===0){
                         let message = 'No Data Available for this Category and Item';
                         this.showSuccess(message);
                     }
                 },
-                error: (err) => {
-                    console.error(err);
+                error:(err)=>{
+                    console.log(err);
                 }
             });
-        } else {
-            let message = 'Please select both Category and Item before filtering.';
-            this.errorSuccess(message);
+        } else{
+            let message='Please select date';
+             this.errorSuccess(message);
         }
-    }
-    private buildFormArrayFormProducts(products: any[]) {
-        const stockArray = this.getStockArray();
-        console.log('stock arrary', stockArray);
-        stockArray.clear();
-        products.forEach((p: any) => {
-            const group = this.fb.group({
-               itemid:[p.itemid],
-    categoryid:[p.categoryid],
-    mrp:[p.mrp],
-    purchaseprice:[p.purchaseprice] 
-            });
-            stockArray.push(group);
-        });
-    }
-    applyGlobalFilter() {
-       const searchTerm=(this.globalFilter || '')?.toLowerCase().trim();
-       const selectedCategory=this.invoiceForm.get('category')?.value;
-       const selectedItem=this.invoiceForm.get('item')?.value;
-       this.filteredProducts=this.products.filter((p:any)=>{
-        const matchesSearch=!searchTerm || String(p.itemcombine ?? p.name ?? '').toLowerCase() .includes(searchTerm) ||
-        String(p.categoryname ?? p.category ?? '').toLowerCase() .includes(searchTerm) ||
-      String(p.curStock ?? p.currentstock ?? '')
-                    .toLowerCase()
-                    .includes(searchTerm);
-
-            const matchesCategory = !selectedCategory || p.category === selectedCategory || p.categoryid === selectedCategory;
-            const matchesItem = !selectedItem || p.name === selectedItem || p.itemid === selectedItem;
-
-            return matchesSearch && matchesCategory && matchesItem;
-       });
-       this.buildFormArrayFormProducts(this.filteredProducts);
-    }
-    onGetStockIn() {
-      this.products=this.inventoryService.productItem || [];
-      this.buildFormArrayFormProducts(this.products);
-    }
-    onItemChange(event:any){
-  const itemId = event.value;
-  if(!itemId){
-     this.products = [];
-        this.filteredProducts = [];
-        this.buildFormArrayFormProducts([]);
-        
-        return;
-  }
-}
-onCategoryItem(event: any) {
-  const categoryId = event.value;
-this.invoiceForm.get('item')?.setValue(null);
-  // If category is null → load all items
-  if (!categoryId) {
-    this.OnGetItem();     // reload full item list
-    return;
-  }
-
-  // If category has value → load category-specific items
-  this.categoryRelavantItem(categoryId);
-}
-
- categoryRelavantItem(id:any){
-   console.log('item:',id);
-   this.itemOptions=[];
-   const payload={
-    uname:"admin",
-    p_username:"admin",
-    p_returntype:"CATEGORY",
-    p_returnvalue:id.toString(),
-    clientcode:"CG01-SE",
-    "x-access-token":this.authService.getToken()
-   };
-   this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-    next:(res: any) => {
-    if(!res.data || res.data.length==0){
-         this.itemOptions = [];
-        // Clear filtered products if no items for this category
-        this.filteredProducts = [];
-        this.products = [];
-        this.buildFormArrayFormProducts([]);
-        this.showSuccess('No items found for this category.');
-        return;
-      }
-      this.itemOptions=res.data;
-    },
-    error:(err)=>{
-      console.error(err);
-    }
-   });
- }
-    onSave(updatedData: any) {
-        const mappedData = {
-            selection: true,
-            code: updatedData.itemCode.label || updatedData.itemCode,
-            itemName: updatedData.itemName,
-            category: updatedData.category,
-            stock: updatedData.stock,
-            costPrice: updatedData.costPrice,
-            mrp: updatedData.mrp,
-            location: updatedData.location,
-            lastUpdatedBy: updatedData.lastUpdatedBy,
-            lastUpdated: updatedData.lastUpdated
-        };
-    }
+     }
 
     onPageChange(event: any) {
         this.first = event.first;
@@ -272,14 +181,14 @@ this.invoiceForm.get('item')?.setValue(null);
     get grandTotal(): number {
         return this.products.reduce((sum, p) => sum + (p.total || 0), 0);
     }
-    exportToExcel() {}
 
     reset() {
-        this.invoiceForm.reset();
+        this.invoiceForm.reset({
+            fromDate: new Date(),
+            toDate: new Date()
+        });
         this.filteredProducts = [];
          this.products = [];
-  this.buildFormArrayFormProducts([]);
-         this.OnGetItem();
     }
     createDropdownPayload(returnType: string) {
         return {
@@ -290,31 +199,31 @@ this.invoiceForm.get('item')?.setValue(null);
             'x-access-token': this.authService.getToken()
         };
     }
-    OnGetItem() {
-        const payload = this.createDropdownPayload('ITEM');
+    OnGetCusName() {
+        const payload = this.createDropdownPayload('CUSTOMER');
         this.inventoryService.getdropdowndetails(payload).subscribe({
-            next: (res) => (this.itemOptions = res.data),
+            next: (res) => (this.cusNameOptions = res.data),
             error: (err) => console.log(err)
         });
     }
-    // OnGetReport() {
-    //     // const payload = this.createDropdownPayload('ITEM');
-    //     // this.inventoryService.getdropdowndetails(payload).subscribe({
-    //     //     next: (res) => (this.itemOptions = res.data),
-    //     //     error: (err) => console.log(err)
-    //     // });
-    // }
-    OnGetCategory() {
-        const payload = this.createDropdownPayload('CATEGORY');
+    OnGetStatus() {
+        const payload = this.createDropdownPayload('STATUS');
         this.inventoryService.getdropdowndetails(payload).subscribe({
-            next: (res) => (this.categoryOptions = res.data),
+            next: (res) => (this.statusOptions = res.data),
+            error: (err) => console.log(err)
+        });
+    }
+    OnGetCusMobile() {
+        const payload = this.createDropdownPayload('MOBILE');
+        this.inventoryService.getdropdowndetails(payload).subscribe({
+            next: (res) => (this.cusMobileOptions = res.data),
             error: (err) => console.log(err)
         });
     }
     loadAllDropdowns() {
-        // this.OnGetReport();
-        this.OnGetCategory();
-        this.OnGetItem();
+        this.OnGetStatus();
+        this.OnGetCusName();
+        this.OnGetCusMobile();
        
     }
     showSuccess(message: string) {

@@ -4,9 +4,9 @@
     <span class="block text-surface-900 font-bold text-2xl">Item Report</span>
      <!-- Add and Display Buttons -->
       <div class="flex gap-6">
-         <button pButton type="submit" label="Display" class="p-button-warning"(click)="Onreturndropdowndetails()" ></button>
-          <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
-        <button pButton type="button" label="Download" icon="pi pi-download" iconPos="right" class="p-button-warning" (click)="exportToExcel()"></button>
+         <button pButton type="submit" label="Display" class="p-button-warning"(click)="Onreturndropdowndetails()" [disabled]="reportForm.invalid"></button>
+        <button pButton type="button" label="Download" icon="pi pi-download" iconPos="right" class="p-button-warning"></button>
+        <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
       </div>
   </div>
 
@@ -19,7 +19,7 @@
 
         <!-- Report Type -->
         <div class="flex flex-col">
-          <label class="font-medium mb-1">Report Type</label>
+          <label class="font-medium mb-1">Report Type <span class="text-red-500">*</span></label>
            <p-dropdown
             [options]="reportTypeOptions"
             optionLabel="label"
@@ -28,7 +28,9 @@
             [showClear]="true"
             filterPlaceholder="Select Report Type"
             formControlName="reportType"
-            placeholder="Report Type">
+            placeholder="Report Type"
+            (onChange)="onReportChange($event)"
+            >
           </p-dropdown>
           <!-- <small class="text-red-500 ms-3 mt-1" *ngIf="reportForm.get('vendorName')?.touched">
             <span *ngIf="reportForm.get('vendorName')?.errors?.['required']">Vendor Name is required</span>
@@ -41,13 +43,13 @@
          <!-- Category -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Category</label>
-                <p-dropdown [options]="categoryOptions" optionLabel="fieldname" optionValue="fieldid" (onChange)="onCategoryItem($event)" [filter]="true" [showClear]="true" filterPlaceholder="Search Category" formControlName="category" placeholder="Category"> </p-dropdown>
+                <p-dropdown [options]="categoryOptions" optionLabel="fieldname" optionValue="fieldid" (onChange)="onCategoryItem($event)" [filter]="true" [showClear]="true" filterPlaceholder="Search Category" formControlName="category" placeholder="Category"  [disabled]="!reportForm.get('reportType')?.value"> </p-dropdown>
             </div>
 
        <!-- Item Name -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Item Name</label>
-                <p-dropdown [options]="itemOptions" optionLabel="itemcombine" optionValue="itemid" [filter]="true" [showClear]="true" (onChange)="onItemChange($event)" filterPlaceholder="Search Item" formControlName="item" placeholder="Item"> </p-dropdown>
+                <p-dropdown [options]="itemOptions" optionLabel="itemcombine" optionValue="itemid" [filter]="true" [showClear]="true" (onChange)="onItemChange($event)" filterPlaceholder="Search Item" formControlName="item" placeholder="Item"  [disabled]="!reportForm.get('reportType')?.value"> </p-dropdown>
             </div>
           </div>
      
@@ -67,13 +69,18 @@
       >
         <ng-template #header>
           <tr class="bg-yellow-400">
-            <th><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
+            <th><p-tableHeaderCheckbox disabled></p-tableHeaderCheckbox></th>
             <th>Item Code</th>
             <th>Item Name</th>
             <th>Category</th>
             <th>Stock</th>
+            <th>UOM</th>
+            <th>Qty</th>
             <th>Cost Price</th>
            <th>MRP</th>
+           <th>GST Item</th>
+           <th>Active</th>
+           <th>Warranty (in Mon)</th>
             <th>Location</th>
             <th>Last Updated By</th>
             <th>Last Updated</th>
@@ -85,17 +92,22 @@
             <td class="text-center">
              <p-tableCheckbox [value]="row" />
             </td>
-            <td class="flex justify-between gap-2">{{ row.itemsku}}
+            <td>{{ row.itemsku}}
                <!-- <span class=" pi pi-copy cursor-pointer "></span> -->
               </td>
             <td>{{ row.itemname }}</td>
             <td>{{ row.categoryname }}</td>
             <td>{{ row.currentstock }}</td>
+            <td>{{ row.uomname}}</td>
+            <td>{{ row.quantity}}</td>
             <td>{{ row.costprice }}</td>
             <td>{{ row.saleprice}}</td>
+            <td>{{ row.gstitem}}</td>
+            <td>{{ row.isactive}}</td>
+            <td>{{ row.warrentyperiod}}</td>
             <td>{{ row.location }}</td>
-            <td>{{ row.lastUpdatedBy}}</td>
-            <td>{{ row.lastUpdated}}</td>
+            <td>{{ row.updatedby}}</td>
+            <td>{{ row.updatedon}}</td>
           </tr>
         </ng-template>
 
@@ -103,12 +115,6 @@
           <div class="text-gray-600 ms-2">Total Items: {{ filteredProducts?.length || 0 }}</div>
         </ng-template>
       </p-table>
-    </div>
-
-    <!-- Grand Total -->
-    <div class="flex justify-end items-center gap-4 mt-6 border-t pt-4">
-      <label class="font-medium">Grand Total</label>
-      <input pInputText type="text" [value]="grandTotal" readonly placeholder="Total" class="w-40 text-right" />
     </div>
   </form>
 

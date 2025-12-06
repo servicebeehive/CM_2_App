@@ -13,15 +13,14 @@
 
       <div class="flex gap-4">
 
-        <!-- RESET -->
+        <!-- SUBMIT -->
         <button
           pButton
-          type="button"
-          label="Reset"
-          class="p-button-secondary"
-          (click)="onReset()">
+          type="submit"
+          label="Submit"
+          class="p-button-warning"
+          [disabled]="isSubmitDisabled() || submitDisabledByBill || salesForm.hasError('costNotGreater')">
         </button>
-
         <!-- PRINT -->
         <button
           pButton
@@ -34,14 +33,16 @@
           >
         </button>
 
-        <!-- SUBMIT -->
+       
+         <!-- RESET -->
         <button
           pButton
-          type="submit"
-          label="Submit"
-          class="p-button-warning"
-          [disabled]="isSubmitDisabled() || submitDisabledByBill || salesForm.hasError('costNotGreater')">
+          type="button"
+          label="Reset"
+          class="p-button-secondary"
+          (click)="onReset()">
         </button>
+
 
       </div>
     </div>
