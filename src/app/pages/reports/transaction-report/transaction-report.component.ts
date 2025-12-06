@@ -88,6 +88,7 @@ export class TransactionReportComponent {
      today:Date = new Date();
      gstTransaction: string = 'all';
     globalFilter: string = '';
+    columns : any[]=[];
         // ✅ Move dropdown options into variables
         categoryOptions = [];
         itemOptions = [];
@@ -107,6 +108,98 @@ export class TransactionReportComponent {
     {label:'Purchase', value:'PURCHASE'},
     {label:'Debit Note', value:'DEBITNOTE'},
  ];
+
+ setTableColumns(type:String){
+     if(!type || type === '') {
+        this.columns=[
+            {fields:'' , header:'Invoice No'},
+            {fields:'' , header:'Invoice Date'},
+            {fields:'' , header:'Category', widthClass: 'fixed-category-col'},
+            {fields:'' , header:'Item', widthClass: 'fixed-item-col'},
+            {fields:'' , header:'UOM'},
+            {fields:'' , header:'Status'},
+            {fields:'' , header:'GST'},
+            {fields:'' , header:'MRP'},
+            {fields:'' , header:'Quantity'},
+            {fields:'' , header:'Amount'},
+            {fields:'' , header:'Discount'},
+            {fields:'' , header:'Grand Total'}
+        ];
+         this.filteredProducts = [];
+    return;
+    }
+   else if(type === 'SALE' || type === 'REPLACE'){
+        this.columns=[
+            {fields:'invoiceno' , header:'Invoice No'},
+            {fields:'invoicedate' , header:'Invoice Date'},
+            {fields:'category' , header:'Category', widthClass: 'fixed-category-col'},
+            {fields:'item' , header:'Item', widthClass: 'fixed-item-col'},
+            {fields:'uom' , header:'UOM'},
+            {fields:'status' , header:'Status'},
+            {fields:'gsttans' , header:'GST'},
+            {fields:'mrp' , header:'MRP'},
+            {fields:'qty' , header:'Quantity'},
+            {fields:'amount' , header:'Amount'},
+            {fields:'overalldiscount' , header:'Discount'},
+            {fields:'grandtotal' , header:'Grand Total'}
+        ];
+    }
+    else if(type==='RETURN'){
+            this.columns=[
+            {fields:'returninvoiceno' , header:'Invoice No'},
+            {fields:'returninvoicedate' , header:'Invoice Date'},
+            {fields:'saleinvoiceno' , header:'Sale Invoice No',widthClass: 'fixed-saleinvoice-col'},
+            {fields:'category' , header:'Category', widthClass: 'fixed-category-col'},
+            {fields:'item' , header:'Item', widthClass: 'fixed-item-col'},
+            {fields:'uom' , header:'UOM'},
+            {fields:'status' , header:'Status'},
+            {fields:'gsttans' , header:'GST'},
+            {fields:'mrp' , header:'MRP'},
+            {fields:'qty' , header:'Quantity'},
+            {fields:'amount' , header:'Amount'},
+            {fields:'overalldiscount' , header:'Discount'},
+            {fields:'grandtotal' , header:'Grand Total'}
+        ];
+    }
+    else if(type === 'PURCHASE'){
+         this.columns=[
+            {fields:'purchaseid' , header:'Purchase id'},
+            {fields:'purchasedate' , header:'Purchase Date'},
+            {fields:'invoiceno' , header:'Invoice No'},
+            {fields:'invoicedate' , header:'Invoice Date'},
+            {fields:'category' , header:'Category', widthClass: 'fixed-category-col'},
+            {fields:'item' , header:'Item', widthClass: 'fixed-item-col'},
+            {fields:'uom' , header:'UOM'},
+            {fields:'status' , header:'Status'},
+            {fields:'costprice' , header:'Cost Price'},
+            {fields:'qty' , header:'Quantity'},
+            {fields:'amount' , header:'Amount'},
+            {fields:'grandtotal' , header:'Grand Total'}
+        ];
+    }
+    else if(type=== 'DEBITNOTE') {
+        this.columns=[
+            {fields:'debitnote' , header:'Debit Note'},
+            {fields:'creditnote' , header:'Credit Note'},
+            {fields:'repinvoiceno' , header:'Invoice No'},
+            {fields:'repinvoicedate' , header:'Invoice Date'},
+            {fields:'category' , header:'Category', widthClass: 'fixed-category-col'},
+            {fields:'item' , header:'Item', widthClass: 'fixed-item-col'},
+            {fields:'uom' , header:'UOM'},
+            {fields:'status' , header:'Status'},
+            {fields:'mrp' , header:'MRP'},
+            {fields:'qty' , header:'Quantity'},
+            {fields:'amount' , header:'Amount'},
+            {fields:'overalldiscount' , header:'Discount'},
+            {fields:'grandtotal' , header:'Grand Total'}
+        ]; 
+    }
+   
+    else{
+        this.columns=[];
+    }
+   
+ }
     ngOnInit(): void {
         this.reportForm = this.fb.group(
             {
@@ -117,12 +210,13 @@ export class TransactionReportComponent {
                 reportType:['',Validators.required],
             },{validators: this.dateRangeValidator}
         );
+
         this.gstTransaction = 'all';
           this.reportForm.get('category')?.disable();
         this.reportForm.get('item')?.disable();
+        this.setTableColumns('');
        this.loadAllDropdowns();
         this.onGetStockIn(); 
-         
         this.reportForm.get('reportType')?.valueChanges.subscribe(selected=>{
             if(selected){
                 this.reportForm.get('category')?.enable();
@@ -187,6 +281,7 @@ private resetGstTransaction(reportType:string){
                 clientcode: 'CG01-SE',
                 'x-access-token': this.authService.getToken()
             };
+            this.setTableColumns(reportType);
             this.inventoryService.gettransactionreportdetail(payload).subscribe({
                 next: (res: any) => {
                     console.log('API RESULT:', res.data);
@@ -268,6 +363,9 @@ this.reportForm.get('item')?.setValue(null);
 }
 onReportChange(event:any){
    const reportType=event.value;
+   if(reportType){
+    this.setTableColumns(reportType || '');
+   }
    if(!reportType){
   this.products = [];
         this.filteredProducts = [];
@@ -325,7 +423,7 @@ onReportChange(event:any){
         });
         this.filteredProducts = [];
          this.products = [];
-//   this.buildFormArrayFormProducts([]);
+        this.setTableColumns('');
  this.reportForm.get('category')?.disable();
     this.reportForm.get('item')?.disable();
     const currentReportType = this.reportForm.get('reportType')?.value;

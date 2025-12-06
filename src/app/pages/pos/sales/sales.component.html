@@ -191,12 +191,11 @@
         [paginator]="true"
                         [rows]="10"
          [rowsPerPageOptions]="[5, 10, 20, 50]"
-        class="p-datatable-gridlines mt-6">
+        class="p-datatable-gridlines mt-6 sale-report">
 
         <!-- HEADER -->
         <ng-template pTemplate="header">
           <tr class="bg-yellow-400">
-            <th><p-tableHeaderCheckbox disabled></p-tableHeaderCheckbox></th>
             <th>Item Code</th>
             <th>Item Name</th>
             <th>Current Stock</th>
@@ -213,7 +212,6 @@
         <!-- ROWS -->
         <ng-template pTemplate="body" let-row let-i="rowIndex">
           <tr [formGroup]="row">
-              <td class="text-center"><p-tableCheckbox disabled></p-tableCheckbox></td>
             <td>{{ row.get('itemsku')?.value }}</td>
             <td>{{ row.get('ItemName')?.value }}</td>
             <td>{{ row.get('curStock')?.value }}</td>

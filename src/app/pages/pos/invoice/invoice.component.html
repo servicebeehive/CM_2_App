@@ -79,10 +79,9 @@
 
         <!-- Product Table with Pagination -->
         <div>
-            <p-table [value]="filteredProducts" dataKey="code" [tableStyle]="{ 'min-width': '50rem' }" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 20, 50]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines mt-6">
+            <p-table [value]="filteredProducts" dataKey="code" [tableStyle]="{ 'min-width': '50rem' }" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 20, 50]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines mt-6 invoice">
                 <ng-template #header>
                     <tr class="bg-yellow-400">
-                        <th><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
                         <th>Invoice No</th>
                         <th>Invoice Date</th>
                         <th>Transaction Type</th>
@@ -96,9 +95,6 @@
 
                 <ng-template pTemplate="body" let-row let-i="rowIndex">
                     <tr>
-                        <td class="text-center">
-                            <p-tableCheckbox [value]="row" />
-                        </td>
                         <td>{{ row.invoice_no }}</td>
                         <td>{{ row.invoice_date }}</td>
                         <td>{{ row.transactiontype}}</td>

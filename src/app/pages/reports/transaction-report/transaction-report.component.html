@@ -117,48 +117,24 @@
     <!-- Product Table with Pagination -->
     <div>
       <p-table
-        [value]="filteredProducts"
+        [value]="filteredProducts"  
         dataKey="code"
         [tableStyle]="{'min-width': '50rem'}"
         [paginator]="true"
         [rows]="10"
         [rowsPerPageOptions]="[5, 10, 20, 50]"
         [responsiveLayout]="'scroll'"
-        class="p-datatable-gridlines mt-6"
+        class="p-datatable-gridlines mt-6 transaction-report-table"
       >
         <ng-template #header>
           <tr class="bg-yellow-400">
-           
-            <th>Transaction Id</th>
-            <th>Transaction Date</th>
-            <th>Item Name</th>
-            <th>Category</th>  
-            <th>UOM</th>   
-           <th>Status</th>
-           <th>Qty</th>
-           <th>MRP</th>
-           <th>Amount</th>
-            <th>Discount</th>
-            <th>Total</th>
+           <th *ngFor="let col of columns" [ngClass]="col.widthClass">{{col.header}}</th>
           </tr>
         </ng-template>
 
          <ng-template pTemplate="body" let-row let-i="rowIndex">
           <tr>
-            
-            <td class="flex justify-between gap-2">{{ row.invoiceno}}
-               <!-- <span class=" pi pi-copy cursor-pointer "></span> -->
-              </td>
-            <td>{{ row.invoicedate }}</td>
-            <td>{{ row.item }}</td>
-            <td>{{ row.category}}</td>
-            <td>{{ row.uom}}</td>
-            <td>{{ row.status}}</td>
-            <td>{{ row.qty }}</td>
-            <td>{{ row.mrp}}</td>
-            <td>{{ row.amount}}</td>
-            <td>{{ row.overalldiscount}}</td>
-            <td>{{ row.grandtotal}}</td>
+           <td *ngFor="let col of columns" [ngClass]="col.widthClass">{{row[col.fields] || ''}}</td>
           </tr>
         </ng-template>
 

@@ -69,10 +69,9 @@
 
         <!-- Product Table with Pagination -->
         <div>
-            <p-table [value]="filteredProducts" dataKey="code" [tableStyle]="{ 'min-width': '50rem' }" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 20, 50]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines mt-6">
+            <p-table [value]="filteredProducts" dataKey="code" [tableStyle]="{ 'min-width': '50rem' }" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 20, 50]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines mt-6 transaction">
                 <ng-template #header>
                     <tr class="bg-yellow-400">
-                        <th><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
                         <th>Purchase Id</th>
                         <th>Transaction Date</th>
                         <th>Vendor Invoice</th>
@@ -87,9 +86,6 @@
 
                 <ng-template pTemplate="body" let-row let-i="rowIndex">
                     <tr>
-                        <td class="text-center">
-                            <p-tableCheckbox [value]="row" />
-                        </td>
                         <td>
                             {{ row.purchaseid }}
                             <!-- <span class=" pi pi-copy cursor-pointer "></span> -->
@@ -101,8 +97,8 @@
                         <td>{{ row.item_count }}</td>
                         <td>{{ row.total_amount }}</td>
                         <td>{{ row.status }}</td>
-                        <td class="text-center w-[60px]">
-                            <div class="flex g-2">
+                        <td >
+                            <div class="flex items-center justify-center g-2">
                                 <button pButton type="button" icon="pi pi-print" disabled class="p-button-text p-button-sm"></button>
                                 <button pButton type="button" icon="pi pi-folder-open" class="p-button-text p-button-sm text-red-500"></button>
                             </div>

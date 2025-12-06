@@ -65,11 +65,10 @@
         [rows]="10"
         [rowsPerPageOptions]="[5, 10, 20, 50]"
         [responsiveLayout]="'scroll'"
-        class="p-datatable-gridlines mt-6"
+        class="p-datatable-gridlines mt-6 item-report"
       >
         <ng-template #header>
           <tr class="bg-yellow-400">
-            <th><p-tableHeaderCheckbox disabled></p-tableHeaderCheckbox></th>
             <th>Item Code</th>
             <th>Item Name</th>
             <th>Category</th>
@@ -89,9 +88,6 @@
 
         <ng-template pTemplate="body" let-row let-i="rowIndex">
           <tr>
-            <td class="text-center">
-             <p-tableCheckbox [value]="row" />
-            </td>
             <td>{{ row.itemsku}}
                <!-- <span class=" pi pi-copy cursor-pointer "></span> -->
               </td>

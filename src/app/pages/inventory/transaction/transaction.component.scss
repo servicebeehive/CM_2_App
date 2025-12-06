@@ -1,0 +1,44 @@
+:host {
+    display: block;
+}
+
+::ng-deep .transaction {
+    .p-datatable-wrapper {
+        max-height: 500px;
+        overflow: auto;
+        border-radius: 6px;
+        border: 1px solid var(--surface-border);
+    }
+    
+    /* Apply equal width to ALL columns */
+    .p-datatable-table {
+        table-layout: fixed; /* This makes columns equal width */
+        width: 100%;
+    }
+    
+    /* Equal width for all header cells */
+    .p-datatable-thead > tr > th {
+        width: 100%; /* Equal distribution */
+        min-width: 120px; /* Optional: Set a minimum width */
+        text-align: center; /* Optional: Center align text */
+        position: static !important;
+    }
+    
+    /* Equal width for all body cells */
+    .p-datatable-tbody > tr > td {
+        width: 100%; /* Equal distribution */
+        min-width: 120px; /* Optional: Set a minimum width */
+        text-align: center; /* Optional: Center align text */
+        position: static !important;
+    }
+    
+    /* Remove any existing sticky behavior */
+    .p-datatable-tbody > tr > td,
+    .p-datatable-thead > tr > th {
+        position: static !important;
+        left: auto !important;
+        right: auto !important;
+        box-shadow: none !important;
+        background: inherit !important;
+    }
+}
