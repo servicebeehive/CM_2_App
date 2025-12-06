@@ -33,6 +33,10 @@ export const API_ENDPOINTS = {
   suppliers: {
     base: '/suppliers'
   },
+  dashboardservice: {
+    topbar: '/getdashboardreport'
+  },
+
 
 
 };
