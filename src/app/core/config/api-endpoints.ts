@@ -35,6 +35,11 @@ export const API_ENDPOINTS = {
   suppliers: {
     base: '/suppliers'
   },
+  dashboardservice: {
+    topbar: '/getdashboardreport'
+  },
+
+
   user:{
     getuserdetails:'/getuserdetails'
   }
