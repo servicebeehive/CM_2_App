@@ -45,12 +45,7 @@ import { AuthService } from '@/core/services/auth.service';
 })
 export class StatsWidget implements OnInit {
      public authService = inject(AuthService);
-    public getUserDetails = {
-    "uname": "admin",
-    "p_loginuser": "admin",
-    "clientcode": "CG01-SE",
-    "x-access-token": this.authService.getToken(),
-  };
+  
     knobValue: number = 80;
      dashboardCards:any= [];
   constructor(private OnttopBarService:DashboardService){}
@@ -60,7 +55,7 @@ export class StatsWidget implements OnInit {
 
   OnGettopBarCard(){
    let  apibody={
-    ...this.getUserDetails,
+    
     "p_reporttype": "CARDS",
    "p_warehouse":"",
    "p_period":"MONTH",

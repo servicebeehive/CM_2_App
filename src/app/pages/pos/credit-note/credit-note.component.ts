@@ -77,13 +77,7 @@ interface Image {
 })
 export class CreditNoteComponent {
     CreditForm!: FormGroup;
-    public authService = inject(AuthService);
-    public getUserDetails = {
-        "uname": "admin",
-        "p_loginuser": "admin",
-        "clientcode": "CG01-SE",
-        "x-access-token": this.authService.getToken(),
-    };
+
 
     public visibleDialog = false;
     public selectedRow: any = null;
@@ -188,7 +182,7 @@ export class CreditNoteComponent {
     //REPLACEDN
     OnReplicedn() {
         let apibody = {
-            ...this.getUserDetails,
+           
             "p_returntype": "REPLACEDN",
 
         }
@@ -213,7 +207,7 @@ export class CreditNoteComponent {
     // Debit note
     OnDNN() {
         let apibody = {
-            ...this.getUserDetails,
+           
             "p_returntype": "DNN",
 
         }
@@ -253,7 +247,7 @@ export class CreditNoteComponent {
 
     accpatHeaderCreate(saledata: any,type:string) {
         let apibody: any = {
-    ...this.getUserDetails,
+   
     p_transactiontype: type,   // CREDITNOTE or DEBITNOTE
     p_transactionid: 0,
     p_transactiondate: "",
@@ -320,7 +314,7 @@ if (apibody.p_transactiontype === "CREDITNOTE") {
         if(dnndata.value==null) return
        // return
         let apibody={
-            ...this.getUserDetails,
+           
             "p_returntype": "DNN",
             "p_returnvalue":dnndata.value,
             }
