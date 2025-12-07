@@ -55,9 +55,13 @@ constructor(private fb: FormBuilder,private route:Router, private authservice:Au
 
      ngOnInit() {
     this.loginForm = this.fb.group({
-      usercode: ['admin', [Validators.required,Validators.minLength(4)]],   // email as loginId
-      pwd: ['admin', [Validators.required,Validators.minLength(4)]],
-      logintype:[''],
+      // usercode: ['admin', [Validators.required,Validators.minLength(4)]],   // email as loginId
+      // pwd: ['admin', [Validators.required,Validators.minLength(4)]],
+      // logintype:[''],
+      // clientcode:['CG01-SE',[Validators.required]]
+      usercode: [null, [Validators.required,Validators.minLength(4)]],   // email as loginId
+       pwd: [null, [Validators.required,Validators.minLength(4)]],
+      logintype:[null],
       clientcode:['CG01-SE',[Validators.required]]
 
 

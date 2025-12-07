@@ -51,7 +51,7 @@ import { TagModule } from 'primeng/tag';
      <!-- Main Content -->
      <div class="grid grid-cols-12 gap-8">
         <!-- Stats Widget -->
-        <app-stats-widget />
+        <app-stats-widget [filerby]="selectedFilter" />
         
         <!-- Revenue Section -->
         <div class="col-span-12 xl:col-span-4">
@@ -72,12 +72,13 @@ import { TagModule } from 'primeng/tag';
 })
 export class EcommerceDashboard {
     filterOptions = [
-         { label: 'Today', value: 'today' },
-  { label: 'This Month', value: 'month' },
-  { label: 'Quarterly', value: 'quarter' },
-  { label: 'Yearly', value: 'year' }
+         { label: 'Today', value: 'TODAY' },
+  { label: 'This Month', value: 'MONTH' },
+  { label: 'Quarterly', value: 'QUARTER' },
+  { label: 'Yearly', value: 'YEAR' }
+
 ];
-selectedFilter = 'today';  // default value
+selectedFilter = 'MONTH';  // default value
 
 onFilterChange(e: any) {
   console.log('Selected Filter:', e.value);
