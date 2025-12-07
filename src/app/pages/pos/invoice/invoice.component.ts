@@ -143,7 +143,7 @@ dateRangeValidator(form:FormGroup){
                 p_enddate: this.datepipe.transform(endDate,'yyyy/MM/dd'),
                 p_mobile: p_mobile || null,
                 p_customer: p_cusname || null,
-                status: status || null,
+                p_status: status || null,
                 p_username:'admin',
                 clientcode: 'CG01-SE',
                 'x-access-token': this.authService.getToken()

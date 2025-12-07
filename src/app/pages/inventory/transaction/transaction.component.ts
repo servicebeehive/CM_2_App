@@ -139,7 +139,7 @@ export class TransactionComponent {
         p_invoicestart: this.datepipe.transform(startDate,'yyyy/MM/dd'),
         p_invoiceend:this.datepipe.transform(endDate,'yyyy/MM/dd'),
         p_vendor:p_vendor||null,
-        // p_invoicenumber:invoice||null,
+        p_invoicenumber:invoice||null,
         p_username:'admin',
         clientcode:'CG01-SE',
         'x-access-token':this.authService.getToken()

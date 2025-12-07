@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, ViewChild } from '@angular/core';
-import { AbstractControl, FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { Component } from '@angular/core';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { ChipModule } from 'primeng/chip';
 import { EditorModule } from 'primeng/editor';
@@ -22,28 +22,7 @@ import { InventoryService } from '@/core/services/inventory.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { CheckboxModule } from 'primeng/checkbox';
-import { Paginator } from 'primeng/paginator';
-import { RouterLink } from '@angular/router';
 import { AuthService } from '@/core/services/auth.service';
-interface Product {
-    name: string;
-    price: string;
-    code: string;
-    sku: string;
-    status: string;
-    tags: string[];
-    category: string;
-    colors: string[];
-    stock: string;
-    inStock: boolean;
-    description: string;
-    images: Image[];
-}
-
-interface Image {
-    name: string;
-    objectURL: string;
-}
 
 @Component({
     selector: 'app-item-report',
@@ -76,210 +55,161 @@ interface Image {
 })
 export class ItemReportComponent {
     reportForm!: FormGroup;
-
     visibleDialog = false;
     selectedRow: any = null;
     selection: boolean = true;
-    pagedProducts: StockIn[] = [];
     first: number = 0;
     rowsPerPage: number = 5;
     globalFilter: string = '';
-    // ✅ Move dropdown options into variables
+    showData: boolean = false; 
+    
     categoryOptions = [];
     itemOptions = [];
     products: StockIn[] = [];
     filteredProducts: StockIn[] = [];
+    
+    reportTypeOptions: any[] = [
+        { label: 'Item List', value: 'ITEMLIST' },
+        { label: 'Out of Stock', value: 'OUTSTOCK' },
+        { label: 'Low Stock', value: 'LOWSTOCK' },
+        { label: 'Most Saleable', value: 'MOSTSALEABLE'},
+        { label: 'Non-Active Item', value: 'NONACTIVE' },
+    ];
+    
     constructor(
         private fb: FormBuilder,
         private inventoryService: InventoryService,
         private authService: AuthService,
         private messageService: MessageService
     ) {}
- reportTypeOptions: any[] = [
-    { label: 'Item List', value: 'ITEMLIST' },
-    { label: 'Out of Stock', value: 'OUTSTOCK' },
-    { label: 'Low Stock', value: 'LOWSTOCK' },
-    { label: 'Most Saleable', value: 'MOSTSALEABLE'},
-    { label: 'Non-Active Item', value: 'NONACTIVE' },
-];
+    
     ngOnInit(): void {
-       
         this.reportForm = this.fb.group({
-            item: [{value:'',disabled:true}],
-          reportType:['',Validators.required],
-            category: [{value:'',disabled:true}],
+            item: [{value: '', disabled: true}],
+            reportType: ['', Validators.required],
+            category: [{value: '', disabled: true}],
         });
-         this.loadAllDropdowns();
-        this.onGetStockIn();
-       
+        
+        this.loadAllDropdowns();
+        
         this.reportForm.get('reportType')?.valueChanges.subscribe(selected => {
-      if (selected) {
-        this.reportForm.get('category')?.enable();
-        this.reportForm.get('item')?.enable();
-      } else {
-        this.reportForm.get('category')?.disable();
-        this.reportForm.get('item')?.disable();
-         this.reportForm.patchValue({ category: null, item: null });
-      }
-    });
-     this.reportForm.get('category')?.valueChanges.subscribe(() => this.applyGlobalFilter());
-        this.reportForm.get('item')?.valueChanges.subscribe(() => this.applyGlobalFilter());
+            if (selected) {
+                this.reportForm.get('category')?.enable();
+                this.reportForm.get('item')?.enable();
+            } else {
+                this.reportForm.get('category')?.disable();
+                this.reportForm.get('item')?.disable();
+                this.reportForm.patchValue({ category: null, item: null });
+            }
+        });
     }
-//     categoryOrItemRequired(control: AbstractControl) {
-//   const category = control.get('category')?.value;
-//   const item = control.get('item')?.value;
-
-//   if (!category && !item) {
-//     return { categoryOrItemRequired: true };
-//   }
-//   return null;
-// }
-
-    getStockArray(): FormArray {
-        return this.reportForm.get('p_stock') as FormArray;
-    }
+    
     Onreturndropdowndetails() {
         const category = this.reportForm.controls['category'].value;
         const item = this.reportForm.controls['item'].value;
         const reportType = this.reportForm.controls['reportType'].value;
-       
+        
         console.log('Filters:', { category, item, reportType });
-        if (category || item || reportType) {
-            const payload = {
-                uname: 'admin',
-                p_categoryid: category || null,
-                p_itemid: item || null,
-                p_username: 'admin',
-                p_type: reportType || 'ITEMLIST',
-                clientcode: 'CG01-SE',
-                'x-access-token': this.authService.getToken()
-            };
-            this.inventoryService.getupdatedata(payload).subscribe({
-                next: (res: any) => {
-                    console.log('API RESULT:', res.data);
-                    this.products = res?.data || [];
-                    this.filteredProducts = [...this.products];
-                     
-                    if (this.products.length == 0) {
-                        let message = 'No Data Available for this Category and Item';
-                        this.showSuccess(message);
-                    }
-                },
-                error: (err) => {
-                    console.error(err);
+        
+        if (!reportType) {
+            this.errorSuccess('Please select a Report Type.');
+            return;
+        }
+        
+        const payload = {
+            uname: 'admin',
+            p_categoryid: category || null,
+            p_itemid: item || null,
+            p_username: 'admin',
+            p_type: reportType || 'ITEMLIST',
+            clientcode: 'CG01-SE',
+            'x-access-token': this.authService.getToken()
+        };
+        
+        this.showData = false; 
+        
+        this.inventoryService.getupdatedata(payload).subscribe({
+            next: (res: any) => {
+                console.log('API RESULT:', res.data);
+                this.products = res?.data || [];
+                this.filteredProducts = [...this.products];
+                this.showData = true; 
+                
+                if (this.products.length === 0) {
+                    this.showSuccess('No Data Available for the selected filters.');
                 }
-            });
-        } else {
-            let message = 'Please select both Category and Item before filtering.';
-            this.errorSuccess(message);
+            },
+            error: (err) => {
+                console.error(err);
+                this.errorSuccess('Error loading data. Please try again.');
+                this.showData = false;
+            }
+        });
+    }
+  
+   
+    
+    onReportChange(event: any) {
+        const reportType = event.value;
+        if (!reportType) {
+            this.products = [];
+            this.filteredProducts = [];
+            this.showData = false; 
+            return;
         }
     }
     
-    applyGlobalFilter() {
-       const searchTerm=(this.globalFilter || '')?.toLowerCase().trim();
-       const selectedCategory=this.reportForm.get('category')?.value;
-       const selectedItem=this.reportForm.get('item')?.value;
-       const selectedReportType = this.reportForm.get('reportType')?.value;
-       this.filteredProducts=this.products.filter((p:any)=>{
-        const matchesSearch=!searchTerm || String(p.itemcombine ?? p.name ?? '').toLowerCase() .includes(searchTerm) ||
-        String(p.categoryname ?? p.category ?? '').toLowerCase() .includes(searchTerm) ||
-      String(p.curStock ?? p.currentstock ?? '')
-                    .toLowerCase()
-                    .includes(searchTerm);
-
-            const matchesCategory = !selectedCategory || p.category === selectedCategory || p.categoryid === selectedCategory;
-            const matchesItem = !selectedItem || p.name === selectedItem || p.itemid === selectedItem;
-
-            return matchesSearch && matchesCategory && matchesItem;
-       });
-        
-    }
-    onGetStockIn() {
-      this.products=this.inventoryService.productItem || [];
-       
-    }
-    onItemChange(event:any){
-  const itemId = event.value;
-  if(!itemId){
-     this.products = [];
-        // this.filteredProducts = [];
-        // this.buildFormArrayFormProducts([]);
-        // this.reportForm.get('category')?.setValue(null);
-        // this.reportForm.get('reportType')?.setValue(null);
-        // return;
-  }
-
-}
- onReportChange(event:any){
-  const reportType = event.value;
-  if(!reportType){
-     this.products = [];
-        this.filteredProducts = [];
-         this.reportForm.get('category')?.setValue(null);
-        this.reportForm.get('item')?.setValue(null);
-        return;
-  }
-}
     onCategoryItem(event: any) {
-  const categoryId = event.value;
-this.reportForm.get('item')?.setValue(null);
-  // If category is null → load all items
-  if (!categoryId) {
-    this.OnGetItem();     // reload full item list
-    return;
-  }
-  // If category has value → load category-specific items
-  this.categoryRelavantItem(categoryId);
-}
-
- categoryRelavantItem(id:any){
-   console.log('item:',id);
-   this.itemOptions=[];
-   const payload={
-    uname:"admin",
-    p_username:"admin",
-    p_returntype:"CATEGORY",
-    p_returnvalue:id.toString(),
-    clientcode:"CG01-SE",
-    "x-access-token":this.authService.getToken()
-   };
-   this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-    next:(res: any) => {
-    if(!res.data || res.data.length==0){
-         this.itemOptions = [];
-        // Clear filtered products if no items for this category
-        this.filteredProducts = [];
-        this.products = [];
-        this.showSuccess('No items found for this category.');
-        return;
-      }
-      this.itemOptions=res.data;
-    },
-    error:(err)=>{
-      console.error(err);
+        const categoryId = event.value;
+        this.reportForm.get('item')?.setValue(null);
+        
+        if (!categoryId) {
+            this.OnGetItem();
+            return;
+        }
+        
+        this.categoryRelavantItem(categoryId);
     }
-   });
- }
+    
+    categoryRelavantItem(id: any) {
+        this.itemOptions = [];
+        const payload = {
+            uname: "admin",
+            p_username: "admin",
+            p_returntype: "CATEGORY",
+            p_returnvalue: id.toString(),
+            clientcode: "CG01-SE",
+            "x-access-token": this.authService.getToken()
+        };
+        
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res: any) => {
+                if (!res.data || res.data.length === 0) {
+                    this.itemOptions = [];
+                    this.showSuccess('No items found for this category.');
+                    return;
+                }
+                this.itemOptions = res.data;
+            },
+            error: (err) => {
+                console.error(err);
+            }
+        });
+    }
+    
     onPageChange(event: any) {
         this.first = event.first;
         this.rowsPerPage = event.rows;
-        this.updatePagedProducts();
     }
-
-    updatePagedProducts() {
-        // this.pagedProducts = this.products.slice(this.first, this.first + this.rowsPerPage);
-    }
-
-    get grandTotal(): number {
-        return this.products.reduce((sum, p) => sum + (p.total || 0), 0);
-    }
-
+    
     reset() {
         this.reportForm.reset();
         this.filteredProducts = [];
-         this.products = [];
+        this.products = [];
+        this.showData = false; 
         this.OnGetItem();
     }
+    
     createDropdownPayload(returnType: string) {
         return {
             uname: 'admin',
@@ -289,6 +219,7 @@ this.reportForm.get('item')?.setValue(null);
             'x-access-token': this.authService.getToken()
         };
     }
+    
     OnGetItem() {
         const payload = this.createDropdownPayload('ITEM');
         this.inventoryService.getdropdowndetails(payload).subscribe({
@@ -296,13 +227,7 @@ this.reportForm.get('item')?.setValue(null);
             error: (err) => console.log(err)
         });
     }
-    OnGetReport() {
-        const payload = this.createDropdownPayload('ITEM');
-        this.inventoryService.getdropdowndetails(payload).subscribe({
-            next: (res) => (this.itemOptions = res.data),
-            error: (err) => console.log(err)
-        });
-    }
+    
     OnGetCategory() {
         const payload = this.createDropdownPayload('CATEGORY');
         this.inventoryService.getdropdowndetails(payload).subscribe({
@@ -310,14 +235,16 @@ this.reportForm.get('item')?.setValue(null);
             error: (err) => console.log(err)
         });
     }
+    
     loadAllDropdowns() {
-        this.OnGetReport();
         this.OnGetCategory();
         this.OnGetItem();
     }
+    
     showSuccess(message: string) {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
     }
+    
     errorSuccess(message: string) {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: message });
     }

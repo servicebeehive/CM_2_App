@@ -34,6 +34,7 @@
       <tr>
         <th>User Role</th>
         <th>User Name</th>
+        <th>Full Name</th>
         <th>Mobile</th>
         <th>Email</th>
         <th>Active</th>
@@ -42,11 +43,12 @@
     </ng-template>
     <ng-template pTemplate="body" let-user>
       <tr>
-        <td>{{ user.userRole }}</td>
-        <td>{{ user.userName }}</td>
-        <td>{{ user.mobile }}</td>
+        <td>{{ user.usertypename }}</td>
+        <td>{{ user.username }}</td>
+        <td>{{ user.fullname}}</td>
+        <td>{{ user.phone }}</td>
         <td>{{ user.email }}</td>
-        <td>{{ user.active }}</td>
+        <td>{{ user.isactive }}</td>
         <td class="text-center">
           <i
             class="pi pi-pencil cursor-pointer text-blue-500"
@@ -81,7 +83,7 @@
         <div class="flex flex-col">
           <label class="font-medium mb-1">User Name <span class="text-red-500">*</span></label>
           <input pInputText formControlName="p_uname" placeholder="User Name" />
-          <small class="text-red-500 mt-1" *ngIf="userForm.get('userName')?.touched && userForm.get('userName')?.invalid">
+          <small class="text-red-500 mt-1" *ngIf="userForm.get('p_uname')?.touched && userForm.get('p_uname')?.invalid">
             User Name is required
           </small>
         </div>
@@ -91,40 +93,16 @@
           <label class="font-medium mb-1">User Role <span class="text-red-500">*</span></label>
           <p-dropdown
             [options]="userRoleOptions"
-            optionLabel="label"
-            optionValue="value"
+            optionLabel="fieldname"
+            optionValue="fieldid"
             formControlName="p_utypeid"
             placeholder="Select Role"
           ></p-dropdown>
-          <small class="text-red-500 mt-1" *ngIf="userForm.get('userRole')?.touched && userForm.get('userRole')?.invalid">
+          <small class="text-red-500 mt-1" *ngIf="userForm.get('p_utypeid')?.touched && userForm.get('p_utypeid')?.invalid">
             User Role is required
           </small>
         </div>
 
- <!-- Mobile -->
-        <div class="flex flex-col">
-          <label class="font-medium mb-1">Mobile <span class="text-red-500">*</span></label>
-          <input
-            pInputText
-            type="text"
-            formControlName="p_phone"
-            maxlength="10"
-            placeholder="mobile"
-            (keypress)="allowOnlyDigits($event)"
-          />
-          <small class="text-red-500 mt-1" *ngIf="userForm.get('p_phone')?.touched && userForm.get('p_phone')?.invalid">
-            Enter a valid 10-digit mobile number
-          </small>
-        </div>
-
-        <!-- Email -->
-        <div class="flex flex-col">
-          <label class="font-medium mb-1">Email <span class="text-red-500">*</span></label>
-          <input pInputText type="email" formControlName="p_email" placeholder="Email" />
-          <small class="text-red-500 mt-1" *ngIf="userForm.get('p_email')?.touched && userForm.get('p_email')?.invalid">
-            Enter a valid email address
-          </small>
-        </div>
 
         <!-- Password -->
         <div class="flex flex-col relative">
@@ -172,11 +150,45 @@
           </small>
         </div>
 
-       
+<!-- User Full Name -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Full Name <span class="text-red-500">*</span></label>
+          <input pInputText formControlName="p_ufullname" placeholder="Full Name" />
+          <small class="text-red-500 mt-1" *ngIf="userForm.get('p_ufullname')?.touched && userForm.get('p_ufullname')?.invalid">
+            User Full Name is required
+          </small>
+        </div>
+
+
+        <!-- Mobile -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Mobile <span class="text-red-500">*</span></label>
+          <input
+            pInputText
+            type="text"
+            formControlName="p_phone"
+            maxlength="10"
+            placeholder="mobile"
+            (keypress)="allowOnlyDigits($event)"
+          />
+          <small class="text-red-500 mt-1" *ngIf="userForm.get('p_phone')?.touched && userForm.get('p_phone')?.invalid">
+            Enter a valid 10-digit mobile number
+          </small>
+        </div>
+
+        <!-- Email -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Email <span class="text-red-500">*</span></label>
+          <input pInputText type="email" formControlName="p_email" placeholder="Email" />
+          <small class="text-red-500 mt-1" *ngIf="userForm.get('p_email')?.touched && userForm.get('p_email')?.invalid">
+            Enter a valid email address
+          </small>
+        </div>
+
         <!-- Active -->
-        <div class="flex items-center gap-2 col-span-2 mt-2">
-          <label class="font-medium">Active</label>
+        <div class="flex gap-3 mt-9">
           <p-checkbox formControlName="checked" [binary]="true"></p-checkbox>
+          <label class="font-medium">Active</label>
         </div>
       </div>
 

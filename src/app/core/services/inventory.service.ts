@@ -5,7 +5,7 @@ import { API_ENDPOINTS } from '../config/api-endpoints';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { StockIn } from '@/types/stockin.model';
-import { SaleHeader, StockHeader } from '../models/inventory.model';
+import { SaleHeader, StockHeader,UserHeader } from '../models/inventory.model';
 
 @Injectable({ providedIn: 'root' })
 export class InventoryService {
@@ -69,7 +69,7 @@ export class InventoryService {
 )
   }
 
-  OnUserHeaderCreate(payload:StockHeader):Observable<any>{
+  OnUserHeaderCreate(payload:UserHeader):Observable<any>{
     console.log(payload)
     let url=`${this.baseUrl}${API_ENDPOINTS.user.getuserdetails}`;
     return this.http.post<any>(url,payload).pipe(catchError(error=>{

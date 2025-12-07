@@ -160,7 +160,7 @@ onSave(updatedData:any){
      category:updatedData.category,
      curStock: updatedData.curStock,
     purchasePrice: updatedData.purchasePrice,
-    costPerItem:costPerItem,
+    costPerItem:(costPerItem),
     quantity: updatedData.qty,
     total: (updatedData.purchasePrice) * (updatedData.qty),
     uom: updatedData.parentUOM,

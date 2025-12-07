@@ -7,8 +7,8 @@
         <div class="flex  gap-4">
   <button pButton type="button" label="Generate DN" class="p-button-primary" [disabled]="saleArray.length === 0 ||CreditForm.get('p_debitNote')?.value" (click)="Ganratedn('DEBITNOTE')"></button> 
         <button pButton type="button" label="Link CN" class="p-button-primary" [disabled]="CreditForm.get('p_debitNote')?.value == null" (click)="Ganratedn('CREDITNOTE')"></button>
-        <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
         <button pButton type="button" label="Print" class="p-button-primary" (click)="print()" [disabled]="!CreditForm.get('p_debitNote')?.value"></button> 
+         <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
     </div>
   </div>
 

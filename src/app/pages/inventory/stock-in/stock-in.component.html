@@ -92,7 +92,7 @@
   [rows]="10"
   [rowsPerPageOptions]="[ 10, 20, 50]"
   [responsiveLayout]="'scroll'"
-  class="p-datatable-gridlines mt-6"
+  class="p-datatable-gridlines mt-6 stock"
 >
 
   <!-- HEADER -->
@@ -110,7 +110,6 @@
         <th>MRP</th>
       <th>UOM</th>
       <th>Child UOM</th>
-    
       <th>Discount</th>
       <th>Min Stock</th>
       <th>Warranty(Mon)</th>
@@ -133,7 +132,7 @@
       <td>{{ product.currentstock }}</td>
       <td>{{ product.quantity }}</td>
       <td>{{ product.costprice }}</td>
-      <td>{{ product.quantity * product.costprice }}</td>
+      <td>{{ (product.quantity * product.costprice).toFixed(2) }}</td>
       <td>{{ product.saleprice }}</td>
 
       <td>{{ product.uomname }}</td>

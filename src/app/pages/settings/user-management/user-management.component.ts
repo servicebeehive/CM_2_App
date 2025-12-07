@@ -51,18 +51,13 @@ export class UserManagementComponent {
   showConfirmPassword = false;
   user:any[]=[];
   filteredUser: any[] = [];
+
   editMode = false;
   selectedUser: any = null;
   globalFilter: string = '';
   showGlobalSearch:boolean=true;
 
-  userRoleOptions = [
-    { label: 'Admin', value: 'Admin' },
-    { label: 'Front Desk', value: 'Front Desk' },
-    { label: 'Help Desk', value: 'Help Desk' },
-    { label: 'Manager', value: 'Manager' },
-    { label: 'Operation Desk', value: 'Operation Desk' },
-  ];
+  userRoleOptions = [];
 
   constructor(
     private fb: FormBuilder,
@@ -73,15 +68,18 @@ export class UserManagementComponent {
 
   ngOnInit() {
     this.initForm();
+    this.onGetUserRole();
     this.filteredUser=[...this.user];
+    this.onGetUserList();
   }
 
   initForm() {
     this.userForm = this.fb.group(
       {
-        userRole: ['', Validators.required],
-        userName: ['', [Validators.required,Validators.maxLength(20)]],
-        password: [
+        p_utypeid: ['', Validators.required],
+        p_uname: ['', [Validators.required,Validators.maxLength(20)]],
+        p_ufullname: ['', [Validators.required,Validators.maxLength(50)]],
+        p_pwd: [
           '',
           [
             Validators.required,
@@ -92,8 +90,8 @@ export class UserManagementComponent {
           ],
         ],
         conPassword: ['', Validators.required],
-        mobile: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
-        email: ['', [Validators.required, Validators.email,Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/),Validators.maxLength(50)]],
+        p_phone: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
+        p_email: ['', [Validators.required, Validators.email,Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/),Validators.maxLength(50)]],
         checked: [true],
       },
       { validators: this.passwordMatchValidator }
@@ -103,7 +101,7 @@ export class UserManagementComponent {
   passwordMatchValidator: ValidatorFn = (
     group: AbstractControl
   ): ValidationErrors | null => {
-    const password = group.get('password')?.value;
+    const password = group.get('p_pwd')?.value;
     const confirm = group.get('conPassword')?.value;
     return password === confirm ? null : { passwordMismatch: true };
   };
@@ -119,7 +117,23 @@ export class UserManagementComponent {
     this.visibleDialog = true;
     this.editMode = true;
     this.selectedUser = user;
-    this.userForm.patchValue(user);
+  
+ // Clear password validators for edit mode
+  this.userForm.get('p_pwd')?.clearValidators();
+  this.userForm.get('conPassword')?.clearValidators();
+   this.userForm.get('p_uname')?.disable();
+
+    this.userForm.patchValue({  
+    p_utypeid: user.p_utypeid,
+    p_uname: user.username,
+    p_ufullname: user.fullname,
+    p_phone: user.phone,
+    p_email: user.email,
+    checked:(user.isactive) === 'Y' 
+    });this.userForm.get('p_pwd')?.setValue('');
+  this.userForm.get('conPassword')?.setValue('');
+
+  this.userForm.updateValueAndValidity();
   }
   valueReturnToString(value: any) {
   return value != null ? value.toString() : null;
@@ -127,24 +141,62 @@ export class UserManagementComponent {
   closeDialog() {
     this.visibleDialog = false;
   }
-
-  onUserCreation(data:any){
-    const payload:any ={
+ onGetUserList(){
+   const payload:any = {
     "uname": "admin",
-    "p_operationtype": "INSERT",
-    "p_ufullname": data.userName,
-    "p_uname":data.userName,
-    "p_pwd": data.password,
-    "p_active": "Y",
-    "p_phone": data.mobile,
-    "p_utypeid": data.userRole==null?"" : this.valueReturnToString(data.userRole),
-    "p_email": data.email,
+    "p_ufullname": "",
+    "p_uname":"admin",
+    "p_pwd": "",
+    "p_active": "",
+    "p_operationtype": "GETUSER",
+    "p_phone": "",
+    "p_utypeid": "",
+    "p_email": "",
     "p_loginuser": "admin",
     "p_oldpwd": "",
     "clientcode": "CG01-SE",
     "x-access-token": this.authService.getToken()
-    };
-    // this.inventoryService.
+   };
+   this.inventoryService.OnUserHeaderCreate(payload).subscribe({
+    next:(res)=>{
+      console.log('res:',res);
+      this.user=res.data || [];
+      this.filteredUser=[...this.user];
+    },
+    error:(err)=>{
+      console.error(err);
+    }
+   });
+ }
+ onUserCreation(data: any) {
+  this.userForm.get('p_uname')?.enable;
+  const payload: any = {
+    "uname": "admin",
+    "p_operationtype": this.editMode ? "UPDATE" : "INSERT",
+    "p_ufullname": data.p_ufullname,
+    "p_uname": data.p_uname,
+    "p_pwd": data.p_pwd,
+    "p_active": data.checked ? "Y" : "N",
+    "p_phone": data.p_phone,
+    "p_utypeid": data.p_utypeid,
+    "p_email": data.p_email,
+    "p_loginuser": "admin",
+    "p_oldpwd": "",
+    "clientcode": "CG01-SE",
+    "x-access-token": this.authService.getToken()
+  };
+
+  this.inventoryService.OnUserHeaderCreate(payload).subscribe({
+    next: (res) => {
+      console.log('Create/Update response:', res);
+      // Close dialog
+      this.visibleDialog = false;
+       this.onGetUserList();
+    },
+    error: (err) => {
+      console.error('API error', err);
+    }
+  });
 }
   /** ✅ Submit Form **/
   onSubmit() {
@@ -152,36 +204,36 @@ export class UserManagementComponent {
       this.userForm.markAllAsTouched() ;
       return;
     }
-    const formValue = this.userForm.value  ;
-    const newUser = {
-      id: this.editMode && this.selectedUser ? this.selectedUser.id : Date.now(),
-      userRole: formValue.userRole,
-      userName: formValue.userName,
-      mobile: formValue.mobile,
-      email: formValue.email,
-      active: formValue.checked ? 'Yes' : 'No',
-    };
+//     const formValue = this.userForm.value  ;
+//     const newUser = {
+//       id: this.editMode && this.selectedUser ? this.selectedUser.id : Date.now(),
+//       p_utypeid: formValue.p_utypeid,
+//       p_uname: formValue.p_uname,
+//       p_phone: formValue.p_phone,
+//       p_email: formValue.p_email,
+//       p_active: formValue.checked ? 'Yes' : 'No',
+//     };
     this.onUserCreation(this.userForm.value);
-    if (this.editMode) {
-      const index = this.user.findIndex(
-        (u) => u.id === this.selectedUser.id
-      );
-      if (index !== -1) this.user[index] = newUser;
-    } else {
-      this.user.push(newUser);
-    }
+//     if (this.editMode) {
+//       const index = this.user.findIndex(
+//         (u) => u.id === this.selectedUser.id
+//       );
+//       if (index !== -1) this.user[index] = newUser;
+//     } else {
+//       this.user.push(newUser);
+//     }
 
-    this.visibleDialog = false;
-this.applyGlobalFilterManual();
-    this.confirmationService.confirm({
-      message: this.editMode
-        ? 'User updated successfully!'
-        : 'User added successfully!',
-      header: 'Success',
-      icon: 'pi pi-check-circle',
-      acceptLabel: 'OK',
-      rejectVisible: false,
-    });
+//     this.visibleDialog = false;
+// this.applyGlobalFilterManual();
+//     this.confirmationService.confirm({
+//       message: this.editMode
+//         ? 'User updated successfully!'
+//         : 'User added successfully!',
+//       header: 'Success',
+//       icon: 'pi pi-check-circle',
+//       acceptLabel: 'OK',
+//       rejectVisible: false,
+//     });
   }
 
   /** 🧮 Allow only digits **/
@@ -195,7 +247,7 @@ this.applyGlobalFilterManual();
   /** 🧹 Delete user **/
   deleteItem(user: any) {
     this.confirmationService.confirm({
-      message: `Are you sure you want to delete <b>${user.userName}</b>?`,
+      message: `Are you sure you want to delete <b>${user.userName || user.p_uname}</b>?`,
       header: 'Confirm Delete',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Yes',
@@ -208,7 +260,23 @@ this.applyGlobalFilterManual();
       },
     });
   }
-
+  createDropdownPayload(returnType: string) {
+  return {
+    uname: "admin",
+    p_username: "admin",
+    p_returntype: returnType,
+    clientcode: "CG01-SE",
+    "x-access-token": this.authService.getToken()
+  };
+}
+onGetUserRole(){
+const payload = this.createDropdownPayload("USERTYPE");
+    this.inventoryService.getdropdowndetails(payload).subscribe({
+      next: (res) => 
+         this.userRoleOptions = res.data,
+      error: (err) => console.log(err)
+    });
+}
   /** 🔍 Global Filter **/
   applyGlobalFilter() {
     this.applyGlobalFilterManual();

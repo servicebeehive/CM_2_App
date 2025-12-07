@@ -591,6 +591,7 @@ OnSalesHeaderCreate(data: any) {
             },
             { emitEvent: false }
         );
+         this.saleArray.clear(); 
     }
 createDropdownPayload(returnType: string) {
     return {

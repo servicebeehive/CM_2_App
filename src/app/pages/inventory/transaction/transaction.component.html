@@ -69,8 +69,8 @@
 
         <!-- Product Table with Pagination -->
         <div>
-            <p-table [value]="filteredProducts" dataKey="code" [tableStyle]="{ 'min-width': '50rem' }" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 20, 50]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines mt-6 transaction">
-                <ng-template #header>
+            <p-table [value]="filteredProducts" dataKey="code" [tableStyle]="{ 'min-width': '110rem' }" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 20, 50]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines mt-6 transaction">
+                <ng-template pTemplate="header">
                     <tr class="bg-yellow-400">
                         <th>Purchase Id</th>
                         <th>Transaction Date</th>
