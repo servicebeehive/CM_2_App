@@ -111,6 +111,7 @@ export class UserManagementComponent {
     this.visibleDialog = true;
     this.editMode = false;
     this.userForm.reset({ checked: true });
+    this.userForm.get('p_uname')?.enable();
   }
 
   openEditDialog(user: any) {
@@ -121,8 +122,9 @@ export class UserManagementComponent {
  // Clear password validators for edit mode
   this.userForm.get('p_pwd')?.clearValidators();
   this.userForm.get('conPassword')?.clearValidators();
-   this.userForm.get('p_uname')?.disable();
-
+  this.userForm.get('p_uname')?.disable();
+  
+console.log('user role', user.usertypename)
     this.userForm.patchValue({  
     p_utypeid: user.p_utypeid,
     p_uname: user.username,
@@ -170,6 +172,7 @@ export class UserManagementComponent {
  }
  onUserCreation(data: any) {
   this.userForm.get('p_uname')?.enable;
+  console.log('user role:',data.p_utypeid);
   const payload: any = {
     "uname": "admin",
     "p_operationtype": this.editMode ? "UPDATE" : "INSERT",
@@ -204,36 +207,7 @@ export class UserManagementComponent {
       this.userForm.markAllAsTouched() ;
       return;
     }
-//     const formValue = this.userForm.value  ;
-//     const newUser = {
-//       id: this.editMode && this.selectedUser ? this.selectedUser.id : Date.now(),
-//       p_utypeid: formValue.p_utypeid,
-//       p_uname: formValue.p_uname,
-//       p_phone: formValue.p_phone,
-//       p_email: formValue.p_email,
-//       p_active: formValue.checked ? 'Yes' : 'No',
-//     };
-    this.onUserCreation(this.userForm.value);
-//     if (this.editMode) {
-//       const index = this.user.findIndex(
-//         (u) => u.id === this.selectedUser.id
-//       );
-//       if (index !== -1) this.user[index] = newUser;
-//     } else {
-//       this.user.push(newUser);
-//     }
-
-//     this.visibleDialog = false;
-// this.applyGlobalFilterManual();
-//     this.confirmationService.confirm({
-//       message: this.editMode
-//         ? 'User updated successfully!'
-//         : 'User added successfully!',
-//       header: 'Success',
-//       icon: 'pi pi-check-circle',
-//       acceptLabel: 'OK',
-//       rejectVisible: false,
-//     });
+    this.onUserCreation(this.userForm.getRawValue());
   }
 
   /** 🧮 Allow only digits **/

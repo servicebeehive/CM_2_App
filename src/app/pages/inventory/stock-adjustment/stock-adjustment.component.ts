@@ -1,4 +1,3 @@
-// stock-adjustment.component.ts
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import {
@@ -32,17 +31,7 @@ import { AutoCompleteModule } from 'primeng/autocomplete';
 import { StockIn } from '@/types/stockin.model';
 import { InventoryService } from '@/core/services/inventory.service';
 import { AuthService } from '@/core/services/auth.service';
-import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
 
-/**
- * StockAdjustmentComponent
- *
- * Standalone Angular component that renders stock adjustment UI (PrimeNG table + reactive form).
- * --- Notes for developers ---
- *  - This file has been reformatted and annotated for clarity.
- *  - **No function names or logic have been changed** (per request).
- *  - Comments explain intent, responsibilities and important interactions between controls and model.
- */
 @Component({
   selector: 'app-stock-adjustment',
   standalone: true,
@@ -84,6 +73,8 @@ export class StockAdjustmentComponent {
   products: any[] = []; // full data list (raw objects)
   filteredProducts: any[] = []; // current visible list used by p-table
   globalFilter: string = '';
+  showData: boolean = false; // New flag to control table visibility
+  
   // Dropdown options
   categoryOptions: any[] = [];
   itemOptions: any[] = [];
@@ -122,14 +113,7 @@ export class StockAdjustmentComponent {
       mrpUpdate: ['B'],
       p_stock: this.fb.array([]) // holds FormGroups for each table row
     });
-
-    // Load dropdowns and initial stock data
     this.loadAllDropdowns();
-    this.onGetStockIn();
-
-    // wire reactive filtering when category/item changes
-    this.updateForm.get('category')?.valueChanges.subscribe(() => this.applyGlobalFilter());
-    this.updateForm.get('item')?.valueChanges.subscribe(() => this.applyGlobalFilter());
   }
 
   // -------------------------
@@ -246,58 +230,6 @@ export class StockAdjustmentComponent {
     };
   }
 
-  // -------------------------
-  // Initial load (stubbed / uses inventoryService.productItem)
-  // -------------------------
-  onGetStockIn() {
-    // Use inventoryService.productItem if present else API call
-    // original code commented out - keeping as-is per request
-    // this.products = this.inventoryService.productItem || [];
-
-    // Ensure each product has expected fields and controls
-    // this.buildFormArrayFromProducts(this.products);
-  }
-
-  // -------------------------
-  // Filtering logic
-  // -------------------------
-  applyGlobalFilter() {
-    const searchTerm = (this.globalFilter || '').toLowerCase().trim();
-    const selectedCategory = this.updateForm.get('category')?.value;
-    const selectedItem = this.updateForm.get('item')?.value;
-
-    this.filteredProducts = this.products.filter((p: any) => {
-      const matchesSearch =
-        !searchTerm ||
-        String(p.itemcombine ?? p.name ?? '')
-          .toLowerCase()
-          .includes(searchTerm) ||
-        String(p.categoryname ?? p.category ?? '')
-          .toLowerCase()
-          .includes(searchTerm) ||
-        String(p.curStock ?? p.currentstock ?? '')
-          .toLowerCase()
-          .includes(searchTerm);
-
-      const matchesCategory =
-        !selectedCategory ||
-        p.category === selectedCategory ||
-        p.categoryid === selectedCategory;
-
-      const matchesItem =
-        !selectedItem || p.name === selectedItem || p.itemid === selectedItem;
-
-      return matchesSearch && matchesCategory && matchesItem;
-    });
-
-    // Rebuild form controls to match filteredProducts
-    this.buildFormArrayFromProducts(this.filteredProducts);
-  }
-
-  filterProducts() {
-    // older alias preserved for compatibility
-    this.applyGlobalFilter();
-  }
 
   // -------------------------
   // Adjustment dropdown handler
@@ -394,48 +326,45 @@ export class StockAdjustmentComponent {
     this.OnGetItem();
     this.OnGetCategory();
   }
-onCategoryItem(event: any) {
-  const categoryId = event.value;
-this.updateForm.get('item')?.setValue(null);
-  // If category is null → load all items
-  if (!categoryId) {
-    this.OnGetItem();     // reload full item list
-    return;
+
+  onCategoryItem(event: any) {
+    const categoryId = event.value;
+    this.updateForm.get('item')?.setValue(null);
+    
+    if (!categoryId) {
+      this.OnGetItem();
+      return;
+    }
+    
+    this.categoryRelavantItem(categoryId);
   }
 
-  // If category has value → load category-specific items
-  this.categoryRelavantItem(categoryId);
-}
-
- categoryRelavantItem(id:any){
-   console.log('item:',id);
-   this.itemOptions=[];
-   const payload={
-    uname:"admin",
-    p_username:"admin",
-    p_returntype:"CATEGORY",
-    p_returnvalue:id.toString(),
-    clientcode:"CG01-SE",
-    "x-access-token":this.authService.getToken()
-   };
-   this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-    next:(res: any) => {
-    if(!res.data || res.data.length==0){
-         this.itemOptions = [];
-        // Clear filtered products if no items for this category
-        this.filteredProducts = [];
-        this.products = [];
-        // this.buildFormArrayFormProducts([]);
-        this.showSuccess('No items found for this category.');
-        return;
+  categoryRelavantItem(id: any) {
+    this.itemOptions = [];
+    const payload = {
+      uname: "admin",
+      p_username: "admin",
+      p_returntype: "CATEGORY",
+      p_returnvalue: id.toString(),
+      clientcode: "CG01-SE",
+      "x-access-token": this.authService.getToken()
+    };
+    
+    this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+      next: (res: any) => {
+        if (!res.data || res.data.length === 0) {
+          this.itemOptions = [];
+          this.showSuccess('No items found for this category.');
+          return;
+        }
+        this.itemOptions = res.data;
+      },
+      error: (err) => {
+        console.error(err);
       }
-      this.itemOptions=res.data;
-    },
-    error:(err)=>{
-      console.error(err);
-    }
-   });
- }
+    });
+  }
+
   OnGetItem() {
     const payload = this.createDropdownPayload('ITEM');
     this.inventoryService.getdropdowndetails(payload).subscribe({
@@ -458,38 +387,47 @@ this.updateForm.get('item')?.setValue(null);
   Onreturndropdowndetails() {
     const category = this.updateForm.controls['category'].value;
     const item = this.updateForm.controls['item'].value;
-
-    if (category || item) {
-      const payload = {
-        uname: 'admin',
-        p_categoryid: category || null,
-        p_itemid: item || null,
-        p_username: 'admin',
-        p_updatetype: this.updateForm.controls['mrpUpdate'].value,
-        clientcode: 'CG01-SE',
-        'x-access-token': this.authService.getToken()
-      };
-
-      this.inventoryService.getadjustmentdata(payload).subscribe({
-        next: (res: any) => {
-          // API returned new list; set as products and rebuild formArray
-          this.products = res?.data || [];
-          this.filteredProducts = [...this.products];
-          this.buildFormArrayFromProducts(this.filteredProducts);
-          if (this.products.length == 0) {
-            let message = 'No Data Available for this Category and Item';
-            this.showSuccess(message);
-          }
-        },
-        error: (err) => {
-          console.error(err);
-        }
-      });
-    } else {
-      // if you want better UX, show a message instead of alert
+    if(category ==null && item === null){
+      this.filteredProducts=[];
+      this.products=[];
+    }
+    if (!category && !item ) {
       let message = 'Please select both Category and Item before filtering.';
       this.errorSuccess(message);
+      return;
     }
+
+    const payload = {
+      uname: 'admin',
+      p_categoryid: category || null,
+      p_itemid: item || null,
+      p_username: 'admin',
+      p_updatetype: this.updateForm.controls['mrpUpdate'].value,
+      clientcode: 'CG01-SE',
+      'x-access-token': this.authService.getToken()
+    };
+
+    this.showData = false; // Hide previous data while loading
+    
+    this.inventoryService.getadjustmentdata(payload).subscribe({
+      next: (res: any) => {
+        // API returned new list; set as products and rebuild formArray
+        this.products = res?.data || [];
+        this.filteredProducts = [...this.products];
+        this.buildFormArrayFromProducts(this.filteredProducts);
+        this.showData = true; // Show data after successful API call
+        
+        if (this.products.length === 0) {
+          let message = 'No Data Available for this Category and Item';
+          this.showSuccess(message);
+        }
+      },
+      error: (err) => {
+        console.error(err);
+        this.errorSuccess('Error loading data. Please try again.');
+        this.showData = false;
+      }
+    });
   }
 
   // -------------------------
@@ -501,13 +439,12 @@ this.updateForm.get('item')?.setValue(null);
     const trimmed = (stockArray || [])
       .map((r) => ({
         ItemId: r.ItemId,
-        // UOMId: r.UOMId,
         batchId: r.BatchId,
         Quantity: r.Quantity,
         adjtype: r.adjtype || null,
         mrpvalue: r.mrpvalue
       }))
-      .filter((r) => (r.Quantity != null && r.Quantity>0 && r.adjtype) || (r.mrpvalue!=null && r.mrpvalue !== "")); // keep only filled rows
+      .filter((r) => (r.Quantity != null && r.Quantity > 0 && r.adjtype) || (r.mrpvalue != null && r.mrpvalue !== "")); // keep only filled rows
 
     if (trimmed.length === 0) {
       let message = 'No rows to save. Please enter Quantity and Adjustment Type for at least one row.';
@@ -529,21 +466,16 @@ this.updateForm.get('item')?.setValue(null);
       next: (res: any) => {
         this.showSuccess((res?.data && res.data[0]?.msg) || 'Stock/MRP updated successfully');
         // optionally refresh data
-       this.Onreturndropdowndetails();
+        this.Onreturndropdowndetails();
       },
       error: (err) => console.error(err)
     });
   }
-onItemChange(event:any){
-  const itemId = event.value;
-  if(!itemId){
-     this.products = [];
-        this.filteredProducts = [];
-        // this.buildFormArrayFormProducts([]);
-        
-        return;
+
+  onItemChange(event: any) {
+    // No automatic filtering
   }
-}
+
   // -------------------------
   // Confirm + submit wrapper
   // -------------------------
@@ -567,18 +499,17 @@ onItemChange(event:any){
   // -------------------------
   reset() {
     // Reset the form and clear table data
-    this.updateForm.reset();
-    this.updateForm.patchValue({
+    this.updateForm.reset({
       mrpUpdate: 'B',
     });
-
+    
     // Clear model lists and pagination
     this.products = [];
     this.filteredProducts = [];
     this.pagedProducts = [];
     this.first = 0;
+    this.showData = false; // Hide table on reset
     this.OnGetItem();
-
   }
 
   showSuccess(message: string) {
@@ -587,9 +518,5 @@ onItemChange(event:any){
 
   errorSuccess(message: string) {
     this.messageService.add({ severity: 'error', summary: 'Error', detail: message });
-  }
-
-  closeDialog() {
-    // placeholder for any dialog close operations
   }
 }

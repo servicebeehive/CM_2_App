@@ -149,6 +149,7 @@ filterInvoiceNo(event:any){
 }
 
 onSave(updatedData:any){
+  console.log('before:',updatedData);
    if(!updatedData) return;
     const hasChildUOM= updatedData.childUOMDetails?.some((u:any)=> u.childUOM || u.conversion || u.mrp);
     const costPerItem=updatedData.qty && updatedData.purchasePrice ? (updatedData.purchasePrice/updatedData.qty).toFixed(2) : 0;
@@ -178,6 +179,7 @@ onSave(updatedData:any){
         const index=this.products.findIndex(p=>p.code === this.selectedRow.code);
             if(index!==-1){
                this.products[index]={...this.products[index], ...mappedData };
+               console.log('after',updatedData);
             }
         }
             else{

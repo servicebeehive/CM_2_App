@@ -117,7 +117,7 @@
     <!-- Product Table with Pagination -->
     <div>
       <p-table
-        [value]="filteredProducts"  
+        [value]="filteredProducts" 
         dataKey="code"
         [tableStyle]="{'min-width': '50rem'}"
         [paginator]="true"
@@ -134,7 +134,7 @@
 
          <ng-template pTemplate="body" let-row let-i="rowIndex">
           <tr>
-           <td *ngFor="let col of columns" [ngClass]="col.widthClass">{{row[col.fields] || ''}}</td>
+           <td *ngFor="let col of columns" [ngClass]="col.widthClass">{{row[col.fields]}}</td>
           </tr>
         </ng-template>
 

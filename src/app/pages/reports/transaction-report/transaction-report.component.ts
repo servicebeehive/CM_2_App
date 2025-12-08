@@ -90,7 +90,8 @@ export class TransactionReportComponent {
     ) {}
     
     setTableColumns(type: string) {
-        if (!type || type === '') {
+        if (!type && type === '') {
+             this.columns=[];
             this.columns = [
                 { fields: '', header: 'Invoice No' },
                 { fields: '', header: 'Invoice Date' },
@@ -124,7 +125,7 @@ export class TransactionReportComponent {
                 { fields: 'grandtotal', header: 'Grand Total' }
             ];
         }
-        else if (type === 'RETURN') {
+        else if (type === 'RETURN' ) {
             this.columns = [
                 { fields: 'returninvoiceno', header: 'Invoice No' },
                 { fields: 'returninvoicedate', header: 'Invoice Date' },
@@ -267,8 +268,8 @@ export class TransactionReportComponent {
         
         const payload = {
             uname: 'admin',
-            p_categoryid: String(category) || null,
-            p_itemid: String(item) || null,
+            p_categoryid: category.toString() || null,
+            p_itemid: item.toString() || null,
             p_fromdate: this.datepipe.transform(fromDate, 'yyyy/MM/dd'),
             p_todate: this.datepipe.transform(toDate, 'yyyy/MM/dd'),
             p_username: 'admin',
@@ -305,9 +306,11 @@ export class TransactionReportComponent {
     
     onReportChange(event: any) {
         const reportType = event.value;
+        console.log('ans:',reportType);
         if (reportType) {
             this.setTableColumns(reportType || '');
             this.resetGstTransaction(reportType);
+             this.filteredProducts = [];
         }
         
         if (!reportType) {
@@ -425,4 +428,4 @@ export class TransactionReportComponent {
     errorSuccess(message: string) {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: message });
     }
-}
+} 

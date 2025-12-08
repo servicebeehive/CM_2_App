@@ -259,8 +259,8 @@ enterEditItemMode(itemData: any) {
             category: itemData.categoryid,
             curStock: itemData.currentstock,
             p_expirydate: itemData.expirydate ? new Date(itemData.expirydate) : null,
-            gstItem: itemData.gstitem === 'Y',
-            activeItem: itemData.isactive === 'Y',
+            gstItem: itemData.gstitem==='Y',
+            activeItem: itemData.isactive==='Y',
             location: itemData.location,
             minStock: itemData.minimumstock,
             // purchasePrice: itemData.costprice * itemData.quantity,
@@ -468,7 +468,7 @@ if (hasEditDataChange && formReady) {
             p_currencyid: Number(form.currencyId || 1),
             p_taxid: Number(form.taxId || 0),
             p_warehourse: form.warehouse || 'ShristiShop',
-            p_isactive: 'Y',
+            p_isactive: form.activeItem ? 'Y' : 'N' ,
             p_gstitem: form.gstItem ? 'Y' : 'N',
 
             // Child UOM logic
