@@ -144,12 +144,7 @@ interface ExportColumn {
 export class RecentSalesWidget {
     public authService = inject(AuthService);
     products!: any[];
-    public getUserDetails = {
-    "uname": "admin",
-    "p_loginuser": "admin",
-    "clientcode": "CG01-SE",
-    "x-access-token": this.authService.getToken(),
-  };
+    
 
     // filterSalesTable = {
     //     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -212,7 +207,7 @@ export class RecentSalesWidget {
     }
     OnGetSales(){
         let  apibody={
-    ...this.getUserDetails,
+    
    "p_reporttype": "MOSTSALEABLE",
    "p_warehouse":"",
    "p_period":"",

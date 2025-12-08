@@ -136,12 +136,7 @@ interface Week {
 export class RevenueOverViewWidget implements OnInit {
    public authService = inject(AuthService);
     products!: any[];
-    public getUserDetails = {
-    "uname": "admin",
-    "p_loginuser": "admin",
-    "clientcode": "CG01-SE",
-    "x-access-token": this.authService.getToken(),
-  };
+  
 
     // filterSalesTable = {
     //     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -186,7 +181,7 @@ export class RevenueOverViewWidget implements OnInit {
     }
     OnGetSales(){
         let  apibody={
-    ...this.getUserDetails,
+   
     "p_loginuser": "admin",
    "p_reporttype": "LOWSTOCK",
    "p_warehouse":"",
