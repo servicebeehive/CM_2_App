@@ -138,15 +138,15 @@ dateRangeValidator(form:FormGroup){
 
         if((startDate && endDate) || (p_cusname || p_mobile || status) ){
             const payload={
-                uname:'admin',
+                 
                 p_startdate: this.datepipe.transform(startDate,'yyyy/MM/dd'),
                 p_enddate: this.datepipe.transform(endDate,'yyyy/MM/dd'),
                 p_mobile: p_mobile || null,
                 p_customer: p_cusname || null,
                 p_status: status || null,
                 p_username:'admin',
-                clientcode: 'CG01-SE',
-                'x-access-token': this.authService.getToken()
+                    
+                      
             };
             this.inventoryService.getinvoicedetail(payload).subscribe({
                 next :(res:any) =>{
@@ -192,11 +192,11 @@ dateRangeValidator(form:FormGroup){
     }
     createDropdownPayload(returnType: string) {
         return {
-            uname: 'admin',
+             
             p_username: 'admin',
             p_returntype: returnType,
-            clientcode: 'CG01-SE',
-            'x-access-token': this.authService.getToken()
+                
+                  
         };
     }
     OnGetCusName() {

@@ -82,12 +82,7 @@ export class ReturnComponent {
     // ✅ Move dropdown options into variables
     billNoOptions: any[] = [];
 public authService = inject(AuthService);
-  public getUserDetails = {
-    "uname": "admin",
-    "p_loginuser": "admin",
-    "clientcode": "CG01-SE",
-    "x-access-token": this.authService.getToken(),
-  };
+  public getUserDetails = {};
     constructor(
         private fb: FormBuilder,
         private stockInService: InventoryService,

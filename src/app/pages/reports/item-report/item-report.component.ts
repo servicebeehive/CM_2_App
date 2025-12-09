@@ -117,13 +117,13 @@ export class ItemReportComponent {
         }
         
         const payload = {
-            uname: 'admin',
+             
             p_categoryid: category || null,
             p_itemid: item || null,
             p_username: 'admin',
             p_type: reportType || 'ITEMLIST',
-            clientcode: 'CG01-SE',
-            'x-access-token': this.authService.getToken()
+                
+                  
         };
         
         this.showData = false; 
@@ -174,12 +174,12 @@ export class ItemReportComponent {
     categoryRelavantItem(id: any) {
         this.itemOptions = [];
         const payload = {
-            uname: "admin",
+             
             p_username: "admin",
             p_returntype: "CATEGORY",
             p_returnvalue: id.toString(),
-            clientcode: "CG01-SE",
-            "x-access-token": this.authService.getToken()
+            
+             
         };
         
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
@@ -212,11 +212,9 @@ export class ItemReportComponent {
     
     createDropdownPayload(returnType: string) {
         return {
-            uname: 'admin',
+             
             p_username: 'admin',
             p_returntype: returnType,
-            clientcode: 'CG01-SE',
-            'x-access-token': this.authService.getToken()
         };
     }
     

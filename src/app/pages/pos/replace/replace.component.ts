@@ -89,12 +89,7 @@ export class ReplaceComponent {
   submitDisabledByBill:boolean=false;
   discountplace:string='Enter Amount';
   public authService = inject(AuthService);
-  public getUserDetails = {
-    "uname": "admin",
-    "p_loginuser": "admin",
-    "clientcode": "CG01-SE",
-    "x-access-token": this.authService.getToken(),
-  };
+  public getUserDetails = {};
   searchValue: string = '';
   itemOptions: any[] = [];
   transactionIdOptions = [];

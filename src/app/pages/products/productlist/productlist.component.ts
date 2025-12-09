@@ -117,12 +117,9 @@ export class ProductlistComponent {
     }
     
     createDropdownPayload(returnType: string) {
-        return {
-            uname: "admin",
+        return { 
             p_username: "admin",
-            p_returntype: returnType,
-            clientcode: "CG01-SE",
-            "x-access-token": this.authService.getToken()
+            p_returntype: returnType
         };
     }
     
@@ -146,12 +143,12 @@ export class ProductlistComponent {
     categoryRelavantItem(id: any) {
         this.itemOptions = [];
         const payload = {
-            uname: "admin",
+             
             p_username: "admin",
             p_returntype: "CATEGORY",
             p_returnvalue: id.toString(),
-            clientcode: "CG01-SE",
-            "x-access-token": this.authService.getToken()
+            
+             
         };
         
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
@@ -203,13 +200,13 @@ export class ProductlistComponent {
         }
         
         const payload = {
-            uname: 'admin',
+             
             p_categoryid: category || null,
             p_itemid: item || null,
             p_username: 'admin',
             p_type: '',
-            clientcode: 'CG01-SE',
-            'x-access-token': this.authService.getToken()
+                
+                  
         };
         
         this.showData = false;
@@ -243,7 +240,9 @@ export class ProductlistComponent {
     }
     
     onSave(updatedData: any) {
-        console.log('updated before:',updatedData)
+    
+        console.log('updated before:',updatedData);
+       this.Onreturndropdowndetails() ;
         // const mappedData = {
         //     selection: true,
         //     code: updatedData.itemCode.label || updatedData.itemCode,

@@ -267,7 +267,7 @@ export class TransactionReportComponent {
         }
         
         const payload = {
-            uname: 'admin',
+             
             p_categoryid: category.toString() || null,
             p_itemid: item.toString() || null,
             p_fromdate: this.datepipe.transform(fromDate, 'yyyy/MM/dd'),
@@ -275,8 +275,6 @@ export class TransactionReportComponent {
             p_username: 'admin',
             p_gsttran: ((reportType === 'DEBITNOTE') ? (gstType === 'none' ? null : gstType) : (gstType === 'all' ? null : gstType)),
             p_reporttype: reportType || 'SALE',
-            clientcode: 'CG01-SE',
-            'x-access-token': this.authService.getToken()
         };
         
         this.setTableColumns(reportType);
@@ -340,12 +338,12 @@ export class TransactionReportComponent {
     categoryRelavantItem(id: any) {
         this.itemOptions = [];
         const payload = {
-            uname: "admin",
+             
             p_username: "admin",
             p_returntype: "CATEGORY",
             p_returnvalue: id.toString(),
-            clientcode: "CG01-SE",
-            "x-access-token": this.authService.getToken()
+            
+             
         };
         
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
@@ -392,11 +390,11 @@ export class TransactionReportComponent {
     
     createDropdownPayload(returnType: string) {
         return {
-            uname: 'admin',
+             
             p_username: 'admin',
             p_returntype: returnType,
-            clientcode: 'CG01-SE',
-            'x-access-token': this.authService.getToken()
+                
+                  
         };
     }
     

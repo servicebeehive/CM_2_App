@@ -22,6 +22,7 @@ import { RippleModule } from 'primeng/ripple';
 import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
 import { AuthService } from '@/core/services/auth.service';
 import { InventoryService } from '@/core/services/inventory.service';
+import { UserService } from '@/core/services/user.service';
 
 @Component({
   selector: 'app-user-management',
@@ -63,7 +64,8 @@ export class UserManagementComponent {
     private fb: FormBuilder,
     private confirmationService: ConfirmationService,
     private authService: AuthService,
-    private inventoryService: InventoryService
+    private inventoryService: InventoryService,
+    private userService:UserService
   ) {}
 
   ngOnInit() {
@@ -111,7 +113,11 @@ export class UserManagementComponent {
     this.visibleDialog = true;
     this.editMode = false;
     this.userForm.reset({ checked: true });
-    this.userForm.get('p_uname')?.enable();
+   this.userForm.get('p_uname')?.enable();
+  this.userForm.get('p_pwd')?.enable();
+  this.userForm.get('conPassword')?.enable();
+  this.userForm.get('p_utypeid')?.enable();
+  this.userForm.get('checked')?.enable();
   }
 
   openEditDialog(user: any) {
@@ -120,19 +126,28 @@ export class UserManagementComponent {
     this.selectedUser = user;
   
  // Clear password validators for edit mode
-  this.userForm.get('p_pwd')?.clearValidators();
-  this.userForm.get('conPassword')?.clearValidators();
+  this.userForm.get('p_pwd')?.disable();
+  this.userForm.get('conPassword')?.disable();
   this.userForm.get('p_uname')?.disable();
   
 console.log('user role', user.usertypename)
     this.userForm.patchValue({  
-    p_utypeid: user.p_utypeid,
+    p_utypeid: user.usertypeid,
     p_uname: user.username,
     p_ufullname: user.fullname,
     p_phone: user.phone,
     p_email: user.email,
     checked:(user.isactive) === 'Y' 
-    });this.userForm.get('p_pwd')?.setValue('');
+    });
+    if(user.username === 'admin' || user.username === 'Admin'){
+     this.userForm.get('p_utypeid')?.disable(); 
+    this.userForm.get('checked')?.disable();
+  }
+   else {
+    this.userForm.get('p_utypeid')?.enable();
+    this.userForm.get('checked')?.enable();
+  }
+    this.userForm.get('p_pwd')?.setValue('');
   this.userForm.get('conPassword')?.setValue('');
 
   this.userForm.updateValueAndValidity();
@@ -145,7 +160,6 @@ console.log('user role', user.usertypename)
   }
  onGetUserList(){
    const payload:any = {
-    "uname": "admin",
     "p_ufullname": "",
     "p_uname":"admin",
     "p_pwd": "",
@@ -154,12 +168,9 @@ console.log('user role', user.usertypename)
     "p_phone": "",
     "p_utypeid": "",
     "p_email": "",
-    "p_loginuser": "admin",
     "p_oldpwd": "",
-    "clientcode": "CG01-SE",
-    "x-access-token": this.authService.getToken()
    };
-   this.inventoryService.OnUserHeaderCreate(payload).subscribe({
+   this.userService.OnUserHeaderCreate(payload).subscribe({
     next:(res)=>{
       console.log('res:',res);
       this.user=res.data || [];
@@ -171,25 +182,21 @@ console.log('user role', user.usertypename)
    });
  }
  onUserCreation(data: any) {
-  this.userForm.get('p_uname')?.enable;
+ 
   console.log('user role:',data.p_utypeid);
   const payload: any = {
-    "uname": "admin",
     "p_operationtype": this.editMode ? "UPDATE" : "INSERT",
     "p_ufullname": data.p_ufullname,
     "p_uname": data.p_uname,
     "p_pwd": data.p_pwd,
     "p_active": data.checked ? "Y" : "N",
     "p_phone": data.p_phone,
-    "p_utypeid": data.p_utypeid,
+    "p_utypeid": (data.p_utypeid).toString(),
     "p_email": data.p_email,
-    "p_loginuser": "admin",
     "p_oldpwd": "",
-    "clientcode": "CG01-SE",
-    "x-access-token": this.authService.getToken()
   };
-
-  this.inventoryService.OnUserHeaderCreate(payload).subscribe({
+ 
+  this.userService.OnUserHeaderCreate(payload).subscribe({
     next: (res) => {
       console.log('Create/Update response:', res);
       // Close dialog
@@ -236,11 +243,8 @@ console.log('user role', user.usertypename)
   }
   createDropdownPayload(returnType: string) {
   return {
-    uname: "admin",
     p_username: "admin",
     p_returntype: returnType,
-    clientcode: "CG01-SE",
-    "x-access-token": this.authService.getToken()
   };
 }
 onGetUserRole(){

@@ -485,9 +485,8 @@ if (hasEditDataChange && formReady) {
 
             // User Session Info
             p_loginuser: this.shareservice.getUserData()?.username || 'admin',
-            clientcode: 'CG01-SE',
-            'x-access-token': this.authService.getToken(),
-            uname: 'admin'
+                
+            
         };
     }
 
@@ -498,6 +497,7 @@ if (hasEditDataChange && formReady) {
             next: (res) => {
                const msg = res?.data?.[0]?.msg || "Item saved successfully";
                 this.showSuccess(msg);
+                this.save.emit(this.addForm.getRawValue());
                 this.close.emit(this.addForm.getRawValue());
             },
             error: (res) => {}
@@ -570,12 +570,12 @@ this.enterAddItemMode(itemnamdata);
 OnChildOM(id: number) {
  
     const payload = {
-      uname: "admin",
+       
       p_username: "admin",
       p_returntype: "CHILDUOM",
       p_returnvalue:id.toString(),
-      clientcode: "CG01-SE",
-      "x-access-token": this.authService.getToken()
+      
+       
     };
 
     this.inventoryService.Getreturndropdowndetails(payload).subscribe({
@@ -623,12 +623,12 @@ viewItem(id: number) {
  this.ChilduomOptions=[]
 
   const payload = {
-    uname: "admin",
+     
     p_username: "admin",
     p_returntype: "CHILDUOMMASTER",
     p_returnvalue:id.toString(),
-    clientcode: "CG01-SE",
-    "x-access-token": this.authService.getToken()
+    
+     
   };
 
   this.inventoryService.Getreturndropdowndetails(payload).subscribe({

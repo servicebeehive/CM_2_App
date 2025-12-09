@@ -11,6 +11,7 @@ import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModu
 import { CommonModule } from '@angular/common';
 import { AuthService } from '@/core/services/auth.service';
 import { InventoryService } from '@/core/services/inventory.service';
+import { UserService } from '@/core/services/user.service';
 
 @Component({
   selector: 'app-new-password',
@@ -119,7 +120,7 @@ import { InventoryService } from '@/core/services/inventory.service';
 })
 export class NewPassword {
   LayoutService = inject(LayoutService);
-  constructor(private autherService:AuthService, private inventoryService:InventoryService){}
+  constructor(private autherService:AuthService, private userService:UserService){}
   fb = inject(FormBuilder);
   isDarkTheme = computed(() => this.LayoutService.isDarkTheme());
 
@@ -147,21 +148,18 @@ export class NewPassword {
 
 changePassword(data:any){
 const payload:any={
-  "uname": "admin",
-    "p_ufullname":data.p_uname,
+     
+    "p_ufullname":"",
     "p_uname":data.p_uname,
     "p_pwd": data.p_pwd,
-    "p_active": data.checked? 'Y':'N',
+    "p_active": "",
     "p_operationtype": "CHANGE",
-    "p_phone": data.p_phone,
-    "p_utypeid": 1,
-    "p_email": data.p_email,
-    "p_loginuser": "admin",
+    "p_phone": "",
+    "p_utypeid": data.p_utypeid,
+    "p_email": "",
     "p_oldpwd": data.oldPassword,
-    "clientcode": "CG01-SE",
-    "x-access-token": this.autherService.getToken()
 };
-this.inventoryService.OnUserHeaderCreate(payload).subscribe({
+this.userService.OnUserHeaderCreate(payload).subscribe({
   next:(res)=>{
     console.log('result:',res);
   },

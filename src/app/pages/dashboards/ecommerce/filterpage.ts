@@ -112,11 +112,11 @@ export class FilterPage {
     }
      createDropdownPayload(returnType: string) {
         return {
-            uname: 'admin',
+             
             p_username: 'admin',
             p_returntype: returnType,
-            clientcode: 'CG01-SE',
-            'x-access-token': this.authService.getToken()
+                
+                  
         };
     }
     onItemChange(event:any){
@@ -137,12 +137,12 @@ export class FilterPage {
     categoryRelavantItem(id:any){
       this.itemOptions=[];
       const payload={
-        uname:"admin",
+ 
         p_username:"admin",
         p_returntype:"CATEGORY",
         p_returnvalue:id.toString(),
         clientcode:"CG01-SE",
-        "x-access-token":this.authService.getToken()
+               
       };
       this.stockInService.Getreturndropdowndetails(payload).subscribe({
         next:(res:any)=>{

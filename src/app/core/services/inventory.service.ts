@@ -5,7 +5,7 @@ import { API_ENDPOINTS } from '../config/api-endpoints';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { StockIn } from '@/types/stockin.model';
-import { SaleHeader, StockHeader,UserHeader } from '../models/inventory.model';
+import { SaleHeader, StockHeader } from '../models/inventory.model';
 import { ShareService } from './shared.service';
 
 @Injectable({ providedIn: 'root' })
@@ -75,16 +75,7 @@ export class InventoryService {
 )
   }
 
-  OnUserHeaderCreate(payload:UserHeader):Observable<any>{
-    console.log(payload)
-     let payloaddata=this.shareservice.GetApiBody(payload)
-    let url=`${this.baseUrl}${API_ENDPOINTS.user.getuserdetails}`;
-    return this.http.post<any>(url,payloaddata).pipe(catchError(error=>{
-        return throwError(()=>error)
-    }),
-
-)
-  }
+ 
    OnSalesHeaderCreate(payload:SaleHeader):Observable<any>{
     console.log(payload)
      let payloaddata=this.shareservice.GetApiBody(payload)

@@ -297,12 +297,9 @@ purchaseIdOptions: any[] = [];    // For PURCHASE ID dropdown
 dateTime=new Date()
 
 OnGetDropdown(){
-    let payload={
-    "uname": "admin",
+    let payload={   
     "p_username": "admin",
-    "p_returntype": "ITEM",
-    "clientcode": "CG01-SE",
-    "x-access-token": this.authService.getToken()
+    "p_returntype": "ITEM",  
 }
 
     this.stockInService.getdropdowndetails(payload).subscribe({
@@ -319,7 +316,7 @@ OnGetDropdown(){
 
 OnPurchesHeaderCreate(data:any){
   const payload: any = {
-    "uname": "admin",
+       
     "p_operationtype": "PUR_INSERT",
     "p_purchaseid":data.p_tranpurchaseid==null?"":this.valueReturnToString(data.p_tranpurchaseid),
     "p_vendorid":data.p_vendorid==null?this.valueReturnToString(0):this.valueReturnToString(data.p_vendorid),
@@ -327,9 +324,9 @@ OnPurchesHeaderCreate(data:any){
     "p_invoicedate":this.datePipe.transform(data.p_invoicedate, 'dd/MM/yyyy'),
     "p_remarks": data.p_remarks,
     "p_active": "Y",
-    "p_loginuser": "admin",
-    "clientcode": "CG01-SE",
-    "x-access-token":this.authService.getToken()
+     
+    
+           
 };
 
 this.stockInService.OnPurchesHeaderCreate(payload).subscribe({
@@ -373,11 +370,11 @@ this.productForm.patchValue({
 }
 createDropdownPayload(returnType: string) {
   return {
-    uname: "admin",
+     
     p_username: "admin",
     p_returntype: returnType,
-    clientcode: "CG01-SE",
-    "x-access-token": this.authService.getToken()
+    
+     
   };
 }
 purchaseIdDetails(event:any){
@@ -471,12 +468,12 @@ OnGetPurchaseId() {
 }
 OnGetPurcheseItem(id:any) {
   const payload = {
-    "uname": "admin",
+       
     "p_username": "admin",
     "p_returntype": "PURCHASEDETAIL",
     "p_returnvalue":id.toString(),
-    "clientcode": "CG01-SE",
-    "x-access-token":this.authService.getToken()
+    
+           
     //"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyY29kZSI6ImFkbWluIiwiaWF0IjoxNzYzMDI3NzU5LCJleHAiOjE3NjMxMTQxNTl9.w9YSCAVi4G5bou6vlR2tjFb2oU4jUAJ1uHSLUTfbxKc"
 };
 
@@ -494,12 +491,12 @@ OnGetPurcheseItem(id:any) {
 //Delete stock item
 OnDeleteItem(id:any){
     const payload = {
-    "uname": "admin",
+       
     "p_username": "admin",
     "p_returntype": "PURCHASEDETAIL",
      "p_purchasedetailid":id,
-    "clientcode": "CG01-SE",
-    "x-access-token":this.authService.getToken()
+    
+           
     //"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyY29kZSI6ImFkbWluIiwiaWF0IjoxNzYzMDI3NzU5LCJleHAiOjE3NjMxMTQxNTl9.w9YSCAVi4G5bou6vlR2tjFb2oU4jUAJ1uHSLUTfbxKc"
 };
   this.stockInService.DeletStockinitem(payload).subscribe({
@@ -513,12 +510,12 @@ OnDeleteItem(id:any){
 }
 // onchildUOM(id:any){
 //     const payload = {
-//     "uname": "admin",
+//        
 //     "p_username": "admin",
 //     "p_returntype": "CHILDUOM",
 //      "p_returnvalue":id.toString(),
-//     "clientcode": "CG01-SE",
-//     "x-access-token":this.authService.getToken()
+//     
+//            
    
 // };
 //   this.stockInService.Getreturndropdowndetails(payload).subscribe({
@@ -533,12 +530,12 @@ viewItem(id: number) {
   console.log(id)
 
   const payload = {
-    uname: "admin",
+     
     p_username: "admin",
     p_returntype: "CHILDUOM",
     p_returnvalue:id.toString(),
-    clientcode: "CG01-SE",
-    "x-access-token": this.authService.getToken()
+    
+     
   };
 
   this.stockInService.Getreturndropdowndetails(payload).subscribe({

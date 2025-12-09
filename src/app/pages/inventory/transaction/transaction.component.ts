@@ -135,14 +135,14 @@ export class TransactionComponent {
 
   if((startDate && endDate) || p_vendor || invoice){
     const payload={
-        uname:'admin',
+         
         p_invoicestart: this.datepipe.transform(startDate,'yyyy/MM/dd'),
         p_invoiceend:this.datepipe.transform(endDate,'yyyy/MM/dd'),
         p_vendor:p_vendor||null,
         p_invoicenumber:invoice||null,
         p_username:'admin',
         clientcode:'CG01-SE',
-        'x-access-token':this.authService.getToken()
+               
     };
     this.inventoryService.gettransactiondetail(payload).subscribe({
         next:(res:any)=>{
@@ -185,11 +185,11 @@ export class TransactionComponent {
     }
     createDropdownPayload(returnType: string) {
         return {
-            uname: 'admin',
+             
             p_username: 'admin',
             p_returntype: returnType,
-            clientcode: 'CG01-SE',
-            'x-access-token': this.authService.getToken()
+                
+                  
         };
     }
     OnGetInvoice() {

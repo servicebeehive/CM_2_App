@@ -314,11 +314,11 @@ export class StockAdjustmentComponent {
   // -------------------------
   createDropdownPayload(returnType: string) {
     return {
-      uname: 'admin',
+       
       p_username: 'admin',
       p_returntype: returnType,
-      clientcode: 'CG01-SE',
-      'x-access-token': this.authService.getToken()
+          
+            
     };
   }
 
@@ -342,12 +342,12 @@ export class StockAdjustmentComponent {
   categoryRelavantItem(id: any) {
     this.itemOptions = [];
     const payload = {
-      uname: "admin",
+       
       p_username: "admin",
       p_returntype: "CATEGORY",
       p_returnvalue: id.toString(),
-      clientcode: "CG01-SE",
-      "x-access-token": this.authService.getToken()
+      
+       
     };
     
     this.inventoryService.Getreturndropdowndetails(payload).subscribe({
@@ -398,13 +398,13 @@ export class StockAdjustmentComponent {
     }
 
     const payload = {
-      uname: 'admin',
+       
       p_categoryid: category || null,
       p_itemid: item || null,
       p_username: 'admin',
       p_updatetype: this.updateForm.controls['mrpUpdate'].value,
-      clientcode: 'CG01-SE',
-      'x-access-token': this.authService.getToken()
+          
+            
     };
 
     this.showData = false; // Hide previous data while loading
@@ -453,12 +453,12 @@ export class StockAdjustmentComponent {
     }
 
     const payload = {
-      uname: 'admin',
+       
       p_stock: trimmed,
-      "p_loginuser": "admin",
-      clientcode: 'CG01-SE',
+       
+          
       p_updatetype: this.updateForm.controls['mrpUpdate'].value,
-      'x-access-token': this.authService.getToken()
+            
     };
   
     // call API
