@@ -50,7 +50,7 @@ export class ShareService {
     // 🔥 Now safely merge extra fields + payload
     const apiBody: any = {
       uname: headerApiBody?.username,
-      p_loginuser: headerApiBody?.username,
+      p_loginuser: headerApiBody?.username || "admin",
       clientcode: headerApiBody?.clientcode || "CG01-SE",
       "x-access-token": headerApiBody?.usertoken,
       ...payload   // payload will NOT contain duplicate keys

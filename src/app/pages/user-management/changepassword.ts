@@ -150,7 +150,7 @@ changePassword(data:any){
 const payload:any={
      
     "p_ufullname":"",
-    "p_uname":data.p_uname,
+    "p_uname": data.p_uname,
     "p_pwd": data.p_pwd,
     "p_active": "",
     "p_operationtype": "CHANGE",
