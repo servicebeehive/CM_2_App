@@ -49,10 +49,10 @@ export class ShareService {
 
     // 🔥 Now safely merge extra fields + payload
     const apiBody: any = {
-      uname: headerApiBody?.username,
+      uname:'admin',
       p_loginuser: headerApiBody?.username,
       clientcode: headerApiBody?.clientcode || "CG01-SE",
-      "x-access-token": headerApiBody?.usertoken,
+      "x-access-token":'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyY29kZSI6ImFkbWluIiwiaWF0IjoxNzY1MjY2MDQ0LCJleHAiOjE3NjUzNTI0NDR9.ytWhv1-hYx2kbS1Ov2BkpZdgwaTsQhIw7HvjQoRdNVs',
       ...payload   // payload will NOT contain duplicate keys
     };
 

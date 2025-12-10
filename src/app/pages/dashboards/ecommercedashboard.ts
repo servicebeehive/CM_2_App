@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { StatsWidget } from './ecommerce/statswidget';
 import { RecentSalesWidget } from './ecommerce/recentsaleswidget';
 import { RevenueOverViewWidget } from "./ecommerce/revenueoverviewwidget";
@@ -14,11 +14,13 @@ import { InputIconModule } from 'primeng/inputicon';
 import { PaginatorModule } from 'primeng/paginator';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
+import { AuthService } from '@/core/services/auth.service';
+import { SaleMangerDashboard } from './salemanagerdashboard';
 
 @Component({
     selector: 'app-ecommerce-dashboard',
     standalone: true,
-    imports: [StatsWidget, RecentSalesWidget, RevenueOverViewWidget, SalesByCategoryWidget,FilterPage,
+    imports: [StatsWidget, RecentSalesWidget, SaleMangerDashboard, RevenueOverViewWidget, SalesByCategoryWidget,FilterPage,
         CommonModule,
     FormsModule,
 
@@ -38,7 +40,11 @@ import { TagModule } from 'primeng/tag';
             <app-filter-page class="top-filter-section" />
         </div>
      </div> -->
-     <p-dropdown 
+   
+
+        <div *ngIf="role === 'Admin'||role === 'admin'">
+
+  <p-dropdown 
             [options]="filterOptions" 
             [(ngModel)]="selectedFilter"
             optionLabel="label"
@@ -47,6 +53,8 @@ import { TagModule } from 'primeng/tag';
             (onChange)="onFilterChange($event)"
             styleClass="w-40 mb-4"
         ></p-dropdown>
+
+
      
      <!-- Main Content -->
      <div class="grid grid-cols-12 gap-8">
@@ -68,9 +76,16 @@ import { TagModule } from 'primeng/tag';
         </div>
         
      </div>
+</div>
+<div *ngIf="role === 'SalesManager'">
+    <app-sales-dashboard></app-sales-dashboard>
+
+</div>
+
     `
 })
-export class EcommerceDashboard {
+export class EcommerceDashboard implements OnInit {
+public role:string=''
     filterOptions = [
          { label: 'Today', value: 'TODAY' },
   { label: 'This Month', value: 'MONTH' },
@@ -79,9 +94,13 @@ export class EcommerceDashboard {
 
 ];
 selectedFilter = 'MONTH';  // default value
+constructor(public authservice:AuthService){
+
+}
+
 
 onFilterChange(e: any) {
-  console.log('Selected Filter:', e.value);
+   
 
   // Here you will call API based on filter
   // Example:
@@ -89,6 +108,12 @@ onFilterChange(e: any) {
   // this.loadOutOfStock(e.value);
 
   
+}
+ngOnInit(): void {
+    const isUserRoleType:any=this.authservice.isLogIntType()
+
+    this.role=isUserRoleType?.usertypecode
+  console.log('Selected Filter:', isUserRoleType?.usertypecode); 
 }
 
 }
