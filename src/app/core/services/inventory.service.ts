@@ -75,16 +75,7 @@ export class InventoryService {
 )
   }
 
-  OnUserHeaderCreate(payload:StockHeader):Observable<any>{
-    console.log(payload)
-     let payloaddata=this.shareservice.GetApiBody(payload)
-    let url=`${this.baseUrl}${API_ENDPOINTS.user.getuserdetails}`;
-    return this.http.post<any>(url,payloaddata).pipe(catchError(error=>{
-        return throwError(()=>error)
-    }),
-
-)
-  }
+ 
    OnSalesHeaderCreate(payload:SaleHeader):Observable<any>{
     console.log(payload)
      let payloaddata=this.shareservice.GetApiBody(payload)

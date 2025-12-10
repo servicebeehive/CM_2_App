@@ -16,7 +16,7 @@
                 <!-- Transaction Date From-->
                 <div class="flex flex-col">
                     <label class="font-medium mb-1">From Date <span class="text-red-500">*</span></label>
-                    <p-datepicker fluid formControlName="fromDate" [showIcon]="true" placeholder="From Date"></p-datepicker>
+                    <p-datepicker fluid formControlName="fromDate" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="From Date"></p-datepicker>
                     <small class="text-red-500 ms-3 mt-1" *ngIf="transactionForm.get('fromDate')?.touched">
             <span *ngIf="transactionForm.get('fromDate')?.errors?.['required']">From Date is required</span>
           </small>
@@ -25,7 +25,7 @@
                 <!-- Transaction Date To -->
                 <div class="flex flex-col">
                     <label class="font-medium mb-1">To Date <span class="text-red-500">*</span></label>
-                    <p-datepicker fluid formControlName="toDate" [showIcon]="true" placeholder="To Date"></p-datepicker>
+                    <p-datepicker fluid formControlName="toDate" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="To Date"></p-datepicker>
                      <small class="text-red-500 ms-3 mt-1" *ngIf="transactionForm.get('toDate')?.touched">
             <span *ngIf="transactionForm.get('toDate')?.errors?.['required']">To Date is required</span>
              <span *ngIf="transactionForm.errors?.['dateRangeInvalid'] && transactionForm.get('toDate')?.touched">To Date must be greater than or equal to From Date</span>
@@ -69,8 +69,8 @@
 
         <!-- Product Table with Pagination -->
         <div>
-            <p-table [value]="filteredProducts" dataKey="code" [tableStyle]="{ 'min-width': '50rem' }" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 20, 50]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines mt-6 transaction">
-                <ng-template #header>
+            <p-table [value]="filteredProducts" dataKey="code" [tableStyle]="{ 'min-width': '110rem' }" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 20, 50]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines mt-6 transaction">
+                <ng-template pTemplate="header">
                     <tr class="bg-yellow-400">
                         <th>Purchase Id</th>
                         <th>Transaction Date</th>

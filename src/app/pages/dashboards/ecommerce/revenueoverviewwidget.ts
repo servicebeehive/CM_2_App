@@ -182,7 +182,7 @@ export class RevenueOverViewWidget implements OnInit {
     OnGetSales(){
         let  apibody={
    
-    "p_loginuser": "admin",
+     
    "p_reporttype": "LOWSTOCK",
    "p_warehouse":"",
    "p_period":"",

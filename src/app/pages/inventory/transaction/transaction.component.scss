@@ -9,7 +9,9 @@
         border-radius: 6px;
         border: 1px solid var(--surface-border);
     }
-    
+    .bg-yellow-400 {
+    background-color: #EAB308; /* Tailwind's yellow-400 */
+}
     /* Apply equal width to ALL columns */
     .p-datatable-table {
         table-layout: fixed; /* This makes columns equal width */

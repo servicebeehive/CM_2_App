@@ -93,12 +93,7 @@ export class SalesComponent {
   submitDisabledByBill:boolean=false;
   discountplace:string='Enter Amount';
   public authService = inject(AuthService);
-  public getUserDetails = {
-    "uname": "admin",
-    "p_loginuser": "admin",
-    "clientcode": "CG01-SE",
-    "x-access-token": this.authService.getToken(),
-  };
+  public getUserDetails = {};
   searchValue: string = '';
   itemOptions: any[] = [];
   transactionIdOptions = [];
@@ -236,8 +231,8 @@ createSaleItem(data?: any): FormGroup {
   // Map API sale items (array) into the FormArray
   mapSaleItems(apiItems: any[]) {
     this.saleArray.clear(); // Remove old rows if any
-
-    apiItems.forEach(item => {
+     this.uomlist = [];
+    apiItems.forEach((item,index )=> {
       this.saleArray.push(
         this.fb.group({
           TransactiondetailId: item.transactiondetailid || 0,
@@ -256,10 +251,12 @@ createSaleItem(data?: any): FormGroup {
           itemsku: item.itemsku || ''
         })
       );
+       this.OnUMO(item.itemid || item.itemsku, index)
     });
 
     // If items were added, update totals for the last row and overall summary
     const index = this.saleArray.length - 1;
+   
     this.updateTotal(index);
     this.calculateSummary();
   }
@@ -301,7 +298,7 @@ allowOnlyNumbers(event: any) {
     });
   }
 
-  // Load initial dropdowns (items, bill no)
+  // Load initial dropdowns (items, bill no)this.OngetcalculatedMRP
   loadAllDropdowns() {
     this.OnGetItem();
     this.OnGetBillNo();
@@ -432,6 +429,7 @@ costGreaterThanSaleValidator(): ValidatorFn {
     this.stockInService.Getreturndropdowndetails(apibody).subscribe({
       next: (res) => {
         this.mapSaleItems(res.data );
+
         if(res.data && res.data.length>0 && res.data[0].discounttype){
           this.salesForm.patchValue({
             p_disctype:(res.data[0].discounttype==='Y')
@@ -691,7 +689,7 @@ updateTotal(i: number) {
     const apibody = this.cleanRequestBody(this.salesForm.value);
 
     // const datada={
-    // "uname": "admin",
+    //    
     // "p_transactiontype": "SALE",
     // "p_transactionid": 0,
     // "p_transactiondate": "08/11/2025",
@@ -706,7 +704,7 @@ updateTotal(i: number) {
     // "p_gsttran": "N",
     // "p_status": "Complete",
     // "p_isactive": "Y",
-    // "p_loginuser": "admin",
+    //  
     // "p_linktransactionid": 0,
     // "p_replacesimilir": "Y",
     // "p_creditnoteno": "",
@@ -847,7 +845,13 @@ OngetcalculatedMRP(data: any, index: number) {
 
 
   UOMId(event:any,index:number){
-    console.log(event)
+    const row = this.saleArray.at(index);
+  
+  // Get current row data
+  const rowData = {
+    ItemId: row.get('ItemId')?.value,
+    UOMId: event.value
+  };
     this.OngetcalculatedMRP(event.value,index)
   }
 calculateMRP(index: number) {
