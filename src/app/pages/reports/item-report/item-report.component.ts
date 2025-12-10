@@ -219,7 +219,7 @@ export class ItemReportComponent {
     }
     
     OnGetItem() {
-        const payload = this.createDropdownPayload('ITEM');
+        const payload = this.createDropdownPayload('ITEMALL');
         this.inventoryService.getdropdowndetails(payload).subscribe({
             next: (res) => (this.itemOptions = res.data),
             error: (err) => console.log(err)

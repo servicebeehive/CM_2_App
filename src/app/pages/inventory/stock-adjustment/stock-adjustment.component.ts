@@ -344,7 +344,7 @@ export class StockAdjustmentComponent {
     const payload = {
        
       p_username: "admin",
-      p_returntype: "CATEGORY",
+      p_returntype: "CATEGORYITEM",
       p_returnvalue: id.toString(),
       
        
