@@ -321,7 +321,7 @@ else{
     return {
       ...this.getUserDetails,
       p_transactiontype: "RETURN",
-      p_transactionid: body.p_transactionid ,
+      p_transactionid: 0 ,
       p_transactiondate: formattedDate || "",
       p_customername: body.p_customername || "",
       p_mobileno: body.p_mobileno || "",
@@ -342,14 +342,15 @@ else{
       p_paymentmode: body.p_paymentmode || "Cash",
       p_paymentdue: Number(body.p_paymentdue) || 0,
       p_sale: (body.p_sale || []).map((x: any) => ({
-        TransactiondetailId:body.p_transactionid ,
+        TransactiondetailId: 0,
         ItemId: x.ItemId,
         ItemName: x.ItemName,
         UOMId: x.UOMId,
         Quantity: x.Quantity,
         itemcost: x.itemcost,
         MRP: x.MRP,
-        totalPayable: x.totalPayable
+        totalPayable: x.totalPayable,
+        currentstock:x.curStock,
       }))
     };
   }
@@ -360,6 +361,12 @@ OnSalesHeaderCreate(data: any) {
     this.stockInService.OninsertSalesDetails(apibody).subscribe({
       next: (res) => {
         console.log(res.data);
+      
+      //   this.OnGetReturnBillNo();
+      //     // const billno = res.data[0]?.billno;
+      //   this.returnForm.patchValue({
+      //   returnBillNo: res.data[0].billno   
+      // })
         this.messageService.add({
           severity: 'success',
           summary: 'Success',

@@ -603,7 +603,8 @@ allowOnlyNumbers(event: any) {
         Quantity: x.Quantity,
         itemcost: x.itemcost,
         MRP: x.MRP,
-        totalPayable: x.totalPayable
+        totalPayable: x.totalPayable,
+        currentstock:x.curStock,
       }))
     };
   }

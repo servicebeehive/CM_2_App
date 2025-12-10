@@ -139,6 +139,7 @@ export class SalesComponent {
       p_totalpayable: [0],
       p_currencyid: [0],
       p_gsttran: [true],
+      status:[''],
       p_status: [''],
       p_isactive: [''],
       p_loginuser: [''],
@@ -396,12 +397,13 @@ costGreaterThanSaleValidator(): ValidatorFn {
     const billDetails = this.billNoOptions.find(billitem => billitem.billno === event.value); 
     if (billDetails) {
       this.SaleDetails(billDetails);
- 
+       console.log('details:',billDetails);
       this.salesForm.patchValue({
         p_transactionid: billDetails.transactionid,
         p_customername:billDetails.customername,
         p_transactiondate: billDetails.transactiondate ? new Date(billDetails.transactiondate) : null,
         p_mobileno: billDetails.mobileno,
+        status: billDetails.status ,
         p_totalcost: (billDetails.totalcost).toFixed(2),
         p_totalsale: (billDetails.totalsale).toFixed(2),
         p_disctype: billDetails.discounttype=='Y'?true:false,
@@ -428,6 +430,11 @@ costGreaterThanSaleValidator(): ValidatorFn {
 
     this.stockInService.Getreturndropdowndetails(apibody).subscribe({
       next: (res) => {
+         if (res.data && res.data.length > 0) {
+        this.salesForm.patchValue({
+          status: res.data[0].status || ''
+        });
+      }
         this.mapSaleItems(res.data );
 
         if(res.data && res.data.length>0 && res.data[0].discounttype){
@@ -805,8 +812,6 @@ OnUMO(value: any, index: number) {
   });
 }
 
-
-
 OngetcalculatedMRP(data: any, index: number) {
 
   const row = this.saleArray.at(index);
@@ -871,8 +876,8 @@ calculateMRP(index: number) {
   this.orderService.getcalculatedMRP(apibody).subscribe({
     next: (res: any) => {
 
-      const mrp = Number(res.data.totalmrp || 0);
-      const cost = Number(res.data.totalcost || 0);
+      const mrp = Number(res?.data?.totalmrp || 0);
+      const cost = Number(res?.data?.totalcost || 0);
 
       // ⭐ IMPORTANT — Update purchase price also
       row.patchValue({
