@@ -75,6 +75,7 @@ forgetPassword(){
   onSubmit() {
     if (this.loginForm.valid) {
         //  this.route.navigate(['/layout']);
+        this.loginForm.controls['logintype'].setValue( this.loginForm.get('usercode')?.value)
         this.authservice.isLoggedIn(this.loginForm.value).subscribe({
             next:(res:any)=>{
                 if(res.success==true){

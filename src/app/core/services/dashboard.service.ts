@@ -26,4 +26,14 @@ export class DashboardService {
 
 )
   }
+    GetUserBarCard(payload:any):Observable<any>{
+  let payloaddata=this.shareservice.GetApiBody(payload)
+    // console.log(payload)
+    let url=`${this.baseUrl}${API_ENDPOINTS.dashboardservice.topbar}`;
+    return this.httpClient.post<any>(url,payloaddata).pipe(catchError(error=>{
+        return throwError(()=>error)
+    }),
+
+)
+  }
 }
