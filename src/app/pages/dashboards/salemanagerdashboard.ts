@@ -1,23 +1,63 @@
-import { Component, inject, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, Input, SimpleChanges } from '@angular/core';
+import { StatsWidget } from './ecommerce/statswidget';
+import { RecentSalesWidget } from './ecommerce/recentsaleswidget';
+import { RevenueOverViewWidget } from "./ecommerce/revenueoverviewwidget";
+import { SalesByCategoryWidget } from "./ecommerce/salesbycategorywidget";
+import { TopProductsWidget } from "./ecommerce/topproductswidget";
+import { FilterPage } from './ecommerce/filterpage';
 import { CommonModule } from '@angular/common';
-import { KnobModule } from 'primeng/knob';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { CardModule } from 'primeng/card';
+import { DropdownModule } from 'primeng/dropdown';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { PaginatorModule } from 'primeng/paginator';
+import { TableModule } from 'primeng/table';
+import { TagModule } from 'primeng/tag';
 import { DashboardService } from '@/core/services/dashboard.service';
-import { AuthService } from '@/core/services/auth.service';
-import { SkeletonModule } from 'primeng/skeleton';
+import { Skeleton, SkeletonModule } from "primeng/skeleton";
+import { RouterModule } from '@angular/router';
+import { KnobModule } from 'primeng/knob';
 
 @Component({
+    selector: 'app-sales-dashboard',
     standalone: true,
-    selector: 'app-stats-widget',
     imports: [
-        CommonModule,
-        KnobModule,
+    CommonModule,
+    FormsModule,
+    // PrimeNG modules
+    CardModule,
+    TableModule,
+    DropdownModule,
+    TagModule,
+    PaginatorModule,
+    IconFieldModule,
+    InputIconModule,
+    Skeleton,
+    KnobModule,
         FormsModule,
         RouterModule,
         SkeletonModule
-    ],
+],
     template: `
+      <!-- Top Filter Section -->
+     <!-- <div class="grid grid-cols-12 gap-8 mb-8">
+        <div class="col-span-12">
+            <app-filter-page class="top-filter-section" />
+        </div>
+     </div> -->
+     <p-dropdown 
+            [options]="filterOptions" 
+            [(ngModel)]="selectedFilter"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Filter"
+            (onChange)="onFilterChange($event)"
+            styleClass="w-40 mb-4"
+        ></p-dropdown>
+     
+     <!-- Main Content -->
+     <div class="grid grid-cols-12 gap-8">
     <div 
         class="col-span-12 md:col-span-6 xl:col-span-3"
         *ngFor="let card of (loading ? skeletonItems : dashboardCards)"
@@ -55,16 +95,36 @@ import { SkeletonModule } from 'primeng/skeleton';
 
         </div>
     </div>
-    `,
-    host: {
-        '[style.display]': '"contents"'
-    }
+        <div class="col-span-12 xl:col-span-4">
+         
+        </div>
+        <div class="col-span-12 lg:col-span-4">
+           
+        </div>
+       
+        
+        <!-- Recent Sales and Top Products -->
+       <div class="col-span-12 xl:col-span-4">
+        
+        </div>
+        
+     </div>
+    `
 })
-export class StatsWidget implements OnInit, OnChanges {
-
+export class SaleMangerDashboard {
+  
     @Input() filerby: any;
+    public role:string=''
+    filterOptions = [
+         { label: 'Today', value: 'TODAY' },
+  { label: 'This Month', value: 'MONTH' },
+  { label: 'Quarterly', value: 'QUARTER' },
+  { label: 'Yearly', value: 'YEAR' }
 
-    public authService = inject(AuthService);
+];
+selectedFilter = 'MONTH';  // default value
+
+   
 
     loading = true;
 
@@ -75,15 +135,15 @@ export class StatsWidget implements OnInit, OnChanges {
     constructor(private OnttopBarService: DashboardService) {}
 
     ngOnInit(): void {
-        this.OnGettopBarCard(this.filerby);
+        this.OnGettopBarCard(this.selectedFilter);
     }
 
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes['filerby']) {
-            const period = changes['filerby'].currentValue;
-            this.OnGettopBarCard(period);
-        }
-    }
+    // ngOnChanges(changes: SimpleChanges): void {
+    //     if (changes['filerby']) {
+    //         const period = changes['filerby'].currentValue;
+    //         this.OnGettopBarCard(period);
+    //     }
+    // }
 
     OnGettopBarCard(filerby: string) {
 
@@ -99,34 +159,37 @@ export class StatsWidget implements OnInit, OnChanges {
 
         this.OnttopBarService.GettopBarCard(apibody).subscribe({
             next: (res) => {
-                const data = res.data[0];
+              
+                       const data = res?.data[0];
 
                 this.dashboardCards = [
                     {
-                        label: 'Total Purchase',
+                        label: 'Total Item -  Sold & Return',
                         icon: 'pi pi-box',
-                        value: data.totalpurchase,
+                        value: data.total_items,
                         routerLink: '/layout/inventory/overview'
                     },
                     {
-                        label: 'Total Sale',
+                        label: 'Purchase',
                         icon: 'pi pi-shopping-cart',
                         value: data.totalsale,
                         routerLink: '/layout/pos/sales'
                     },
                     {
-                        label: 'Total Return',
+                        label: 'Sale',
                         icon: 'pi pi-arrow-down-left',
                         value: data.totalreturn,
                         routerLink: '/layout/inventory/stock-in'
                     },
                     {
-                        label: 'Total Profit',
+                        label: 'Return',
                         icon: 'pi pi-arrow-up',
                         value: data.profit,
                         routerLink: '/layout/inventory/stock-in'
                     },
                 ];
+                
+             
 
                 this.loading = false; // Stop Skeleton
             },
@@ -136,4 +199,18 @@ export class StatsWidget implements OnInit, OnChanges {
             }
         });
     }
+onFilterChange(event: any) {
+    console.log(event)
+  
+   //
+   this.OnGettopBarCard(event.value)
+
+  // Here you will call API based on filter
+  // Example:
+  // this.loadTopSales(e.value);
+  // this.loadOutOfStock(e.value);
+
+  
+}
+
 }

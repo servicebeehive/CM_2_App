@@ -2,7 +2,7 @@
     display: block;
 }
 
-::ng-deep .sale-report{
+::ng-deep .invoice{
 
 .p-datatable-wrapper{
     max-height: 500px;
@@ -11,21 +11,21 @@
     border: 1px solid var(--surface-border);
     border-radius: 6px;   
 }
- .p-datatable-thead > tr > th:nth-child(1),
-  .p-datatable-tbody > tr > td:nth-child(1) {
-    min-width: 150px;
+ .p-datatable-thead > tr > th:nth-child(3),
+  .p-datatable-tbody > tr > td:nth-child(3) {
+    min-width: 120px;
     max-width: 180px;
   }
- .p-datatable-thead > tr > th:nth-child(2),
-  .p-datatable-tbody > tr > td:nth-child(2) {
+ .p-datatable-thead > tr > th:nth-child(4),
+  .p-datatable-tbody > tr > td:nth-child(4) {
     min-width: 250px;
     max-width: 250px;
   }
-  .p-datatable-thead > tr > th:nth-child(3),
-  .p-datatable-tbody > tr > td:nth-child(3) {
-    min-width: 90px;
-    max-width: 120px;
-  }
+//   .p-datatable-thead > tr > th:nth-child(3),
+//   .p-datatable-tbody > tr > td:nth-child(3) {
+//     min-width: 90px;
+//     max-width: 120px;
+//   }
    .p-datatable-tbody > tr > td,
   .p-datatable-thead > tr > th {
     position: static !important;

@@ -1,0 +1,117 @@
+<div class="card p-6">
+    <!-- Header Row: Stock In + Buttons -->
+    <div class="flex justify-between items-center mb-6">
+        <span class="block text-surface-900 font-bold text-2xl">Transaction</span>
+          <div class="flex justify-end gap-4 mt-8">
+                    <button pButton type="submit" label="Display" class="p-button-warning" [disabled]="transactionForm.invalid" (click)="display()" ></button>
+                    <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
+                </div>
+    </div>
+
+    <form [formGroup]="transactionForm" class="space-y-8">
+        <!-- 🏷 Product Info Section -->
+        <div>
+
+            <div class="grid grid-cols-2 gap-x-8 gap-y-2 w-full">
+                <!-- Transaction Date From-->
+                <div class="flex flex-col">
+                    <label class="font-medium mb-1">From Date <span class="text-red-500">*</span></label>
+                    <p-datepicker fluid formControlName="fromDate" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="From Date"></p-datepicker>
+                    <small class="text-red-500 ms-3 mt-1" *ngIf="transactionForm.get('fromDate')?.touched">
+            <span *ngIf="transactionForm.get('fromDate')?.errors?.['required']">From Date is required</span>
+          </small>
+                </div>
+
+                <!-- Transaction Date To -->
+                <div class="flex flex-col">
+                    <label class="font-medium mb-1">To Date <span class="text-red-500">*</span></label>
+                    <p-datepicker fluid formControlName="toDate" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="To Date"></p-datepicker>
+                     <small class="text-red-500 ms-3 mt-1" *ngIf="transactionForm.get('toDate')?.touched">
+            <span *ngIf="transactionForm.get('toDate')?.errors?.['required']">To Date is required</span>
+             <span *ngIf="transactionForm.errors?.['dateRangeInvalid'] && transactionForm.get('toDate')?.touched">To Date must be greater than or equal to From Date</span>
+          </small>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-6 flex-grow mt-4">
+                <!-- Category -->
+                <div class="flex flex-col">
+                    <label class="font-medium mb-1">Supplier</label>
+                    <p-dropdown
+                        [options]="vendorOptions"
+                        optionLabel="fieldname"
+                        optionValue="fieldid"
+                        [filter]="true"
+                        [showClear]="true"
+                        filterPlaceholder="Search Supplier"
+                        formControlName="p_vendor"
+                        placeholder="Supplier"
+                    >
+                    </p-dropdown>
+                </div>
+
+                <!-- Item Name -->
+                <div class="flex flex-col">
+                    <label class="font-medium mb-1">Invoice No</label>
+                    <p-dropdown
+                        [options]="invoiceOptions"
+                        optionLabel="fieldname"
+                        optionValue="fieldid"
+                        [filter]="true"
+                        [showClear]="true"
+                        filterPlaceholder="Search Invoice No"
+                        formControlName="invoice"
+                        placeholder="Invoice No"
+                    >
+                    </p-dropdown>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Table with Pagination -->
+        <div>
+            <p-table [value]="filteredProducts" dataKey="code" [tableStyle]="{ 'min-width': '110rem' }" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 20, 50]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines mt-6 transaction">
+                <ng-template pTemplate="header">
+                    <tr class="bg-yellow-400">
+                        <th>Purchase Id</th>
+                        <th>Transaction Date</th>
+                        <th>Vendor Invoice</th>
+                        <th>Vendor Invoice Date</th>
+                        <th>Supplier</th>
+                        <th>Item Count</th>
+                        <th>Total Amount</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </ng-template>
+
+                <ng-template pTemplate="body" let-row let-i="rowIndex">
+                    <tr>
+                        <td>
+                            {{ row.purchaseid }}
+                            <!-- <span class=" pi pi-copy cursor-pointer "></span> -->
+                        </td>
+                        <td>{{ row.transactiondate | date:'dd/MM/yyyy'}}</td>
+                        <td>{{ row.vendorinvoice}}</td>
+                        <td>{{ row.vendorinvoicedate }}</td>
+                        <td>{{ row.supplier }}</td>
+                        <td>{{ row.item_count }}</td>
+                        <td>{{ row.total_amount }}</td>
+                        <td>{{ row.status }}</td>
+                        <td >
+                            <div class="flex items-center justify-center g-2">
+                                <button pButton type="button" icon="pi pi-folder-open" class="p-button-text p-button-sm text-red-500"></button>
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+
+                <ng-template pTemplate="paginatorleft">
+                    <div class="text-gray-600 ms-2">Total Items: {{ filteredProducts?.length || 0 }}</div>
+                </ng-template>
+            </p-table>
+        </div>
+    </form>
+
+    <!-- Confirm Dialog -->
+    <p-confirmDialog></p-confirmDialog>
+</div>

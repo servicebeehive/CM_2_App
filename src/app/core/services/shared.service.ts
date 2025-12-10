@@ -5,14 +5,17 @@ import { Injectable } from '@angular/core';
 })
 export class ShareService {
   private readonly STORAGE_KEY = 'user_info';
+  private readonly API_BODY = 'apibody';
 
   constructor() {}
 
   // ✅ Save user data to localStorage
   setUserData(data: any): void {
     try {
-      const jsonData = JSON.stringify(data);
+      const jsonData:any = JSON.stringify(data);
       localStorage.setItem(this.STORAGE_KEY, jsonData);
+      
+       
       console.log('User data saved to localStorage ✅');
     } catch (error) {
       console.error('Error saving user data:', error);
@@ -29,6 +32,40 @@ export class ShareService {
       return null;
     }
   }
+ GetApiBody(payload: any): any | null {
+  try {
+    const stored: any = localStorage.getItem(this.STORAGE_KEY);
+    let headerApiBody = JSON.parse(stored);
+
+    // 🔥 Keys you want to forcefully override
+    const removeKeys = ["uname", "p_loginuser", "clientcode", "x-access-token","p_username"];
+
+    // 🔥 Remove from incoming payload if exists
+    removeKeys.forEach(key => {
+      if (payload && payload.hasOwnProperty(key)) {
+        delete payload[key];
+      }
+    });
+
+    // 🔥 Now safely merge extra fields + payload
+    const apiBody: any = {
+      uname:'admin',
+      p_loginuser: headerApiBody?.username || "admin",
+      clientcode: headerApiBody?.clientcode || "CG01-SE",
+      "x-access-token":headerApiBody?.usertoken,
+    // "x-access-token" :'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyY29kZSI6ImFkbWluIiwiaWF0IjoxNzY1MjY2MDQ0LCJleHAiOjE3NjUzNTI0NDR9.ytWhv1-hYx2kbS1Ov2BkpZdgwaTsQhIw7HvjQoRdNVs',
+    ...payload   // payload will NOT contain duplicate keys
+    };
+
+    return apiBody;
+
+  } catch (error) {
+    console.error("API Body Error:", error);
+    return null;
+  }
+}
+
+
 
   // ✅ Get a single field (e.g., username)
   getField(fieldName: string): any {

@@ -259,8 +259,8 @@ enterEditItemMode(itemData: any) {
             category: itemData.categoryid,
             curStock: itemData.currentstock,
             p_expirydate: itemData.expirydate ? new Date(itemData.expirydate) : null,
-            gstItem: itemData.gstitem === 'Y',
-            activeItem: itemData.isactive === 'Y',
+            gstItem: itemData.gstitem==='Y',
+            activeItem: itemData.isactive==='Y',
             location: itemData.location,
             minStock: itemData.minimumstock,
             // purchasePrice: itemData.costprice * itemData.quantity,
@@ -468,7 +468,7 @@ if (hasEditDataChange && formReady) {
             p_currencyid: Number(form.currencyId || 1),
             p_taxid: Number(form.taxId || 0),
             p_warehourse: form.warehouse || 'ShristiShop',
-            p_isactive: 'Y',
+            p_isactive: form.activeItem ? 'Y' : 'N' ,
             p_gstitem: form.gstItem ? 'Y' : 'N',
 
             // Child UOM logic
@@ -485,9 +485,8 @@ if (hasEditDataChange && formReady) {
 
             // User Session Info
             p_loginuser: this.shareservice.getUserData()?.username || 'admin',
-            clientcode: 'CG01-SE',
-            'x-access-token': this.authService.getToken(),
-            uname: 'admin'
+                
+            
         };
     }
 
@@ -498,6 +497,7 @@ if (hasEditDataChange && formReady) {
             next: (res) => {
                const msg = res?.data?.[0]?.msg || "Item saved successfully";
                 this.showSuccess(msg);
+                this.save.emit(this.addForm.getRawValue());
                 this.close.emit(this.addForm.getRawValue());
             },
             error: (res) => {}
@@ -570,12 +570,12 @@ this.enterAddItemMode(itemnamdata);
 OnChildOM(id: number) {
  
     const payload = {
-      uname: "admin",
+       
       p_username: "admin",
       p_returntype: "CHILDUOM",
       p_returnvalue:id.toString(),
-      clientcode: "CG01-SE",
-      "x-access-token": this.authService.getToken()
+      
+       
     };
 
     this.inventoryService.Getreturndropdowndetails(payload).subscribe({
@@ -623,12 +623,12 @@ viewItem(id: number) {
  this.ChilduomOptions=[]
 
   const payload = {
-    uname: "admin",
+     
     p_username: "admin",
     p_returntype: "CHILDUOMMASTER",
     p_returnvalue:id.toString(),
-    clientcode: "CG01-SE",
-    "x-access-token": this.authService.getToken()
+    
+     
   };
 
   this.inventoryService.Getreturndropdowndetails(payload).subscribe({

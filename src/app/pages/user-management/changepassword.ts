@@ -9,6 +9,9 @@ import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from "@angular/forms";
 import { CommonModule } from '@angular/common';
+import { AuthService } from '@/core/services/auth.service';
+import { InventoryService } from '@/core/services/inventory.service';
+import { UserService } from '@/core/services/user.service';
 
 @Component({
   selector: 'app-new-password',
@@ -117,6 +120,7 @@ import { CommonModule } from '@angular/common';
 })
 export class NewPassword {
   LayoutService = inject(LayoutService);
+  constructor(private autherService:AuthService, private userService:UserService){}
   fb = inject(FormBuilder);
   isDarkTheme = computed(() => this.LayoutService.isDarkTheme());
 
@@ -142,9 +146,33 @@ export class NewPassword {
     return !!(control?.touched && control?.hasError('required'));
   }
 
+changePassword(data:any){
+const payload:any={
+     
+    "p_ufullname":"",
+    "p_uname": data.p_uname,
+    "p_pwd": data.p_pwd,
+    "p_active": "",
+    "p_operationtype": "CHANGE",
+    "p_phone": "",
+    "p_utypeid": data.p_utypeid,
+    "p_email": "",
+    "p_oldpwd": data.oldPassword,
+};
+this.userService.OnUserHeaderCreate(payload).subscribe({
+  next:(res)=>{
+    console.log('result:',res);
+  },
+  error:(err)=>{
+    console.error(err);
+  }
+})
+}
+
   onSubmit() {
     if (this.passwordForm.invalid) return;
     console.log('Password changed successfully:', this.passwordForm.value);
-    // ✅ Here you can call your API for changing password
+    
+    this.changePassword(this.passwordForm.value);
   }
 }

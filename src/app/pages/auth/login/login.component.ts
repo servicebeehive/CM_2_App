@@ -55,9 +55,13 @@ constructor(private fb: FormBuilder,private route:Router, private authservice:Au
 
      ngOnInit() {
     this.loginForm = this.fb.group({
-      usercode: ['admin', [Validators.required,Validators.minLength(4)]],   // email as loginId
-      pwd: ['admin', [Validators.required,Validators.minLength(4)]],
-      logintype:[''],
+      // usercode: ['admin', [Validators.required,Validators.minLength(4)]],   // email as loginId
+      // pwd: ['admin', [Validators.required,Validators.minLength(4)]],
+      // logintype:[''],
+      // clientcode:['CG01-SE',[Validators.required]]
+      usercode: [null, [Validators.required,Validators.minLength(4)]],   // email as loginId
+       pwd: [null, [Validators.required,Validators.minLength(4)]],
+      logintype:[null],
       clientcode:['CG01-SE',[Validators.required]]
 
 
@@ -71,6 +75,7 @@ forgetPassword(){
   onSubmit() {
     if (this.loginForm.valid) {
         //  this.route.navigate(['/layout']);
+        this.loginForm.controls['logintype'].setValue( this.loginForm.get('usercode')?.value)
         this.authservice.isLoggedIn(this.loginForm.value).subscribe({
             next:(res:any)=>{
                 if(res.success==true){
