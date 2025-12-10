@@ -142,7 +142,7 @@ else{
     });
  }
   blockDecimal(event: KeyboardEvent) {
-    if (event.key === '.' || event.key === ',' || event.key === 'e' || event.key === 'E'|| event.key === '0'||event.key === '-') {
+    if (event.key === '.' || event.key === ',' || event.key === 'e' || event.key === 'E'|| event.key === '-') {
       event.preventDefault();  // block decimal
     }
   }

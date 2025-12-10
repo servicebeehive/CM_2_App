@@ -23,7 +23,7 @@ export const API_ENDPOINTS = {
     updatestockadjustment:'/updatestockadjustment',
     inserttransactiondetails:'/inserttransactiondetails',
     gettransactiondetails:'/gettrasnactiondetails',
-    gettransactionreport:'/gettrasnactionreport'
+    gettransactionreport:'/gettrasnactionreport',
   },
   sales:{
     getcalculatedMRP:'/getcalculatedMRP'
@@ -41,7 +41,8 @@ export const API_ENDPOINTS = {
 
 
   user:{
-    getuserdetails:'/getuserdetails'
+    getuserdetails:'/getuserdetails',
+     updateprofie:'/updateprofile'
   }
 
 };

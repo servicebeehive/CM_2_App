@@ -246,7 +246,7 @@ createSaleItem(data?: any): FormGroup {
           // p_totalcost:item.
           // Additional fields used in UI
           curStock: item.current_stock || 0,
-          warPeriod: 0,
+          warPeriod: item.warrenty || 0,
           location: "",
           itemsku: item.itemsku || ''
         })
@@ -468,7 +468,7 @@ this.updateTotalCostSummary()
 
   // Prevent decimal input in quantity field (keyboard)
   blockDecimal(event: KeyboardEvent) {
-    if (event.key === '.' || event.key === ',' || event.key === 'e' || event.key === 'E' || event.key === '0'||event.key === '-') {
+    if (event.key === '.' || event.key === ',' || event.key === 'e' || event.key === 'E' || event.key === '-') {
       event.preventDefault();  // block decimal
     }
   }
@@ -829,7 +829,7 @@ OngetcalculatedMRP(data: any, index: number) {
 
       row.patchValue({
         MRP: mrp,
-        itemcost: cost,             // ⭐ FIXED
+        itemcost: cost,           
         totalPayable: qty * mrp,
         apiCost: qty * cost
       });
@@ -839,10 +839,6 @@ OngetcalculatedMRP(data: any, index: number) {
     }
   });
 }
-
-
-
-
 
   UOMId(event:any,index:number){
     const row = this.saleArray.at(index);

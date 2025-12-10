@@ -57,20 +57,34 @@ export interface SaleItem {
 }
 
 export interface UserHeader {
-  uname: string;
-  p_ufullname: string;
-  p_uname: string;
-  p_pwd: string;
-  p_active: string;
-  p_operationtype: string;
-  p_phone: string;
-  p_utypeid: string;
-  p_email: string;
-  p_loginuser: string;
-  p_oldpwd: string;
-  clientcode: string;
-  "x-access-token": string;
+  uname?: string;
+  p_ufullname?: string;
+  p_uname?: string;
+  p_pwd?: string;
+  p_active?: string;
+  p_operationtype?: string;
+  p_phone?: string;
+  p_utypeid?: string;
+  p_email?: string;
+  p_loginuser?: string;
+  p_oldpwd?: string;
+  clientcode?: string;
+  p_companyname: string;
+  p_companyaddress: string;
+  p_companycity: string;
+  p_companystate: string;
+  p_companycountry: string;
+  p_companypincode: string;
+  p_companyphone: string;
+  p_companyemail: string | null;
+  p_companygstno: string;
+  p_companycontactperson: string;
+  p_companycontactphone: string;
+  p_companycontactemail: string;
+  p_companylogo: string | null;
+  "x-access-token"?: string;
 }
+
 
 
 

@@ -24,4 +24,13 @@ private baseUrl = environment.baseurl;
   
   )
     }
+
+    OnUserListHeaderCreate(payload:UserHeader):Observable<any>{
+      console.log(payload);
+      let payloaddata = this.shareservice.GetApiBody(payload);
+      let url=`${this.baseUrl}${API_ENDPOINTS.user.updateprofie}`;
+      return this.http.post<any>(url,payloaddata).pipe(catchError(error=>{
+        return throwError(()=>error)
+      }))
+    }
 }

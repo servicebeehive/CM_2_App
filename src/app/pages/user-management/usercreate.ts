@@ -10,6 +10,8 @@ import { RippleModule } from 'primeng/ripple';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { InventoryService } from '@/core/services/inventory.service';
+import { UserService } from '@/core/services/user.service';
 
 @Component({
     selector: 'user-create',
@@ -22,40 +24,40 @@ import { RouterLink } from '@angular/router';
             <div class="grid grid-cols-12 gap-6">
                 <div class="col-span-12 md:col-span-6">
                     <label class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Company Name</label>
-                    <input formControlName="companyName" type="text" pInputText placeholder="Company Name" fluid />
+                    <input formControlName="companyname" type="text" pInputText placeholder="Company Name" fluid />
                 </div>
 
                 <div class="col-span-12 md:col-span-6">
-                    <label for="email" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> Email </label>
-                    <input formControlName="email" type="email" pInputText fluid placeholder="Email" />
-                    <small class="text-red-500 mt-1" *ngIf="profileForm.get('email')?.touched && profileForm.get('email')?.invalid"> Enter a valid email address </small>
+                    <label for="companyemail" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> Email </label>
+                    <input formControlName="companyemail" type="email" pInputText fluid placeholder="Email" />
+                    <small class="text-red-500 mt-1" *ngIf="profileForm.get('companyemail')?.touched && profileForm.get('companyemail')?.invalid"> Enter a valid email address </small>
                 </div>
 
                 <div class="col-span-12 md:col-span-6">
-                    <label for="gstNo" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> GST No </label>
-                    <input formControlName="gstNo" type="text" pInputText fluid placeholder="GST No." maxlength="15" />
-                    <small class="text-red-500 mt-1" *ngIf="profileForm.get('gstNo')?.touched && profileForm.get('gstNo')?.invalid"> Enter a valid gst number </small>
+                    <label for="companygstno" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> GST No </label>
+                    <input formControlName="companygstno" type="text" pInputText fluid placeholder="GST No." maxlength="15" />
+                    <small class="text-red-500 mt-1" *ngIf="profileForm.get('companygstno')?.touched && profileForm.get('companygstno')?.invalid"> Enter a valid gst number </small>
                 </div>
 
                 <div class="col-span-12 md:col-span-6">
-                    <label for="phoneNo" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Phone</label>
-                    <input formControlName="phoneNo" type="text" pInputText fluid placeholder="Phone" maxlength="10" (keypress)="allowOnlyDigits($event)" />
-                    <small class="text-red-500 mt-1" *ngIf="profileForm.get('phone')?.touched && profileForm.get('phone')?.invalid"> Enter a valid 10-digit mobile number </small>
+                    <label for="companyphone" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Phone</label>
+                    <input formControlName="companyphone" type="text" pInputText fluid placeholder="Phone" maxlength="10" (keypress)="allowOnlyDigits($event)" />
+                    <small class="text-red-500 mt-1" *ngIf="profileForm.get('companyphone')?.touched && profileForm.get('companyphone')?.invalid"> Enter a valid 10-digit mobile number </small>
                 </div>
 
                 <div class="col-span-12 md:col-span-6">
-                    <label for="address" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> Address</label>
-                    <input formControlName="address" type="text" pInputText fluid placeholder="Address" />
+                    <label for="companyaddress" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> Address</label>
+                    <input formControlName="companyaddress" type="text" pInputText fluid placeholder="Address" />
                 </div>
 
                 <div class="col-span-12 md:col-span-6">
-                    <label for="ownerName" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> Owner Name </label>
-                    <input formControlName="ownerName" type="text" pInputText fluid placeholder="Owner Name" />
+                    <label for="companycontactperson" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> Company Contact Person </label>
+                    <input formControlName="companycontactperson" type="text" pInputText fluid placeholder="Comapny Contact Person" />
                 </div>
 
                 <div class="col-span-12 md:col-span-6">
-                    <label for="country" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> Country </label>
-                    <p-select inputId="country" [options]="countries" optionLabel="name" fluid [filter]="true" filterBy="name" [showClear]="true" placeholder="Select a Country">
+                    <label for="companycountry" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> Country </label>
+                    <p-select inputId="companycountry" formControlName="companycountry" [options]="countries" optionLabel="name" fluid [filter]="true" filterBy="name" [showClear]="true" placeholder="Select a Country">
                         <ng-template let-country #item>
                             <div class="flex items-center">
                                 <img src="https://primefaces.org/cdn/primeng/images/flag/flag_placeholder.png" [class]="'mr-2 flag flag-' + country.code.toLowerCase()" style="width:18px" />
@@ -66,30 +68,30 @@ import { RouterLink } from '@angular/router';
                 </div>
 
                 <div class="col-span-12 md:col-span-6">
-                    <label for="ownerPhoneNo" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Owner Phone</label>
-                    <input formControlName="ownerPhoneNo" type="text" pInputText fluid placeholder="Owner Phone" maxlength="10" (keypress)="allowOnlyDigits($event)" />
-                    <small class="text-red-500 mt-1" *ngIf="profileForm.get('ownerPhoneNo')?.touched && profileForm.get('ownerPhoneNo')?.invalid"> Enter a valid 10-digit mobile number </small>
+                    <label for="companycontactphone" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Comapny Contact Phone</label>
+                    <input formControlName="companycontactphone" type="text" pInputText fluid placeholder="Company Contact Phone" maxlength="10" (keypress)="allowOnlyDigits($event)" />
+                    <small class="text-red-500 mt-1" *ngIf="profileForm.get('companycontactphone')?.touched && profileForm.get('companycontactphone')?.invalid"> Enter a valid 10-digit mobile number </small>
                 </div>
 
                 <div class="col-span-12 md:col-span-6">
-                    <label for="city" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> City </label>
-                    <input formControlName="city" type="text" pInputText fluid placeholder="City" />
+                    <label for="companycity" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> City </label>
+                    <input formControlName="companycity" type="text" pInputText fluid placeholder="City" />
                 </div>
 
                 <div class="col-span-12 md:col-span-6">
-                    <label for="state" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> State </label>
-                    <input formControlName="state" type="text" pInputText fluid placeholder="State" />
+                    <label for="companystate" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> State </label>
+                    <input formControlName="companystate" type="text" pInputText fluid placeholder="State" />
                 </div>
 
                 <div class="col-span-12 md:col-span-6">
-                    <label for="ownerEmail" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Owner Email </label>
-                    <input formControlName="ownerEmail" type="email" pInputText fluid placeholder="Owner Email" />
-                    <small class="text-red-500 mt-1" *ngIf="profileForm.get('ownerEmail')?.touched && profileForm.get('ownerEmail')?.invalid"> Enter a valid email address </small>
+                    <label for="companycontactemail" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Company Contact Email </label>
+                    <input formControlName="companycontactemail" type="email" pInputText fluid placeholder="Company Contact Email" />
+                    <small class="text-red-500 mt-1" *ngIf="profileForm.get('companycontactemail')?.touched && profileForm.get('companycontactemail')?.invalid"> Enter a valid email address </small>
                 </div>
 
                 <div class="col-span-12 md:col-span-6 flex flex-col items-start">
-                    <label for="avatar" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Company Logo</label>
-                    <p-fileupload mode="basic" name="avatar" url="./upload.php" accept="image/*" [maxFileSize]="1000000" styleClass="p-button-outlined p-button-plain" chooseLabel="Upload Image"></p-fileupload>
+                    <label for="companylogo" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Company Logo</label>
+                    <p-fileupload mode="basic" name="companylogo" url="./upload.php" accept="image/*" [maxFileSize]="1000000" styleClass="p-button-outlined p-button-plain" chooseLabel="Upload Image"></p-fileupload>
                 </div>
 
                 <div class="flex flex-col">
@@ -106,25 +108,27 @@ import { RouterLink } from '@angular/router';
 })
 export class UserCreate {
     fb = inject(FormBuilder);
-    profileForm: FormGroup = this.fb.group({
-        companyName: ['', Validators.maxLength(50)],
-        email: ['', [Validators.email, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/), Validators.maxLength(50)]],
-        gstNo: ['',[Validators.required, Validators.pattern(/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/),
-  Validators.maxLength(15),
-  Validators.minLength(15)]],
-        ownerName: ['', Validators.maxLength(50)],
-        address: ['', Validators.maxLength(100)],
-        ownerPhoneNo: ['', Validators.pattern(/^[0-9]{10}$/)],
-        ownerEmail: ['', [Validators.email, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/), Validators.maxLength(50)]],
-        country: ['',Validators.required],
-        state: ['', Validators.maxLength(50)],
-        city: ['', Validators.maxLength(50)],
-        phoneNo: ['', Validators.pattern(/^[0-9]{10}$/)]
-    });
+    userList: any[] = [];
     countries: any[] = [];
-
+    profileForm: FormGroup = this.fb.group({
+        companyname: ['', Validators.maxLength(50)],
+        companyemail: ['', [Validators.email, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/), Validators.maxLength(50)]],
+        companygstno: ['',[Validators.required]],
+        companycontactperson: ['', Validators.maxLength(50)],
+        companyaddress: ['', Validators.maxLength(100)],
+        companycontactphone: ['', Validators.pattern(/^[0-9]{10}$/)],
+        companycontactemail: ['', [Validators.email, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/), Validators.maxLength(50)]],
+        companycountry: ['',Validators.required],
+        companystate: ['', Validators.maxLength(50)],
+        companycity: ['', Validators.maxLength(50)],
+        companyphone: ['', Validators.pattern(/^[0-9]{10}$/)]
+    });
+    
+    constructor(private inventoryService:InventoryService, private userService : UserService){}
     ngOnInit() {
+       
         this.countries = [
+           
             { name: 'Australia', code: 'AU' },
             { name: 'Brazil', code: 'BR' },
             { name: 'China', code: 'CN' },
@@ -136,6 +140,7 @@ export class UserCreate {
             { name: 'Spain', code: 'ES' },
             { name: 'United States', code: 'US' }
         ];
+         this.onGetData();
     }
     allowOnlyDigits(event: KeyboardEvent) {
         const char = event.key;
@@ -143,5 +148,70 @@ export class UserCreate {
             event.preventDefault();
         }
     }
-    onSubmit() {}
+    onSubmit() {
+        if(this.profileForm.invalid){
+            this.profileForm.markAllAsTouched();
+            return;
+        }
+        const form = this.profileForm.value;
+        const payload={
+    p_companyname : form.companyname,
+	p_companyaddress : form.companyaddress,
+	p_companycity : form.companycity,
+	p_companystate : form.companystate,
+	p_companycountry : form.companycountry?.name,
+	p_companypincode : "490001",
+	p_companyphone: form.companyphone,
+	p_companyemail : form.p_companycontactemail || null,
+	p_companygstno : form.companygstno,
+	p_companycontactperson : form.companycontactperson,
+	p_companycontactphone : form.companycontactphone,
+	p_companycontactemail : form.companycontactemail,
+	p_companylogo : null
+        };
+     this.userService.OnUserListHeaderCreate(payload).subscribe({
+        next:(res:any)=>{
+             console.log('API RESULT:', res.data);
+        },
+        error: (err) => {
+                console.error(err);
+        }
+     });
+    }
+ 
+    createDropdownPayload(returnType:string){
+       return{
+         uname: "admin",
+    p_username: "admin",
+    p_returntype: returnType
+       }
+    }
+
+    onGetData(){
+        const  payload= this.createDropdownPayload('PROFILE');
+        this.inventoryService.getdropdowndetails(payload).subscribe({
+            
+            next:(res)=>
+            { if(res.data){
+                    this.patchFromData(res.data[0]);
+            }
+            },
+            error: (err) => console.log(err)
+        });
+    }
+    patchFromData(data:any){
+           this.profileForm.patchValue({
+                    companyname:data.companyname,
+                     companyemail: data.companyemail,
+                    companygstno: data.companygstno,
+                    companycontactperson: data.companycontactperson,
+                    companyaddress: data.companyaddress,
+                    companycontactphone: data.companycontactphone,
+                    companycontactemail: data.companycontactemail,
+                    companycountry: this.countries.find(c=>c.name === data.companycountry),
+                    companystate: data.companystate,
+                    companycity: data.companycity,
+                    companyphone: data.companyphone
+                });
+    }
 }
