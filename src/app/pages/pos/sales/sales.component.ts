@@ -876,8 +876,8 @@ calculateMRP(index: number) {
   this.orderService.getcalculatedMRP(apibody).subscribe({
     next: (res: any) => {
 
-      const mrp = Number(res?.data?.totalmrp || 0);
-      const cost = Number(res?.data?.totalcost || 0);
+      const mrp = Number(res.data.totalmrp || 0);
+      const cost = Number(res.data.totalcost || 0);
 
       // ⭐ IMPORTANT — Update purchase price also
       row.patchValue({

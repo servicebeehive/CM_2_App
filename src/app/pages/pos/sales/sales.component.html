@@ -107,8 +107,8 @@
           <label> <b> Status:</b></label>
           <input type="text" formControlName="status"  placeholder="Status" 
    [ngStyle]="{
-    'color': salesForm.value.status === 'Complete' ? 'green' :
-             salesForm.value.status === 'Partial' ? 'grey' :
+    'color': salesForm.value.status === 'Done' ? 'green' :
+             salesForm.value.status === 'Partial Cancel' ? 'grey' :
              salesForm.value.status === 'Cancel' ? 'red' : 'black',
     'font-weight': 'bold'
   }"
