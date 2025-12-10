@@ -159,7 +159,7 @@ selectedFilter = 'MONTH';  // default value
 
         this.OnttopBarService.GettopBarCard(apibody).subscribe({
             next: (res) => {
-                if(res.success){
+              
                        const data = res?.data[0];
 
                 this.dashboardCards = [
@@ -188,7 +188,7 @@ selectedFilter = 'MONTH';  // default value
                         routerLink: '/layout/inventory/stock-in'
                     },
                 ];
-                }
+                
              
 
                 this.loading = false; // Stop Skeleton
