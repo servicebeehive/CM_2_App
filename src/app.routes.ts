@@ -11,6 +11,11 @@ export const appRoutes: Routes = [
         path: 'layout',
         component: AppLayout,
         children: [
+             {
+                path: '',
+                redirectTo: 'dashboard',
+                pathMatch: 'full'
+            },
             {
                 path: 'dashboard',
                 loadComponent: () => import('./app/pages/dashboards/ecommercedashboard').then((c) => c.EcommerceDashboard),

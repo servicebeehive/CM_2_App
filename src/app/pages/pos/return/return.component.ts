@@ -99,7 +99,7 @@ public authService = inject(AuthService);
     }
  initializeForm(): void {
 this.returnForm = this.fb.group({
-            returnBillNo: ['', Validators.required],
+            returnBillNo: [null, Validators.required],
             p_itemdata: [null],
       p_transactiontype: [''],
       p_itemid: [null],
@@ -361,12 +361,15 @@ OnSalesHeaderCreate(data: any) {
     this.stockInService.OninsertSalesDetails(apibody).subscribe({
       next: (res) => {
         console.log(res.data);
-      
-      //   this.OnGetReturnBillNo();
-      //     // const billno = res.data[0]?.billno;
-      //   this.returnForm.patchValue({
-      //   returnBillNo: res.data[0].billno   
-      // })
+        this.OnGetReturnBillNo();
+         const billno = res.data[0].billno;
+        console.log('return:',billno);
+        // 
+      //     //
+      //     
+        this.returnForm.patchValue({
+        returnBillNo: billno   
+      })
         this.messageService.add({
           severity: 'success',
           summary: 'Success',
