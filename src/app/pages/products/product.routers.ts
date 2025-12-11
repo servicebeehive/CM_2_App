@@ -1,10 +1,8 @@
 import { Routes } from '@angular/router';
-import { CreateproductComponent } from './createproduct/createproduct.component';
 import { ProductcategoriesComponent } from './productcategories/productcategories.component';
 import { ProductlistComponent } from './productlist/productlist.component';
 
 export default [
-    {path:'create',component:CreateproductComponent},
     {path:'list',component:ProductlistComponent},
     {path:'category',component:ProductcategoriesComponent},
 

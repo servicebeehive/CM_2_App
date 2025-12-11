@@ -30,6 +30,13 @@ export class AuthService {
 isLogIn():boolean{
   return !!localStorage.getItem('app_token');
 }
+isLogIntType(){
+  const usertypedata:any=localStorage.getItem('user_info');
+  const userDetails=JSON.parse(usertypedata)
+  
+ // const usertype=JSON.stringify(usertypedata)
+  return userDetails
+}
 
 getUserRole():string|null{
 return localStorage.getItem('username');

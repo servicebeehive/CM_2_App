@@ -7,7 +7,8 @@
         <div class="flex  gap-4">
   <button pButton type="button" label="Generate DN" class="p-button-primary" [disabled]="saleArray.length === 0 ||CreditForm.get('p_debitNote')?.value" (click)="Ganratedn('DEBITNOTE')"></button> 
         <button pButton type="button" label="Link CN" class="p-button-primary" [disabled]="CreditForm.get('p_debitNote')?.value == null" (click)="Ganratedn('CREDITNOTE')"></button>
-        <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
+        <button pButton type="button" label="Print" class="p-button-primary" (click)="print()" [disabled]="!CreditForm.get('p_debitNote')?.value"></button> 
+         <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
     </div>
   </div>
 
@@ -50,6 +51,7 @@
   [(selection)]="selectedItems"
   (selectionChange)="onSelectionChange($event)"
  [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" [responsiveLayout]="'scroll'"
+ class="p-datatable-gridlines mt-6"
 >
   <ng-template pTemplate="header">
     <tr class="bg-yellow-400">
@@ -102,3 +104,150 @@
 
 </div>
   <p-confirmDialog></p-confirmDialog>
+
+
+
+
+
+<div class="dn-container" style="padding:50px;" style="width:720px" id="printSection" >
+  <div class="header">
+    <h1>Debit Note</h1>
+  </div>
+
+  <div class="section" style="padding: 4px;">
+    <div class="company">
+          <div class="left">
+        Debit Note No: {{CreditForm.get('p_debitNote')?.value}}
+        <div class="label">Company Name: SHRISTI ELECTRICAL	</div>
+        <div class="small">Address:SHOP NO.-7 SAPNA TALKIES COMPLEX,		<br>	
+NANDINI ROAD, BHILAI		<br>
+State Name: Chhattisgarh<br> Code: 22			
+
+ <br/>Email ID: {{'shristielectricalgw@gmail.com'}} <br/>GSTIN: 22AOCPY0439F1Z5
+          <!-- <br/>State: -->
+        </div>
+      </div>
+    
+    </div>
+  </div>
+<!-- <table width="100%" border="0" cellspacing="0" cellpadding="0" style="border-collapse:collapse;font-size:14px;margin-top:10px;">
+  <tr>
+    <td align="left">  <div class="right">
+        <div style="text-align:left">
+          <div class="label">Return/Debit To:</div>
+          <div class="small">Name:<br/>Address:<br/>Phone Number:<br/>GSTIN:<br/>State: Karnataka</div>
+        </div>
+      </div></td>
+    <td align="right">
+       <div>
+ 
+    <div style="text-align:right">
+      <div>Document Info</div>
+      <div> <br/>Date: <br/>Place of Supply:</div>
+    </div>
+  </div>
+</td>
+  </tr>
+</table> -->
+ 
+<div style="padding-top:15px; padding-bottom:15px;">
+  <table width="100%" aria-label="items" border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;font-size:14px;margin-top:10px;">
+
+  <thead>
+    <tr>
+      <th align="left">SN</th>
+      <th align="left">Item Name</th>
+      <!-- <th align="left">HSN Code</th> -->
+      <th align="left">Unit</th>
+      <th align="left">Quantity</th>
+      <th align="left">MRP</th>
+      <!-- <th align="left">Disc</th> -->
+      <!-- <th align="left">GST</th> -->
+      <!-- <th align="left">Ad. CESS</th> -->
+      <th align="left">Amount</th>
+    </tr>
+  </thead>
+
+  <tbody>
+   <ng-container *ngFor="let row of replacecednlist; let i=index">
+    <tr>
+      <td>{{i+1}}</td>
+      <td>{{row.itemname}}</td>
+      <!-- <td>{{ row.itemsku }}</td> -->
+      <td>{{ row.current_stock }}</td>
+      <td>{{ row.quantity }}</td>
+    
+     <td>{{"₹"+row.mrp }}</td>
+    <!-- <td></td> -->
+     <!-- <td></td> -->
+      <td>{{"₹"+ row.quantity * row.mrp }}</td>
+     
+      
+     
+     
+      
+    
+    </tr>
+</ng-container>
+   
+
+  
+
+    <!-- Amount in words & Total Amount block -->
+    <tr>
+      <!-- <td  rowspan="3" class="bold">
+        Amount in words:
+      </td>
+      <td colspan="5" rowspan="3" class="bold">
+     
+      </td> -->
+
+      <td colspan="5"  class="bold" style="text-align:right;">
+        Total Amount:
+      </td>
+      <td> <strong>₹{{ totalAmount }}</strong></td>
+    </tr>
+
+    <tr>
+      <td colspan="3" class="bold" align="right">Payment Mode:</td>
+       <td colspan="3" class="bold" >Cash</td>
+      
+    </tr>
+     <!-- <tr>
+       <td colspan="2" class="bold" align="right">Reference No:</td>
+        <td colspan="2" class="bold"></td>
+      </tr> -->
+   
+
+    <!-- BANK DETAILS + SIGN -->
+    <tr>
+      <td class="bold">Bank Name:</td>
+      <td colspan="2">Shristi Elec bank name	
+</td>
+
+   
+      <td rowspan="5" colspan="3" style="text-align:center; vertical-align:bottom;">
+        Company seal and Sign
+      </td>
+    </tr>
+
+    <tr>
+      <td class="bold">Account Number:</td>
+      <td colspan="5"></td>
+    </tr>
+
+    <tr>
+      <td class="bold">IFSC Code:</td>
+      <td colspan="5"></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+  <div class="footer">
+    Note: This is a computer generated debit note and does not require signature.
+  </div>
+</div>

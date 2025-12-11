@@ -1,9 +1,9 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, inject, ViewChild } from '@angular/core';
 import { RippleModule } from 'primeng/ripple';
 import { Table, TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { CommonModule } from '@angular/common';
-import { Product, ProductService } from '@/pages/service/product.service'
+
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputTextModule } from 'primeng/inputtext';
 import { FormsModule } from '@angular/forms';
@@ -12,6 +12,9 @@ import { FilterMatchMode } from 'primeng/api';
 import { TooltipModule } from 'primeng/tooltip';
 import { TagModule } from 'primeng/tag';
 import { SelectModule } from 'primeng/select';
+import { AuthService } from '@/core/services/auth.service';
+import { DashboardService } from '@/core/services/dashboard.service';
+import { CardModule } from 'primeng/card';
 
 interface Column {
     field: string;
@@ -27,6 +30,7 @@ interface ExportColumn {
 @Component({
     standalone: true,
     selector: 'app-recent-sales-widget',
+    
     imports: [
         CommonModule,
         TableModule,
@@ -36,18 +40,19 @@ interface ExportColumn {
         InputIconModule,
         InputTextModule,
         FormsModule,
+       CardModule,
         TooltipModule,
         TagModule,
         SelectModule
     ],
-    template: ` <div class="card">
+    template: `<p-card  class="mb-4 min-h-[444px]">
         <div
             class="flex flex-col md:flex-row md:items-start md:justify-between mb-4"
         >
             <div
                 class="text-surface-900 dark:text-surface-0 text-xl font-semibold mb-4 md:mb-0"
             >
-                Recent Sales
+               Top Selling Product
             </div>
             <div class="inline-flex items-center">
                 <!-- <p-iconfield>
@@ -68,80 +73,78 @@ interface ExportColumn {
                     pTooltip="Export"
                     (click)="dt.exportCSV()"
                 /> -->
-                 <p-select 
+                 <!-- <p-select 
                         [options]="filterOptions" 
                         [(ngModel)]="filter" 
                         class="w-full"
                         optionLabel="label"
                         placeholder="Filter">
-                    </p-select>
+                    </p-select> -->
             </div>
         </div>
-        <p-table
-            #dt
+        <div class="min-h-[350px]">
+        <p-table 
+            #dt 
+            [rows]="5"
             [value]="products"
             [paginator]="true"
-            [rows]="5"
-            [columns]="cols"
+          
+         
             responsiveLayout="scroll"
-            [globalFilterFields]="[
-                'type',
-                'billDate',
-                'price',
-                'inventoryStatus',
-            ]"
-            [exportHeader]="'customExportHeader'"
         >
             <ng-template #header>
                 <tr>
-                    <th pSortableColumn="type">
-                        <span class="flex items-center gap-2">Item <p-sortIcon field="type"></p-sortIcon></span>
+                    <th>
+                       Item
                     </th>
-                    <th pSortableColumn="billDate">
-                        <span class="flex items-center gap-2">Category <p-sortIcon field="billDate"></p-sortIcon></span>
+                    <th>
+                    Category 
                     </th>
-                    <th pSortableColumn="totalQty">
-                        <span class="flex items-center gap-2">UOM <p-sortIcon field="totalQty"></p-sortIcon></span>
-                    </th>
+<!--                    
                     <th pSortableColumn="billNo">
                         <span class="flex items-center gap-2">Stock <p-sortIcon field="billNo"></p-sortIcon></span>
+                    </th> -->
+                <th>
+                   Current Stock 
                     </th>
-                    <!-- <th pSortableColumn="totalSale">
-                        <span class="flex items-center gap-2">Total Sale <p-sortIcon field="totalSale"></p-sortIcon></span>
-                    </th>
-                    <th>View</th> -->
+                   
                 </tr>
             </ng-template>
             <ng-template #body let-product>
                 <tr>
                     <td style="width: 35%; min-width: 7rem;">
-                        {{ product.name }}
+                        {{ product.itemcombine }}
                     </td>
                     <td style="width: 35%; min-width: 7rem;">
-                        {{ product.category }}
+                        {{ product.categoryname }}
                     </td>
-                    <td style="width: 35%; min-width: 8rem;">
-                        {{ product.price | currency: 'USD' }}
+                     <td style="width:30%; min-width: 7rem;">
+                        {{ product.currentstock }}
                     </td>
-                    <td style="width: 35%; min-width: 8rem;">
-                        <!-- <p-tag
+                   
+                   
+                    <!-- <td style="width: 35%; min-width: 8rem;">
+                        <p-tag
                             [severity]="
                                 getBadgeSeverity(product.inventoryStatus)
                             "
                             >{{ product.inventoryStatus }}</p-tag
-                        > -->
-                    </td>
+                        >
+                    </td> -->
                     <!-- <td style="width: 15%;">
                         <p-button icon="pi pi-search" outlined rounded />
                     </td> -->
                 </tr>
             </ng-template>
         </p-table>
-    </div>`,
-    providers: [ProductService],
+</div>
+</p-card>`,
+ 
 })
 export class RecentSalesWidget {
-    products!: Product[];
+    public authService = inject(AuthService);
+    products!: any[];
+    
 
     // filterSalesTable = {
     //     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -159,29 +162,28 @@ export class RecentSalesWidget {
 
     @ViewChild('dt') dt!: Table;
 
-    constructor(private productService: ProductService) {}
+    constructor(public OnttopBarService:DashboardService) {}
+    
 
     ngOnInit() {
-        this.productService
-            .getProductsSmall()
-            .then((data) => (this.products = data));
+        // this.productService
+        //     .getProductsSmall()
+        //     .then((data) => (this.products = data));
 
         this.cols = [
-            {
-                field: 'code',
-                header: 'Code',
-                customExportHeader: 'Product Code',
-            },
-            { field: 'name', header: 'Name' },
-            { field: 'category', header: 'Category' },
-            { field: 'price', header: 'Price' },
-            { field: 'inventoryStatus', header: 'Inventory Status' },
+         
+            { field: 'itemcombine', header: 'Name' },
+            { field: 'categoryname', header: 'Category' },
+            // { field: 'price', header: 'Price' },
+            { field: 'currentstock', header: 'Inventory Status' },
         ];
 
+         
         this.exportColumns = this.cols.map((col) => ({
             title: col.header,
             dataKey: col.field,
         }));
+        this.OnGetSales()
     }
 
     onFilterGlobal(event: Event): void {
@@ -203,4 +205,26 @@ export class RecentSalesWidget {
                 return 'info';
         }
     }
+    OnGetSales(){
+        let  apibody={
+    
+   "p_reporttype": "MOSTSALEABLE",
+   "p_warehouse":"",
+   "p_period":"",
+   "p_category":null,
+   "p_item":null,
+
+
+   }
+         this.OnttopBarService.GettopBarCard(apibody).subscribe({
+             next:(res)=>{
+            console.log(res)
+            const data=res.data
+            this.products=data
+            console.log(this.products)
+        }
+
+         })
+    }
+
 }

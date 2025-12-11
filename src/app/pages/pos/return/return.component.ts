@@ -82,12 +82,7 @@ export class ReturnComponent {
     // ✅ Move dropdown options into variables
     billNoOptions: any[] = [];
 public authService = inject(AuthService);
-  public getUserDetails = {
-    "uname": "admin",
-    "p_loginuser": "admin",
-    "clientcode": "CG01-SE",
-    "x-access-token": this.authService.getToken(),
-  };
+  public getUserDetails = {};
     constructor(
         private fb: FormBuilder,
         private stockInService: InventoryService,
@@ -104,7 +99,7 @@ public authService = inject(AuthService);
     }
  initializeForm(): void {
 this.returnForm = this.fb.group({
-            returnBillNo: ['', Validators.required],
+            returnBillNo: [null, Validators.required],
             p_itemdata: [null],
       p_transactiontype: [''],
       p_itemid: [null],
@@ -147,7 +142,7 @@ else{
     });
  }
   blockDecimal(event: KeyboardEvent) {
-    if (event.key === '.' || event.key === ',' || event.key === 'e' || event.key === 'E'|| event.key === '0'||event.key === '-') {
+    if (event.key === '.' || event.key === ',' || event.key === 'e' || event.key === 'E'|| event.key === '-') {
       event.preventDefault();  // block decimal
     }
   }
@@ -326,7 +321,7 @@ else{
     return {
       ...this.getUserDetails,
       p_transactiontype: "RETURN",
-      p_transactionid: body.p_transactionid ,
+      p_transactionid: 0 ,
       p_transactiondate: formattedDate || "",
       p_customername: body.p_customername || "",
       p_mobileno: body.p_mobileno || "",
@@ -347,14 +342,15 @@ else{
       p_paymentmode: body.p_paymentmode || "Cash",
       p_paymentdue: Number(body.p_paymentdue) || 0,
       p_sale: (body.p_sale || []).map((x: any) => ({
-        TransactiondetailId:body.p_transactionid ,
+        TransactiondetailId: 0,
         ItemId: x.ItemId,
         ItemName: x.ItemName,
         UOMId: x.UOMId,
         Quantity: x.Quantity,
         itemcost: x.itemcost,
         MRP: x.MRP,
-        totalPayable: x.totalPayable
+        totalPayable: x.totalPayable,
+        currentstock:x.curStock,
       }))
     };
   }
@@ -365,6 +361,15 @@ OnSalesHeaderCreate(data: any) {
     this.stockInService.OninsertSalesDetails(apibody).subscribe({
       next: (res) => {
         console.log(res.data);
+        this.OnGetReturnBillNo();
+         const billno = res.data[0].billno;
+        console.log('return:',billno);
+        // 
+      //     //
+      //     
+        this.returnForm.patchValue({
+        returnBillNo: billno   
+      })
         this.messageService.add({
           severity: 'success',
           summary: 'Success',
@@ -591,6 +596,7 @@ OnSalesHeaderCreate(data: any) {
             },
             { emitEvent: false }
         );
+         this.saleArray.clear(); 
     }
 createDropdownPayload(returnType: string) {
     return {

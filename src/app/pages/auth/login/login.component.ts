@@ -15,6 +15,7 @@ import { PasswordModule } from 'primeng/password';
 import { MessageModule } from 'primeng/message';
 import { AuthService } from '@/core/services/auth.service';
 import { Select } from "primeng/select";
+import { ShareService } from '@/core/services/shared.service';
 @Component({
   selector: 'app-login',
     templateUrl: './login.component.html',
@@ -49,16 +50,22 @@ export class LoginComponent  implements OnInit{
 
     isDarkTheme = computed(() => this.LayoutService.isDarkTheme());
  loginForm!: FormGroup;
-constructor(private fb: FormBuilder,private route:Router, private authservice:AuthService) {
+constructor(private fb: FormBuilder,private route:Router, private authservice:AuthService,
+  private sharedService:ShareService
+) {
 
 }
 
      ngOnInit() {
     this.loginForm = this.fb.group({
-      usercode: ['admin', [Validators.required,Validators.minLength(4)]],   // email as loginId
-      pwd: ['admin', [Validators.required,Validators.minLength(4)]],
-      logintype:[''],
-      clientcode:['CG01-SE',[Validators.required]]
+      // usercode: ['admin', [Validators.required,Validators.minLength(4)]],   // email as loginId
+      // pwd: ['admin', [Validators.required,Validators.minLength(4)]],
+      // logintype:[''],
+      // clientcode:['CG01-SE',[Validators.required]]
+      usercode: [null, [Validators.required,Validators.minLength(4)]],   // email as loginId
+       pwd: [null, [Validators.required,Validators.minLength(4)]],
+      logintype:[null],
+      clientcode:[null,[Validators.required]]
 
 
     });
@@ -71,11 +78,16 @@ forgetPassword(){
   onSubmit() {
     if (this.loginForm.valid) {
         //  this.route.navigate(['/layout']);
+        const clientCode = this.loginForm.get('clientcode')?.value;
+        this.sharedService.setClientCode(clientCode);
+         
+        this.loginForm.controls['logintype'].setValue( this.loginForm.get('usercode')?.value);
         this.authservice.isLoggedIn(this.loginForm.value).subscribe({
             next:(res:any)=>{
                 if(res.success==true){
                     this.authservice.setToken(res.data?.usertoken)
                     this.route.navigate(['/layout']);
+                    
                 }
             },
           error:(res)=>{

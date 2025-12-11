@@ -77,14 +77,8 @@ interface Image {
 })
 export class CreditNoteComponent {
     CreditForm!: FormGroup;
-    public authService = inject(AuthService);
-    public getUserDetails = {
-        "uname": "admin",
-        "p_loginuser": "admin",
-        "clientcode": "CG01-SE",
-        "x-access-token": this.authService.getToken(),
-    };
 
+totalAmount: number = 0;
     public visibleDialog = false;
     public selectedRow: any = null;
    public  selection: boolean = true;
@@ -188,7 +182,7 @@ export class CreditNoteComponent {
     //REPLACEDN
     OnReplicedn() {
         let apibody = {
-            ...this.getUserDetails,
+           
             "p_returntype": "REPLACEDN",
 
         }
@@ -213,7 +207,7 @@ export class CreditNoteComponent {
     // Debit note
     OnDNN() {
         let apibody = {
-            ...this.getUserDetails,
+           
             "p_returntype": "DNN",
 
         }
@@ -253,7 +247,7 @@ export class CreditNoteComponent {
 
     accpatHeaderCreate(saledata: any,type:string) {
         let apibody: any = {
-    ...this.getUserDetails,
+   
     p_transactiontype: type,   // CREDITNOTE or DEBITNOTE
     p_transactionid: 0,
     p_transactiondate: "",
@@ -316,11 +310,11 @@ if (apibody.p_transactiontype === "CREDITNOTE") {
         })
     }
     RetunCredit(dnndata:any){
-        console.log(dnndata)
+   
         if(dnndata.value==null) return
        // return
         let apibody={
-            ...this.getUserDetails,
+           
             "p_returntype": "DNN",
             "p_returnvalue":dnndata.value,
             }
@@ -328,6 +322,7 @@ if (apibody.p_transactiontype === "CREDITNOTE") {
          this.prouctsaleservice.Getreturndropdowndetails(apibody).subscribe({
             next:(res)=>{
                 this.replacecednlist=res.data
+                this.calculateTotal(this.replacecednlist)
                  this.CreditForm.patchValue({
                     p_creditNote: this.replacecednlist[0]?.cnno
                     
@@ -336,5 +331,47 @@ if (apibody.p_transactiontype === "CREDITNOTE") {
             }
          })
     }
+
+
+calculateTotal(data:any[]) {
+  this.totalAmount = data.reduce((sum, row) => {
+    return sum + (row.quantity * row.mrp);
+  }, 0);
+}
+print() {
+  const printContents = document.getElementById('printSection')?.innerHTML;
+  if (!printContents) return;
+
+  const popup = window.open('', '_blank', 'width=900,height=650');
+
+  popup!.document.open();
+  popup!.document.write(`
+    <html>
+      <head>
+     
+        <style>
+          @page {
+            size: A4;
+            margin:40px;
+          }
+
+          @media print {
+            body { font-family: Arial, sans-serif; padding:50px }
+
+            header, footer {
+              display: none !important;
+              visibility: hidden !important;
+            }
+          }
+        </style>
+      </head>
+      <body onload="window.print(); window.close();">
+        ${printContents}
+      </body>
+    </html>
+  `);
+
+ // popup!.document.close();
+}
 
 }

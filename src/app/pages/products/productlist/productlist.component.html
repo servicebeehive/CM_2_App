@@ -26,11 +26,11 @@
                     <!-- Item -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Item</label>
-                        <p-dropdown [options]="itemOptions" optionLabel="itemcombine" optionValue="itemid" [filter]="true" [showClear]="true" (onChange)="onItemChange($event)" filterPlaceholder="Search Item" formControlName="item" placeholder="Item"> </p-dropdown>
+                        <p-dropdown [options]="itemOptions" optionLabel="itemcombine" optionValue="itemid" [filter]="true" [showClear]="true" filterPlaceholder="Search Item" formControlName="item" placeholder="Item"> </p-dropdown>
                     </div>
                     <div class="flex flex-col">
                             <label class="font-medium mb-1 invisible">label</label>
-                            <button pButton type="button" label="Filter" class="p-button-outlined w-[100px]" (click)="Onreturndropdowndetails()"></button>
+                            <button pButton type="button" label="Filter" class="w-[100px]" (click)="Onreturndropdowndetails()"></button>
                         </div>
                 </div>
                   <!-- Buttons -->
@@ -61,6 +61,7 @@
                                 <th>Current Stock</th>
                                 <th>Cost/Item</th>
                                 <th>MRP</th>
+                                <th>Location</th>
                                 <th>GST Item</th>
                                 <th>Active</th>
                                 <th>BarCode</th>
@@ -78,6 +79,7 @@
                                 <td class="w-[60px]">{{ row.currentstock }}</td>
                                 <td class="w-[60px]">{{ row.costprice }}</td>
                                 <td class="w-[60px]">{{ row.saleprice }}</td>
+                                <td>{{row.location}}</td>
                                <td class="w-[60px]">{{row.gstitem}}</td>
                                 <td class="w-[60px]">{{ row.isactive }}</td>
                                 <td class="w-[140px]">

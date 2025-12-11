@@ -3,6 +3,7 @@ import { InventoryService } from '@/core/services/inventory.service';
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MessageService } from 'primeng/api';
 import { DropdownModule } from 'primeng/dropdown';
 import { SelectModule } from 'primeng/select';
 
@@ -50,7 +51,9 @@ import { SelectModule } from 'primeng/select';
                         [showClear]="true"
                         optionLabel="fieldname"
                         optionValue="fieldid"
-                        placeholder="Category">
+                        placeholder="Category"
+                        (onChange)="onCategoryItem($event)"
+                        >
                     </p-dropdown>
                 </div>
             </div>
@@ -62,9 +65,11 @@ import { SelectModule } from 'primeng/select';
                         [options]="itemOptions" 
                         [(ngModel)]="item" 
                         class="w-full"
-                        optionLabel="itemname"
+                        optionLabel="itemcombine"
                         optionValue="itemid"
-                        placeholder="Item">
+                        placeholder="Item"
+                        (onChange)="onItemChange($event)"
+                        >
                     </p-dropdown>
                 </div>
             </div>
@@ -101,18 +106,58 @@ export class FilterPage {
     ngOnInit() {
         this.loadAllDropdowns();
     }
-    constructor( private stockInService:InventoryService, private authService:AuthService){}
+    constructor( private stockInService:InventoryService, private authService:AuthService , private messageService:MessageService){}
     onFilterChange() {
         // Handle filter changes here
     }
      createDropdownPayload(returnType: string) {
         return {
-            uname: 'admin',
+             
             p_username: 'admin',
             p_returntype: returnType,
-            clientcode: 'CG01-SE',
-            'x-access-token': this.authService.getToken()
+                
+                  
         };
+    }
+    onItemChange(event:any){
+  const itemId = event.value;
+  if(!itemId){
+        
+        return;
+  }
+}
+    onCategoryItem(event:any){
+        const categoryId=event.value;
+        if(!categoryId){
+            this.OnGetItem();
+            return;
+        }
+        this.categoryRelavantItem(categoryId);
+    }
+    categoryRelavantItem(id:any){
+      this.itemOptions=[];
+      const payload={
+ 
+        p_username:"admin",
+        p_returntype:"CATEGORY",
+        p_returnvalue:id.toString(),
+        clientcode:"CG01-SE",
+               
+      };
+      this.stockInService.Getreturndropdowndetails(payload).subscribe({
+        next:(res:any)=>{
+            if(!res.data || res.data.length===0){
+                this.itemOptions=[];
+                this.showSuccess('No items found for this category.');
+                return;
+            }
+            this.itemOptions=res.data;
+        },
+        error:(err)=>{
+          console.error(err);
+       this.itemOptions = [];
+        }
+      });
     }
      OnGetItem() {
     const payload = this.createDropdownPayload("ITEM");
@@ -133,4 +178,7 @@ export class FilterPage {
     this.OnGetItem();
     this.OnGetCategory();
   }
+  showSuccess(message: string) {
+        this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
+    }
 }

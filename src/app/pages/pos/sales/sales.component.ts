@@ -93,12 +93,7 @@ export class SalesComponent {
   submitDisabledByBill:boolean=false;
   discountplace:string='Enter Amount';
   public authService = inject(AuthService);
-  public getUserDetails = {
-    "uname": "admin",
-    "p_loginuser": "admin",
-    "clientcode": "CG01-SE",
-    "x-access-token": this.authService.getToken(),
-  };
+  public getUserDetails = {};
   searchValue: string = '';
   itemOptions: any[] = [];
   transactionIdOptions = [];
@@ -144,6 +139,7 @@ export class SalesComponent {
       p_totalpayable: [0],
       p_currencyid: [0],
       p_gsttran: [true],
+      status:[''],
       p_status: [''],
       p_isactive: [''],
       p_loginuser: [''],
@@ -152,6 +148,12 @@ export class SalesComponent {
       p_creditnoteno: [''],
       p_paymentmode: [''],
       p_paymentdue: [0],
+      sgst_9:[''],
+      tax_18:[''],
+      cgst_9:[''],
+      discountvalueper:[],
+      amount_before_tax:[''],
+
       // FormArray for sale rows
       p_sale: this.fb.array([])
     },{
@@ -236,8 +238,8 @@ createSaleItem(data?: any): FormGroup {
   // Map API sale items (array) into the FormArray
   mapSaleItems(apiItems: any[]) {
     this.saleArray.clear(); // Remove old rows if any
-
-    apiItems.forEach(item => {
+     this.uomlist = [];
+    apiItems.forEach((item,index )=> {
       this.saleArray.push(
         this.fb.group({
           TransactiondetailId: item.transactiondetailid || 0,
@@ -251,15 +253,17 @@ createSaleItem(data?: any): FormGroup {
           // p_totalcost:item.
           // Additional fields used in UI
           curStock: item.current_stock || 0,
-          warPeriod: 0,
+          warPeriod: item.warrenty || 0,
           location: "",
           itemsku: item.itemsku || ''
         })
       );
+       this.OnUMO(item.itemid || item.itemsku, index)
     });
 
     // If items were added, update totals for the last row and overall summary
     const index = this.saleArray.length - 1;
+   
     this.updateTotal(index);
     this.calculateSummary();
   }
@@ -301,7 +305,7 @@ allowOnlyNumbers(event: any) {
     });
   }
 
-  // Load initial dropdowns (items, bill no)
+  // Load initial dropdowns (items, bill no)this.OngetcalculatedMRP
   loadAllDropdowns() {
     this.OnGetItem();
     this.OnGetBillNo();
@@ -399,18 +403,24 @@ costGreaterThanSaleValidator(): ValidatorFn {
     const billDetails = this.billNoOptions.find(billitem => billitem.billno === event.value); 
     if (billDetails) {
       this.SaleDetails(billDetails);
- 
+       console.log('details:',billDetails);
       this.salesForm.patchValue({
         p_transactionid: billDetails.transactionid,
         p_customername:billDetails.customername,
         p_transactiondate: billDetails.transactiondate ? new Date(billDetails.transactiondate) : null,
         p_mobileno: billDetails.mobileno,
+        status: billDetails.status ,
         p_totalcost: (billDetails.totalcost).toFixed(2),
         p_totalsale: (billDetails.totalsale).toFixed(2),
         p_disctype: billDetails.discounttype=='Y'?true:false,
-        p_overalldiscount: billDetails.discount,
+        p_overalldiscount:billDetails.discount,
+        discountvalueper:billDetails.discountvalueper,
         p_roundoff: billDetails.roundoff,
         p_totalpayable: (billDetails.totalpayable).toFixed(2),
+         sgst_9:billDetails.sgst_9,
+      tax_18:billDetails.tax_18,
+      cgst_9:billDetails.cgst_9,
+      amount_before_tax:billDetails.amount_before_tax,
       });
      
     }
@@ -431,7 +441,13 @@ costGreaterThanSaleValidator(): ValidatorFn {
 
     this.stockInService.Getreturndropdowndetails(apibody).subscribe({
       next: (res) => {
+         if (res.data && res.data.length > 0) {
+        this.salesForm.patchValue({
+          status: res.data[0].status || ''
+        });
+      }
         this.mapSaleItems(res.data );
+
         if(res.data && res.data.length>0 && res.data[0].discounttype){
           this.salesForm.patchValue({
             p_disctype:(res.data[0].discounttype==='Y')
@@ -470,7 +486,7 @@ this.updateTotalCostSummary()
 
   // Prevent decimal input in quantity field (keyboard)
   blockDecimal(event: KeyboardEvent) {
-    if (event.key === '.' || event.key === ',' || event.key === 'e' || event.key === 'E' || event.key === '0'||event.key === '-') {
+    if (event.key === '.' || event.key === ',' || event.key === 'e' || event.key === 'E' || event.key === '-') {
       event.preventDefault();  // block decimal
     }
   }
@@ -659,7 +675,7 @@ updateTotal(i: number) {
       p_currencyid: Number(body.p_currencyid) || 0,
       p_gsttran: body.p_gsttran === true ? "Y" :
         body.p_gsttran === false ? "N" : "N",
-      p_status: body.p_status || "Complete",
+      p_status: body.p_status || "Done",
       p_isactive: "Y",
       p_linktransactionid: 0,
       // p_replacesimilir: body.p_replacesimilir || "",
@@ -691,7 +707,7 @@ updateTotal(i: number) {
     const apibody = this.cleanRequestBody(this.salesForm.value);
 
     // const datada={
-    // "uname": "admin",
+    //    
     // "p_transactiontype": "SALE",
     // "p_transactionid": 0,
     // "p_transactiondate": "08/11/2025",
@@ -706,7 +722,7 @@ updateTotal(i: number) {
     // "p_gsttran": "N",
     // "p_status": "Complete",
     // "p_isactive": "Y",
-    // "p_loginuser": "admin",
+    //  
     // "p_linktransactionid": 0,
     // "p_replacesimilir": "Y",
     // "p_creditnoteno": "",
@@ -807,8 +823,6 @@ OnUMO(value: any, index: number) {
   });
 }
 
-
-
 OngetcalculatedMRP(data: any, index: number) {
 
   const row = this.saleArray.at(index);
@@ -831,7 +845,7 @@ OngetcalculatedMRP(data: any, index: number) {
 
       row.patchValue({
         MRP: mrp,
-        itemcost: cost,             // ⭐ FIXED
+        itemcost: cost,           
         totalPayable: qty * mrp,
         apiCost: qty * cost
       });
@@ -842,12 +856,14 @@ OngetcalculatedMRP(data: any, index: number) {
   });
 }
 
-
-
-
-
   UOMId(event:any,index:number){
-    console.log(event)
+    const row = this.saleArray.at(index);
+  
+  // Get current row data
+  const rowData = {
+    ItemId: row.get('ItemId')?.value,
+    UOMId: event.value
+  };
     this.OngetcalculatedMRP(event.value,index)
   }
 calculateMRP(index: number) {
@@ -870,9 +886,10 @@ calculateMRP(index: number) {
 
   this.orderService.getcalculatedMRP(apibody).subscribe({
     next: (res: any) => {
-
-      const mrp = Number(res.data.totalmrp || 0);
-      const cost = Number(res.data.totalcost || 0);
+if(res.success){
+    console.log(res)
+      const mrp = Number(res?.data.totalmrp || 0);
+      const cost = Number(res?.data.totalcost || 0);
 
       // ⭐ IMPORTANT — Update purchase price also
       row.patchValue({
@@ -881,6 +898,8 @@ calculateMRP(index: number) {
         totalPayable: qty * mrp,
         apiCost: qty * cost           // <-- used for cost summary
       });
+}
+    
 
       this.updateTotalCostSummary();
       this.calculateSummary();
