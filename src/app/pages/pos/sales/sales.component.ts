@@ -1,4 +1,3 @@
-
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, ViewChild, inject } from '@angular/core';
 import {
@@ -149,6 +148,12 @@ export class SalesComponent {
       p_creditnoteno: [''],
       p_paymentmode: [''],
       p_paymentdue: [0],
+      sgst_9:[''],
+      tax_18:[''],
+      cgst_9:[''],
+      discountvalueper:[],
+      amount_before_tax:[''],
+
       // FormArray for sale rows
       p_sale: this.fb.array([])
     },{
@@ -408,9 +413,14 @@ costGreaterThanSaleValidator(): ValidatorFn {
         p_totalcost: (billDetails.totalcost).toFixed(2),
         p_totalsale: (billDetails.totalsale).toFixed(2),
         p_disctype: billDetails.discounttype=='Y'?true:false,
-        p_overalldiscount: billDetails.discount,
+        p_overalldiscount:billDetails.discount,
+        discountvalueper:billDetails.discountvalueper,
         p_roundoff: billDetails.roundoff,
         p_totalpayable: (billDetails.totalpayable).toFixed(2),
+         sgst_9:billDetails.sgst_9,
+      tax_18:billDetails.tax_18,
+      cgst_9:billDetails.cgst_9,
+      amount_before_tax:billDetails.amount_before_tax,
       });
      
     }
@@ -876,9 +886,10 @@ calculateMRP(index: number) {
 
   this.orderService.getcalculatedMRP(apibody).subscribe({
     next: (res: any) => {
-
-      const mrp = Number(res.data.totalmrp || 0);
-      const cost = Number(res.data.totalcost || 0);
+if(res.success){
+    console.log(res)
+      const mrp = Number(res?.data.totalmrp || 0);
+      const cost = Number(res?.data.totalcost || 0);
 
       // ⭐ IMPORTANT — Update purchase price also
       row.patchValue({
@@ -887,6 +898,8 @@ calculateMRP(index: number) {
         totalPayable: qty * mrp,
         apiCost: qty * cost           // <-- used for cost summary
       });
+}
+    
 
       this.updateTotalCostSummary();
       this.calculateSummary();
