@@ -105,10 +105,10 @@
         </div>
           <div class="flex items-center gap-2">
           <label> <b> Status:</b></label>
-          <input type="text" formControlName="status" placeholder="Status" 
+          <input type="text" formControlName="status"  placeholder="Status" 
    [ngStyle]="{
-    'color': salesForm.value.status === 'Done' ? 'green' :
-             salesForm.value.status === 'Partial Cancel' ? 'grey' :
+    'color': salesForm.value.status === 'Complete' ? 'green' :
+             salesForm.value.status === 'Partial' ? 'grey' :
              salesForm.value.status === 'Cancel' ? 'red' : 'black',
     'font-weight': 'bold'
   }"
@@ -464,7 +464,7 @@
         <td>Quantity</td>
         <td>Rate</td>
         <td>per</td>
-        <td>Disc %</td>
+        <td>Disc  %</td>
         <td>Amount</td>
       </tr>
     </thead>
@@ -485,18 +485,23 @@
       <!-- SUB TOTAL -->
       <tr>
         <td colspan="7" style="text-align:right;font-weight:bold;">Total</td>
-        <td>₹{{ salesForm.get('p_totalpayable')?.value | number:'1.2-2' }}</td>
+        <td>₹{{ salesForm.get('p_totalsale')?.value | number:'1.2-2' }}</td>
+        <!-- <td>₹{{ salesForm.get('p_totalpayable')?.value | number:'1.2-2' }}</td> -->
       </tr>
         <tr>
-        <td colspan="7" style="text-align:right;font-weight:bold;"> Discount</td>
+        <td colspan="7" style="text-align:right;font-weight:bold;"> Discount {{salesForm.get('p_disctype')?.value?salesForm.get('p_overalldiscount')?.value+'%':''}}</td>
       
-        <td>₹{{ salesForm.get('p_overalldiscount')?.value | number:'1.2-2' }}</td>
+        <td>{{!salesForm.get('p_disctype')?.value?'₹':''}}{{!salesForm.get('p_disctype')?.value?salesForm.get('p_overalldiscount')?.value:'₹'+salesForm.get('discountvalueper')?.value  }}
+          
+        </td>
+   
+        
       </tr>
-        <tr *ngIf="salesForm.get('p_disctype')?.value==='Y'">
+        <!-- <tr *ngIf="salesForm.get('p_disctype')?.value==='Y'">
         <td colspan="7" style="text-align:right;font-weight:bold;"> Discount</td>
       
         <td>YES</td>
-      </tr>
+      </tr> -->
       
      
 
@@ -516,7 +521,7 @@
       <!-- ROUND OFF -->
       <tr>
         <td colspan="7" style="text-align:right;"><b>ROUND OFF +/-</b></td>
-        <td>₹{{ salesForm.get('p_roundoff')?.value|number:'1.2-2' }}</td>
+        <td>{{ salesForm.get('p_roundoff')?.value|number:'1.2-2' }}</td>
       </tr>
 
     </tbody>
@@ -524,10 +529,10 @@
     <!-- GRAND TOTAL -->
     <tfoot>
       <tr style="font-weight:bold;">
-        <td colspan="3" style="text-align:right;">Total Qty</td>
-        <td>{{ salesForm.get('p_totalqty')?.value }} PCS</td>
-        <td colspan="3"></td>
-        <td>₹{{ salesForm.get('p_totalpayable')?.value |number:'1.2-2'}}</td>
+        <!-- <td colspan="3" style="text-align:right;">Total Qty</td>
+        <td>{{ salesForm.get('p_totalqty')?.value }} PCS</td> -->
+        <td colspan="7" align="right" style="text-align: right; font-weight: bold;">Grand Total</td>
+        <td style="font-weight: bold;">₹{{ salesForm.get('p_totalpayable')?.value | number:'1.2-2' }}</td>
       </tr>
     </tfoot>
   </table>
@@ -589,7 +594,3 @@
   </div>
 
 </div>
-
-
-
-

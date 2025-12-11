@@ -151,6 +151,7 @@ export class SalesComponent {
       sgst_9:[''],
       tax_18:[''],
       cgst_9:[''],
+      discountvalueper:[],
       amount_before_tax:[''],
 
       // FormArray for sale rows
@@ -412,7 +413,8 @@ costGreaterThanSaleValidator(): ValidatorFn {
         p_totalcost: (billDetails.totalcost).toFixed(2),
         p_totalsale: (billDetails.totalsale).toFixed(2),
         p_disctype: billDetails.discounttype=='Y'?true:false,
-        p_overalldiscount: billDetails.discount,
+        p_overalldiscount:billDetails.discount,
+        discountvalueper:billDetails.discountvalueper,
         p_roundoff: billDetails.roundoff,
         p_totalpayable: (billDetails.totalpayable).toFixed(2),
          sgst_9:billDetails.sgst_9,
@@ -884,9 +886,10 @@ calculateMRP(index: number) {
 
   this.orderService.getcalculatedMRP(apibody).subscribe({
     next: (res: any) => {
-
-      const mrp = Number(res.data.totalmrp || 0);
-      const cost = Number(res.data.totalcost || 0);
+if(res.success){
+    console.log(res)
+      const mrp = Number(res?.data.totalmrp || 0);
+      const cost = Number(res?.data.totalcost || 0);
 
       // ⭐ IMPORTANT — Update purchase price also
       row.patchValue({
