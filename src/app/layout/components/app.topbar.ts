@@ -76,7 +76,6 @@ export class AppTopbar  {
             next:(res)=>
             { if(res.data){
                     this.companyName=res.data[0].companyname;
-                    console.log('com',this.companyName);
             }
             },
             error: (err) => console.log(err)

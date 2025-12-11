@@ -6,7 +6,7 @@ import { Injectable } from '@angular/core';
 export class ShareService {
   private readonly STORAGE_KEY = 'user_info';
   private readonly API_BODY = 'apibody';
-
+  private clientCode:string|null = null;
   constructor() {}
 
   // ✅ Save user data to localStorage
@@ -32,6 +32,15 @@ export class ShareService {
       return null;
     }
   }
+
+  setClientCode(code:string){
+    this.clientCode=code;
+  }
+
+  getClientCode():string | null{
+    return this.clientCode;
+  }
+
  GetApiBody(payload: any): any | null {
   try {
     const stored: any = localStorage.getItem(this.STORAGE_KEY);
@@ -51,12 +60,13 @@ export class ShareService {
     const apiBody: any = {
       uname:headerApiBody?.username, //-Arushi 11 dec 2025 , 1pm -username will go into uname as per CD
       p_loginuser: headerApiBody?.username,//-Arushi 11 dec 2025 , 1pm - admin will not go if username is blank it should show error
-      clientcode: headerApiBody?.clientcode || 'CG01-SE',//-Arushi 11 dec 2025 , 1pm - CG01-SE will not go if is blank it should show error
+      clientcode: this.clientCode,//-Arushi 11 dec 2025 , 1pm - CG01-SE will not go if is blank it should show error
       "x-access-token":headerApiBody?.usertoken,
     // "x-access-token" :'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyY29kZSI6ImFkbWluIiwiaWF0IjoxNzY1MjY2MDQ0LCJleHAiOjE3NjUzNTI0NDR9.ytWhv1-hYx2kbS1Ov2BkpZdgwaTsQhIw7HvjQoRdNVs',
-    ...payload   // payload will NOT contain duplicate keys
+    ...payload 
+      // payload will NOT contain duplicate keys
     };
-
+     
     return apiBody;
 
   } catch (error) {
