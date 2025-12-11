@@ -8,6 +8,8 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
+import { UserService } from '@/core/services/user.service';
+import { InventoryService } from '@/core/services/inventory.service';
 
 @Component({
     selector: '[app-topbar]',
@@ -18,6 +20,7 @@ import { InputIconModule } from 'primeng/inputicon';
             <button #menubutton type="button" class="topbar-menubutton p-link p-trigger" (click)="onMenuButtonClick()">
                 <i class="pi pi-bars"></i>
             </button>
+             <h1><strong>{{companyName}}</strong></h1>
             <nav app-breadcrumb class="topbar-breadcrumb"></nav>
         </div>
 
@@ -41,11 +44,13 @@ import { InputIconModule } from 'primeng/inputicon';
         </div>
     </div>`
 })
-export class AppTopbar {
+export class AppTopbar  {
     @ViewChild('menubutton') menuButton!: ElementRef;
-
-    constructor(public layoutService: LayoutService) {}
-
+     companyName:string='';
+    constructor(public layoutService: LayoutService, private inventoryService:InventoryService) {}
+   ngOnInit(){
+     this.onGetData();
+   }
     onMenuButtonClick() {
         this.layoutService.onMenuToggle();
     }
@@ -56,5 +61,25 @@ export class AppTopbar {
 
     onConfigButtonClick() {
         this.layoutService.showConfigSidebar();
+    }
+     createDropdownPayload(returnType:string){
+       return{
+         uname: "admin",
+    p_username: "admin",
+    p_returntype: returnType
+       }
+    }
+    onGetData(){
+        const  payload= this.createDropdownPayload('PROFILE');
+        this.inventoryService.getdropdowndetails(payload).subscribe({
+            
+            next:(res)=>
+            { if(res.data){
+                    this.companyName=res.data[0].companyname;
+                    console.log('com',this.companyName);
+            }
+            },
+            error: (err) => console.log(err)
+        });
     }
 }

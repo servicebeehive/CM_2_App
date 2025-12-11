@@ -1,3 +1,4 @@
+
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, ViewChild, inject } from '@angular/core';
 import {
@@ -148,11 +149,6 @@ export class SalesComponent {
       p_creditnoteno: [''],
       p_paymentmode: [''],
       p_paymentdue: [0],
-      sgst_9:[''],
-      tax_18:[''],
-      cgst_9:[''],
-      amount_before_tax:[''],
-
       // FormArray for sale rows
       p_sale: this.fb.array([])
     },{
@@ -415,10 +411,6 @@ costGreaterThanSaleValidator(): ValidatorFn {
         p_overalldiscount: billDetails.discount,
         p_roundoff: billDetails.roundoff,
         p_totalpayable: (billDetails.totalpayable).toFixed(2),
-         sgst_9:billDetails.sgst_9,
-      tax_18:billDetails.tax_18,
-      cgst_9:billDetails.cgst_9,
-      amount_before_tax:billDetails.amount_before_tax,
       });
      
     }
@@ -895,8 +887,6 @@ calculateMRP(index: number) {
         totalPayable: qty * mrp,
         apiCost: qty * cost           // <-- used for cost summary
       });
-}
-    
 
       this.updateTotalCostSummary();
       this.calculateSummary();

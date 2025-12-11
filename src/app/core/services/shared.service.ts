@@ -49,9 +49,9 @@ export class ShareService {
 
     // 🔥 Now safely merge extra fields + payload
     const apiBody: any = {
-      uname:'admin',
-      p_loginuser: headerApiBody?.username || "admin",
-      clientcode: headerApiBody?.clientcode || "CG01-SE",
+      uname:headerApiBody?.username, //-Arushi 11 dec 2025 , 1pm -username will go into uname as per CD
+      p_loginuser: headerApiBody?.username,//-Arushi 11 dec 2025 , 1pm - admin will not go if username is blank it should show error
+      clientcode: headerApiBody?.clientcode || 'CG01-SE',//-Arushi 11 dec 2025 , 1pm - CG01-SE will not go if is blank it should show error
       "x-access-token":headerApiBody?.usertoken,
     // "x-access-token" :'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyY29kZSI6ImFkbWluIiwiaWF0IjoxNzY1MjY2MDQ0LCJleHAiOjE3NjUzNTI0NDR9.ytWhv1-hYx2kbS1Ov2BkpZdgwaTsQhIw7HvjQoRdNVs',
     ...payload   // payload will NOT contain duplicate keys
