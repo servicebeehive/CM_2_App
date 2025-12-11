@@ -476,34 +476,47 @@
         <td>{{ item.get('ItemName')?.value }}</td>
         <td>{{ item.get('HSN')?.value || 8544 }}</td>
         <td>{{ item.get('Quantity')?.value }} PCS</td>
-        <td>{{ item.get('MRP')?.value | number:'1.2-2' }}</td>
+        <td>₹{{ item.get('MRP')?.value | number:'1.2-2' }}</td>
         <td>PCS</td>
         <td>{{ item.get('discount')?.value || '' }}</td>
-        <td>{{ item.get('totalPayable')?.value | number:'1.2-2' }}</td>
+        <td>₹{{ item.get('totalPayable')?.value | number:'1.2-2' }}</td>
       </tr>
 
       <!-- SUB TOTAL -->
       <tr>
-        <td colspan="7" style="text-align:right;font-weight:bold;">Sub Total</td>
-        <td>{{ salesForm.get('p_totalsale')?.value | number:'1.2-2' }}</td>
+        <td colspan="7" style="text-align:right;font-weight:bold;">Total</td>
+        <td>₹{{ salesForm.get('p_totalpayable')?.value | number:'1.2-2' }}</td>
       </tr>
+        <tr>
+        <td colspan="7" style="text-align:right;font-weight:bold;"> Discount</td>
+      
+        <td>₹{{ salesForm.get('p_overalldiscount')?.value | number:'1.2-2' }}</td>
+      </tr>
+        <tr *ngIf="salesForm.get('p_disctype')?.value==='Y'">
+        <td colspan="7" style="text-align:right;font-weight:bold;"> Discount</td>
+      
+        <td>YES</td>
+      </tr>
+      
+     
+
 
       <!-- CGST -->
-      <tr>
+      <!-- <tr>
         <td colspan="7" style="text-align:right;"><b>CGST</b></td>
         <td>{{ salesForm.get('p_cgst')?.value }}</td>
       </tr>
 
-      <!-- SGST -->
+    
       <tr>
         <td colspan="7" style="text-align:right;"><b>SGST</b></td>
         <td>{{ salesForm.get('p_sgst')?.value }}</td>
-      </tr>
+      </tr> -->
 
       <!-- ROUND OFF -->
       <tr>
         <td colspan="7" style="text-align:right;"><b>ROUND OFF +/-</b></td>
-        <td>{{ salesForm.get('p_roundoff')?.value }}</td>
+        <td>₹{{ salesForm.get('p_roundoff')?.value|number:'1.2-2' }}</td>
       </tr>
 
     </tbody>
@@ -514,7 +527,7 @@
         <td colspan="3" style="text-align:right;">Total Qty</td>
         <td>{{ salesForm.get('p_totalqty')?.value }} PCS</td>
         <td colspan="3"></td>
-        <td>₹ {{ salesForm.get('p_totalpayable')?.value }}</td>
+        <td>₹{{ salesForm.get('p_totalpayable')?.value |number:'1.2-2'}}</td>
       </tr>
     </tfoot>
   </table>
@@ -539,12 +552,16 @@
 
     <tr style="text-align:center;">
       <td>8544</td>
-      <td>{{ salesForm.get('p_totalsale')?.value }}</td>
+      <td>₹{{ salesForm.get('amount_before_tax')?.value|number:'1.2-2' }}</td>
       <td>9%</td>
-      <td>{{ salesForm.get('p_cgst')?.value }}</td>
+      <td>₹{{ salesForm.get('cgst_9')?.value |number:'1.2-2'}}</td>
       <td>9%</td>
-      <td>{{ salesForm.get('p_sgst')?.value }}</td>
-      <td>{{ salesForm.get('p_cgst')?.value + salesForm.get('p_sgst')?.value }}</td>
+      <td>₹{{ salesForm.get('sgst_9')?.value|number:'1.2-2' }}</td>
+      <td>₹{{ salesForm.get('tax_18')?.value |number:'1.2-2' }}</td>
+       <!-- sgst_9:billDetails.sgst_9,
+      tax_18:billDetails.tax_18,
+      cgst_9:billDetails.cgst_9,
+      amount_before_tax:billDetails.amount_before_tax, -->
     </tr>
   </table>
 
