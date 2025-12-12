@@ -78,7 +78,7 @@ interface Image {
 export class CreditNoteComponent {
     CreditForm!: FormGroup;
 
-
+totalAmount: number = 0;
     public visibleDialog = false;
     public selectedRow: any = null;
    public  selection: boolean = true;
@@ -322,6 +322,7 @@ if (apibody.p_transactiontype === "CREDITNOTE") {
          this.prouctsaleservice.Getreturndropdowndetails(apibody).subscribe({
             next:(res)=>{
                 this.replacecednlist=res.data
+                this.calculateTotal(this.replacecednlist)
                  this.CreditForm.patchValue({
                     p_creditNote: this.replacecednlist[0]?.cnno
                     
@@ -330,6 +331,13 @@ if (apibody.p_transactiontype === "CREDITNOTE") {
             }
          })
     }
+
+
+calculateTotal(data:any[]) {
+  this.totalAmount = data.reduce((sum, row) => {
+    return sum + (row.quantity * row.mrp);
+  }, 0);
+}
 print() {
   const printContents = document.getElementById('printSection')?.innerHTML;
   if (!printContents) return;
