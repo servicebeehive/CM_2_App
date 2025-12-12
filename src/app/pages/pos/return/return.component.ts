@@ -361,6 +361,7 @@ OnSalesHeaderCreate(data: any) {
     this.stockInService.OninsertSalesDetails(apibody).subscribe({
       next: (res) => {
         console.log(res.data);
+        this.OnGetBillNo();
         this.OnGetReturnBillNo();
          const billno = res.data[0].billno;
         console.log('return:',billno);
@@ -615,7 +616,7 @@ createDropdownPayload(returnType: string) {
     });
   }
    OnGetReturnBillNo() {
-    const payload = this.createDropdownPayload("RETURN");
+    const payload = this.createDropdownPayload("SALERETURN");
     this.returnService.getdropdowndetails(payload).subscribe({
       next: (res) => {
         const billdata: any = res.data;

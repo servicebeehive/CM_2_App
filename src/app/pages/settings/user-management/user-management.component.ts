@@ -59,6 +59,8 @@ export class UserManagementComponent {
   showGlobalSearch:boolean=true;
 
   userRoleOptions = [];
+  loggedInUserName:string = '';
+  loggedInUserRole:string=''; 
 
   constructor(
     private fb: FormBuilder,
@@ -73,6 +75,8 @@ export class UserManagementComponent {
     this.onGetUserRole();
     this.filteredUser=[...this.user];
     this.onGetUserList();
+    this.loggedInUserName=this.authService.isLogIntType().username;
+    this.loggedInUserRole=this.authService.isLogIntType().usertypename;
   }
 
   initForm() {
@@ -174,7 +178,13 @@ console.log('user role', user.usertypename)
     next:(res)=>{
       console.log('res:',res);
       this.user=res.data || [];
-      this.filteredUser=[...this.user];
+      if(this.loggedInUserRole ==='Admin' || this.loggedInUserRole==='admin'){
+          this.filteredUser=[...this.user];
+      }
+      else{
+        this.filteredUser=this.user.filter(u=>u.username === this.loggedInUserName);
+      }
+      
     },
     error:(err)=>{
       console.error(err);

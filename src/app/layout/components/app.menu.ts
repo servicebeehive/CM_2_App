@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AppMenuitem } from './app.menuitem';
 import { AuthService } from '@/core/services/auth.service';
-import { ADMIN_MENU_MODEL, SALES_MANAGER_MENU_MODEL } from '@/core/config/menu.config';
+import { ADMIN_MENU_MODEL, SALES_MANAGER_MENU_MODEL, SALES_REP_MENU_MODEL } from '@/core/config/menu.config';
 
 @Component({
     selector: 'app-menu',
@@ -43,7 +43,7 @@ export class AppMenu {
   } 
   else {
     // default fallback
-    this.model = SALES_MANAGER_MENU_MODEL;
+    this.model = SALES_REP_MENU_MODEL;
   }
     
 

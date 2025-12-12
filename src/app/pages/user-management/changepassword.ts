@@ -162,6 +162,7 @@ const payload:any={
 this.userService.OnUserHeaderCreate(payload).subscribe({
   next:(res)=>{
     console.log('result:',res);
+    console.log('resultpayload:',payload);
   },
   error:(err)=>{
     console.error(err);

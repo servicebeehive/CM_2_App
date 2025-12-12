@@ -7,7 +7,9 @@ export class ShareService {
   private readonly STORAGE_KEY = 'user_info';
   private readonly API_BODY = 'apibody';
   private clientCode:string|null = null;
-  constructor() {}
+  constructor() {
+    this.clientCode=localStorage.getItem('clientCode');
+  }
 
   // ✅ Save user data to localStorage
   setUserData(data: any): void {
@@ -35,6 +37,7 @@ export class ShareService {
 
   setClientCode(code:string){
     this.clientCode=code;
+    localStorage.setItem('clientCode',code);
   }
 
   getClientCode():string | null{
