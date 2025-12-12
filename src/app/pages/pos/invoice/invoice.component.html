@@ -96,7 +96,7 @@
                 <ng-template pTemplate="body" let-row let-i="rowIndex">
                     <tr>
                         <td>{{ row.invoice_no }}</td>
-                        <td>{{ row.invoice_date }}</td>
+                        <td>{{ row.invoice_date | date:'dd/MM/yyyy' }}</td>
                         <td>{{ row.transactiontype}}</td>
                         <td>{{ row.customer }}</td>
                         <td>{{ row.total_amount }}</td>
@@ -122,3 +122,6 @@
     <!-- Confirm Dialog -->
     <p-confirmDialog></p-confirmDialog>
 </div>
+
+
+

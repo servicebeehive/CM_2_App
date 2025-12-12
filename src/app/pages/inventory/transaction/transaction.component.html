@@ -92,14 +92,14 @@
                         </td>
                         <td>{{ row.transactiondate | date:'dd/MM/yyyy'}}</td>
                         <td>{{ row.vendorinvoice}}</td>
-                        <td>{{ row.vendorinvoicedate }}</td>
+                        <td>{{ row.vendorinvoicedate | date:'dd/MM/yyyy' }}</td>
                         <td>{{ row.supplier }}</td>
                         <td>{{ row.item_count }}</td>
                         <td>{{ row.total_amount }}</td>
                         <td>{{ row.status }}</td>
                         <td >
                             <div class="flex items-center justify-center g-2">
-                                <button pButton type="button" icon="pi pi-folder-open" class="p-button-text p-button-sm text-red-500"></button>
+                                <button pButton type="button" icon="pi pi-folder-open" class="p-button-text p-button-sm text-red-500" ></button>
                             </div>
                         </td>
                     </tr>

@@ -5,6 +5,7 @@
     <div class="flex gap-4">
       <button
         pButton
+        *ngIf="loggedInUserRole==='Admin'"
         type="button"
         label="Add User"
         icon="pi pi-plus"
@@ -54,10 +55,10 @@
             class="pi pi-pencil cursor-pointer text-blue-500"
             (click)="openEditDialog(user)"
           ></i>
-          <i
+          <!-- <i
             class="pi pi-trash ms-2 cursor-pointer text-red-500"
             (click)="deleteItem(user)"
-          ></i>
+          ></i> -->
         </td>
       </tr>
     </ng-template>

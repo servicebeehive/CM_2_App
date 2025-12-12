@@ -12,6 +12,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { InventoryService } from '@/core/services/inventory.service';
 import { UserService } from '@/core/services/user.service';
+import { AuthService } from '@/core/services/auth.service';
 
 @Component({
     selector: 'user-create',
@@ -93,15 +94,17 @@ import { UserService } from '@/core/services/user.service';
                     <label for="companylogo" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Company Logo</label>
                     <p-fileupload mode="basic" name="companylogo" url="./upload.php" accept="image/*" [maxFileSize]="1000000" styleClass="p-button-outlined p-button-plain" chooseLabel="Upload Image"></p-fileupload>
                 </div>
-
-                <div class="flex flex-col">
+                @if(loggedInUserRole==='Admin')
+                {<div class="flex flex-col">
                     <button pButton pRipple type="submit" label="Submit" class="w-auto mt-3" [disabled]="profileForm.invalid"></button>
                 </div>
 
                 <div class="flex flex-col">
                     <button pButton pRipple type="button" label="Close" class="w-auto mt-3" routerLink="/layout"></button>
                 </div>
+                }
             </div>
+        
             <!-- </div> -->
         </form>
     </div>`
@@ -110,6 +113,7 @@ export class UserCreate {
     fb = inject(FormBuilder);
     userList: any[] = [];
     countries: any[] = [];
+    loggedInUserRole:string='';
     profileForm: FormGroup = this.fb.group({
         companyname: ['', Validators.maxLength(50)],
         companyemail: ['', [Validators.email, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/), Validators.maxLength(50)]],
@@ -124,7 +128,7 @@ export class UserCreate {
         companyphone: ['', Validators.pattern(/^[0-9]{10}$/)]
     });
     
-    constructor(private inventoryService:InventoryService, private userService : UserService){}
+    constructor(private inventoryService:InventoryService, private userService : UserService,private authservice:AuthService){}
     ngOnInit() {
        
         this.countries = [
@@ -140,7 +144,9 @@ export class UserCreate {
             { name: 'Spain', code: 'ES' },
             { name: 'United States', code: 'US' }
         ];
+        this.loggedInUserRole=this.authservice.isLogIntType().usertypename;
          this.onGetData();
+        
     }
     allowOnlyDigits(event: KeyboardEvent) {
         const char = event.key;
@@ -194,6 +200,12 @@ export class UserCreate {
             next:(res)=>
             { if(res.data){
                     this.patchFromData(res.data[0]);
+                    if(this.loggedInUserRole !=='Admin'){
+                        this.profileForm.disable();
+                    }
+                    else{
+                        this.profileForm.enable();
+                    }
             }
             },
             error: (err) => console.log(err)

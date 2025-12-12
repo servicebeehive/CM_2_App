@@ -189,25 +189,25 @@ selectedFilter = 'MONTH';  // default value
                         label: 'Total Item -  Sold & Return',
                         icon: 'pi pi-box',
                         value: data.total_items,
-                        routerLink: '/layout/inventory/overview'
+                        // routerLink: '/layout/inventory/overview'
                     },
                     {
                         label: 'Purchase',
                         icon: 'pi pi-shopping-cart',
                         value: data.total_purchase,
-                        routerLink: '/layout/pos/sales'
+                        routerLink: '/layout/inventory/transaction'
                     },
                     {
                         label: 'Sale',
                         icon: 'pi pi-arrow-down-left',
                         value: data.total_sale,
-                        routerLink: '/layout/inventory/stock-in'
+                        routerLink: '/layout/pos/invoice'
                     },
                     {
                         label: 'Return',
                         icon: 'pi pi-arrow-up',
                         value: data.total_return,
-                        routerLink: '/layout/inventory/stock-in'
+                        routerLink: '/layout/pos/invoice'
                     },
                 ];
                 

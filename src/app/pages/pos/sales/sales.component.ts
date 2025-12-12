@@ -750,6 +750,11 @@ updateTotal(i: number) {
         const billno=res.data[0]?.billno
         this.OnGetBillNo()
       this.salesForm.controls['p_billno'].setValue(billno)
+       if (res.data && res.data.length > 0) {
+        this.salesForm.patchValue({
+          status: 'Done'
+        });
+      }
         console.log('res',res);
         
         this.messageService.add({

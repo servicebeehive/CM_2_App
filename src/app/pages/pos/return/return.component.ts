@@ -333,7 +333,7 @@ else{
       p_currencyid: Number(body.p_currencyid) || 0,
       p_gsttran: body.p_gsttran === true ? "Y" :
         body.p_gsttran === false ? "N" : "N",
-      p_status: body.p_status || "Complete",
+      p_status: body.p_status || "Done",
       p_isactive: "Y",
       p_linktransactionid:body.p_transactionid ?? 0,
       // p_replacesimilir: body.p_replacesimilir || "",
@@ -361,6 +361,7 @@ OnSalesHeaderCreate(data: any) {
     this.stockInService.OninsertSalesDetails(apibody).subscribe({
       next: (res) => {
         console.log(res.data);
+        this.OnGetBillNo();
         this.OnGetReturnBillNo();
          const billno = res.data[0].billno;
         console.log('return:',billno);
@@ -605,7 +606,7 @@ createDropdownPayload(returnType: string) {
     };
   }
     OnGetBillNo() {
-    const payload = this.createDropdownPayload("NEWTRANSACTIONID");
+    const payload = this.createDropdownPayload("SALERETURN");
     this.returnService.getdropdowndetails(payload).subscribe({
       next: (res) => {
         const billdata: any = res.data;

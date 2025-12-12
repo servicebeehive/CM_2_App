@@ -134,7 +134,7 @@
 
          <ng-template pTemplate="body" let-row let-i="rowIndex">
           <tr>
-           <td *ngFor="let col of columns" [ngClass]="col.widthClass">{{row[col.fields]}}</td>
+           <td *ngFor="let col of columns" [ngClass]="col.widthClass">{{ col.formatter?col.formatter(row[col.fields]):row[col.fields]}}</td>
           </tr>
         </ng-template>
 
