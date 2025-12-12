@@ -616,7 +616,7 @@ createDropdownPayload(returnType: string) {
     });
   }
    OnGetReturnBillNo() {
-    const payload = this.createDropdownPayload("SALERETURN");
+    const payload = this.createDropdownPayload("RETURN");
     this.returnService.getdropdowndetails(payload).subscribe({
       next: (res) => {
         const billdata: any = res.data;
