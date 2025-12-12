@@ -143,13 +143,19 @@ console.log('user role', user.usertypename)
     p_email: user.email,
     checked:(user.isactive) === 'Y' 
     });
-    if(user.username === 'admin' || user.username === 'Admin'){
-     this.userForm.get('p_utypeid')?.disable(); 
+    if(user.usertypecode === 'Admin'){
+   
     this.userForm.get('checked')?.disable();
   }
    else {
-    this.userForm.get('p_utypeid')?.enable();
+    
     this.userForm.get('checked')?.enable();
+  }
+  if(this.loggedInUserName==='admin'){
+  this.userForm.get('p_utypeid')?.enable(); 
+  }
+  else{
+this.userForm.get('p_utypeid')?.disable();
   }
     this.userForm.get('p_pwd')?.setValue('');
   this.userForm.get('conPassword')?.setValue('');
@@ -235,22 +241,6 @@ console.log('user role', user.usertypename)
     }
   }
 
-  /** 🧹 Delete user **/
-  deleteItem(user: any) {
-    this.confirmationService.confirm({
-      message: `Are you sure you want to delete <b>${user.userName || user.p_uname}</b>?`,
-      header: 'Confirm Delete',
-      icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Yes',
-      rejectLabel: 'No',
-      acceptButtonStyleClass: 'p-button-danger',
-      rejectButtonStyleClass: 'p-button-secondary',
-      accept: () => {
-      this.user=this.user.filter((u)=>u.id !==user.id);
-      this.applyGlobalFilterManual();
-      },
-    });
-  }
   createDropdownPayload(returnType: string) {
   return {
     p_username: "admin",

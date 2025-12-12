@@ -109,10 +109,27 @@ export class TransactionReportComponent {
             this.filteredProducts = [];
             return;
         }
-        else if (type === 'SALE' || type === 'REPLACE') {
+        const formatDate=(dateValue:any): string =>{
+            if(!dateValue)
+                return '';
+            if(typeof dateValue ==='string' && /^\d{2}\/\d{2}\/\d{4}$/.test(dateValue)){
+                return dateValue;
+            }
+            try{
+                const date=new Date(dateValue);
+                if (!isNaN(date.getTime())) {
+                const day = date.getDate().toString().padStart(2, '0');
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const year = date.getFullYear();
+                return `${day}/${month}/${year}`;
+            }
+        } catch {}
+            return dateValue;
+        };
+         if (type === 'SALE' || type === 'REPLACE') {
             this.columns = [
                 { fields: 'invoiceno', header: 'Invoice No' },
-                { fields: 'invoicedate', header: 'Invoice Date' },
+                { fields: 'invoicedate', header: 'Invoice Date',formatter:formatDate },
                 { fields: 'category', header: 'Category', widthClass: 'fixed-category-col' },
                 { fields: 'item', header: 'Item', widthClass: 'fixed-item-col' },
                 { fields: 'uom', header: 'UOM' },
@@ -128,7 +145,7 @@ export class TransactionReportComponent {
         else if (type === 'RETURN' ) {
             this.columns = [
                 { fields: 'returninvoiceno', header: 'Invoice No' },
-                { fields: 'returninvoicedate', header: 'Invoice Date' },
+                { fields: 'returninvoicedate', header: 'Invoice Date',formatter:formatDate },
                 { fields: 'saleinvoiceno', header: 'Sale Invoice No', widthClass: 'fixed-saleinvoice-col' },
                 { fields: 'category', header: 'Category', widthClass: 'fixed-category-col' },
                 { fields: 'item', header: 'Item', widthClass: 'fixed-item-col' },
@@ -145,9 +162,9 @@ export class TransactionReportComponent {
         else if (type === 'PURCHASE') {
             this.columns = [
                 { fields: 'purchaseid', header: 'Purchase id' },
-                { fields: 'purchasedate', header: 'Purchase Date' },
+                { fields: 'purchasedate', header: 'Purchase Date',formatter:formatDate },
                 { fields: 'invoiceno', header: 'Invoice No' },
-                { fields: 'invoicedate', header: 'Invoice Date' },
+                { fields: 'invoicedate', header: 'Invoice Date',formatter:formatDate },
                 { fields: 'category', header: 'Category', widthClass: 'fixed-category-col' },
                 { fields: 'item', header: 'Item', widthClass: 'fixed-item-col' },
                 { fields: 'uom', header: 'UOM' },
@@ -163,7 +180,7 @@ export class TransactionReportComponent {
                 { fields: 'debitnote', header: 'Debit Note' },
                 { fields: 'creditnote', header: 'Credit Note' },
                 { fields: 'repinvoiceno', header: 'Invoice No' },
-                { fields: 'repinvoicedate', header: 'Invoice Date' },
+                { fields: 'repinvoicedate', header: 'Invoice Date',formatter:formatDate },
                 { fields: 'category', header: 'Category', widthClass: 'fixed-category-col' },
                 { fields: 'item', header: 'Item', widthClass: 'fixed-item-col' },
                 { fields: 'uom', header: 'UOM' },

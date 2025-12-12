@@ -82,7 +82,7 @@ interface ExportColumn {
                     </p-select> -->
             </div>
         </div>
-        <div class="min-h-[350px]">
+        <div class="min-h-[400px]">
         <p-table 
             #dt 
             [rows]="5"

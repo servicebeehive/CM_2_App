@@ -81,8 +81,8 @@
            <th>Active</th>
            <th>Warranty (in Mon)</th>
             <th>Location</th>
-            <th>Last Updated By</th>
-            <th>Last Updated</th>
+            <th>Last Upd By</th>
+            <th>Last Upd On</th>
           </tr>
         </ng-template>
 
@@ -103,7 +103,7 @@
             <td>{{ row.warrentyperiod}}</td>
             <td>{{ row.location }}</td>
             <td>{{ row.updatedby}}</td>
-            <td>{{ row.updatedon}}</td>
+            <td>{{ row.updatedon | date:'dd/MM/yyyy'}}</td>
           </tr>
         </ng-template>
 

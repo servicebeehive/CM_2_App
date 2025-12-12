@@ -38,7 +38,7 @@ export class AppMenu {
   if (this.role === 'Admin') {
     this.model = ADMIN_MENU_MODEL;
   } 
-  else if (this.role === 'SalesManger') {
+  else if (this.role === 'SalesManager') {
     this.model = SALES_MANAGER_MENU_MODEL;
   } 
   else {
