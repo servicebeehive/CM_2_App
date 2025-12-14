@@ -71,7 +71,7 @@ export class TransactionReportComponent {
     categoryOptions = [];
     itemOptions = [];
     products: StockIn[] = [];
-    filteredProducts: StockIn[] = [];
+    filteredProducts: any[] = [];
     
     reportTypeOptions: any[] = [
         { label: 'Sale', value: 'SALE' },
@@ -435,7 +435,109 @@ export class TransactionReportComponent {
         this.OnGetCategory();
         this.OnGetItem();
     }
+    downloadExcel() {
+    if (!this.filteredProducts || this.filteredProducts.length === 0) {
+        this.errorSuccess('No data available to download.');
+        return;
+    }
+
+    // Generate CSV content
+    const csvContent = this.generateCSV();
     
+    // Create and trigger download
+    this.downloadFile(csvContent, 'text/csv;charset=utf-8;', '.csv');
+    
+    this.showSuccess('Excel file downloaded successfully!');
+}
+
+private generateCSV(): string {
+    // Create header row
+    const headers = this.columns.map(col => this.escapeCSV(col.header));
+    const headerRow = headers.join(',');
+    
+    // Create data rows
+    const dataRows = this.filteredProducts.map(item => {
+        const row = this.columns.map(col => {
+            const value = item[col.fields];
+            const formattedValue = col.formatter ? col.formatter(value) : value;
+            return this.escapeCSV(formattedValue);
+        });
+        return row.join(',');
+    });
+    
+    // Combine header and data rows
+    return [headerRow, ...dataRows].join('\n');
+}
+
+private escapeCSV(value: any): string {
+    if (value === null || value === undefined || value === '') {
+        return '';
+    }
+    
+    const stringValue = String(value);
+    
+    // Escape double quotes
+    const escapedValue = stringValue.replace(/"/g, '""');
+    
+    // Wrap in quotes if contains comma, double quote, or newline
+    if (/[,"\n\r]/.test(escapedValue)) {
+        return `"${escapedValue}"`;
+    }
+    
+    return escapedValue;
+}
+
+private downloadFile(data: string, mimeType: string, extension: string) {
+    const blob = new Blob([data], { type: mimeType });
+    const url = window.URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = this.generateFileName() + extension;
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    window.URL.revokeObjectURL(url);
+}
+
+private generateFileName(): string {
+    const reportType = this.reportForm.get('reportType')?.value || 'Transaction';
+    const fromDate = this.reportForm.get('fromDate')?.value;
+    const toDate = this.reportForm.get('toDate')?.value;
+    
+    let fileName = `${reportType}_Report`;
+    
+    if (fromDate && toDate) {
+        const fromStr = this.datepipe.transform(fromDate, 'yyyy-MM-dd');
+        const toStr = this.datepipe.transform(toDate, 'yyyy-MM-dd');
+        fileName += `_${fromStr}_to_${toStr}`;
+    }
+    
+    return fileName;
+}
+
+onDownloadClick() {
+    // Check if form is valid
+    if (this.reportForm.invalid) {
+        this.errorSuccess('Please fill all required fields before downloading.');
+        return;
+    }
+    
+    // Check if we have data
+    if (!this.filteredProducts || this.filteredProducts.length === 0) {
+        if (!this.showData) {
+            this.errorSuccess('Please click "Display" first to load data before downloading.');
+            return;
+        } else {
+            this.errorSuccess('No data available to download.');
+            return;
+        }
+    }
+    
+    this.downloadExcel();
+}
     showSuccess(message: string) {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
     }

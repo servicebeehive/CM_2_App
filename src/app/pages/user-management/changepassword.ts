@@ -120,7 +120,9 @@ import { UserService } from '@/core/services/user.service';
 })
 export class NewPassword {
   LayoutService = inject(LayoutService);
-  constructor(private autherService:AuthService, private userService:UserService){}
+  constructor(private autherService:AuthService, private userService:UserService){
+    
+  }
   fb = inject(FormBuilder);
   isDarkTheme = computed(() => this.LayoutService.isDarkTheme());
 
@@ -147,15 +149,16 @@ export class NewPassword {
   }
 
 changePassword(data:any){
+  const userName= this.autherService.isLogIntType().username;
 const payload:any={
      
     "p_ufullname":"",
-    "p_uname": data.p_uname,
-    "p_pwd": data.p_pwd,
+    "p_uname": userName,
+    "p_pwd": data.newPassword,
     "p_active": "",
     "p_operationtype": "CHANGE",
     "p_phone": "",
-    "p_utypeid": data.p_utypeid,
+    "p_utypeid": '',
     "p_email": "",
     "p_oldpwd": data.oldPassword,
 };

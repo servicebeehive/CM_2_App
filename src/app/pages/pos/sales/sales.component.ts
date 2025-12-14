@@ -954,55 +954,31 @@ printInvoice() {
   popupWindow!.document.open();
 
   popupWindow!.document.write(`
-    <html>
-      <head>
-        <title>Invoice Print</title>
-
-        <style>
-
-          /* Force Single Page */
-          @page {
-            size: A4;
-            margin:0;
-          }
-
-          body {
-            font-family: Arial;
-            padding: 10px;
-            zoom: 80%; /* Adjust 60–100% until your invoice fits on one page */
-          }
-
-          table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            page-break-inside: avoid; 
-          }
-
-          th, td { 
-            border: 1px solid #000; 
-            padding: 5px;
-            font-size: 12px;
-          }
-
-          hr { margin: 10px 0; }
-
-          /* Avoid breaking inside elements */
-          .no-break, table, tr, td {
-            page-break-inside: avoid !important;
-          }
-
-        </style>
-      </head>
-
-      <body onload="window.print(); window.close();">
-        <div class="no-break">
-          ${printContents}
-        </div>
-      </body>
-    </html>
+     <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Invoice Print</title>
+                        <style>
+                            /* Your print styles here */
+                            body { font-family: Arial, sans-serif; }
+                            /* Add more styles as needed */
+                        </style>
+                    </head>
+                    <body>
+                        ${printContents}
+                        <script>
+                            window.onload = function() {
+                                window.print();
+                                window.onafterprint = function() {
+                                    window.close();
+                                };
+                            };
+                        </script>
+                    </body>
+                    </html>
   `);
 
- // popupWindow!.document.close();
+ popupWindow!.document.close();
 }
 
 

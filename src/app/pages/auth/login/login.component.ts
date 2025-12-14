@@ -16,6 +16,7 @@ import { MessageModule } from 'primeng/message';
 import { AuthService } from '@/core/services/auth.service';
 import { Select } from "primeng/select";
 import { ShareService } from '@/core/services/shared.service';
+import { MessageService } from 'primeng/api';
 @Component({
   selector: 'app-login',
     templateUrl: './login.component.html',
@@ -51,7 +52,7 @@ export class LoginComponent  implements OnInit{
     isDarkTheme = computed(() => this.LayoutService.isDarkTheme());
  loginForm!: FormGroup;
 constructor(private fb: FormBuilder,private route:Router, private authservice:AuthService,
-  private sharedService:ShareService
+  private sharedService:ShareService,private messageService:MessageService
 ) {
 
 }
@@ -89,6 +90,11 @@ forgetPassword(){
                     this.route.navigate(['/layout']);
                     
                 }
+                else{
+                   let message='Wrong UserId Or Password!!';
+            this.errorSuccess(message);
+            
+                }
             },
           error:(res)=>{
             console.log(res)
@@ -101,5 +107,7 @@ forgetPassword(){
       this.loginForm.markAllAsTouched();
     }
   }
-
+ errorSuccess(message: string) {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: message });
+    }
 }

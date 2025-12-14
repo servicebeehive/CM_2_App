@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -51,7 +51,7 @@ import { AuthService } from '@/core/services/auth.service';
     ],
     templateUrl: './item-report.component.html',
     styleUrl: './item-report.component.scss',
-    providers: [ConfirmationService]
+    providers: [ConfirmationService, DatePipe]
 })
 export class ItemReportComponent {
     reportForm!: FormGroup;
@@ -66,7 +66,8 @@ export class ItemReportComponent {
     categoryOptions = [];
     itemOptions = [];
     products: StockIn[] = [];
-    filteredProducts: StockIn[] = [];
+    filteredProducts: any[] = [];
+    columns:any[]=[];
     
     reportTypeOptions: any[] = [
         { label: 'Item List', value: 'ITEMLIST' },
@@ -80,7 +81,8 @@ export class ItemReportComponent {
         private fb: FormBuilder,
         private inventoryService: InventoryService,
         private authService: AuthService,
-        private messageService: MessageService
+        private messageService: MessageService,
+        private datePipe: DatePipe
     ) {}
     
     ngOnInit(): void {
@@ -89,7 +91,7 @@ export class ItemReportComponent {
             reportType: ['', Validators.required],
             category: [{value: '', disabled: true}],
         });
-        
+        this.setTableColumns();
         this.loadAllDropdowns();
         
         this.reportForm.get('reportType')?.valueChanges.subscribe(selected => {
@@ -238,7 +240,123 @@ export class ItemReportComponent {
         this.OnGetCategory();
         this.OnGetItem();
     }
+   private setTableColumns(): void {
+    const formatDate = (dateValue: any): string => {
+        if (!dateValue) return '';
+        try {
+            const date = new Date(dateValue);
+            if (!isNaN(date.getTime())) {
+                return this.datePipe.transform(date, 'dd/MM/yyyy') || '';
+            }
+        } catch {}
+        return String(dateValue);
+    };
     
+    this.columns = [
+        { fields: 'itemsku', header: 'Item Code' },
+        { fields: 'itemname', header: 'Item Name' },
+        { fields: 'categoryname', header: 'Category' },
+        { fields: 'currentstock', header: 'Stock' },
+        { fields: 'uomname', header: 'UOM' },
+        { fields: 'quantity', header: 'Qty' },
+        { fields: 'costprice', header: 'Cost Price' },
+        { fields: 'saleprice', header: 'MRP' },
+        { fields: 'gstitem', header: 'GST Item' },
+        { fields: 'isactive', header: 'Active' },
+        { fields: 'warrentyperiod', header: 'Warranty (in Mon)' },
+        { fields: 'location', header: 'Location' },
+        { fields: 'updatedby', header: 'Last Upd By' },
+        { fields: 'updatedon', header: 'Last Upd On', formatter: formatDate }
+    ];
+}
+
+    downloadExcel(){
+       if(!this.filteredProducts || this.filteredProducts.length===0){
+        this.errorSuccess('No data available to download.');
+        return;
+       }
+       const csvContent= this.generateCSV();
+        this.downloadFile(csvContent, 'text/csv;charset=utf-8;', '.csv');
+        
+        this.showSuccess('Excel file downloaded successfully!');
+    }
+     
+    private generateCSV():string{
+         const headers = this.columns.map(col => this.escapeCSV(col.header));
+    const headerRow = headers.join(',');
+    
+    // Create data rows
+    const dataRows = this.filteredProducts.map(item => {
+        const row = this.columns.map(col => {
+            const value = item[col.fields];
+            const formattedValue = col.formatter ? col.formatter(value) : value;
+            return this.escapeCSV(formattedValue);
+        });
+        return row.join(',');
+    });
+    
+    // Combine header and data rows
+    return [headerRow, ...dataRows].join('\n');
+    }
+    private escapeCSV(value:any):string{
+        if(value===null || value === undefined || value===''){
+            return '';
+        }
+        const stringValue = String(value);
+        const escapedValue = stringValue.replace(/"/g,'""');
+        if(/[,"\n\r]/.test(escapedValue)){
+            return `"${escapedValue}"`;
+        }
+        return escapedValue;
+    }
+    private downloadFile(data:string,mimeType:string,extension:string){
+        const blob=new Blob([data],{type:mimeType});
+        const url= window.URL.createObjectURL(blob);
+        const link=document.createElement('a');
+        link.href=url;
+        link.download=this.generateFileName() + extension;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+    }
+    private generateFileName(): string {
+        const reportType = this.reportForm.get('reportType')?.value || 'Item';
+        const category = this.reportForm.get('category')?.value;
+        const item = this.reportForm.get('item')?.value;
+        const currentDate = this.datePipe.transform(new Date(), 'yyyy-MM-dd_HH-mm');
+        
+        let fileName = `${reportType}_Report_${currentDate}`;
+        
+        if (category) {
+            fileName += `_Category_${category}`;
+        }
+        
+        if (item) {
+            fileName += `_Item_${item}`;
+        }
+        
+        return fileName;
+    }
+    onDownloadClick(){
+    if(this.reportForm.invalid){
+        this.errorSuccess('Please fill all required fields before downloading.');
+        return;
+    }
+    
+    if(!this.filteredProducts || this.filteredProducts.length === 0){
+        if(!this.showData){
+            this.errorSuccess('Please click "Display" first to load data before downloading.');
+            return;
+        } else {
+            this.errorSuccess('No data available to download.');
+            return; 
+        }
+    }
+    
+    this.downloadExcel(); 
+}
+
     showSuccess(message: string) {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
     }

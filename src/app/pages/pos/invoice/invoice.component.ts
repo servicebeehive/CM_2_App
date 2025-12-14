@@ -91,6 +91,8 @@ export class InvoiceComponent {
         statusOptions:any[]= [];
         products: StockIn[] = [];
         filteredProducts: StockIn[] = [];
+        invoiceData:any[]=[];
+        invoiceSummary:any={};
         constructor(
             private fb: FormBuilder,
             private inventoryService: InventoryService,
@@ -106,7 +108,28 @@ export class InvoiceComponent {
                p_cusname:[''],
                 fromDate: [this.today,Validators.required],
                 toDate:[this.today,Validators.required],
-                status:['']
+                status:[''],
+
+                //PRINT SECTION VARIABLE
+                p_billno: [''],
+            p_transactiondate: [''],
+            p_transactionid: [''],
+            p_customername: [''],
+            p_customeraddress: [''],
+            p_mobileno: [''],
+            p_customergstin: [''],
+            p_customerstate: [''],
+            p_totalsale: [''],
+            p_totalpayable: [''],
+            p_disctype: [''],
+            p_overalldiscount: [''],
+            discountvalueper: [''],
+            p_roundoff: [''],
+            amount_before_tax: [''],
+            cgst_9: [''],
+            sgst_9: [''],
+            tax_18: [''],
+            p_totalqty: [''],
             },{validators:this.dateRangeValidator}
         );
        this.loadAllDropdowns();
@@ -124,7 +147,6 @@ dateRangeValidator(form:FormGroup){
   getStockArray(): FormArray {
         return this.invoiceForm.get('p_stock') as FormArray;
     }
-   
     onGetStockIn() {
       this.products=this.inventoryService.productItem || [];
     }
@@ -144,9 +166,7 @@ dateRangeValidator(form:FormGroup){
                 p_mobile: p_mobile || null,
                 p_customer: p_cusname || null,
                 p_status: status || null,
-                p_username:'admin',
-                    
-                      
+                p_username:'admin',            
             };
             this.inventoryService.getinvoicedetail(payload).subscribe({
                 next :(res:any) =>{
@@ -189,6 +209,7 @@ dateRangeValidator(form:FormGroup){
         });
         this.filteredProducts = [];
          this.products = [];
+         this.invoiceData=[];
     }
     createDropdownPayload(returnType: string) {
         return {
@@ -232,6 +253,136 @@ dateRangeValidator(form:FormGroup){
     errorSuccess(message: string) {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: message });
     }
+
+   printInvoice(row: any) {
+    
+    // Create payload FIRST
+    const payload = {
+        "p_username": 'admin',
+        "p_returntype": 'SALEPRINT',
+        "p_returnvalue": row.invoice_no
+    };
+    
+    console.log('Payload:', payload); // Debug: Check if payload is correct
+    
+    // Make API call
+    this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+        next: (res) => {
+            console.log('API Result:', res.data);
+            if(Array.isArray(res.data) && res.data.length>0){
+                this.invoiceData=res.data;
+
+            }
+            
+            this.populateInvoiceForm(res.data[0]);
+            setTimeout(()=>{
+                this.openPrintWindow();
+            },100); 
+        },
+        error: (err) => {
+            console.error('API Error:', err);
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Failed to load invoice data'
+            });
+        } 
+    });
+}private calculateInvoiceSummary(items:any[]){
+    if(!items || items.length===0) return;
+    
+    const firstItem=items[0];
+    const totalQty = items.reduce((sum,item)=>sum +(item.quantity || 0),0);
+    this.invoiceSummary={
+         billno: firstItem.billno,
+        transactiondate: firstItem.transactiondate,
+        transactionid: firstItem.transactionid,
+        customername: firstItem.customername,
+        mobileno: firstItem.mobileno,
+        status: firstItem.status,
+        
+        // Totals (already calculated per invoice, not per item)
+        totalsale: firstItem.totalsale,
+        totalpayable: firstItem.totalpayable,
+        discount: firstItem.discount,
+        discounttype: firstItem.discounttype,
+        discountvalueper: firstItem.discountvalueper,
+        roundoff: firstItem.roundoff,
+        
+        // Tax amounts (already calculated per invoice)
+        cgst_9: firstItem.cgst_9,
+        sgst_9: firstItem.sgst_9,
+        tax_18: firstItem.tax_18,
+        amount_before_tax: firstItem.amount_before_tax,
+        
+        // Calculated values
+        totalqty: totalQty,
+        
+        // Item count
+        itemCount: items.length
+    };
+      console.log('Invoice Summary:', this.invoiceSummary);
+}
+ private populateInvoiceForm(data:any){
+    if(!data) return;
+            this.invoiceForm.patchValue({
+                p_billno:data.billno || '',
+                 p_transactiondate: data.transactiondate || '',
+            p_transactionid: data.transactionid || '',
+            p_customername: data.customername ||'',
+            p_mobileno: data.mobileno || '',
+            p_totalsale: data.totalsale || 0,
+            p_totalpayable: data.totalpayable || 0,
+            p_disctype: data.discounttype || 'N',
+            p_overalldiscount: data.discount || 0,
+            discountvalueper: data.discount || 0,
+            p_roundoff: data.roundoff || 0,
+            amount_before_tax: data.amount_before_tax || 0,
+            cgst_9: data.cgst_9 || 0,
+            sgst_9: data.sgst_9 || 0,
+            tax_18: data.tax_18 || 0,
+            p_totalqty: data.quantity || 0
+            });
+            
+        }
+        private openPrintWindow(){
+             // Now open print window AFTER getting data
+            const printContents = document.getElementById('invoicePrintSection')?.innerHTML;
+            if (!printContents) {
+                console.error('Invoice print section not found');
+                return;
+            }
+
+            const popupWindow = window.open('', '_blank', 'width=900,height=1000');
+            if (popupWindow) {
+                popupWindow.document.open();
+                popupWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Invoice Print</title>
+                        <style>
+                            /* Your print styles here */
+                            body { font-family: Arial, sans-serif; }
+                            /* Add more styles as needed */
+                        </style>
+                    </head>
+                    <body>
+                        ${printContents}
+                        <script>
+                            window.onload = function() {
+                                window.print();
+                                window.onafterprint = function() {
+                                    window.close();
+                                };
+                            };
+                        </script>
+                    </body>
+                    </html>
+                `);
+                popupWindow.document.close();
+            }
+        }
 }
 
 

@@ -104,7 +104,7 @@
                         <td>{{ row.status }}</td>
                         <td class="text-center w-[60px]">
                             <div class="flex g-2">
-                                <button pButton type="button" icon="pi pi-print" disabled class="p-button-text p-button-sm"></button>
+                                <button pButton type="button" icon="pi pi-print" class="p-button-text p-button-sm" printSectionId="invoicePrintSection" (click)="printInvoice(row)" ></button>
                                 <button pButton type="button" icon="pi pi-folder-open" class="p-button-text p-button-sm text-red-500"></button>
                             </div>
                         </td>
@@ -125,3 +125,254 @@
 
 
 
+<!-- ================================
+     PRINT SECTION (INVOICE)
+================================= -->
+<div id="invoicePrintSection" style="width:900px; margin:auto; font-family:Arial;">
+
+  <h3 style="text-align: center;">TAX INVOICE</h3>
+
+  <!-- ================= HEADER SECTION ================= -->
+  <table width="100%" border="1" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
+    <tr>
+
+      <!-- LEFT SIDE (COMPANY + BUYER INFO) -->
+      <td width="60%" style="vertical-align:top; padding: 6px;">
+
+        <strong>SHRISTI ELECTRICAL</strong><br>
+        SHOP NO.-7 SAPNA TALKIES COMPLEX,<br>
+        NANDINI ROAD, BHILAI<br>
+        GSTIN/UIN: 22AOCPY0439F1Z5<br>
+        State Name: Chhattisgarh, Code: 22<br>
+        E-Mail : {{'shristielectricalgw@gmail.com'}}
+        <br>
+
+        <hr style="margin:5px 0;">
+
+        <strong>Buyer (Bill to)</strong><br><br>
+
+        <strong>{{ invoiceForm.get('p_customername')?.value || ''}}</strong><br>
+        {{ invoiceForm.get('p_customeraddress')?.value  || ''}}<br>
+        Mobile: {{ invoiceForm.get('p_mobileno')?.value || '' }}<br>
+        <br>
+
+        GSTIN/UIN : {{ invoiceForm.get('p_customergstin')?.value || '-' }}<br>
+        State Name : {{ invoiceForm.get('p_customerstate')?.value || '-' }}
+      </td>
+
+      <!-- RIGHT SECTION (INVOICE DETAILS) -->
+      <td width="40%" style="vertical-align:top;">
+        <table width="100%" border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;">
+
+          <tr>
+            <td><strong>Invoice No.</strong></td>
+            <td>{{ invoiceForm.get('p_billno')?.value }}</td>
+          </tr>
+
+          <tr>
+            <td><strong>Dated</strong></td>
+            <td>{{ invoiceForm.get('p_transactiondate')?.value | date:'dd-MMM-yy' }}</td>
+          </tr>
+
+          <tr>
+            <td>Delivery Note</td>
+            <td>-</td>
+          </tr>
+
+          <tr>
+            <td><strong>Mode/Terms of Payment</strong></td>
+            <td><strong>BALANCE</strong></td>
+          </tr>
+
+          <tr>
+            <td>Reference No. & Date</td>
+            <td>{{ invoiceForm.get('p_transactionid')?.value }} dt. {{ invoiceForm.get('p_transactiondate')?.value | date:'dd-MMM-yy' }}</td>
+          </tr>
+
+          <tr>
+            <td>Other References</td>
+            <td>-</td>
+          </tr>
+
+          <tr>
+            <td>Buyer's Order No.</td>
+            <td>-</td>
+          </tr>
+
+          <tr>
+            <td>Dated</td>
+            <td>-</td>
+          </tr>
+
+          <tr>
+            <td>Dispatch Doc No.</td>
+            <td>-</td>
+          </tr>
+
+          <tr>
+            <td>Delivery Note Date</td>
+            <td>-</td>
+          </tr>
+
+          <tr>
+            <td>Dispatched through</td>
+            <td>-</td>
+          </tr>
+
+          <tr>
+            <td>Destination</td>
+            <td>-</td>
+          </tr>
+
+          <tr>
+            <td>Terms of Delivery</td>
+            <td>-</td>
+          </tr>
+
+        </table>
+      </td>
+
+    </tr>
+  </table>
+
+  <!-- ================= ITEM TABLE ================= -->
+  <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;font-size:14px;margin-top:10px;">
+    <thead>
+      <tr style="text-align:center;font-weight:bold;">
+          <tr style="text-align:center;font-weight:bold;">
+        <td>Sl No.</td>
+        <td>Description of Goods</td>
+        <td>HSN/SAC</td>
+        <td>Quantity</td>
+        <td>Rate</td>
+        <td>per</td>
+        <td>Disc  %</td>
+        <td>Amount</td>
+      </tr>
+    </thead>
+
+    <tbody>
+
+      <tr *ngFor="let item of invoiceData; let i = index">
+        <td>{{ i + 1 }}</td>
+        <td>{{ item.itemname}}</td>
+        <td>8544</td>
+        <td>{{ item.quantity }} {{item.uomname}}</td>
+        <td>₹{{ item.mrp | number:'1.2-2' }}</td>
+        <td>{{item.uomname}}</td>
+        <td>{{ item.discount || '' }}</td>
+        <td>₹{{ (item.quantity * item.mrp) | number:'1.2-2' }}</td>
+      </tr>
+
+      <!-- SUB TOTAL -->
+      <tr>
+        <td colspan="7" style="text-align:right;font-weight:bold;">Total</td>
+        <td>₹{{ invoiceForm.get('p_totalsale')?.value | number:'1.2-2' }}</td>
+        <!-- <td>₹{{ invoiceForm.get('p_totalpayable')?.value | number:'1.2-2' }}</td> -->
+      </tr>
+        <tr>
+        <td colspan="7" style="text-align:right;font-weight:bold;"> Discount {{invoiceForm.get('p_disctype')?.value?invoiceForm.get('p_overalldiscount')?.value+'%':''}}</td>
+      
+        <td>{{!invoiceForm.get('p_disctype')?.value?'₹':''}}{{!invoiceForm.get('p_disctype')?.value?invoiceForm.get('p_overalldiscount')?.value:'₹'+invoiceForm.get('discountvalueper')?.value  }}
+          
+        </td>
+   
+        
+      </tr>
+        <!-- <tr *ngIf="invoiceForm.get('p_disctype')?.value==='Y'">
+        <td colspan="7" style="text-align:right;font-weight:bold;"> Discount</td>
+      
+        <td>YES</td>
+      </tr> -->
+      
+     
+
+
+      <!-- CGST -->
+      <!-- <tr>
+        <td colspan="7" style="text-align:right;"><b>CGST</b></td>
+        <td>{{ invoiceForm.get('p_cgst')?.value }}</td>
+      </tr>
+
+    
+      <tr>
+        <td colspan="7" style="text-align:right;"><b>SGST</b></td>
+        <td>{{ invoiceForm.get('p_sgst')?.value }}</td>
+      </tr> -->
+
+      <!-- ROUND OFF -->
+      <tr>
+        <td colspan="7" style="text-align:right;"><b>ROUND OFF +/-</b></td>
+        <td>{{ invoiceForm.get('p_roundoff')?.value|number:'1.2-2' }}</td>
+      </tr>
+
+    </tbody>
+
+    <!-- GRAND TOTAL -->
+    <tfoot>
+      <tr style="font-weight:bold;">
+        <!-- <td colspan="3" style="text-align:right;">Total Qty</td>
+        <td>{{ invoiceForm.get('p_totalqty')?.value }} PCS</td> -->
+        <td colspan="7" align="right" style="text-align: right; font-weight: bold;">Grand Total</td>
+        <td style="font-weight: bold;">₹{{ invoiceForm.get('p_totalpayable')?.value | number:'1.2-2' }}</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <!-- ================= AMOUNT IN WORDS ================= -->
+  <div style="padding:10px;font-size:14px;">
+    <strong>Amount Chargeable (in words):</strong>
+    <!-- {{ amountInWords }} --> -
+  </div>
+
+  <!-- ================= GST SUMMARY ================= -->
+  <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;font-size:14px;margin-top:10px;">
+    <tr style="font-weight:bold;text-align:center;">
+      <td>HSN/SAC</td>
+      <td>Taxable Value</td>
+      <td>Rate</td>
+      <td>CGST Amount</td>
+      <td>Rate</td>
+      <td>SGST Amount</td>
+      <td>Total Tax Amount</td>
+    </tr>
+
+    <tr style="text-align:center;">
+      <td>8544</td>
+      <td>₹{{ invoiceForm.get('amount_before_tax')?.value|number:'1.2-2' }}</td>
+      <td>9%</td>
+      <td>₹{{ invoiceForm.get('cgst_9')?.value |number:'1.2-2'}}</td>
+      <td>9%</td>
+      <td>₹{{ invoiceForm.get('sgst_9')?.value|number:'1.2-2' }}</td>
+      <td>₹{{ invoiceForm.get('tax_18')?.value |number:'1.2-2' }}</td>
+       <!-- sgst_9:billDetails.sgst_9,
+      tax_18:billDetails.tax_18,
+      cgst_9:billDetails.cgst_9,
+      amount_before_tax:billDetails.amount_before_tax, -->
+    </tr>
+  </table>
+
+  <!-- ================= BANK DETAILS ================= -->
+  <div style="padding:10px;font-size:14px;">
+
+    <strong>Tax Amount (in words):</strong> 
+    <!-- {{ taxAmountInWords }} --> -
+    <br><br>
+
+    <strong>Company's Bank Details</strong><br>
+    Bank Name : <b>BANK OF INDIA</b><br>
+    A/c No. : 930520110000557<br>
+    Branch & IFS Code : POWER HOUSE & BKID0009305<br><br>
+
+    Company's PAN : <b>AOCPY0439F</b>
+    <br><br>
+
+    <strong>Declaration:</strong>
+    We declare that this invoice shows the actual price of the goods described and all particulars are true.
+
+    <br><br>
+    <p style="text-align:right;"><strong>Authorized Signatory</strong></p>
+
+  </div>
+
+</div>
