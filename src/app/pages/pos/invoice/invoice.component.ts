@@ -23,7 +23,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { CheckboxModule } from 'primeng/checkbox';
 import { Paginator } from 'primeng/paginator';
-import { RouterLink } from "@angular/router";
+import { Router, RouterLink } from "@angular/router";
 import { AuthService } from '@/core/services/auth.service';
 interface Product {
     name: string;
@@ -98,7 +98,8 @@ export class InvoiceComponent {
             private inventoryService: InventoryService,
             private authService: AuthService,
             private messageService: MessageService,
-            public datepipe:DatePipe
+            public datepipe:DatePipe,
+            private router:Router
         ) {}
  
     ngOnInit(): void {
@@ -247,6 +248,116 @@ dateRangeValidator(form:FormGroup){
         this.OnGetCusMobile();
        
     }
+    openInvoiceInNewTab(row:any){
+        console.log('Opening invoice:', row);
+        const payload={
+            p_username:'admin',
+            p_returntype:'SALEPRINT',
+            p_returnvalue:row.invoice_no
+        };
+        this.messageService.add({
+            severity:'info',
+            summary:'Loading',
+            detail:'Opening invoice details...',
+            life:2000
+        });
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next:(res:any)=>{
+                if(res.data && res.data.length>0){
+                    const invoiceDetails = res.data[0];
+                    console.log('Invoice details:', invoiceDetails);
+
+                    const salePageData = this.prepareSalePageData(invoiceDetails, res.data);
+                    
+                    // Store in localStorage with a unique key
+                    const storageKey = `invoice_${row.invoice_no}_${Date.now()}`;
+                    localStorage.setItem(storageKey, JSON.stringify(salePageData));
+                    
+                    // Open sale page in new tab
+                    const salePageUrl = `/sale?storageKey=${storageKey}&mode=edit&invoice_no=${row.invoice_no}`;
+                    window.open(salePageUrl, '_blank');
+                    
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Success',
+                        detail: 'Invoice opened in sale page'
+                    });
+                } else {
+                    this.messageService.add({
+                        severity: 'warn',
+                        summary: 'No Data',
+                        detail: 'No invoice details found'
+                    });
+                }
+            },
+            error: (err) => {
+                console.error('Error fetching invoice details:', err);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'Failed to load invoice details'
+                });
+            }
+        });
+    }
+
+    // Prepare data for sale page
+    private prepareSalePageData(invoiceSummary: any, items: any[]): any {
+        return {
+            // Basic invoice info
+            invoice_no: invoiceSummary.billno,
+            invoice_date: invoiceSummary.transactiondate,
+            
+            // Customer info
+            customer: {
+                name: invoiceSummary.customername || '',
+                mobile: invoiceSummary.mobileno || '',
+                // Add other customer fields if available
+                address: invoiceSummary.customeraddress || '',
+                gstin: invoiceSummary.customergstin || '',
+                state: invoiceSummary.customerstate || ''
+            },
+            
+            // Items list
+            items: items.map(item => ({
+                item_id: item.itemid,
+                item_name: item.itemname,
+                category: item.categoryname,
+                quantity: item.quantity,
+                uom: item.uomname,
+                mrp: item.mrp,
+                cost_price: item.costprice,
+                discount: item.discount || 0,
+                tax_percentage: item.taxpercentage || 0,
+                total: (item.quantity * item.mrp) - (item.discount || 0)
+            })),
+            
+            // Totals
+            totals: {
+                subtotal: invoiceSummary.totalsale || 0,
+                discount: invoiceSummary.discount || 0,
+                discount_type: invoiceSummary.discounttype || 'N',
+                tax: invoiceSummary.tax_18 || 0,
+                cgst: invoiceSummary.cgst_9 || 0,
+                sgst: invoiceSummary.sgst_9 || 0,
+                roundoff: invoiceSummary.roundoff || 0,
+                grand_total: invoiceSummary.totalpayable || 0,
+                amount_before_tax: invoiceSummary.amount_before_tax || 0
+            },
+            
+            // Payment info
+            payment: {
+                paid_amount: invoiceSummary.paid_amount || 0,
+                balance: invoiceSummary.balance || 0,
+                status: invoiceSummary.status || '',
+                payment_mode: invoiceSummary.payment_mode || 'Cash'
+            },
+            
+            // Flags for sale page
+            mode: 'edit',
+            source: 'invoice_report'
+        };
+    }
     showSuccess(message: string) {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
     }
@@ -288,41 +399,8 @@ dateRangeValidator(form:FormGroup){
             });
         } 
     });
-}private calculateInvoiceSummary(items:any[]){
-    if(!items || items.length===0) return;
-    
-    const firstItem=items[0];
-    const totalQty = items.reduce((sum,item)=>sum +(item.quantity || 0),0);
-    this.invoiceSummary={
-         billno: firstItem.billno,
-        transactiondate: firstItem.transactiondate,
-        transactionid: firstItem.transactionid,
-        customername: firstItem.customername,
-        mobileno: firstItem.mobileno,
-        status: firstItem.status,
-        
-        // Totals (already calculated per invoice, not per item)
-        totalsale: firstItem.totalsale,
-        totalpayable: firstItem.totalpayable,
-        discount: firstItem.discount,
-        discounttype: firstItem.discounttype,
-        discountvalueper: firstItem.discountvalueper,
-        roundoff: firstItem.roundoff,
-        
-        // Tax amounts (already calculated per invoice)
-        cgst_9: firstItem.cgst_9,
-        sgst_9: firstItem.sgst_9,
-        tax_18: firstItem.tax_18,
-        amount_before_tax: firstItem.amount_before_tax,
-        
-        // Calculated values
-        totalqty: totalQty,
-        
-        // Item count
-        itemCount: items.length
-    };
-      console.log('Invoice Summary:', this.invoiceSummary);
 }
+
  private populateInvoiceForm(data:any){
     if(!data) return;
             this.invoiceForm.patchValue({

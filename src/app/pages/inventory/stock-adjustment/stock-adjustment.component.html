@@ -93,7 +93,7 @@
                                 <td>{{ row.batchdate | date:'dd-MM-yyyy'}}</td>
                                 <td>{{ row.costprice }}</td>
                                 <td>
-                                    <div class="grid items-center gap-2"><input class="w-[70px]" type="number" pInputText [min]="1" placeholder="{{ row.saleprice }}" [formControl]="row.mrpControl" (keydown)="blockMinus($event)" /></div>
+                                    <div class="grid items-center gap-2"><input class="w-[100px]" type="number" pInputText [min]="1" placeholder="{{ row.saleprice }}" [formControl]="row.mrpControl" (keydown)="blockMinus($event)" /></div>
                                     <!-- <small class="text-red-500" *ngIf="row.mrpControl.touched && row.mrpControl.errors?.['required']"> MRP is required. </small> -->
 
                                     <!-- Min(1) -->

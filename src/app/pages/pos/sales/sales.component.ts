@@ -691,6 +691,7 @@ updateTotal(i: number) {
         UOMId: x.UOMId,
         Quantity: x.Quantity,
         itemcost: x.itemcost,
+        warrenty:x.warPeriod,
         MRP: x.MRP,
         totalPayable: x.totalPayable,
           currentstock:x.curStock,
@@ -743,8 +744,7 @@ updateTotal(i: number) {
     // "clientcode": "CG01-SE",
     // "x-access-token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyY29kZSI6ImFkbWluIiwiaWF0IjoxNzYzNjQyOTY4LCJleHAiOjE3NjM3MjkzNjh9.2yeOGtpWD24Fl1Ske4iVv4D0yy3o_JQ1eMyaXY_Zu_U"
 
-    // }
-
+    // } 
     this.stockInService.OninsertSalesDetails(apibody).subscribe({
       next: (res) => {
         const billno=res.data[0]?.billno
@@ -756,14 +756,12 @@ updateTotal(i: number) {
         });
       }
         console.log('res',res);
-        
         this.messageService.add({
           severity: 'success',
           summary: 'Success',
           detail: 'Sales saved successfully!',
           life: 3000
         });
-
          this.confirmationService.confirm({
              header: 'Print Invoice',
              message: 'Are you sure you want to print this invoice?',
@@ -911,9 +909,6 @@ if(res.success){
     }
   });
 }
-
-
-
 
 
 OnQtyChange(index: number) {

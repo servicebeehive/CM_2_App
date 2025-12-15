@@ -12,6 +12,7 @@ import { CommonModule } from '@angular/common';
 import { AuthService } from '@/core/services/auth.service';
 import { InventoryService } from '@/core/services/inventory.service';
 import { UserService } from '@/core/services/user.service';
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-new-password',
@@ -120,7 +121,7 @@ import { UserService } from '@/core/services/user.service';
 })
 export class NewPassword {
   LayoutService = inject(LayoutService);
-  constructor(private autherService:AuthService, private userService:UserService){
+  constructor(private autherService:AuthService, private userService:UserService,private messageService: MessageService){
     
   }
   fb = inject(FormBuilder);
@@ -164,8 +165,8 @@ const payload:any={
 };
 this.userService.OnUserHeaderCreate(payload).subscribe({
   next:(res)=>{
-    console.log('result:',res);
-    console.log('resultpayload:',payload);
+    this.showSuccess('Password has been saved successfully!!');
+
   },
   error:(err)=>{
     console.error(err);
@@ -179,4 +180,7 @@ this.userService.OnUserHeaderCreate(payload).subscribe({
     
     this.changePassword(this.passwordForm.value);
   }
+   showSuccess(message: string) {
+        this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
+    }
 }

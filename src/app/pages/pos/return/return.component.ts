@@ -239,7 +239,7 @@ else{
           // p_totalcost:item.
           // Additional fields used in UI
           curStock: item.current_stock || 0,
-          warPeriod: 0,
+          warPeriod: item.warrenty,
           location: "",
           itemsku: item.itemsku || ''
         })
@@ -349,6 +349,7 @@ else{
         Quantity: x.Quantity,
         itemcost: x.itemcost,
         MRP: x.MRP,
+         warrenty:x.warPeriod,
         totalPayable: x.totalPayable,
         currentstock:x.curStock,
       }))

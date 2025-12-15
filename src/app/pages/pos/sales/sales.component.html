@@ -98,7 +98,7 @@
         </p-select>
       </div>
   <!-- GST CHECKBOX -->
-      <div class="flex justify-between">
+      <div class="flex gap-10">
         <div class="flex items-center gap-2">
           <p-checkbox binary="true" variant="filled" formControlName="p_gsttran"></p-checkbox>
           <label>GST Transaction</label>
@@ -171,11 +171,11 @@
 
       <!-- MOBILE -->
       <div class="flex flex-col">
-        <label class="font-medium mb-1">Mobile No.</label>
+        <label class="font-medium mb-1">Mobile No</label>
         <input
           pInputText
           type="number"
-          placeholder="Mobile No."
+          placeholder="Mobile No"
           maxlength="10"
           formControlName="p_mobileno" 
           (keypress)="allowOnlyNumbers($event)"/>
@@ -292,7 +292,7 @@
 
       <!-- Total Cost -->
       <div class="flex flex-col">
-        <label>Total Cost</label>
+        <label>Cost Total</label>
         <input pInputText readonly type="number" formControlName="p_totalcost" />
       </div>
 
@@ -399,8 +399,8 @@
           </tr>
 
           <tr>
-            <td><strong>Mode/Terms of Payment</strong></td>
-            <td><strong>BALANCE</strong></td>
+            <td><strong>Mode of Payment</strong></td>
+            <td><strong>CASH</strong></td>
           </tr>
 
           <tr>

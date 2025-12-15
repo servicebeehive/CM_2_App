@@ -20,7 +20,9 @@ import { InventoryService } from '@/core/services/inventory.service';
             <button #menubutton type="button" class="topbar-menubutton p-link p-trigger" (click)="onMenuButtonClick()">
                 <i class="pi pi-bars"></i>
             </button>
-             <h1><strong>{{companyName}}</strong></h1>
+            
+            <p class="text-3xl font-bold text-primary">{{companyName}}</p>
+
             <nav app-breadcrumb class="topbar-breadcrumb"></nav>
         </div>
 

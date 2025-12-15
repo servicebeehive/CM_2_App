@@ -105,7 +105,7 @@
                         <td class="text-center w-[60px]">
                             <div class="flex g-2">
                                 <button pButton type="button" icon="pi pi-print" class="p-button-text p-button-sm" printSectionId="invoicePrintSection" (click)="printInvoice(row)" ></button>
-                                <button pButton type="button" icon="pi pi-folder-open" class="p-button-text p-button-sm text-red-500"></button>
+                                <button pButton type="button" icon="pi pi-folder-open" class="p-button-text p-button-sm text-red-500" (click)="openInvoiceInNewTab(row)"  pTooltip="Open in Sale Page" tooltipPosition="top"></button>
                             </div>
                         </td>
                     </tr>
@@ -180,8 +180,8 @@
           </tr>
 
           <tr>
-            <td><strong>Mode/Terms of Payment</strong></td>
-            <td><strong>BALANCE</strong></td>
+            <td><strong>Mode of Payment</strong></td>
+            <td><strong>CASH</strong></td>
           </tr>
 
           <tr>
