@@ -72,7 +72,7 @@
             <p-table [value]="filteredProducts" dataKey="code" [tableStyle]="{ 'min-width': '110rem' }" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 20, 50]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines mt-6 transaction">
                 <ng-template pTemplate="header">
                     <tr class="bg-yellow-400">
-                        <th>Purchase Id</th>
+                        <th>Transaction Id</th>
                         <th>Transaction Date</th>
                         <th>Vendor Invoice</th>
                         <th>Vendor Invoice Date</th>
@@ -99,7 +99,7 @@
                         <td>{{ row.status }}</td>
                         <td >
                             <div class="flex items-center justify-center g-2">
-                                <button pButton type="button" icon="pi pi-folder-open" class="p-button-text p-button-sm text-red-500" ></button>
+                                <button pButton type="button" icon="pi pi-folder-open" class="p-button-text p-button-sm text-red-500" (click)="openTransaction(row)" ></button>
                             </div>
                         </td>
                     </tr>

@@ -28,6 +28,7 @@ import { RouterLink } from "@angular/router";
 import { AuthService } from '@/core/services/auth.service';
 import { DrowdownDetails } from '@/core/models/inventory.model';
 import { MessageService } from 'primeng/api';
+import { ShareService } from '@/core/services/shared.service';
 
 interface Product {
     name: string;
@@ -96,7 +97,7 @@ export class StockInComponent {
      childUomStatus:boolean=false;
      addItemEnabled=false;
     @ViewChild(AddinventoryComponent) addInventoryComp!:AddinventoryComponent;
-   public itemOptionslist:[]=[]
+   public itemOptionslist:any[]=[]
    childUomDialog: boolean = false;
 childUOMList: any[] = [];
 
@@ -112,7 +113,7 @@ childUOMList: any[] = [];
     itemOptions = [];
 
     products:StockIn[] =[];
-    constructor(private fb: FormBuilder, private stockInService:InventoryService,private confirmationService:ConfirmationService,public datePipe:DatePipe,private messageService: MessageService) {}
+    constructor(private fb: FormBuilder, private stockInService:InventoryService,private confirmationService:ConfirmationService,public datePipe:DatePipe,private messageService: MessageService,private sharedService:ShareService) {}
 
     ngOnInit(): void {
     
@@ -127,6 +128,14 @@ childUOMList: any[] = [];
     p_remarks:['',[Validators.maxLength(500)]],
     grandTotal:[0]
 });
+
+const navigation = history.state;
+console.log('Navigation state:',navigation);
+if(navigation && navigation.stockData && navigation.itemsData){
+  this.mode=navigation.mode || 'edit';
+   this.populateStockForm(navigation.stockData, navigation.itemsData);
+}
+  this.setupBackButtonListener();
     }
  onGetStockIn() {
  this.products=this.stockInService.productItem;
@@ -147,7 +156,57 @@ filterInvoiceNo(event:any){
         this.filteredInvoiceNo.push({label:event.query});
     }
 }
+setupBackButtonListener(){
+  window.addEventListener('beforeunload',()=>{
+    this.sharedService.clearInvoiceState();
+  })
+}
 
+ngOnDestory(){
+  window.removeEventListener('beforeunload',()=>{});
+}
+populateStockForm(data:any, itemsData:any[]){
+  console.log('data date:',data);
+ this.productForm.patchValue({
+ p_tranpurchaseid:data.purchaseid || 0,
+    p_invoiceno:data.invoicenumber||'',
+    p_invoicedate:data.invoicedate? new Date(data.invoicedate) : new Date(),
+    p_remarks:data.remark||'',
+    p_vendorid:data.vendorid || null,
+ });
+ if(itemsData && itemsData.length>0){
+  console.log('Processing itemsData:', itemsData);
+
+   const transformedItems = itemsData.map((item: any) => {
+    console.log('Mapping item:', item);
+    return{
+        p_tranpurchaseid: item.transactiondetailid || 0,
+        itemid: item.itemid || 0,
+        itemsku: item.itemsku|| '',
+        itembarcode: item.itembarcode || 0,
+        itemname: item.itemname || '',
+        location: item.location || '',
+        minimumstock: item.minimumstock || 0,
+        categoryid: item.categoryid || 0,
+        warrentyperiod: item.warrentyperiod || 0,
+        uomid: item.uomid || 0,
+        uomname: item.uomname || item.uom || '',
+        childuom: item.hasChildUOM ? 'Y' : 'N',
+        currentstock: item.currentstock || 0,
+        quantity: item.quantity || 1,
+        costprice: item.itemcost || item.costprice || 0,
+        saleprice: item.mrp || item.saleprice || 0,
+        gstitem: item.gstItem === 'Y' ? 'Y' : 'N',
+        categoryname: item.categoryname || item.category || '',
+        expirydate: item.expirydate || null,
+        isactive: 'Y',
+        discount: item.discount || 0
+    };
+      });
+    this.itemOptionslist = transformedItems;
+    
+ }
+}
 onSave(updatedData:any){
   console.log('before:',updatedData);
    if(!updatedData) return;
@@ -467,14 +526,10 @@ OnGetPurchaseId() {
   });
 }
 OnGetPurcheseItem(id:any) {
-  const payload = {
-       
+  const payload = { 
     "p_username": "admin",
     "p_returntype": "PURCHASEDETAIL",
     "p_returnvalue":id.toString(),
-    
-           
-    //"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyY29kZSI6ImFkbWluIiwiaWF0IjoxNzYzMDI3NzU5LCJleHAiOjE3NjMxMTQxNTl9.w9YSCAVi4G5bou6vlR2tjFb2oU4jUAJ1uHSLUTfbxKc"
 };
 
   this.stockInService.Getreturndropdowndetails(payload).subscribe({

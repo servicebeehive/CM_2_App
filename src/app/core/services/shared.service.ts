@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -6,9 +7,9 @@ import { Injectable } from '@angular/core';
 export class ShareService {
   private readonly STORAGE_KEY = 'user_info';
   private readonly API_BODY = 'apibody';
-  private clientCode:string|null = null;
+  private clientcode:string|null = null;
   constructor() {
-    this.clientCode=localStorage.getItem('clientCode');
+    this.clientcode=localStorage.getItem('clientcode');
   }
 
   // ✅ Save user data to localStorage
@@ -36,12 +37,12 @@ export class ShareService {
   }
 
   setClientCode(code:string){
-    this.clientCode=code;
-    localStorage.setItem('clientCode',code);
+    this.clientcode=code;
+    localStorage.setItem('clientcode',code);
   }
 
   getClientCode():string | null{
-    return this.clientCode;
+    return this.clientcode;
   }
 
  GetApiBody(payload: any): any | null {
@@ -63,7 +64,7 @@ export class ShareService {
     const apiBody: any = {
       uname:headerApiBody?.username, //-Arushi 11 dec 2025 , 1pm -username will go into uname as per CD
       p_loginuser: headerApiBody?.username,//-Arushi 11 dec 2025 , 1pm - admin will not go if username is blank it should show error
-      clientcode: this.clientCode,//-Arushi 11 dec 2025 , 1pm - CG01-SE will not go if is blank it should show error
+      clientcode: this.clientcode,//-Arushi 11 dec 2025 , 1pm - CG01-SE will not go if is blank it should show error
       "x-access-token":headerApiBody?.usertoken,
     // "x-access-token" :'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyY29kZSI6ImFkbWluIiwiaWF0IjoxNzY1MjY2MDQ0LCJleHAiOjE3NjUzNTI0NDR9.ytWhv1-hYx2kbS1Ov2BkpZdgwaTsQhIw7HvjQoRdNVs',
     ...payload 
@@ -97,4 +98,31 @@ export class ShareService {
     localStorage.removeItem(this.STORAGE_KEY);
     console.log('User data cleared ❌');
   }
+
+  private invoiceState = new BehaviorSubject<{
+    filters: any;
+    data: any[];
+    timestamp: number;
+  } | null>(null);
+
+  getInvoiceState() {
+    return this.invoiceState.value;
+  }
+
+  setInvoiceState(filters: any, data: any[]) {
+    this.invoiceState.next({
+      filters,
+      data,
+      timestamp: Date.now()
+    });
+  }
+
+  clearInvoiceState() {
+    this.invoiceState.next(null);
+  }
+
+  private stockFilterState=new BehaviorSubject<any>(null);
+  stockFilterSate$ = this.stockFilterState.asObservable();
+  
 }
+

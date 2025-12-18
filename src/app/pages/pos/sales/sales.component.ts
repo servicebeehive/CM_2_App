@@ -36,6 +36,7 @@ import { AddinventoryComponent } from '@/pages/inventory/addinventory/addinvento
 import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
 import { AuthService } from '@/core/services/auth.service';
 import { OrderService } from '@/core/services/order.service';
+import { ShareService } from '@/core/services/shared.service';
 // import { NgxPrintModule } from 'ngx-print';
 
 @Component({
@@ -97,8 +98,12 @@ export class SalesComponent {
   searchValue: string = '';
   itemOptions: any[] = [];
   transactionIdOptions = [];
+  cusMobileOptions: any[]=[]; 
   public itemOptionslist: [] = [];
-  public uomlist:any[]=[]
+  public uomlist:any[]=[];
+  mobilePlaceholder: string = 'Mobile No';
+
+  isLoadingBills: boolean=false;
   @ViewChild(AddinventoryComponent) addInventoryComp!: AddinventoryComponent;
 
   // Dropdowns / lists
@@ -114,13 +119,14 @@ export class SalesComponent {
     private salesService: InventoryService,
     private messageService: MessageService,
     private orderService:OrderService,
-    public datepipe: DatePipe
+    public datepipe: DatePipe,
+    private sharedService:ShareService
   ) { }
 
   ngOnInit(): void {
     this.OnGetDropdown();
     this.loadAllDropdowns();
-
+     
     // Initialize form
     this.salesForm = this.fb.group({
       p_itemdata: [null],
@@ -129,8 +135,8 @@ export class SalesComponent {
       p_billno: [null],
       p_transactionid: [0],
       p_transactiondate: [this.today,[Validators.required]],
-      p_customername: [''],
-      p_mobileno: ['',[Validators.pattern(/^[6-9]\d{9}$/)]],
+      p_customername: ['',Validators.required],
+      p_mobileno: ['',[Validators.required,Validators.pattern(/^[6-9]\d{9}$/)]],
       p_totalcost: [0],
       p_totalsale: [0],
       p_disctype:[false],
@@ -138,6 +144,7 @@ export class SalesComponent {
       p_roundoff: [''],
       p_totalpayable: [0],
       p_currencyid: [0],
+      p_paymentdue:[''],
       p_gsttran: [true],
       status:[''],
       p_status: [''],
@@ -147,17 +154,16 @@ export class SalesComponent {
       p_replacesimilir: [''],
       p_creditnoteno: [''],
       p_paymentmode: [''],
-      p_paymentdue: [0],
       sgst_9:[''],
       tax_18:[''],
       cgst_9:[''],
       discountvalueper:[],
       amount_before_tax:[''],
-
+      
       // FormArray for sale rows
       p_sale: this.fb.array([])
     },{
-      validators: [this.costGreaterThanSaleValidator()]
+      validators: [this.costGreaterThanSaleValidator(), this.paidAmountLessThanFinalAmount()]
     });
     this.salesForm.get('p_billno')?.valueChanges.subscribe(value=>{
       if(value){
@@ -177,7 +183,14 @@ else{
 //  this.salesForm.get('p_overalldiscount')?.setValue('', { emitEvent: false });
  this.applyDiscount();
     });
-
+   const navigation = history.state;
+    console.log('Navigation state:', navigation);
+    
+    if (navigation && navigation.saleData && navigation.itemsData) {
+        this.mode = navigation.mode || 'edit';
+        this.populateSaleForm(navigation.saleData, navigation.itemsData);
+    }
+    this.setupBackButtonListener();
   }
 
   // -----------------------------
@@ -207,7 +220,18 @@ get isPrintDisabled(): boolean {
   // Disable print if BOTH are empty
   return !(billNo || hasItem);
 }
-
+ setupBackButtonListener() {
+    // This helps preserve state when using browser back button
+    window.addEventListener('beforeunload', () => {
+      // If user refreshes sales page, we don't want to preserve invoice state
+      this.sharedService.clearInvoiceState();
+    });
+  }
+  
+  ngOnDestroy() {
+    // Optional: Clear event listener
+    window.removeEventListener('beforeunload', () => {});
+  }
   // -----------------------------
   //  Row Creation / Mapping
   // -----------------------------
@@ -243,7 +267,7 @@ createSaleItem(data?: any): FormGroup {
       this.saleArray.push(
         this.fb.group({
           TransactiondetailId: item.transactiondetailid || 0,
-          ItemId: item.itemsku || 0,    // use itemsku when itemid not present
+          ItemId: item.itemid || 0,    // use itemsku when itemid not present
           ItemName: item.itemname || '',
           UOMId: item.uomname || 0,
           Quantity: item.quantity || 1,
@@ -255,8 +279,8 @@ createSaleItem(data?: any): FormGroup {
           curStock: item.current_stock || 0,
           warPeriod: item.warrenty || 0,
           location: "",
-          itemsku: item.itemsku || ''
-        })
+          itemsku: item.itemsku || '',
+        }) 
       );
        this.OnUMO(item.itemid || item.itemsku, index)
     });
@@ -282,11 +306,100 @@ allowOnlyNumbers(event: any) {
   if (!/^[0-9]$/.test(char)) {
     event.preventDefault();
   }
+
 }
 
   // -----------------------------
   //  Dropdown / Data Loading
   // -----------------------------
+onMobileFilter(event: any) {
+  const typedValue = event.filter;
+  this.mobilePlaceholder = typedValue || 'Mobile No';
+  
+  // Only update form control if typed value is 10 digits
+  if (typedValue && /^[6-9]\d{9}$/.test(typedValue)) {
+    this.salesForm.patchValue({
+      p_mobileno: typedValue
+    });
+    this.mobilePlaceholder='Mobile No'
+  } else {
+     this.mobilePlaceholder='Mobile No'
+  }
+    }
+ onMobileSelect(event:any){
+ const selectedMobile = event.value;
+ const mobileSelection = this.cusMobileOptions.find(mobileNo => mobileNo.fieldid === event.value);
+ console.log('selectedMobile',selectedMobile);
+ console.log('selectedMobile',mobileSelection);
+  if (mobileSelection) {
+    this.salesForm.patchValue({
+      p_mobileno: mobileSelection.customerphone,
+      p_customername:mobileSelection.fieldname
+    });
+}
+}
+
+populateSaleForm(data:any, itemsData:any[]){
+   console.log('Populating form with header:', data);
+    console.log('Populating form with items:', itemsData);
+  this.salesForm.patchValue({
+    p_customername:data.customername || '',
+    p_mobileno: data.mobileno || '',
+    p_gsttran: data.gstin || '',
+    p_billno: data.billno || '',
+    p_transactionid: data.transactionid || 0,
+        p_transactiondate: data.transactiondate ? 
+            new Date(data.transactiondate) : new Date(),
+        status: data.status || '',
+        p_totalcost: data.totalcost || 0,
+        p_totalsale: data.totalsale || 0,
+        p_disctype: data.discounttype === 'Y',
+        p_overalldiscount: data.discount || 0,
+        discountvalueper: data.discountvalueper || 0,
+        p_roundoff: data.roundoff || 0,
+        p_totalpayable: data.totalpayable || 0,
+        sgst_9: data.sgst_9 || 0,
+        tax_18: data.tax_18 || 0,
+        cgst_9: data.cgst_9 || 0,
+        amount_before_tax: data.amount_before_tax || 0
+  });
+ this.saleArray.clear();
+    
+    // Add items to FormArray
+    if (itemsData && itemsData.length > 0) {
+        itemsData.forEach((item: any) => {
+            this.saleArray.push(
+                this.fb.group({
+                    TransactiondetailId: item.transactiondetailid || 0,
+                    ItemId:item.itemsku || 0,
+                    ItemName: item.itemname || '',
+                    UOMId: item.uomid || 0,
+                    UOMName: item.uomname || '',
+                    Quantity: item.quantity || 1,
+                    itemcost: item.itemcost || 0,
+                    MRP: item.mrp || 0,
+                    totalPayable: (item.quantity || 1) * (item.mrp || 0),
+                    curStock: item.current_stock || 0,
+                    warPeriod: item.warrenty || 0,
+                    location: '',
+                    itemsku: item.itemsku || '',
+                    apiCost: (item.quantity || 1) * (item.itemcost || 0)
+                })
+            );
+            
+            // Load UOM for each item
+            const index = this.saleArray.length - 1;
+            this.OnUMO(item.itemid || item.itemsku, index);
+        });
+    }
+    
+    // Calculate totals
+    this.calculateSummary();
+    this.updateTotalCostSummary();
+
+}
+
+
 
   // Generic payload creator
   createDropdownPayload(returnType: string) {
@@ -304,11 +417,19 @@ allowOnlyNumbers(event: any) {
       error: (err) => console.log(err)
     });
   }
+ OnGetCusMobile() {
+    const payload = this.createDropdownPayload("CUSTOMER");
+    this.stockInService.getdropdowndetails(payload).subscribe({
+      next: (res) => this.cusMobileOptions = res.data,
+      error: (err) => console.log(err)
+    });
+  }
 
   // Load initial dropdowns (items, bill no)this.OngetcalculatedMRP
   loadAllDropdowns() {
     this.OnGetItem();
     this.OnGetBillNo();
+    this.OnGetCusMobile();
   }
 
   // Load dropdown via older endpoint (Getreturndropdowndetails)
@@ -334,7 +455,7 @@ allowOnlyNumbers(event: any) {
         const billdata: any = res.data;
         this.billNoOptions = billdata.filter((item: { billno: null; }) => item.billno != null);
       },
-      error: (err) => console.log(err)
+      error: (err) => console.log(err) 
     });
   }
 
@@ -397,13 +518,26 @@ costGreaterThanSaleValidator(): ValidatorFn {
   };
 }
 
+paidAmountLessThanFinalAmount():ValidatorFn{
+return (form:AbstractControl):ValidationErrors | null=>{
+  const p_paymentdue=Number(form.get('p_paymentdue')?.value || 0);
+  const finalPayable = Number(form.get('p_totalpayable')?.value || 0);
+
+  if(finalPayable<p_paymentdue){
+    return {
+      amountNotGreater:true
+    };
+}
+return null;
+  }
+};
+
 
   // Called when bill dropdown value changes
   onBillDetails(event: any) {
     const billDetails = this.billNoOptions.find(billitem => billitem.billno === event.value); 
     if (billDetails) {
       this.SaleDetails(billDetails);
-       console.log('details:',billDetails);
       this.salesForm.patchValue({
         p_transactionid: billDetails.transactionid,
         p_customername:billDetails.customername,
@@ -417,12 +551,14 @@ costGreaterThanSaleValidator(): ValidatorFn {
         discountvalueper:billDetails.discountvalueper,
         p_roundoff: billDetails.roundoff,
         p_totalpayable: (billDetails.totalpayable).toFixed(2),
-         sgst_9:billDetails.sgst_9,
+        p_paymentdue:(billDetails.amountdue),
+        sgst_9:billDetails.sgst_9,
       tax_18:billDetails.tax_18,
       cgst_9:billDetails.cgst_9,
       amount_before_tax:billDetails.amount_before_tax,
       });
-     
+      console.log('payment due',billDetails.totalpayable)
+     console.log('payment due',billDetails.amountdue)
     }
   }
 
@@ -558,16 +694,18 @@ costNotExceedPayableValidator(): ValidatorFn {
        acceptButtonStyleClass: 'p-button-primary',
         rejectButtonStyleClass: 'p-button-secondary',
       accept: () => {
-        this.OnSalesHeaderCreate(this.salesForm.value);
+        this.OnSalesHeaderCreate(this.salesForm.value);   
       }
     });
   }
 
   // Reset form and clear sale array
   onReset() {
-    this.salesForm.reset();
+    this.salesForm.reset({
+      p_gsttran:true,
+    });
     this.saleArray.clear();
-     this.salesForm.get('p_transactiondate')?.setValue(this.today);
+    this.salesForm.get('p_transactiondate')?.setValue(this.today);
   }
 
   // -----------------------------
@@ -691,6 +829,7 @@ updateTotal(i: number) {
         UOMId: x.UOMId,
         Quantity: x.Quantity,
         itemcost: x.itemcost,
+        warrenty:x.warPeriod,
         MRP: x.MRP,
         totalPayable: x.totalPayable,
           currentstock:x.curStock,
@@ -743,12 +882,12 @@ updateTotal(i: number) {
     // "clientcode": "CG01-SE",
     // "x-access-token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyY29kZSI6ImFkbWluIiwiaWF0IjoxNzYzNjQyOTY4LCJleHAiOjE3NjM3MjkzNjh9.2yeOGtpWD24Fl1Ske4iVv4D0yy3o_JQ1eMyaXY_Zu_U"
 
-    // }
-
+    // } 
     this.stockInService.OninsertSalesDetails(apibody).subscribe({
       next: (res) => {
-        const billno=res.data[0]?.billno
-        this.OnGetBillNo()
+        const billno=res.data[0]?.billno;
+        this.OnGetBillNo();
+         this.OnGetItem();
       this.salesForm.controls['p_billno'].setValue(billno)
        if (res.data && res.data.length > 0) {
         this.salesForm.patchValue({
@@ -756,14 +895,12 @@ updateTotal(i: number) {
         });
       }
         console.log('res',res);
-        
         this.messageService.add({
           severity: 'success',
           summary: 'Success',
           detail: 'Sales saved successfully!',
           life: 3000
         });
-
          this.confirmationService.confirm({
              header: 'Print Invoice',
              message: 'Are you sure you want to print this invoice?',
@@ -844,7 +981,7 @@ OngetcalculatedMRP(data: any, index: number) {
 
   this.orderService.getcalculatedMRP(apibody).subscribe({
     next: (res: any) => {
-
+      console.log('calculated:',res.data);
       const mrp = Number(res.data.totalmrp || 0);
       const cost = Number(res.data.totalcost || 0);
 
@@ -869,7 +1006,9 @@ OngetcalculatedMRP(data: any, index: number) {
     ItemId: row.get('ItemId')?.value,
     UOMId: event.value
   };
+  console.log("calculate mrp:", event.value);
     this.OngetcalculatedMRP(event.value,index)
+    
   }
 calculateMRP(index: number) {
   const row = this.saleArray.at(index);
@@ -877,7 +1016,7 @@ calculateMRP(index: number) {
   const qty = Number(row.get('Quantity')?.value || 1);
   const uomid = row.get('UOMId')?.value;
   const itemId = row.get('ItemId')?.value;
-
+console.log('item:',itemId);
   if (!uomid || qty <= 0) return;
 
   let apibody = {
@@ -891,8 +1030,9 @@ calculateMRP(index: number) {
 
   this.orderService.getcalculatedMRP(apibody).subscribe({
     next: (res: any) => {
+      console.log('cal1:',res);
 if(res.success){
-    console.log(res)
+    console.log('cal:',res);
       const mrp = Number(res?.data.totalmrp || 0);
       const cost = Number(res?.data.totalcost || 0);
 
@@ -911,9 +1051,6 @@ if(res.success){
     }
   });
 }
-
-
-
 
 
 OnQtyChange(index: number) {
@@ -954,55 +1091,31 @@ printInvoice() {
   popupWindow!.document.open();
 
   popupWindow!.document.write(`
-    <html>
-      <head>
-        <title>Invoice Print</title>
-
-        <style>
-
-          /* Force Single Page */
-          @page {
-            size: A4;
-            margin:0;
-          }
-
-          body {
-            font-family: Arial;
-            padding: 10px;
-            zoom: 80%; /* Adjust 60–100% until your invoice fits on one page */
-          }
-
-          table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            page-break-inside: avoid; 
-          }
-
-          th, td { 
-            border: 1px solid #000; 
-            padding: 5px;
-            font-size: 12px;
-          }
-
-          hr { margin: 10px 0; }
-
-          /* Avoid breaking inside elements */
-          .no-break, table, tr, td {
-            page-break-inside: avoid !important;
-          }
-
-        </style>
-      </head>
-
-      <body onload="window.print(); window.close();">
-        <div class="no-break">
-          ${printContents}
-        </div>
-      </body>
-    </html>
+     <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Invoice Print</title>
+                        <style>
+                            /* Your print styles here */
+                            body { font-family: Arial, sans-serif; }
+                            /* Add more styles as needed */
+                        </style>
+                    </head>
+                    <body>
+                        ${printContents}
+                        <script>
+                            window.onload = function() {
+                                window.print();
+                                window.onafterprint = function() {
+                                    window.close();
+                                };
+                            };
+                        </script>
+                    </body>
+                    </html>
   `);
 
- // popupWindow!.document.close();
+ popupWindow!.document.close();
 }
 
 

@@ -13,6 +13,7 @@ import { RouterLink } from '@angular/router';
 import { InventoryService } from '@/core/services/inventory.service';
 import { UserService } from '@/core/services/user.service';
 import { AuthService } from '@/core/services/auth.service';
+import { MessageService } from 'primeng/api';
 
 @Component({
     selector: 'user-create',
@@ -29,8 +30,8 @@ import { AuthService } from '@/core/services/auth.service';
                 </div>
 
                 <div class="col-span-12 md:col-span-6">
-                    <label for="companyemail" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> Email </label>
-                    <input formControlName="companyemail" type="email" pInputText fluid placeholder="Email" />
+                    <label for="companyemail" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Company Email </label>
+                    <input formControlName="companyemail" type="email" pInputText fluid placeholder="Company Email" />
                     <small class="text-red-500 mt-1" *ngIf="profileForm.get('companyemail')?.touched && profileForm.get('companyemail')?.invalid"> Enter a valid email address </small>
                 </div>
 
@@ -41,8 +42,8 @@ import { AuthService } from '@/core/services/auth.service';
                 </div>
 
                 <div class="col-span-12 md:col-span-6">
-                    <label for="companyphone" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Phone</label>
-                    <input formControlName="companyphone" type="text" pInputText fluid placeholder="Phone" maxlength="10" (keypress)="allowOnlyDigits($event)" />
+                    <label for="companyphone" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Company Phone</label>
+                    <input formControlName="companyphone" type="text" pInputText fluid placeholder="Company Phone" maxlength="10" (keypress)="allowOnlyDigits($event)" />
                     <small class="text-red-500 mt-1" *ngIf="profileForm.get('companyphone')?.touched && profileForm.get('companyphone')?.invalid"> Enter a valid 10-digit mobile number </small>
                 </div>
 
@@ -74,26 +75,28 @@ import { AuthService } from '@/core/services/auth.service';
                     <small class="text-red-500 mt-1" *ngIf="profileForm.get('companycontactphone')?.touched && profileForm.get('companycontactphone')?.invalid"> Enter a valid 10-digit mobile number </small>
                 </div>
 
-                <div class="col-span-12 md:col-span-6">
-                    <label for="companycity" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> City </label>
-                    <input formControlName="companycity" type="text" pInputText fluid placeholder="City" />
-                </div>
-
-                <div class="col-span-12 md:col-span-6">
+ <div class="col-span-12 md:col-span-6">
                     <label for="companystate" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> State </label>
                     <input formControlName="companystate" type="text" pInputText fluid placeholder="State" />
                 </div>
+               
 
                 <div class="col-span-12 md:col-span-6">
                     <label for="companycontactemail" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Company Contact Email </label>
                     <input formControlName="companycontactemail" type="email" pInputText fluid placeholder="Company Contact Email" />
                     <small class="text-red-500 mt-1" *ngIf="profileForm.get('companycontactemail')?.touched && profileForm.get('companycontactemail')?.invalid"> Enter a valid email address </small>
                 </div>
+                 <div class="col-span-12 md:col-span-6">
+                    <label for="companycity" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> City </label>
+                    <input formControlName="companycity" type="text" pInputText fluid placeholder="City" />
+                </div>
 
                 <div class="col-span-12 md:col-span-6 flex flex-col items-start">
                     <label for="companylogo" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Company Logo</label>
                     <p-fileupload mode="basic" name="companylogo" url="./upload.php" accept="image/*" [maxFileSize]="1000000" styleClass="p-button-outlined p-button-plain" chooseLabel="Upload Image"></p-fileupload>
                 </div>
+                
+
                 @if(loggedInUserRole==='Admin')
                 {<div class="flex flex-col">
                     <button pButton pRipple type="submit" label="Submit" class="w-auto mt-3" [disabled]="profileForm.invalid"></button>
@@ -128,21 +131,21 @@ export class UserCreate {
         companyphone: ['', Validators.pattern(/^[0-9]{10}$/)]
     });
     
-    constructor(private inventoryService:InventoryService, private userService : UserService,private authservice:AuthService){}
+    constructor(private inventoryService:InventoryService, private userService : UserService,private authservice:AuthService,private messageService:MessageService){}
     ngOnInit() {
        
         this.countries = [
            
-            { name: 'Australia', code: 'AU' },
-            { name: 'Brazil', code: 'BR' },
-            { name: 'China', code: 'CN' },
-            { name: 'Egypt', code: 'EG' },
-            { name: 'France', code: 'FR' },
-            { name: 'Germany', code: 'DE' },
+            // { name: 'Australia', code: 'AU' },
+            // { name: 'Brazil', code: 'BR' },
+            // { name: 'China', code: 'CN' },
+            // { name: 'Egypt', code: 'EG' },
+            // { name: 'France', code: 'FR' },
+            // { name: 'Germany', code: 'DE' },
             { name: 'India', code: 'IN' },
-            { name: 'Japan', code: 'JP' },
-            { name: 'Spain', code: 'ES' },
-            { name: 'United States', code: 'US' }
+            // { name: 'Japan', code: 'JP' },
+            // { name: 'Spain', code: 'ES' },
+            // { name: 'United States', code: 'US' }
         ];
         this.loggedInUserRole=this.authservice.isLogIntType().usertypename;
          this.onGetData();
@@ -178,6 +181,7 @@ export class UserCreate {
      this.userService.OnUserListHeaderCreate(payload).subscribe({
         next:(res:any)=>{
              console.log('API RESULT:', res.data);
+             this.showSuccess('Profile details saved successfully');
         },
         error: (err) => {
                 console.error(err);
@@ -225,5 +229,8 @@ export class UserCreate {
                     companycity: data.companycity,
                     companyphone: data.companyphone
                 });
+    }
+     showSuccess(message: string) {
+        this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
     }
 }

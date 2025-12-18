@@ -23,8 +23,9 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { CheckboxModule } from 'primeng/checkbox';
 import { Paginator } from 'primeng/paginator';
-import { RouterLink } from "@angular/router";
+import { Router, RouterLink } from "@angular/router";
 import { AuthService } from '@/core/services/auth.service';
+import { ShareService } from '@/core/services/shared.service';
 interface Product {
     name: string;
     price: string;
@@ -91,12 +92,16 @@ export class InvoiceComponent {
         statusOptions:any[]= [];
         products: StockIn[] = [];
         filteredProducts: StockIn[] = [];
+        invoiceData:any[]=[];
+        invoiceSummary:any={};
         constructor(
             private fb: FormBuilder,
             private inventoryService: InventoryService,
             private authService: AuthService,
             private messageService: MessageService,
-            public datepipe:DatePipe
+            public datepipe:DatePipe,
+            private router:Router,
+            private sharedService: ShareService,
         ) {}
  
     ngOnInit(): void {
@@ -106,11 +111,42 @@ export class InvoiceComponent {
                p_cusname:[''],
                 fromDate: [this.today,Validators.required],
                 toDate:[this.today,Validators.required],
-                status:['']
+                status:[''],
+
+                //PRINT SECTION VARIABLE
+                p_billno: [''],
+            p_transactiondate: [''],
+            p_transactionid: [''],
+            p_customername: [''],
+            p_customeraddress: [''],
+            p_mobileno: [''],
+            p_customergstin: [''],
+            p_customerstate: [''],
+            p_totalsale: [''],
+            p_totalpayable: [''],
+            p_disctype: [''],
+            p_overalldiscount: [''],
+            discountvalueper: [''],
+            p_roundoff: [''],
+            amount_before_tax: [''],
+            cgst_9: [''],
+            sgst_9: [''],
+            tax_18: [''],
+            p_totalqty: [''],
             },{validators:this.dateRangeValidator}
         );
-       this.loadAllDropdowns();
+        const savedState = this.sharedService.getInvoiceState();
+        if(savedState && (Date.now() - savedState.timestamp)<300000){
+            this.invoiceForm.patchValue(savedState.filters);
+            this.products=savedState.data;
+            this.filteredProducts = [...savedState.data];
+            console.log('Restored state from navigation');
+        }
+        else{
+              this.loadAllDropdowns();
         this.onGetStockIn();
+        }
+       
     }
 dateRangeValidator(form:FormGroup){
     const fromDate = form.get('fromDate')?.value;
@@ -124,7 +160,6 @@ dateRangeValidator(form:FormGroup){
   getStockArray(): FormArray {
         return this.invoiceForm.get('p_stock') as FormArray;
     }
-   
     onGetStockIn() {
       this.products=this.inventoryService.productItem || [];
     }
@@ -135,7 +170,6 @@ dateRangeValidator(form:FormGroup){
         const startDate = this.invoiceForm.controls['fromDate'].value;
         const endDate = this.invoiceForm.controls['toDate'].value;
         const status = this.invoiceForm.controls['status'].value;
-
         if((startDate && endDate) || (p_cusname || p_mobile || status) ){
             const payload={
                  
@@ -144,15 +178,14 @@ dateRangeValidator(form:FormGroup){
                 p_mobile: p_mobile || null,
                 p_customer: p_cusname || null,
                 p_status: status || null,
-                p_username:'admin',
-                    
-                      
+                p_username:'admin',            
             };
             this.inventoryService.getinvoicedetail(payload).subscribe({
                 next :(res:any) =>{
                     console.log('API RESEULT:',res.data);
                     this.products=res?.data || [];
                     this.filteredProducts = [...this.products];
+                     this.saveCurrentState();
                     if(this.products.length===0){
                         let message = 'No Data Available for this Category and Item';
                         this.showSuccess(message);
@@ -167,6 +200,11 @@ dateRangeValidator(form:FormGroup){
              this.errorSuccess(message);
         }
      }
+
+ saveCurrentState() {
+    const currentFilters = this.invoiceForm.value;
+    this.sharedService.setInvoiceState(currentFilters, this.products);
+  }
 
     onPageChange(event: any) {
         this.first = event.first;
@@ -189,6 +227,7 @@ dateRangeValidator(form:FormGroup){
         });
         this.filteredProducts = [];
          this.products = [];
+         this.invoiceData=[];
     }
     createDropdownPayload(returnType: string) {
         return {
@@ -226,12 +265,157 @@ dateRangeValidator(form:FormGroup){
         this.OnGetCusMobile();
        
     }
+
+
+    openInvoice(row:any){
+      if(!row || !row.invoice_no) return;
+      const payload = {
+        p_username:'admin',
+        p_returntype:'SALEPRINT',
+        p_returnvalue:row.invoice_no
+      };
+
+      this.saveCurrentState();
+      this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+        next:(res:any)=>{
+           if(res.data && res.data.length>0){
+            const invoiceSummary = res.data[0];
+            console.log('data data:',invoiceSummary);
+            
+            this.router.navigate(['/layout/pos/sales'],{
+                state:{
+                    mode:'edit',
+                    saleData:invoiceSummary,
+                    itemsData:res.data,
+                    returnUrl: '/layout/pos/invoice'
+                }
+            });
+        }
+            else{
+              this.messageService.add({
+                 severity: 'warn',
+          summary: 'No Data',
+          detail: 'Invoice data not found'
+              });
+            }
+        },
+        error:() =>{
+            this.messageService.add({
+                 severity: 'error',
+        summary: 'Error',
+        detail: 'Failed to load invoice'
+            });
+        }
+      });
+    }
+    
     showSuccess(message: string) {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
     }
     errorSuccess(message: string) {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: message });
     }
+    canPrint(row:any):boolean{
+        if(!row || !row.transactiontype)
+            return false;
+        return row.transactiontype.toUpperCase() ==='SALE';
+    }
+   printInvoice(row: any) {
+    
+    // Create payload FIRST
+    const payload = {
+        "p_username": 'admin',
+        "p_returntype": 'SALEPRINT',
+        "p_returnvalue": row.invoice_no
+    };
+    
+    console.log('Payload:', payload); // Debug: Check if payload is correct
+    
+    // Make API call
+    this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+        next: (res) => {
+            console.log('API Result:', res.data);
+            if(Array.isArray(res.data) && res.data.length>0){
+                this.invoiceData=res.data;
+
+            }
+            
+            this.populateInvoiceForm(res.data[0]);
+            setTimeout(()=>{
+                this.openPrintWindow();
+            },100); 
+        },
+        error: (err) => {
+            console.error('API Error:', err);
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Failed to load invoice data'
+            });
+        } 
+    });
+}
+
+ private populateInvoiceForm(data:any){
+    if(!data) return;
+            this.invoiceForm.patchValue({
+                p_billno:data.billno || '',
+                 p_transactiondate: data.transactiondate || '',
+            p_transactionid: data.transactionid || '',
+            p_customername: data.customername ||'',
+            p_mobileno: data.mobileno || '',
+            p_totalsale: data.totalsale || 0,
+            p_totalpayable: data.totalpayable || 0,
+            p_disctype: data.discounttype || 'N',
+            p_overalldiscount: data.discount || 0,
+            discountvalueper: data.discount || 0,
+            p_roundoff: data.roundoff || 0,
+            amount_before_tax: data.amount_before_tax || 0,
+            cgst_9: data.cgst_9 || 0,
+            sgst_9: data.sgst_9 || 0,
+            tax_18: data.tax_18 || 0,
+            p_totalqty: data.quantity || 0
+            });
+            
+        }
+        private openPrintWindow(){
+             // Now open print window AFTER getting data
+            const printContents = document.getElementById('invoicePrintSection')?.innerHTML;
+            if (!printContents) {
+                console.error('Invoice print section not found');
+                return;
+            }
+
+            const popupWindow = window.open('', '_blank', 'width=900,height=1000');
+            if (popupWindow) {
+                popupWindow.document.open();
+                popupWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Invoice Print</title>
+                        <style>
+                            /* Your print styles here */
+                            body { font-family: Arial, sans-serif; }
+                            /* Add more styles as needed */
+                        </style>
+                    </head>
+                    <body>
+                        ${printContents}
+                        <script>
+                            window.onload = function() {
+                                window.print();
+                                window.onafterprint = function() {
+                                    window.close();
+                                };
+                            };
+                        </script>
+                    </body>
+                    </html>
+                `);
+                popupWindow.document.close();
+            }
+        }
 }
 
 

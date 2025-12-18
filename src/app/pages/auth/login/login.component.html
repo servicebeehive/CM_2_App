@@ -67,11 +67,11 @@
                 <p-message class="mt-1 ms-3" *ngIf="loginForm.get('pwd')?.hasError('required') && loginForm.get('pwd')?.touched" severity="error" variant="simple" size="small"> Password is required </p-message>
                 <p-message class="mt-1 ms-3" *ngIf="loginForm.get('pwd')?.hasError('minlength') && loginForm.get('pwd')?.touched" severity="error" variant="simple" size="small"> Password must be atleast 4 characters</p-message>
 
-                <div class="my-6 flex flex-wrap gap-4">
-                    <!-- <div class="flex items-center">
-                        <p-checkbox name="checkbox" value="val" formControlName="rememberMe" styleClass="mr-2" class="flex" [binary]="true"></p-checkbox>
-                        <label for="checkbox" class="text-surface-900 dark:text-surface-0 font-medium mr-20">Remember Me</label>
-                    </div> -->
+                <div class="my-6 flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center">
+                        <p-checkbox   formControlName="rememberMe" styleClass="mr-2" inputId="rememberMe" class="flex" [binary]="true"></p-checkbox>
+                        <label for="rememberMe" class="text-surface-600 dark:text-surface-200 font-medium mr-20 cursor-pointer">Remember Me</label>
+                    </div>
                     <a class="text-surface-600 dark:text-surface-200 cursor-pointer hover:text-primary ml-auto transition-colors duration-300" (click)="forgetPassword()">Forgot password</a>
                 </div>
                 <button pButton pRipple label="Log In" class="w-full" type="submit" [disabled]="loginForm.invalid"></button>
