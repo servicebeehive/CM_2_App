@@ -99,7 +99,7 @@
                         <td>{{ row.status }}</td>
                         <td >
                             <div class="flex items-center justify-center g-2">
-                                <button pButton type="button" icon="pi pi-folder-open" class="p-button-text p-button-sm text-red-500" ></button>
+                                <button pButton type="button" icon="pi pi-folder-open" class="p-button-text p-button-sm text-red-500" (click)="openTransaction(row)" ></button>
                             </div>
                         </td>
                     </tr>

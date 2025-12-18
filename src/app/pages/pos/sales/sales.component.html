@@ -19,7 +19,7 @@
           type="submit"
           label="Submit"
           class="p-button-warning"
-          [disabled]="isSubmitDisabled() || submitDisabledByBill || salesForm.hasError('costNotGreater')">
+          [disabled]="isSubmitDisabled() || submitDisabledByBill || salesForm.hasError('costNotGreater') || salesForm.hasError('amountNotGreater')">
         </button>
         <!-- PRINT -->
         <button
@@ -53,7 +53,108 @@
     ================================= -->
     <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
 
-      <!-- ITEM DROPDOWN -->
+      <!-- BILL NO -->
+      <div class="flex flex-col">
+        <label class="font-medium mb-1">Bill No</label>
+
+        <p-dropdown
+          [options]="billNoOptions"
+          optionLabel="billno"
+          optionValue="billno"
+          placeholder="Bill No."
+          formControlName="p_billno"
+          [filter]="true"
+          filterPlaceholder="Search Bill No."
+          [showClear]="true" 
+          (onChange)="onBillDetails($event)"
+          [loading]="isLoadingBills">
+        </p-dropdown>
+
+        <small class="text-red-500 mt-1" *ngIf="salesForm.get('p_billno')?.touched">
+          <span *ngIf="salesForm.get('p_billno')?.errors?.['required']">
+            Bill No is required
+          </span>
+        </small>
+      </div>
+  <!-- GST CHECKBOX -->
+      <!-- SEARCH MOBILE NO -->
+        <div class="grid grid-cols-2 gap-x-4">
+      <div class="flex flex-col">
+        <label class="font-medium mb-1">Search Mobile No</label>
+
+        <p-dropdown
+          [options]="cusMobileOptions"
+                        class="w-full"
+                        optionLabel="customerphone"
+                        optionValue="fieldid"
+                        [filter]="true"
+                        [showClear]="true"
+                        type="number"
+                        maxlength="10"
+                        filterPlaceholder="Search Customer Mobile"
+                        placeholder="Search Customer Mobile"
+                        (onFilter)="onMobileFilter($event)"
+                        (onChange)="onMobileSelect($event)"
+                         (keypress)="allowOnlyNumbers($event)">
+        </p-dropdown>
+      </div>
+     <div class="grid grid-cols-2 mt-6">
+        <div class="flex items-center gap-2">
+          <p-checkbox binary="true" variant="filled" formControlName="p_gsttran"></p-checkbox>
+          <label>GST Transaction</label>
+        </div>
+          <div class="flex items-center gap-2">
+          <label> <b> Status:</b></label>
+          <input readonly type="text" formControlName="status"  placeholder="Status" class="bg-transparent border-none outline-none"
+   [ngStyle]="{
+    'color': salesForm.value.status === 'Done' ? 'green' :
+             salesForm.value.status === 'Partial Cancel' ? 'grey' :
+             salesForm.value.status === 'Cancel' ? 'red' : 'black',
+    'font-weight': 'bold'
+  }"
+/>
+</div>
+        </div>
+      </div>
+
+
+    <!-- ================================
+         BILL DETAILS + CUSTOMER INFO
+    ================================= -->
+
+     <!-- CUSTOMER NAME -->
+      <div class="flex flex-col">
+        <label class="font-medium mb-1">Customer Name</label>
+        <input
+          pInputText
+          showclear="[true]"
+          placeholder="Customer Name"
+          formControlName="p_customername" />
+          <small class="text-red-500 ms-3 mt-1" *ngIf="salesForm.get('p_customername')?.touched">
+                    <span *ngIf="salesForm.get('p_customername')?.errors?.['required']">Customer Name is required</span>
+                </small>
+      </div>
+
+
+       <!-- MOBILE -->
+      <div class="flex flex-col">
+        <label class="font-medium mb-1">Mobile No</label>
+        <input
+          pInputText
+          type="number"
+          [placeholder]="mobilePlaceholder"
+          maxlength="10"
+          formControlName="p_mobileno" 
+          (keypress)="allowOnlyNumbers($event)"/>
+        <small class="text-red-500 ms-3 mt-1" *ngIf="salesForm.get('p_mobileno')?.touched">
+                    <span *ngIf="salesForm.get('p_mobileno')?.errors?.['required']">Mobile No. is required</span>
+                </small>
+        <small class="text-red-500 mt-1" *ngIf="salesForm.get('p_mobileno')?.errors?.['pattern'] ">
+          Please enter a valid 10-digit mobile number
+        </small>
+      </div>
+
+ <!-- ITEM DROPDOWN -->
       <div class="flex flex-col">
         <label>Item</label>
 
@@ -97,54 +198,7 @@
 
         </p-select>
       </div>
-  <!-- GST CHECKBOX -->
-      <div class="flex gap-10">
-        <div class="flex items-center gap-2">
-          <p-checkbox binary="true" variant="filled" formControlName="p_gsttran"></p-checkbox>
-          <label>GST Transaction</label>
-        </div>
-          <div class="flex items-center gap-2">
-          <label> <b> Status:</b></label>
-          <input type="text" formControlName="status"  placeholder="Status" 
-   [ngStyle]="{
-    'color': salesForm.value.status === 'Done' ? 'green' :
-             salesForm.value.status === 'Partial Cancel' ? 'grey' :
-             salesForm.value.status === 'Cancel' ? 'red' : 'black',
-    'font-weight': 'bold'
-  }"
-/>
-        </div>
-      </div>
-    </div>
 
-
-    <!-- ================================
-         BILL DETAILS + CUSTOMER INFO
-    ================================= -->
-    <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
-
-      <!-- BILL NO -->
-      <div class="flex flex-col">
-        <label class="font-medium mb-1">Bill No</label>
-
-        <p-dropdown
-          [options]="billNoOptions"
-          optionLabel="billno"
-          optionValue="billno"
-          placeholder="Bill No."
-          formControlName="p_billno"
-          [filter]="true"
-          filterPlaceholder="Search Bill No."
-          [showClear]="true" 
-          (onChange)="onBillDetails($event)">
-        </p-dropdown>
-
-        <small class="text-red-500 mt-1" *ngIf="salesForm.get('p_billno')?.touched">
-          <span *ngIf="salesForm.get('p_billno')?.errors?.['required']">
-            Bill No is required
-          </span>
-        </small>
-      </div>
 
       <!-- TRANSACTION DATE -->
       <div class="flex flex-col">
@@ -158,34 +212,6 @@
           [maxDate]="today">
         </p-datepicker>
       </div>
-
-
-      <!-- CUSTOMER NAME -->
-      <div class="flex flex-col">
-        <label class="font-medium mb-1">Customer Name</label>
-        <input
-          pInputText
-          placeholder="Customer Name"
-          formControlName="p_customername" />
-      </div>
-
-      <!-- MOBILE -->
-      <div class="flex flex-col">
-        <label class="font-medium mb-1">Mobile No</label>
-        <input
-          pInputText
-          type="number"
-          placeholder="Mobile No"
-          maxlength="10"
-          formControlName="p_mobileno" 
-          (keypress)="allowOnlyNumbers($event)"/>
-
-        <small class="text-red-500 mt-1" *ngIf="salesForm.get('p_mobileno')?.errors?.['pattern'] ">
-          Please enter a valid 10-digit mobile number
-        </small>
-      </div>
-
-    
 
     </div>
 
@@ -288,7 +314,7 @@
     <!-- ================================
          SUMMARY SECTION
     ================================= -->
-    <div class="grid grid-cols-6 gap-x-8 gap-y-4 m-3 mt-4">
+    <div class="grid grid-cols-7 gap-x-8 gap-y-4 m-3 mt-4">
 
       <!-- Total Cost -->
       <div class="flex flex-col">
@@ -332,6 +358,16 @@
         <small class="text-red-500" 
        *ngIf="salesForm.hasError('costNotGreater')">
   This Cost must be greater than Total Cost.
+</small>
+      </div>
+
+       <!-- Paid Amount -->
+      <div class="flex flex-col">
+        <label>Paid Amount</label>
+        <input pInputText type="number" formControlName="p_paymentdue" />
+        <small class="text-red-500" 
+       *ngIf="salesForm.hasError('amountNotGreater')">
+  Paid Amount cannot be greater than Final Payable.
 </small>
       </div>
 

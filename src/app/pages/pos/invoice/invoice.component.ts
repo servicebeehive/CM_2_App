@@ -25,6 +25,7 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { Paginator } from 'primeng/paginator';
 import { Router, RouterLink } from "@angular/router";
 import { AuthService } from '@/core/services/auth.service';
+import { ShareService } from '@/core/services/shared.service';
 interface Product {
     name: string;
     price: string;
@@ -99,7 +100,8 @@ export class InvoiceComponent {
             private authService: AuthService,
             private messageService: MessageService,
             public datepipe:DatePipe,
-            private router:Router
+            private router:Router,
+            private sharedService: ShareService,
         ) {}
  
     ngOnInit(): void {
@@ -133,8 +135,18 @@ export class InvoiceComponent {
             p_totalqty: [''],
             },{validators:this.dateRangeValidator}
         );
-       this.loadAllDropdowns();
+        const savedState = this.sharedService.getInvoiceState();
+        if(savedState && (Date.now() - savedState.timestamp)<300000){
+            this.invoiceForm.patchValue(savedState.filters);
+            this.products=savedState.data;
+            this.filteredProducts = [...savedState.data];
+            console.log('Restored state from navigation');
+        }
+        else{
+              this.loadAllDropdowns();
         this.onGetStockIn();
+        }
+       
     }
 dateRangeValidator(form:FormGroup){
     const fromDate = form.get('fromDate')?.value;
@@ -158,7 +170,6 @@ dateRangeValidator(form:FormGroup){
         const startDate = this.invoiceForm.controls['fromDate'].value;
         const endDate = this.invoiceForm.controls['toDate'].value;
         const status = this.invoiceForm.controls['status'].value;
-
         if((startDate && endDate) || (p_cusname || p_mobile || status) ){
             const payload={
                  
@@ -174,6 +185,7 @@ dateRangeValidator(form:FormGroup){
                     console.log('API RESEULT:',res.data);
                     this.products=res?.data || [];
                     this.filteredProducts = [...this.products];
+                     this.saveCurrentState();
                     if(this.products.length===0){
                         let message = 'No Data Available for this Category and Item';
                         this.showSuccess(message);
@@ -188,6 +200,11 @@ dateRangeValidator(form:FormGroup){
              this.errorSuccess(message);
         }
      }
+
+ saveCurrentState() {
+    const currentFilters = this.invoiceForm.value;
+    this.sharedService.setInvoiceState(currentFilters, this.products);
+  }
 
     onPageChange(event: any) {
         this.first = event.first;
@@ -248,123 +265,61 @@ dateRangeValidator(form:FormGroup){
         this.OnGetCusMobile();
        
     }
-    openInvoiceInNewTab(row:any){
-        console.log('Opening invoice:', row);
-        const payload={
-            p_username:'admin',
-            p_returntype:'SALEPRINT',
-            p_returnvalue:row.invoice_no
-        };
-        this.messageService.add({
-            severity:'info',
-            summary:'Loading',
-            detail:'Opening invoice details...',
-            life:2000
-        });
-        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-            next:(res:any)=>{
-                if(res.data && res.data.length>0){
-                    const invoiceDetails = res.data[0];
-                    console.log('Invoice details:', invoiceDetails);
 
-                    const salePageData = this.prepareSalePageData(invoiceDetails, res.data);
-                    
-                    // Store in localStorage with a unique key
-                    const storageKey = `invoice_${row.invoice_no}_${Date.now()}`;
-                    localStorage.setItem(storageKey, JSON.stringify(salePageData));
-                    
-                    // Open sale page in new tab
-                    const salePageUrl = `/sale?storageKey=${storageKey}&mode=edit&invoice_no=${row.invoice_no}`;
-                    window.open(salePageUrl, '_blank');
-                    
-                    this.messageService.add({
-                        severity: 'success',
-                        summary: 'Success',
-                        detail: 'Invoice opened in sale page'
-                    });
-                } else {
-                    this.messageService.add({
-                        severity: 'warn',
-                        summary: 'No Data',
-                        detail: 'No invoice details found'
-                    });
+
+    openInvoice(row:any){
+      if(!row || !row.invoice_no) return;
+      const payload = {
+        p_username:'admin',
+        p_returntype:'SALEPRINT',
+        p_returnvalue:row.invoice_no
+      };
+
+      this.saveCurrentState();
+      this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+        next:(res:any)=>{
+           if(res.data && res.data.length>0){
+            const invoiceSummary = res.data[0];
+            console.log('data data:',invoiceSummary);
+            
+            this.router.navigate(['/layout/pos/sales'],{
+                state:{
+                    mode:'edit',
+                    saleData:invoiceSummary,
+                    itemsData:res.data,
+                    returnUrl: '/layout/pos/invoice'
                 }
-            },
-            error: (err) => {
-                console.error('Error fetching invoice details:', err);
-                this.messageService.add({
-                    severity: 'error',
-                    summary: 'Error',
-                    detail: 'Failed to load invoice details'
-                });
+            });
+        }
+            else{
+              this.messageService.add({
+                 severity: 'warn',
+          summary: 'No Data',
+          detail: 'Invoice data not found'
+              });
             }
-        });
+        },
+        error:() =>{
+            this.messageService.add({
+                 severity: 'error',
+        summary: 'Error',
+        detail: 'Failed to load invoice'
+            });
+        }
+      });
     }
-
-    // Prepare data for sale page
-    private prepareSalePageData(invoiceSummary: any, items: any[]): any {
-        return {
-            // Basic invoice info
-            invoice_no: invoiceSummary.billno,
-            invoice_date: invoiceSummary.transactiondate,
-            
-            // Customer info
-            customer: {
-                name: invoiceSummary.customername || '',
-                mobile: invoiceSummary.mobileno || '',
-                // Add other customer fields if available
-                address: invoiceSummary.customeraddress || '',
-                gstin: invoiceSummary.customergstin || '',
-                state: invoiceSummary.customerstate || ''
-            },
-            
-            // Items list
-            items: items.map(item => ({
-                item_id: item.itemid,
-                item_name: item.itemname,
-                category: item.categoryname,
-                quantity: item.quantity,
-                uom: item.uomname,
-                mrp: item.mrp,
-                cost_price: item.costprice,
-                discount: item.discount || 0,
-                tax_percentage: item.taxpercentage || 0,
-                total: (item.quantity * item.mrp) - (item.discount || 0)
-            })),
-            
-            // Totals
-            totals: {
-                subtotal: invoiceSummary.totalsale || 0,
-                discount: invoiceSummary.discount || 0,
-                discount_type: invoiceSummary.discounttype || 'N',
-                tax: invoiceSummary.tax_18 || 0,
-                cgst: invoiceSummary.cgst_9 || 0,
-                sgst: invoiceSummary.sgst_9 || 0,
-                roundoff: invoiceSummary.roundoff || 0,
-                grand_total: invoiceSummary.totalpayable || 0,
-                amount_before_tax: invoiceSummary.amount_before_tax || 0
-            },
-            
-            // Payment info
-            payment: {
-                paid_amount: invoiceSummary.paid_amount || 0,
-                balance: invoiceSummary.balance || 0,
-                status: invoiceSummary.status || '',
-                payment_mode: invoiceSummary.payment_mode || 'Cash'
-            },
-            
-            // Flags for sale page
-            mode: 'edit',
-            source: 'invoice_report'
-        };
-    }
+    
     showSuccess(message: string) {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
     }
     errorSuccess(message: string) {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: message });
     }
-
+    canPrint(row:any):boolean{
+        if(!row || !row.transactiontype)
+            return false;
+        return row.transactiontype.toUpperCase() ==='SALE';
+    }
    printInvoice(row: any) {
     
     // Create payload FIRST

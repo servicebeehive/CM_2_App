@@ -21,19 +21,19 @@ import { InventoryService } from '@/core/services/inventory.service';
                 <i class="pi pi-bars"></i>
             </button>
             
-            <p class="text-3xl font-bold text-primary">{{companyName}}</p>
+            <p class="text-2xl font-bold text-primary">{{companyName}}</p>
 
             <nav app-breadcrumb class="topbar-breadcrumb"></nav>
         </div>
 
         <div class="topbar-end">
             <ul class="topbar-menu">
-                <li class="topbar-search">
+                <!-- <li class="topbar-search">
                     <p-iconfield>
                         <p-inputicon class="pi pi-search" />
                         <input type="text" pInputText placeholder="Search" class="w-48 sm:w-full" />
                     </p-iconfield>
-                </li>
+                </li> -->
                 <li class="ml-3">
                     <p-button icon="pi pi-palette" rounded (onClick)="onConfigButtonClick()"></p-button>
                 </li>

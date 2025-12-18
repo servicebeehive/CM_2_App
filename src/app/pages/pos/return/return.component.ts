@@ -24,6 +24,7 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { AddinventoryComponent } from '@/pages/inventory/addinventory/addinventory.component';
 import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
 import { AuthService } from '@/core/services/auth.service';
+import { select } from '@ngrx/store';
 
 @Component({
     selector: 'app-retrun',
@@ -233,6 +234,7 @@ else{
           UOMId: item.uomid || 0,
           uomname: item.uomname,
           Quantity: item.quantity || 1,
+          originalQuantity:item.quantity,
           itemcost: item.itemcost || 0,
           MRP: (item.mrp || 0).toFixed(2),
           totalPayable: ((item.quantity || 1) * (item.mrp || 0)).toFixed(2),
@@ -401,21 +403,50 @@ OnSalesHeaderCreate(data: any) {
         const row=this.saleArray.at(index) as FormGroup;
 
         const qty = Number(row.get('Quantity')?.value ||0);
-        const stock=Number(row.get('curStock')?.value || 0);
+        const originalQty = Number(row.get('originalQuantity')?.value || 0);
+        // const stock=Number(row.get('curStock')?.value || 0);
         const mrp = Number(row.get('MRP')?.value || 0);
         const total = +(mrp * qty).toFixed(2);
-        if(qty>(stock+1)){
-          row.get('Quantity')?.setErrors({maxStock:true});
-      return;
-    } else {
-      // Clear error if valid
-      row.get('Quantity')?.setErrors(null);
-    }
-
+        console.log('original quantity', originalQty);
+        const isSelected = this.selectedProducts.includes(row);
+        if(isSelected){
+           if(qty===null || qty === undefined || isNaN(qty)){
+             row.get('Quantity')?.setErrors({ required:true});
+            this.showValidationMessage('Quantity is required', 'error');
+            return;
+          }
+          if(qty<=0){
+            row.get('Quantity')?.setErrors({ required:true});
+            this.showValidationMessage('Quantity must be greater than 0', 'error');
+            return;
+          }
+          if(qty>originalQty){
+            row.get('Quantity')?.setErrors({MaxQuantity:true}),
+            this.showValidationMessage(`Cannot return more than ${originalQty} units (original sale quantity)`, 'warn');
+            return;
+          }
+         
+        // if (stock > 0 && qty > stock) {
+        //     // This is a warning, not necessarily an error for returns
+        //     row.get('Quantity')?.setErrors({ stockWarning: true });
+        //     this.showValidationMessage(`Note: Only ${stock} units currently in stock`, 'info');
+        // }
+        }else{
+            row.get('Quantity')?.setErrors(null);
+          }
         row.patchValue({totalPayable: total});
         this.calculateSummary();
         this.updateSelectedTotal();
     }
+    showValidationMessage(message: string, severity: 'error' | 'warn' | 'info' | 'success') {
+    this.messageService.add({
+        severity: severity,
+        summary: severity === 'error' ? 'Validation Error' : 
+                 severity === 'warn' ? 'Warning' : 'Information',
+        detail: message,
+        life: 3000
+    });
+}
     calculateTotals() {
         const totalMrp = this.filteredProducts.reduce((sum, p) => sum + (p.mrp || 0) * (p.Quantity || 0), 0);
         this.returnForm.patchValue(
@@ -558,17 +589,58 @@ OnSalesHeaderCreate(data: any) {
         this.calculateTotals();
         this.closeDialog();
     }
-    
+    isSubmitDisabled(): boolean{
+      if(this.selectedProducts.length === 0){
+        return true;
+      }
+      const hasValidQuatity = this.selectedProducts.some(row=>{
+        const quantity = Number(row.get('Quantity')?.value||0);
+        const originalQty=Number(row.get('originalQuantity')?.value || 0);
+         if (row.get('Quantity')?.invalid) {
+            return true;
+        }
+        if (quantity <= 0 || isNaN(quantity)) {
+            return true;
+        }
+        if (quantity > originalQty) {
+            return true;
+        }
+        return false;
+      });
+      return hasValidQuatity;
+    }
     onSubmit() {
-    //    if (this.isSubmitDisabled()) {
-    //   this.messageService.add({
-    //     severity: 'error',
-    //     summary: 'Validation Failed',
-    //     detail: 'Please correct all errors before submitting.',
-    //     life: 2500
-    //   });
-    //   return;
-    // }
+       if (this.isSubmitDisabled()) {
+      let errorMessage='';
+      if(this.selectedProducts.length ===0){
+        errorMessage='Please select at least one item to return.';
+      }
+      else{
+        const hasValidQuantity = this.selectedProducts.some(row => {
+        const quantity = Number(row.get('Quantity')?.value || 0);
+        return quantity > 0;
+        });
+
+      if (!hasValidQuantity) {
+        errorMessage = 'Please enter quantity greater than 0 for selected items.';
+      } else if (this.returnForm.invalid) {
+        errorMessage = 'Please fill all required fields correctly.';
+      }
+    }
+    
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Validation Failed',
+      detail: errorMessage || 'Please correct all errors before submitting.',
+      life: 3000
+    });
+    
+    // Mark all fields as touched to show validation errors
+    this.returnForm.markAllAsTouched();
+    
+    return;
+  }
+
 
         this.confirmationService.confirm({
             message: 'Are you sure you want to make changes?',

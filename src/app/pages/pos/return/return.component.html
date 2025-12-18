@@ -6,7 +6,7 @@
                 <span class="block text-surface-900 font-bold text-xl mb-6">Return</span>
                 <!-- Buttons -->
                 <div class="flex gap-4">
-                   <button pButton type="submit" label="Submit" class="p-button-warning"></button>
+                   <button pButton type="submit" label="Submit" class="p-button-warning" [disabled]="isSubmitDisabled()"></button>
                      <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
                 </div>
             </div>
@@ -116,10 +116,21 @@
                                 <td>
                                     <div class="flex flex-col">
                                     <input class="w-[70px]" type="number" pInputText formControlName="Quantity" placeholder="quantity" (input)="updateTotal(i)" [readOnly]="!selectedProducts.includes(row)" (keypress)="blockDecimal($event)"  [ngClass]="{ 'border-red-500': row.get('Quantity')?.errors?.['maxStock'] }"  />
-                                    <small class="text-red-500 mt-1"
+                                    <!-- <small class="text-red-500 mt-1"
                *ngIf="row.get('Quantity')?.touched && row.get('Quantity')?.errors?.['maxStock']">
             Quantity exceeds the available sale quantity ({{row.get('curStock')?.value + 1}}).
-        </small>
+        </small> -->
+        <!-- <div *ngIf="row.get('Quantity')?.touched || row.get('Quantity')?.dirty">
+            <small class="text-red-500 text-xs" *ngIf="row.get('Quantity')?.errors?.['required']">
+                Quantity is required
+            </small>
+            <small class="text-red-500 text-xs" *ngIf="row.get('Quantity')?.errors?.['maxStock']">
+                Max {{ row.get('curStock')?.value }} available
+            </small>
+            <small class="text-red-500 text-xs" *ngIf="!row.get('Quantity')?.errors && row.get('Quantity')?.value <= 0 && selectedProducts.includes(row)">
+                Must be greater than 0
+            </small>
+        </div> -->
                                     </div>
                                 <td>{{ row.get('MRP')?.value }}</td>
                                 <td>{{ row.get('totalPayable')?.value }}</td>
