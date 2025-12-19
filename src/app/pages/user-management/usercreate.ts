@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ViewChild } from '@angular/core';
 import { Select } from 'primeng/select';
 import { InputText } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
@@ -14,11 +14,12 @@ import { InventoryService } from '@/core/services/inventory.service';
 import { UserService } from '@/core/services/user.service';
 import { AuthService } from '@/core/services/auth.service';
 import { MessageService } from 'primeng/api';
+import { DropdownModule } from "primeng/dropdown";
 
 @Component({
     selector: 'user-create',
     standalone: true,
-    imports: [Select, InputText, TextareaModule, FileUploadModule, ButtonModule, InputGroupModule, RippleModule, CommonModule, ReactiveFormsModule, RouterLink],
+    imports: [Select, InputText, TextareaModule, FileUploadModule, ButtonModule, InputGroupModule, RippleModule, CommonModule, ReactiveFormsModule, RouterLink, DropdownModule],
     template: `<div class="card">
         <span class="text-surface-900 dark:text-surface-0 text-xl font-bold mb-6 block">Profile Creation</span>
         <!-- <div  class="col-span-12 lg:col-span-10"> -->
@@ -59,14 +60,14 @@ import { MessageService } from 'primeng/api';
 
                 <div class="col-span-12 md:col-span-6">
                     <label for="companycountry" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> Country </label>
-                    <p-select inputId="companycountry" formControlName="companycountry" [options]="countries" optionLabel="name" fluid [filter]="true" filterBy="name" [showClear]="true" placeholder="Select a Country">
-                        <ng-template let-country #item>
+                    <p-dropdown formControlName="companycountry" [options]="countries" optionLabel="country_name" optionValue="country_id" fluid [filter]="true" [showClear]="true" placeholder="Select a Country">
+                        <!-- <ng-template let-country #item>
                             <div class="flex items-center">
                                 <img src="https://primefaces.org/cdn/primeng/images/flag/flag_placeholder.png" [class]="'mr-2 flag flag-' + country.code.toLowerCase()" style="width:18px" />
                                 <div>{{ country.name }}</div>
                             </div>
-                        </ng-template>
-                    </p-select>
+                        </ng-template> -->
+                    </p-dropdown>
                 </div>
 
                 <div class="col-span-12 md:col-span-6">
@@ -77,7 +78,7 @@ import { MessageService } from 'primeng/api';
 
  <div class="col-span-12 md:col-span-6">
                     <label for="companystate" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> State </label>
-                    <input formControlName="companystate" type="text" pInputText fluid placeholder="State" />
+                    <p-dropdown formControlName="companystate" [options]="states" optionLabel="state_name" optionValue="state_id" fluid placeholder="State"></p-dropdown>
                 </div>
                
 
@@ -88,12 +89,15 @@ import { MessageService } from 'primeng/api';
                 </div>
                  <div class="col-span-12 md:col-span-6">
                     <label for="companycity" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> City </label>
-                    <input formControlName="companycity" type="text" pInputText fluid placeholder="City" />
+                    <p-dropdown formControlName="companycity" [options]="cities" optionLabel="city_name" optionValue="cty_id" fluid placeholder="City"></p-dropdown>
                 </div>
 
                 <div class="col-span-12 md:col-span-6 flex flex-col items-start">
                     <label for="companylogo" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Company Logo</label>
-                    <p-fileupload mode="basic" name="companylogo" url="./upload.php" accept="image/*" [maxFileSize]="1000000" styleClass="p-button-outlined p-button-plain" chooseLabel="Upload Image"></p-fileupload>
+                    <p-fileupload #fileUpload mode="basic" name="companylogo" accept="image/*" [maxFileSize]="1000000" styleClass="p-button-outlined p-button-plain" chooseLabel="Upload Image"></p-fileupload>
+                    @if(selectedFile){
+                        <small class="text-green-600 mt-2">File  selected:{{selectedFile.name}}</small>
+                    }
                 </div>
                 
 
@@ -113,9 +117,15 @@ import { MessageService } from 'primeng/api';
     </div>`
 })
 export class UserCreate {
+    @ViewChild('fileUpload') fileUpload:any;
+    selectedFile: File|null = null;
+    logoBase64:string | null=null;
     fb = inject(FormBuilder);
     userList: any[] = [];
     countries: any[] = [];
+    states: any[]=[];
+    cities:any[]=[];
+    public getUserDetails = {};
     loggedInUserRole:string='';
     profileForm: FormGroup = this.fb.group({
         companyname: ['', Validators.maxLength(50)],
@@ -133,23 +143,10 @@ export class UserCreate {
     
     constructor(private inventoryService:InventoryService, private userService : UserService,private authservice:AuthService,private messageService:MessageService){}
     ngOnInit() {
-       
-        this.countries = [
-           
-            // { name: 'Australia', code: 'AU' },
-            // { name: 'Brazil', code: 'BR' },
-            // { name: 'China', code: 'CN' },
-            // { name: 'Egypt', code: 'EG' },
-            // { name: 'France', code: 'FR' },
-            // { name: 'Germany', code: 'DE' },
-            { name: 'India', code: 'IN' },
-            // { name: 'Japan', code: 'JP' },
-            // { name: 'Spain', code: 'ES' },
-            // { name: 'United States', code: 'US' }
-        ];
-        this.loggedInUserRole=this.authservice.isLogIntType().usertypename;
-         this.onGetData();
         
+        this.loggedInUserRole=this.authservice.isLogIntType().usertypename;
+        this.onGetCountry();
+        //  this.onGetData();
     }
     allowOnlyDigits(event: KeyboardEvent) {
         const char = event.key;
@@ -168,7 +165,7 @@ export class UserCreate {
 	p_companyaddress : form.companyaddress,
 	p_companycity : form.companycity,
 	p_companystate : form.companystate,
-	p_companycountry : form.companycountry?.name,
+	p_companycountry : form.companycountry,
 	p_companypincode : "490001",
 	p_companyphone: form.companyphone,
 	p_companyemail : form.p_companycontactemail || null,
@@ -188,7 +185,22 @@ export class UserCreate {
         }
      });
     }
- 
+    
+onFileSelect(event:any){
+    if(event.files && event.files.length>0){
+        this.selectedFile=event.files[0];
+        // this.convertToBase64(this.selectedFile);
+    }
+}
+
+convertToBase64(file:File){
+    const reader = new FileReader();
+        reader.onload = (e: any) => {
+            this.logoBase64 = e.target.result;
+            console.log('Base64 image created');
+        };
+        reader.readAsDataURL(file);
+}
     createDropdownPayload(returnType:string){
        return{
          uname: "admin",
@@ -215,7 +227,80 @@ export class UserCreate {
             error: (err) => console.log(err)
         });
     }
+     onGetCountry(){
+        const payload = this.createDropdownPayload('COUNTRY');
+        this.inventoryService.getdropdowndetails(payload).subscribe({
+            next:(res)=>{this.countries=res.data || [];
+                this.onGetData();
+            },
+            error:(err)=>console.log(err) 
+        });
+    }
+    onGetState(countryId:string,stateName:string){
+        const payload={
+            ...this.getUserDetails,
+             "p_returntype": "STATE",
+             "p_returnvalue": countryId,
+        }
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next:(res)=>{
+                this.states=res.data || [];
+                  console.log('state:',stateName);
+                    console.log('state:',this.states[0].state_name);
+              const state = this.states.find(
+  s => s.state_name?.trim().toLowerCase() === stateName?.trim().toLowerCase()
+);
+
+              
+                if(state){
+                    this.profileForm.patchValue({
+                        companystate: state.state_id
+                    });
+                }
+            },
+            error:(err)=>console.log(err)
+        })
+    }
+
+     onGetCity(stateId:string){
+        const payload={
+            ...this.getUserDetails,
+             "p_returntype": "STATE",
+             "p_returnvalue": stateId,
+        }
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next:(res)=>{
+                this.states=res.data || []
+            },
+            error:(err)=>console.log(err)
+        })
+    }
+
+
+//    onStateChange(StateId:any){
+//         const state= this.states.find(s=>s.state_id===data.value) ;
+//         if(state){
+//             const payload={
+//                 ...this.getUserDetails,
+//                 "p_returntype":'CITY',
+//                 "p_returnvalue":StateId
+//             }
+//             this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+//                 next:(res)=>{
+//                     if(res.data && res.data.length>0){
+//                         this.cities=res.data || [];
+//                     }
+//                 },
+//                  error:(err)=>console.log(err)
+//             })
+//         }
+//     }
+
     patchFromData(data:any){
+        const country = this.countries.find(c=> c.country_name === data.companycountry || c.company_name?.toLowerCase() === data.companycountry?.toLowerCase() );
+         const countryId = country ? country.country_id : data.companycountry;
+        //  const state= this.states.find(s=>s.state_name === data.companystate || s.state_name?.toLowerCase() === data.companystate?.toLowerCase());
+        //  const stateId=state? state.state_id:data.companystate;
            this.profileForm.patchValue({
                     companyname:data.companyname,
                      companyemail: data.companyemail,
@@ -224,11 +309,14 @@ export class UserCreate {
                     companyaddress: data.companyaddress,
                     companycontactphone: data.companycontactphone,
                     companycontactemail: data.companycontactemail,
-                    companycountry: this.countries.find(c=>c.name === data.companycountry),
-                    companystate: data.companystate,
+                    companycountry: countryId,
+                    // companystate: stateId,
                     companycity: data.companycity,
                     companyphone: data.companyphone
                 });
+                if(countryId){
+                    this.onGetState(countryId,data.companystate);
+                }
     }
      showSuccess(message: string) {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });

@@ -37,6 +37,7 @@ import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.comp
 import { AuthService } from '@/core/services/auth.service';
 import { OrderService } from '@/core/services/order.service';
 import { ShareService } from '@/core/services/shared.service';
+import { Router } from '@angular/router';
 // import { NgxPrintModule } from 'ngx-print';
 
 @Component({
@@ -102,7 +103,7 @@ export class SalesComponent {
   public itemOptionslist: [] = [];
   public uomlist:any[]=[];
   mobilePlaceholder: string = 'Mobile No';
-
+  backshow:boolean= false;
   isLoadingBills: boolean=false;
   @ViewChild(AddinventoryComponent) addInventoryComp!: AddinventoryComponent;
 
@@ -120,7 +121,8 @@ export class SalesComponent {
     private messageService: MessageService,
     private orderService:OrderService,
     public datepipe: DatePipe,
-    private sharedService:ShareService
+    private sharedService:ShareService,
+    private route:Router
   ) { }
 
   ngOnInit(): void {
@@ -137,6 +139,7 @@ export class SalesComponent {
       p_transactiondate: [this.today,[Validators.required]],
       p_customername: ['',Validators.required],
       p_mobileno: ['',[Validators.required,Validators.pattern(/^[6-9]\d{9}$/)]],
+      searchMobileNo:[''],
       p_totalcost: [0],
       p_totalsale: [0],
       p_disctype:[false],
@@ -187,6 +190,7 @@ else{
     console.log('Navigation state:', navigation);
     
     if (navigation && navigation.saleData && navigation.itemsData) {
+       this.backshow=true;
         this.mode = navigation.mode || 'edit';
         this.populateSaleForm(navigation.saleData, navigation.itemsData);
     }
@@ -704,6 +708,7 @@ costNotExceedPayableValidator(): ValidatorFn {
     this.salesForm.reset({
       p_gsttran:true,
     });
+    this.backshow=false;
     this.saleArray.clear();
     this.salesForm.get('p_transactiondate')?.setValue(this.today);
   }
@@ -763,7 +768,9 @@ updateTotal(i: number) {
   this.salesForm.updateValueAndValidity();
 }
 
-
+back(){
+    this.route.navigate(['/layout/pos/invoice']);
+}
   // Apply overall discount & round off
   applyDiscount() {
     const totalSale = Number(this.salesForm.get('p_totalsale')?.value || 0) ;

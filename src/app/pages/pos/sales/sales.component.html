@@ -42,8 +42,9 @@
           class="p-button-secondary"
           (click)="onReset()">
         </button>
-
-
+@if(backshow){
+<button pButton type="button" label="Back" class="p-button-secondary" (click)="back()"  ></button>
+}
       </div>
     </div>
 
@@ -91,6 +92,7 @@
                         [showClear]="true"
                         type="number"
                         maxlength="10"
+                        formControlName="searchMobileNo"
                         filterPlaceholder="Search Customer Mobile"
                         placeholder="Search Customer Mobile"
                         (onFilter)="onMobileFilter($event)"

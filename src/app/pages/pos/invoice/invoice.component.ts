@@ -135,19 +135,23 @@ export class InvoiceComponent {
             p_totalqty: [''],
             },{validators:this.dateRangeValidator}
         );
+         this.loadAllDropdowns();
+        this.onGetStockIn();
         const savedState = this.sharedService.getInvoiceState();
-        if(savedState && (Date.now() - savedState.timestamp)<300000){
+        if(savedState){
             this.invoiceForm.patchValue(savedState.filters);
             this.products=savedState.data;
             this.filteredProducts = [...savedState.data];
             console.log('Restored state from navigation');
         }
-        else{
-              this.loadAllDropdowns();
-        this.onGetStockIn();
-        }
        
     }
+    blockMinus(event: KeyboardEvent) {
+    console.log(event);
+    if (event.key === '-' || event.key === 'Minus' || event.key ==='e' || event.key === 'E') {
+      event.preventDefault();
+    }
+  }
 dateRangeValidator(form:FormGroup){
     const fromDate = form.get('fromDate')?.value;
     const toDate=form.get('toDate')?.value;
@@ -157,6 +161,22 @@ dateRangeValidator(form:FormGroup){
  const to=new Date(toDate);
   return to >= from ? null :{ dateRangeInvalid:true }; 
  }
+
+getDueAmount(row:any):number
+{
+    return (Number(row.total_amount)||0) -(Number(row.paid_amount)||0);
+}
+validateReceivedAmount(row:any){
+    const due = this.getDueAmount(row);
+    if(row.received_amount > due){
+        row.amountError=true;
+        // row.received_amount=due;
+    }
+    else{
+        row.amountError = false;
+    }
+}
+
   getStockArray(): FormArray {
         return this.invoiceForm.get('p_stock') as FormArray;
     }
@@ -308,7 +328,9 @@ dateRangeValidator(form:FormGroup){
         }
       });
     }
-    
+    submit(){
+
+    }
     showSuccess(message: string) {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
     }

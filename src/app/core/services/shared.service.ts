@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, filter } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -102,24 +102,40 @@ export class ShareService {
   private invoiceState = new BehaviorSubject<{
     filters: any;
     data: any[];
-    timestamp: number;
   } | null>(null);
+
+ private transactionState=new BehaviorSubject<{
+  filters:any;
+  data:any[];
+ } |null>(null);
 
   getInvoiceState() {
     return this.invoiceState.value;
   }
 
+ getTransactionState(){
+  return this.transactionState.value;
+ }
+
   setInvoiceState(filters: any, data: any[]) {
     this.invoiceState.next({
       filters,
       data,
-      timestamp: Date.now()
     });
   }
+
+setTransactionState(filters:any,data:any[]){
+  this.transactionState.next({
+    filters,data
+  })
+}
 
   clearInvoiceState() {
     this.invoiceState.next(null);
   }
+clearTransactionState(){
+  this.transactionState.next(null);
+}
 
   private stockFilterState=new BehaviorSubject<any>(null);
   stockFilterSate$ = this.stockFilterState.asObservable();
