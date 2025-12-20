@@ -100,7 +100,7 @@
                                     placeholder="Amount"
                                     (keydown)="blockMinus($event)"
                                 />
-                                <small class="text-red-500" *ngIf="row.amountError"> Received amount cannot be greater than {{getDueAmount(row)}}</small>
+                                <small class="text-red-500" *ngIf="row.amountError">This cannot be greater than {{getDueAmount(row)}}</small>
                             </div>
                         </td>
                         <td>{{ row.status }}</td>

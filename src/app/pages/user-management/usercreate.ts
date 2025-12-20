@@ -14,12 +14,12 @@ import { InventoryService } from '@/core/services/inventory.service';
 import { UserService } from '@/core/services/user.service';
 import { AuthService } from '@/core/services/auth.service';
 import { MessageService } from 'primeng/api';
-import { DropdownModule } from "primeng/dropdown";
+import { DropdownModule } from 'primeng/dropdown';
 
 @Component({
     selector: 'user-create',
     standalone: true,
-    imports: [Select, InputText, TextareaModule, FileUploadModule, ButtonModule, InputGroupModule, RippleModule, CommonModule, ReactiveFormsModule, RouterLink, DropdownModule],
+    imports: [InputText, TextareaModule, FileUploadModule, ButtonModule, InputGroupModule, RippleModule, CommonModule, ReactiveFormsModule, RouterLink, DropdownModule],
     template: `<div class="card">
         <span class="text-surface-900 dark:text-surface-0 text-xl font-bold mb-6 block">Profile Creation</span>
         <!-- <div  class="col-span-12 lg:col-span-10"> -->
@@ -60,7 +60,7 @@ import { DropdownModule } from "primeng/dropdown";
 
                 <div class="col-span-12 md:col-span-6">
                     <label for="companycountry" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> Country </label>
-                    <p-dropdown formControlName="companycountry" [options]="countries" optionLabel="country_name" optionValue="country_id" fluid [filter]="true" [showClear]="true" placeholder="Select a Country">
+                    <p-dropdown formControlName="companycountry" [options]="countries" optionLabel="country_name" optionValue="country_id" fluid [filter]="true" [showClear]="true" placeholder="Select a Country" >
                         <!-- <ng-template let-country #item>
                             <div class="flex items-center">
                                 <img src="https://primefaces.org/cdn/primeng/images/flag/flag_placeholder.png" [class]="'mr-2 flag flag-' + country.code.toLowerCase()" style="width:18px" />
@@ -76,75 +76,77 @@ import { DropdownModule } from "primeng/dropdown";
                     <small class="text-red-500 mt-1" *ngIf="profileForm.get('companycontactphone')?.touched && profileForm.get('companycontactphone')?.invalid"> Enter a valid 10-digit mobile number </small>
                 </div>
 
- <div class="col-span-12 md:col-span-6">
+                <div class="col-span-12 md:col-span-6">
                     <label for="companystate" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> State </label>
-                    <p-dropdown formControlName="companystate" [options]="states" optionLabel="state_name" optionValue="state_id" fluid placeholder="State"></p-dropdown>
+                    <p-dropdown formControlName="companystate" [options]="states" optionLabel="state_name" optionValue="state_id" fluid placeholder="State" ></p-dropdown>
                 </div>
-               
 
                 <div class="col-span-12 md:col-span-6">
                     <label for="companycontactemail" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Company Contact Email </label>
                     <input formControlName="companycontactemail" type="email" pInputText fluid placeholder="Company Contact Email" />
                     <small class="text-red-500 mt-1" *ngIf="profileForm.get('companycontactemail')?.touched && profileForm.get('companycontactemail')?.invalid"> Enter a valid email address </small>
                 </div>
-                 <div class="col-span-12 md:col-span-6">
+                <div class="col-span-12 md:col-span-6">
                     <label for="companycity" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> City </label>
-                    <p-dropdown formControlName="companycity" [options]="cities" optionLabel="city_name" optionValue="cty_id" fluid placeholder="City"></p-dropdown>
+                    <p-dropdown formControlName="companycity" [options]="cities" optionLabel="city_name" optionValue="city_id" fluid placeholder="City"></p-dropdown>
                 </div>
 
                 <div class="col-span-12 md:col-span-6 flex flex-col items-start">
                     <label for="companylogo" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Company Logo</label>
-                    <p-fileupload #fileUpload mode="basic" name="companylogo" accept="image/*" [maxFileSize]="1000000" styleClass="p-button-outlined p-button-plain" chooseLabel="Upload Image"></p-fileupload>
-                    @if(selectedFile){
-                        <small class="text-green-600 mt-2">File  selected:{{selectedFile.name}}</small>
+                    <p-fileupload #fileUpload mode="basic" name="companylogo" accept="image/*" [maxFileSize]="1000000" styleClass="p-button-outlined p-button-plain" chooseLabel="Upload Image" (onSelect)="onFileSelect($event)" (onClear)="onFileClear()" ></p-fileupload>
+                    @if (selectedFile) {
+                        <small class="text-green-600 mt-2">File selected:{{ selectedFile.name }}</small>
                     }
                 </div>
-                
 
-                @if(loggedInUserRole==='Admin')
-                {<div class="flex flex-col">
-                    <button pButton pRipple type="submit" label="Submit" class="w-auto mt-3" [disabled]="profileForm.invalid"></button>
-                </div>
+                @if (loggedInUserRole === 'Admin') {
+                    <div class="flex flex-col">
+                        <button pButton pRipple type="submit" label="Submit" class="w-auto mt-3" [disabled]="profileForm.invalid"></button>
+                    </div>
 
-                <div class="flex flex-col">
-                    <button pButton pRipple type="button" label="Close" class="w-auto mt-3" routerLink="/layout"></button>
-                </div>
+                    <div class="flex flex-col">
+                        <button pButton pRipple type="button" label="Close" class="w-auto mt-3" routerLink="/layout"></button>
+                    </div>
                 }
             </div>
-        
+
             <!-- </div> -->
         </form>
     </div>`
 })
 export class UserCreate {
-    @ViewChild('fileUpload') fileUpload:any;
-    selectedFile: File|null = null;
-    logoBase64:string | null=null;
+    @ViewChild('fileUpload') fileUpload: any;
+    selectedFile: File | null = null;
+    logoBase64: string | null = null;
     fb = inject(FormBuilder);
     userList: any[] = [];
     countries: any[] = [];
-    states: any[]=[];
-    cities:any[]=[];
+    states: any[] = [];
+    cities: any[] = [];
     public getUserDetails = {};
-    loggedInUserRole:string='';
+    loggedInUserRole: string = '';
     profileForm: FormGroup = this.fb.group({
         companyname: ['', Validators.maxLength(50)],
         companyemail: ['', [Validators.email, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/), Validators.maxLength(50)]],
-        companygstno: ['',[Validators.required]],
+        companygstno: ['', [Validators.required]],
         companycontactperson: ['', Validators.maxLength(50)],
         companyaddress: ['', Validators.maxLength(100)],
         companycontactphone: ['', Validators.pattern(/^[0-9]{10}$/)],
         companycontactemail: ['', [Validators.email, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/), Validators.maxLength(50)]],
-        companycountry: ['',Validators.required],
+        companycountry: ['', Validators.required],
         companystate: ['', Validators.maxLength(50)],
         companycity: ['', Validators.maxLength(50)],
         companyphone: ['', Validators.pattern(/^[0-9]{10}$/)]
     });
-    
-    constructor(private inventoryService:InventoryService, private userService : UserService,private authservice:AuthService,private messageService:MessageService){}
+
+    constructor(
+        private inventoryService: InventoryService,
+        private userService: UserService,
+        private authservice: AuthService,
+        private messageService: MessageService
+    ) {}
     ngOnInit() {
-        
-        this.loggedInUserRole=this.authservice.isLogIntType().usertypename;
+        this.loggedInUserRole = this.authservice.isLogIntType().usertypename;
         this.onGetCountry();
         //  this.onGetData();
     }
@@ -155,170 +157,205 @@ export class UserCreate {
         }
     }
     onSubmit() {
-        if(this.profileForm.invalid){
+        if (this.profileForm.invalid) {
             this.profileForm.markAllAsTouched();
             return;
         }
         const form = this.profileForm.value;
-        const payload={
-    p_companyname : form.companyname,
-	p_companyaddress : form.companyaddress,
-	p_companycity : form.companycity,
-	p_companystate : form.companystate,
-	p_companycountry : form.companycountry,
-	p_companypincode : "490001",
-	p_companyphone: form.companyphone,
-	p_companyemail : form.p_companycontactemail || null,
-	p_companygstno : form.companygstno,
-	p_companycontactperson : form.companycontactperson,
-	p_companycontactphone : form.companycontactphone,
-	p_companycontactemail : form.companycontactemail,
-	p_companylogo : null
+        const payload = {
+            p_companyname: form.companyname,
+            p_companyaddress: form.companyaddress,
+            p_companycity: form.companycity,
+            p_companystate: form.companystate,
+            p_companycountry: form.companycountry,
+            p_companypincode: '490001',
+            p_companyphone: form.companyphone,
+            p_companyemail: form.p_companycontactemail || null,
+            p_companygstno: form.companygstno,
+            p_companycontactperson: form.companycontactperson,
+            p_companycontactphone: form.companycontactphone,
+            p_companycontactemail: form.companycontactemail,
+            p_companylogo: this.logoBase64 || null
         };
-     this.userService.OnUserListHeaderCreate(payload).subscribe({
-        next:(res:any)=>{
-             console.log('API RESULT:', res.data);
-             this.showSuccess('Profile details saved successfully');
-        },
-        error: (err) => {
+        this.userService.OnUserListHeaderCreate(payload).subscribe({
+            next: (res: any) => {
+                console.log('API RESULT:', res.data);
+                this.showSuccess('Profile details saved successfully');
+            },
+            error: (err) => {
                 console.error(err);
-        }
-     });
+            }
+        });
     }
-    
-onFileSelect(event:any){
-    if(event.files && event.files.length>0){
-        this.selectedFile=event.files[0];
-        // this.convertToBase64(this.selectedFile);
-    }
-}
 
-convertToBase64(file:File){
-    const reader = new FileReader();
+    onFileSelect(event: any) {
+        if (event.files && event.files.length > 0) {
+            this.selectedFile = event.files[0];
+            if (this.selectedFile) {
+            this.convertToBase64(this.selectedFile);
+        }
+        }
+    }
+
+  onFileClear(){
+    this.selectedFile=null;
+    this.logoBase64=null;
+  }
+
+    convertToBase64(file: File) {
+          if (!file) {
+        console.log('No file provided');
+        return;
+    }
+        const reader = new FileReader();
         reader.onload = (e: any) => {
             this.logoBase64 = e.target.result;
             console.log('Base64 image created');
         };
         reader.readAsDataURL(file);
-}
-    createDropdownPayload(returnType:string){
-       return{
-         uname: "admin",
-    p_username: "admin",
-    p_returntype: returnType
-       }
+    }
+    createDropdownPayload(returnType: string) {
+        return {
+            uname: 'admin',
+            p_username: 'admin',
+            p_returntype: returnType
+        };
     }
 
-    onGetData(){
-        const  payload= this.createDropdownPayload('PROFILE');
+    onGetData() {
+        const payload = this.createDropdownPayload('PROFILE');
         this.inventoryService.getdropdowndetails(payload).subscribe({
-            
-            next:(res)=>
-            { if(res.data){
+            next: (res) => {
+                if (res.data) {
                     this.patchFromData(res.data[0]);
-                    if(this.loggedInUserRole !=='Admin'){
+                    if (this.loggedInUserRole !== 'Admin') {
                         this.profileForm.disable();
-                    }
-                    else{
+                    } else {
                         this.profileForm.enable();
                     }
-            }
+                }
             },
             error: (err) => console.log(err)
         });
     }
-     onGetCountry(){
+    onGetCountry() {
         const payload = this.createDropdownPayload('COUNTRY');
         this.inventoryService.getdropdowndetails(payload).subscribe({
-            next:(res)=>{this.countries=res.data || [];
+            next: (res) => {
+                this.countries = res.data || [];
                 this.onGetData();
             },
-            error:(err)=>console.log(err) 
+            error: (err) => console.log(err)
         });
     }
-    onGetState(countryId:string,stateName:string){
-        const payload={
+    onGetState(countryId: string, stateName: string, cityName:string) {
+        const payload = {
             ...this.getUserDetails,
-             "p_returntype": "STATE",
-             "p_returnvalue": countryId,
-        }
+            p_returntype: 'STATE',
+            p_returnvalue: countryId
+        };
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-            next:(res)=>{
-                this.states=res.data || [];
-                  console.log('state:',stateName);
-                    console.log('state:',this.states[0].state_name);
-              const state = this.states.find(
-  s => s.state_name?.trim().toLowerCase() === stateName?.trim().toLowerCase()
-);
-
-              
-                if(state){
+            next: (res) => {
+                this.states = res.data || [];
+                const state = this.states.filter(s => s.state_id=== stateName);
+                console.log(state[0].state_id)
+                console.log(state)
+                const statename=state[0].state_id;
+                
+                if (statename) {
                     this.profileForm.patchValue({
-                        companystate: state.state_id
+                        companystate: statename
                     });
                 }
+
+               if(statename){
+                 this.onGetCity(statename,cityName)
+               }
             },
-            error:(err)=>console.log(err)
-        })
+            error: (err) => console.log(err)
+        });
     }
 
-     onGetCity(stateId:string){
-        const payload={
+    onGetCity(statename: string, cityName:string) {
+        
+        const payload = {
             ...this.getUserDetails,
-             "p_returntype": "STATE",
-             "p_returnvalue": stateId,
-        }
+            p_returntype: 'CITY',
+            p_returnvalue: statename
+        };
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-            next:(res)=>{
-                this.states=res.data || []
+            next: (res) => {
+                this.cities = res.data || [];
+                const city= this.cities.filter(c=>c.city_id === cityName);
+                const cityname=city[0].city_id;
+                console.log('city',cityname);
+                if(city){
+                    this.profileForm.patchValue({
+                        companycity:cityname
+                    })
+                }
             },
-            error:(err)=>console.log(err)
-        })
+            error: (err) => console.log(err)
+        });
     }
-
-
-//    onStateChange(StateId:any){
-//         const state= this.states.find(s=>s.state_id===data.value) ;
-//         if(state){
-//             const payload={
-//                 ...this.getUserDetails,
-//                 "p_returntype":'CITY',
-//                 "p_returnvalue":StateId
+//    onGetStateChange(data:any){
+//     console.log(data.value)
+//     const stateId=data.value;
+//       const payload={
+//         ...this.getUserDetails,
+//         'p_returntype':'CITY',
+//         'p_returnvalue':stateId
+//       }
+//       this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+//         next:(res)=>{
+//             if(res.data && res.data.length>0){
+//                 console.log('res:',res.data)
 //             }
-//             this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-//                 next:(res)=>{
-//                     if(res.data && res.data.length>0){
-//                         this.cities=res.data || [];
-//                     }
-//                 },
-//                  error:(err)=>console.log(err)
-//             })
 //         }
-//     }
+//       })
+//    }
+    //    onStateChange(StateId:any){
+    //         const state= this.states.find(s=>s.state_id===data.value) ;
+    //         if(state){
+    //             const payload={
+    //                 ...this.getUserDetails,
+    //                 "p_returntype":'CITY',
+    //                 "p_returnvalue":StateId
+    //             }
+    //             this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+    //                 next:(res)=>{
+    //                     if(res.data && res.data.length>0){
+    //                         this.cities=res.data || [];
+    //                     }
+    //                 },
+    //                  error:(err)=>console.log(err)
+    //             })
+    //         }
+    //     }
 
-    patchFromData(data:any){
-        const country = this.countries.find(c=> c.country_name === data.companycountry || c.company_name?.toLowerCase() === data.companycountry?.toLowerCase() );
-         const countryId = country ? country.country_id : data.companycountry;
+    patchFromData(data: any) {
+        const country = this.countries.find((c) => c.country_id === data.companycountry || c.company_id?.toLowerCase() === data.companycountry?.toLowerCase());
+        const countryId = country ? country.country_id : data.companycountry;
         //  const state= this.states.find(s=>s.state_name === data.companystate || s.state_name?.toLowerCase() === data.companystate?.toLowerCase());
         //  const stateId=state? state.state_id:data.companystate;
-           this.profileForm.patchValue({
-                    companyname:data.companyname,
-                     companyemail: data.companyemail,
-                    companygstno: data.companygstno,
-                    companycontactperson: data.companycontactperson,
-                    companyaddress: data.companyaddress,
-                    companycontactphone: data.companycontactphone,
-                    companycontactemail: data.companycontactemail,
-                    companycountry: countryId,
-                    // companystate: stateId,
-                    companycity: data.companycity,
-                    companyphone: data.companyphone
-                });
-                if(countryId){
-                    this.onGetState(countryId,data.companystate);
-                }
+        this.profileForm.patchValue({
+            companyname: data.companyname,
+            companyemail: data.companyemail,
+            companygstno: data.companygstno,
+            companycontactperson: data.companycontactperson,
+            companyaddress: data.companyaddress,
+            companycontactphone: data.companycontactphone,
+            companycontactemail: data.companycontactemail,
+            companycountry: countryId,
+            // companystate: stateId,
+            // companycity: data.companycity,
+            companyphone: data.companyphone
+        });
+        if (countryId) {
+            this.onGetState(countryId, data.companystate,data.companycity);
+        }
     }
-     showSuccess(message: string) {
+    showSuccess(message: string) {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
     }
 }
