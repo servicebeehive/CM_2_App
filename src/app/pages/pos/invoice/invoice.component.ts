@@ -1,6 +1,6 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, ViewChild } from '@angular/core';
-import { AbstractControl, FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { ChipModule } from 'primeng/chip';
 import { EditorModule } from 'primeng/editor';
@@ -77,21 +77,22 @@ interface Image {
 })
 export class InvoiceComponent {
     invoiceForm!: FormGroup;
-
+   
      visibleDialog=false;
      selectedRow:any=null;
      selection:boolean=true;
-     pagedProducts:StockIn[]=[];
+     pagedProducts:any[]=[];
      first:number=0;
       today: Date = new Date();
      rowsPerPage:number=5;
     globalFilter: string = '';
+    submitDisable:boolean=true;
         // ✅ Move dropdown options into variables
         cusMobileOptions = [];
         cusNameOptions = [];
         statusOptions:any[]= [];
-        products: StockIn[] = [];
-        filteredProducts: StockIn[] = [];
+        products: any[] = [];
+        filteredProducts: any[] = [];
         invoiceData:any[]=[];
         invoiceSummary:any={};
         constructor(
@@ -102,6 +103,7 @@ export class InvoiceComponent {
             public datepipe:DatePipe,
             private router:Router,
             private sharedService: ShareService,
+            private confirmationService:ConfirmationService
         ) {}
  
     ngOnInit(): void {
@@ -133,6 +135,7 @@ export class InvoiceComponent {
             sgst_9: [''],
             tax_18: [''],
             p_totalqty: [''],
+            p_stock:this.fb.array([])
             },{validators:this.dateRangeValidator}
         );
          this.loadAllDropdowns();
@@ -162,26 +165,32 @@ dateRangeValidator(form:FormGroup){
   return to >= from ? null :{ dateRangeInvalid:true }; 
  }
 
-getDueAmount(row:any):number
-{
-    return (Number(row.total_amount)||0) -(Number(row.paid_amount)||0);
-}
+
 validateReceivedAmount(row:any){
-    const due = this.getDueAmount(row);
-    if(row.received_amount > due){
-        row.amountError=true;
-        // row.received_amount=due;
-    }
-    else{
-        row.amountError = false;
-    }
+     const due = parseFloat(row.due_amount) || 0;
+      const received = parseFloat(row.received_amount) || 0;
+        
+        if (received > due) {
+            row.amountError = true;
+            this.submitDisable=true;
+        } else {
+            row.amountError = false;
+            this.submitDisable=false;
+        }
 }
 
-  getStockArray(): FormArray {
+   getStockArray(): FormArray {
         return this.invoiceForm.get('p_stock') as FormArray;
     }
     onGetStockIn() {
       this.products=this.inventoryService.productItem || [];
+    }
+
+    updateReceivedAmount(index:number,value:number):void{
+        if(this.products[index]){
+            this.products[index].received_amount=value;
+            // this.validateReceivedAmount(this.products[index]);      
+        }
     }
     
      display(){
@@ -205,6 +214,7 @@ validateReceivedAmount(row:any){
                     console.log('API RESEULT:',res.data);
                     this.products=res?.data || [];
                     this.filteredProducts = [...this.products];
+                    this.initialzeFormArray();
                      this.saveCurrentState();
                     if(this.products.length===0){
                         let message = 'No Data Available for this Category and Item';
@@ -221,6 +231,13 @@ validateReceivedAmount(row:any){
         }
      }
 
+   private initialzeFormArray():void{
+    this.products.forEach((product,index)=>{
+        this.products.push(
+            new FormControl(product.received_amount || 0)
+        )
+    })
+}
  saveCurrentState() {
     const currentFilters = this.invoiceForm.value;
     this.sharedService.setInvoiceState(currentFilters, this.products);
@@ -251,11 +268,8 @@ validateReceivedAmount(row:any){
     }
     createDropdownPayload(returnType: string) {
         return {
-             
             p_username: 'admin',
             p_returntype: returnType,
-                
-                  
         };
     }
     OnGetCusName() {
@@ -282,8 +296,7 @@ validateReceivedAmount(row:any){
     loadAllDropdowns() {
         this.OnGetStatus();
         this.OnGetCusName();
-        this.OnGetCusMobile();
-       
+        this.OnGetCusMobile();  
     }
 
 
@@ -328,9 +341,88 @@ validateReceivedAmount(row:any){
         }
       });
     }
-    submit(){
 
+getReceivedAmountControl(index: number): AbstractControl | null {
+    const stockArray = this.getStockArray();
+    return stockArray.at(index)?.get('received_amount') || null;
+}
+
+    onChangeROPdown(){
+    const payloadItems = [];
+        
+        // Process only rows with received amount > 0
+        for (let i = 0; i < this.products.length; i++) {
+            const row = this.products[i];
+            const receivedAmount = parseFloat(row.received_amount) || 0;
+            
+            if (receivedAmount > 0) {
+                // Validate amount before adding
+                if (receivedAmount > parseFloat(row.due_amount)) {
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: `Received amount for invoice ${row.invoice_no} exceeds due amount`
+                    });
+                    return;
+                }
+                
+                payloadItems.push({
+                    adjtype: row.invoice_no,
+                    // Add other required fields
+                    ItemId: 0,
+                    batchId: 0,
+                    Quantity: 0,
+                    mrpvalue: receivedAmount
+                });
+            }
+        }
+        
+        if (payloadItems.length === 0) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Warning',
+                detail: 'Please enter received amount for at least one invoice'
+            });
+            return;
+        }
+        
+        const payload = {
+            p_stock: payloadItems,
+            p_updatetype: 'DUE',
+            p_username: 'admin' // Add username if required
+        };
+        
+        // Call API
+        this.inventoryService.updatestockadjustment(payload).subscribe({
+            next: (res: any) => {
+                this.showSuccess(res?.message || 'Amounts saved successfully');
+                
+                // Refresh the data
+                this.display();
+            },
+            error: (err) => {
+                console.error('Error saving amounts:', err);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'Failed to save received amounts'
+                });
+            }
+        });
     }
+    submit(){
+       this.confirmationService.confirm({
+        message:'Are you sure you want to make change?',
+        header: 'Confirm',
+        acceptLabel:'Yes',
+        rejectLabel:'Cancel',
+        accept:()=>{
+          this.onChangeROPdown();
+        },
+        reject:()=>{}
+       });
+    }
+
     showSuccess(message: string) {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
     }

@@ -44,4 +44,26 @@
     min-width: 130px;
     max-width: 130px;
   }
+
+   @media (max-width: 640px) {
+        /* Simplify paginator on very small screens */
+        .p-paginator-pages {
+            display: none !important;
+        }
+        
+        .p-paginator-current {
+            font-size: 0.75rem !important;
+        }
+        .p-paginator-current,
+        .p-paginator-first,
+        .p-paginator-prev,
+        .p-paginator-next,
+        .p-paginator-last
+        .p-paginator-pages {
+          display: flex !important;
+          align-items: end !important;
+            min-width: 2.5rem !important;
+            height: 2.5rem !important;
+        }
+    } 
 }

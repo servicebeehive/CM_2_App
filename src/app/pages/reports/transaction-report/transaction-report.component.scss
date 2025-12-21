@@ -11,115 +11,6 @@
     border: 1px solid var(--surface-border);
     border-radius: 6px;
   }
-
-  /* Custom column widths */
-//   .p-datatable-thead > tr > th:nth-child(1),
-//   .p-datatable-tbody > tr > td:nth-child(1) {
-//     min-width: 100px;
-//     max-width: 100px;
-//     width: 100px !important;
-//   }
-
-//   .p-datatable-thead > tr > th:nth-child(2),
-//   .p-datatable-tbody > tr > td:nth-child(2) {
-//     min-width: 100px;
-//     max-width: 150px;
-//   }
-
-//   .p-datatable-thead > tr > th:nth-child(3),
-//   .p-datatable-tbody > tr > td:nth-child(3) {
-//     min-width: 100px;
-//     max-width: 120px;
-//   }
-
-//   .p-datatable-thead > tr > th:nth-child(4),
-//   .p-datatable-tbody > tr > td:nth-child(4) {
-//     min-width: 150px;
-//     max-width: 200px;
-//   }
-
-//   .p-datatable-thead > tr > th:nth-child(5),
-//   .p-datatable-tbody > tr > td:nth-child(5) {
-//     min-width: 200px;
-//     max-width: 300px;
-//   }
-
-//   .p-datatable-thead > tr > th:nth-child(6),
-//   .p-datatable-tbody > tr > td:nth-child(6) {
-//     min-width: 80px;
-//     max-width: 100px;
-//     text-align: right;
-//   }
-
-//   .p-datatable-thead > tr > th:nth-child(7),
-//   .p-datatable-tbody > tr > td:nth-child(7) {
-//     min-width: 100px;
-//     max-width: 120px;
-//     text-align: right;
-//   }
-
-//   .p-datatable-thead > tr > th:nth-child(8),
-//   .p-datatable-tbody > tr > td:nth-child(8) {
-//     min-width: 120px;
-//     max-width: 150px;
-//     text-align: right;
-//   }
-
-//   .p-datatable-thead > tr > th:nth-child(9),
-//   .p-datatable-tbody > tr > td:nth-child(9) {
-//     min-width: 100px;
-//     max-width: 120px;
-//     text-align: right;
-//   }
-
-//   .p-datatable-thead > tr > th:nth-child(10),
-//   .p-datatable-tbody > tr > td:nth-child(10) {
-//     min-width: 120px;
-//     max-width: 150px;
-//     text-align: right;
-//   }
-
-//   .p-datatable-thead > tr > th:nth-child(11),
-//   .p-datatable-tbody > tr > td:nth-child(11) {
-//     min-width: 100px;
-//     max-width: 120px;
-//     text-align: center;
-//   }
-
-//   .p-datatable-thead > tr > th:nth-child(12),
-//   .p-datatable-tbody > tr > td:nth-child(12) {
-//     min-width: 80px;
-//     max-width: 100px;
-//     text-align: center;
-//   }
-
-  /* Header styling */
-//   .p-datatable-thead > tr > th {
-//     background-color: var(--primary-color) !important;
-//     color: var(--text-color) !important;
-//     font-weight: 600;
-//     text-transform: capitalize;
-//     white-space: nowrap;
-//     padding: 0.75rem 1rem;
-//   }
-
-//   /* Body styling */
-//   .p-datatable-tbody > tr > td {
-//     padding: 0.75rem 1rem;
-//     vertical-align: middle;
-//     border-bottom: 1px solid var(--surface-border);
-//   }
-
-//   /* Hover effect */
-//   .p-datatable-tbody > tr:hover > td {
-//     background-color: var(--surface-hover) !important;
-//   }
-
-  /* Remove sticky positioning if any */
-//   .p-datatable-thead {
-//     position: static !important;
-//   }
-
   .p-datatable-tbody > tr > td,
   .p-datatable-thead > tr > th {
     position: static !important;
@@ -150,4 +41,8 @@
     max-width: 350px !important;
     width: 300px !important;
   }
+}
+
+@media screen {
+  
 }

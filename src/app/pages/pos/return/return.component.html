@@ -23,24 +23,24 @@
                 <!-- Return Bill no -->
                 <div class="grid grid-cols-2 gap-x-8 gap-y-4 mb-2 w-full">
                     <div class="flex flex-col mb-1">
-                        <label class="font-medium">Return Bill No</label>
-                        <p-dropdown [options]="returnBillNoOptions" optionLabel="billno" optionValue="billno" [filter]="true" filterPlaceholder="Search Return Bill No." formControlName="returnBillNo" placeholder="Return Bill No." [showClear]="true" (onChange)="onReturnBillDetails($event)"> </p-dropdown>
+                        <label class="font-medium">Return Invoice No</label>
+                        <p-dropdown [options]="returnBillNoOptions" optionLabel="billno" optionValue="billno" [filter]="true" filterPlaceholder="Search Return Invoice No" formControlName="returnBillNo" placeholder="Return Invoice No" [showClear]="true" (onChange)="onReturnBillDetails($event)"> </p-dropdown>
                         <small class="text-red-500 ms-3 mt-1" *ngIf="returnForm.get('returnBillNo')?.touched">
                             <span *ngIf="returnForm.get('returnBillNo')?.errors?.['required']">Return Bill No is required</span>
                         </small>
                     </div>
                     <!-- Bill no -->
                     <div class="flex flex-col mb-1">
-                        <label class="font-medium">Bill No</label>
+                        <label class="font-medium">Invoice No</label>
                         <p-dropdown
                             [options]="billNoOptions"
                             optionLabel="billno"
                             optionValue="billno"
                             [filter]="true"
-                            filterPlaceholder="Search Bill No."
+                            filterPlaceholder="Search Invoice No"
                             [showClear]="true"
                             formControlName="p_billno"
-                            placeholder="Bill No."
+                            placeholder="Invoice No"
                             (onChange)="onBillDetails($event)"
                         >
                         </p-dropdown>

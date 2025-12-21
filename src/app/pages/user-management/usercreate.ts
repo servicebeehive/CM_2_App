@@ -59,7 +59,7 @@ import { DropdownModule } from 'primeng/dropdown';
                 </div>
 
                 <div class="col-span-12 md:col-span-6">
-                    <label for="companycountry" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> Country </label>
+                    <label for="companycountry" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Country <span class="text-red-500" >*</span></label>
                     <p-dropdown formControlName="companycountry" [options]="countries" optionLabel="country_name" optionValue="country_id" fluid [filter]="true" [showClear]="true" placeholder="Select a Country" >
                         <!-- <ng-template let-country #item>
                             <div class="flex items-center">
@@ -77,18 +77,18 @@ import { DropdownModule } from 'primeng/dropdown';
                 </div>
 
                 <div class="col-span-12 md:col-span-6">
-                    <label for="companystate" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> State </label>
-                    <p-dropdown formControlName="companystate" [options]="states" optionLabel="state_name" optionValue="state_id" fluid placeholder="State" ></p-dropdown>
+                    <label for="companystate" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> State <span class="text-red-500" >*</span></label>
+                    <p-dropdown formControlName="companystate" [options]="states" optionLabel="state_name" optionValue="state_id" fluid placeholder="State" [showClear]="true" (onChange)=onGetStateChange($event) ></p-dropdown>
                 </div>
 
                 <div class="col-span-12 md:col-span-6">
-                    <label for="companycontactemail" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Company Contact Email </label>
+                    <label for="companycontactemail" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Company Contact Email</label>
                     <input formControlName="companycontactemail" type="email" pInputText fluid placeholder="Company Contact Email" />
                     <small class="text-red-500 mt-1" *ngIf="profileForm.get('companycontactemail')?.touched && profileForm.get('companycontactemail')?.invalid"> Enter a valid email address </small>
                 </div>
                 <div class="col-span-12 md:col-span-6">
-                    <label for="companycity" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> City </label>
-                    <p-dropdown formControlName="companycity" [options]="cities" optionLabel="city_name" optionValue="city_id" fluid placeholder="City"></p-dropdown>
+                    <label for="companycity" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> City <span class="text-red-500" >*</span></label>
+                    <p-dropdown formControlName="companycity" [options]="cities" optionLabel="city_name" optionValue="city_id" fluid [showClear]="true" placeholder="City"></p-dropdown>
                 </div>
 
                 <div class="col-span-12 md:col-span-6 flex flex-col items-start">
@@ -133,9 +133,9 @@ export class UserCreate {
         companyaddress: ['', Validators.maxLength(100)],
         companycontactphone: ['', Validators.pattern(/^[0-9]{10}$/)],
         companycontactemail: ['', [Validators.email, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/), Validators.maxLength(50)]],
-        companycountry: ['', Validators.required],
-        companystate: ['', Validators.maxLength(50)],
-        companycity: ['', Validators.maxLength(50)],
+        companycountry: ['',[Validators.required ,Validators.required]],
+        companystate: ['',[Validators.required, Validators.maxLength(50)]],
+        companycity: ['',[Validators.required, Validators.maxLength(50)]],
         companyphone: ['', Validators.pattern(/^[0-9]{10}$/)]
     });
 
@@ -298,22 +298,35 @@ export class UserCreate {
             error: (err) => console.log(err)
         });
     }
-//    onGetStateChange(data:any){
-//     console.log(data.value)
-//     const stateId=data.value;
-//       const payload={
-//         ...this.getUserDetails,
-//         'p_returntype':'CITY',
-//         'p_returnvalue':stateId
-//       }
-//       this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-//         next:(res)=>{
-//             if(res.data && res.data.length>0){
-//                 console.log('res:',res.data)
-//             }
-//         }
-//       })
-//    }
+   onGetStateChange(data:any){
+    console.log(data.value)
+    const stateId=data.value;
+    this.profileForm.patchValue({
+        companycity:''
+    });
+    this.cities=[];
+
+    if(!stateId){
+        return;
+    }
+      const payload={
+        ...this.getUserDetails,
+        'p_returntype':'CITY',
+        'p_returnvalue':stateId
+      }
+      this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+        next:(res)=>{
+            if(res.data && res.data.length>0){
+                console.log('res:',res.data);
+                this.cities=res.data;
+                this.profileForm.patchValue({
+                    companycity:res.data[0].city_id
+                });
+            }
+        },
+        error:(err)=>console.log(err)
+      });
+   }
     //    onStateChange(StateId:any){
     //         const state= this.states.find(s=>s.state_id===data.value) ;
     //         if(state){

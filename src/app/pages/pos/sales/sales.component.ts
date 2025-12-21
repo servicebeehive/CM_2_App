@@ -318,10 +318,7 @@ export class SalesComponent {
         }
     }
     onMobileSelect(event: any) {
-        const selectedMobile = event.value;
         const mobileSelection = this.cusMobileOptions.find((mobileNo) => mobileNo.fieldid === event.value);
-        console.log('selectedMobile', selectedMobile);
-        console.log('selectedMobile', mobileSelection);
         if (mobileSelection) {
             this.salesForm.patchValue({
                 p_mobileno: mobileSelection.customerphone,
@@ -542,11 +539,6 @@ export class SalesComponent {
             console.log('payment due', billDetails.totalpayable);
             console.log('payment due', billDetails.amountdue);
         }
-    }
-
-    // Helper for item search from UI
-    onItemSearch(event: any) {
-        this.searchValue = event.filter || '';
     }
 
     // SaleDetails → fetch sale detail and map items
@@ -1004,9 +996,7 @@ export class SalesComponent {
 
         this.orderService.getcalculatedMRP(apibody).subscribe({
             next: (res: any) => {
-                console.log('cal1:', res);
                 if (res.success) {
-                    console.log('cal:', res);
                     const mrp = Number(res?.data.totalmrp || 0);
                     const cost = Number(res?.data.totalcost || 0);
 
