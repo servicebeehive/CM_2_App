@@ -135,6 +135,8 @@ export class InvoiceComponent {
             sgst_9: [''],
             tax_18: [''],
             p_totalqty: [''],
+            totalDueAmount:[''],
+            p_checked:[false],
             p_stock:this.fb.array([])
             },{validators:this.dateRangeValidator}
         );
@@ -201,7 +203,6 @@ validateReceivedAmount(row:any){
         const status = this.invoiceForm.controls['status'].value;
         if((startDate && endDate) || (p_cusname || p_mobile || status) ){
             const payload={
-                 
                 p_startdate: this.datepipe.transform(startDate,'yyyy/MM/dd'),
                 p_enddate: this.datepipe.transform(endDate,'yyyy/MM/dd'),
                 p_mobile: p_mobile || null,
@@ -214,6 +215,7 @@ validateReceivedAmount(row:any){
                     console.log('API RESEULT:',res.data);
                     this.products=res?.data || [];
                     this.filteredProducts = [...this.products];
+                    this.totalDueAmount();
                     this.initialzeFormArray();
                      this.saveCurrentState();
                     if(this.products.length===0){
@@ -230,19 +232,50 @@ validateReceivedAmount(row:any){
              this.errorSuccess(message);
         }
      }
-
+totalDueAmount():void{
+  if(!this.products || this.products.length ===0){
+    this.invoiceForm.get('totalDueAmount')?.setValue('0');
+    return;
+  }
+  const totalSaleDue=this.products.reduce((total,product)=>{
+    const isSaleTransaction = product.transactiontype && product.transactiontype.toUpperCase()==='SALE';
+    if(isSaleTransaction){
+        const dueAmount = Number(product.due_amount) || 0;
+        return total +dueAmount;
+    }
+    return total;
+  },0);
+  this.invoiceForm.get('totalDueAmount')?.setValue(totalSaleDue);
+}
    private initialzeFormArray():void{
-    this.products.forEach((product,index)=>{
-        this.products.push(
-            new FormControl(product.received_amount || 0)
-        )
-    })
+     const stockArray = this.getStockArray();
+    
+    // Clear existing controls
+    while (stockArray.length !== 0) {
+        stockArray.removeAt(0);
+    }
+    
+    // Add controls for each product
+    this.products.forEach((product) => {
+        stockArray.push(this.fb.control(product.received_amount || 0));
+    });
 }
  saveCurrentState() {
     const currentFilters = this.invoiceForm.value;
     this.sharedService.setInvoiceState(currentFilters, this.products);
   }
-
+onDueAmountFilter(event:any){
+    const isChecked = this.invoiceForm.controls['p_checked'].value;
+    if(isChecked){
+        this.filteredProducts=this.products.filter((item:any)=>{
+            const dueAmount=Number(item.due_amount)||0;
+            return dueAmount>0;
+        });
+    }
+    else{
+        this.filteredProducts=[...this.products];
+    }
+}
     onPageChange(event: any) {
         this.first = event.first;
         this.rowsPerPage = event.rows;

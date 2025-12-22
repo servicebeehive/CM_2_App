@@ -863,6 +863,7 @@ export class SalesComponent {
                     this.salesForm.patchValue({
                         status: 'Done'
                     });
+                    
                 }
                 console.log('res', res);
                 this.messageService.add({

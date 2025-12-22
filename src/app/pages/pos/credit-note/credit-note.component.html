@@ -106,148 +106,126 @@
   <p-confirmDialog></p-confirmDialog>
 
 
+<!-- ================================
+     PRINT SECTION (INVOICE)
+================================= -->
+<div class="dn-container" style="margin:auto; width:900px; font-family: Arial;" id="printSection" >
+ <h3 style="text-align: center; padding-bottom: 10px;">DEBIT NOTE</h3>
 
-
-
-<div class="dn-container" style="padding:50px;" style="width:720px" id="printSection" >
-  <div class="header">
-    <h1>Debit Note</h1>
-  </div>
-
-  <div class="section" style="padding: 4px;">
-    <div class="company">
-          <div class="left">
-        Debit Note No: {{CreditForm.get('p_debitNote')?.value}}
-        <div class="label">Company Name: SHRISTI ELECTRICAL	</div>
-        <div class="small">Address:SHOP NO.-7 SAPNA TALKIES COMPLEX,		<br>	
-NANDINI ROAD, BHILAI		<br>
-State Name: Chhattisgarh<br> Code: 22			
-
- <br/>Email ID: {{'shristielectricalgw@gmail.com'}} <br/>GSTIN: 22AOCPY0439F1Z5
-          <!-- <br/>State: -->
-        </div>
-      </div>
-    
-    </div>
-  </div>
-<!-- <table width="100%" border="0" cellspacing="0" cellpadding="0" style="border-collapse:collapse;font-size:14px;margin-top:10px;">
-  <tr>
-    <td align="left">  <div class="right">
-        <div style="text-align:left">
-          <div class="label">Return/Debit To:</div>
-          <div class="small">Name:<br/>Address:<br/>Phone Number:<br/>GSTIN:<br/>State: Karnataka</div>
-        </div>
-      </div></td>
-    <td align="right">
-       <div>
- 
-    <div style="text-align:right">
-      <div>Document Info</div>
-      <div> <br/>Date: <br/>Place of Supply:</div>
-    </div>
-  </div>
-</td>
-  </tr>
-</table> -->
- 
-<div style="padding-top:15px; padding-bottom:15px;">
-  <table width="100%" aria-label="items" border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;font-size:14px;margin-top:10px;">
-
-  <thead>
+    <!-- ================= COMPANY & CUSTOMER INFO ================= -->
+  <table width="100%" cellspacing="0" cellpadding="0" style="margin-bottom:15px;border-collapse:collapse;">
     <tr>
-      <th align="left">SN</th>
-      <th align="left">Item Name</th>
-      <!-- <th align="left">HSN Code</th> -->
-      <th align="left">Unit</th>
-      <th align="left">Quantity</th>
-      <th align="left">MRP</th>
-      <!-- <th align="left">Disc</th> -->
-      <!-- <th align="left">GST</th> -->
-      <!-- <th align="left">Ad. CESS</th> -->
-      <th align="left">Amount</th>
-    </tr>
-  </thead>
-
-  <tbody>
-   <ng-container *ngFor="let row of replacecednlist; let i=index">
-    <tr>
-      <td>{{i+1}}</td>
-      <td>{{row.itemname}}</td>
-      <!-- <td>{{ row.itemsku }}</td> -->
-      <td>{{ row.current_stock }}</td>
-      <td>{{ row.quantity }}</td>
-    
-     <td>{{"₹"+row.mrp }}</td>
-    <!-- <td></td> -->
-     <!-- <td></td> -->
-      <td>{{"₹"+ row.quantity * row.mrp }}</td>
-     
-      
-     
-     
-      
-    
-    </tr>
-</ng-container>
-   
-
-  
-
-    <!-- Amount in words & Total Amount block -->
-    <tr>
-      <!-- <td  rowspan="3" class="bold">
-        Amount in words:
+      <td width="50%" style="vertical-align:top;">
+        <strong>SHRISTI ELECTRICAL</strong><br>
+        SHOP NO.-7 SAPNA TALKIES COMPLEX,<br>
+        NANDINI ROAD, BHILAI<br>
+        GSTIN: 22AOCPY0439F1Z5 | State: Chhattisgarh (22)<br>
+        Email: shristielectrical"&#64;"gmail.com
       </td>
-      <td colspan="5" rowspan="3" class="bold">
-     
-      </td> -->
-
-      <td colspan="5"  class="bold" style="text-align:right;">
-        Total Amount:
+      <td width="50%" style="text-align:right;vertical-align:top;">
+        <table style="width: 100%; border: 1px solid black;">
+          <tr>
+            <td><strong>Debit Note No:</strong></td>
+            <td>{{ CreditForm.get('p_debitNote')?.value }}</td>
+          </tr>
+          <tr>
+            <td><strong>Date:</strong></td>
+            <td>{{ CreditForm.get('p_transactiondate')?.value | date:'dd-MMM-yyyy' }}</td>
+          </tr>
+          <tr>
+            <td>Original Invoice:</td>
+            <td>{{ CreditForm.get('p_originalInvoice')?.value || '-' }}</td>
+          </tr>
+          <tr>
+            <td>Payment Mode:</td>
+            <td>CASH</td>
+          </tr>
+        </table>
       </td>
-      <td> <strong>₹{{ totalAmount }}</strong></td>
     </tr>
+  </table>
 
-    <tr>
-      <td colspan="3" class="bold" align="right">Payment Mode:</td>
-       <td colspan="3" class="bold" >Cash</td>
+  <!-- ================= CUSTOMER DETAILS ================= -->
+  <div style="background:#f5f5f5; padding:10px; margin-bottom:15px;">
+    <strong>Return/Debit To:</strong><br>
+    <strong>{{ CreditForm.get('p_customername')?.value || '' }}</strong><br>
+    {{ CreditForm.get('p_customeraddress')?.value || '' }}<br>
+    Mobile: {{ CreditForm.get('p_customermobile')?.value || '' }} | 
+    GSTIN: {{ CreditForm.get('p_customergstin')?.value || '-' }}<br>
+    State: {{ CreditForm.get('p_customerstate')?.value || '-' }}
+  </div>
+
+  <!-- ================= ITEMS TABLE ================= -->
+  <table width="100%" border="1" cellspacing="0" cellpadding="8" style="border-collapse:collapse;font-size:14px;">
+    <thead style="background:#f0f0f0;">
+      <tr>
+        <th>#</th>
+        <th>Item Description</th>
+        <th>HSN</th>
+        <th>Qty</th>
+        <th>Unit</th>
+        <th>Rate</th>
+        <th>Amount</th>
+      </tr>
+    </thead>
+    
+    <tbody>
+      <tr *ngFor="let row of replacecednlist; let i = index">
+        <td align="center">{{ i + 1 }}</td>
+        <td>{{ row.itemname }}</td>
+        <td align="center">8544</td>
+        <td align="center">{{ row.quantity }}</td>
+        <td align="center">{{ row.uomname || row.current_stock }}</td>
+        <td align="right">₹{{ row.mrp | number:'1.2-2' }}</td>
+        <td align="right">₹{{ (row.quantity * row.mrp) | number:'1.2-2' }}</td>
+      </tr>
       
-    </tr>
-     <!-- <tr>
-       <td colspan="2" class="bold" align="right">Reference No:</td>
-        <td colspan="2" class="bold"></td>
+      <!-- Summary Rows -->
+      <!-- <tr>
+        <td colspan="6" align="right"><strong>Total Amount:</strong></td>
+        <td align="right"><strong>₹{{ totalAmount | number:'1.2-2' }}</strong></td>
       </tr> -->
-   
+      
+      <!-- <tr>
+        <td colspan="6" align="right">CGST "&#64;" 9%:</td>
+        <td align="right">₹{{ CreditForm.get('p_cgst')?.value || '0.00' | number:'1.2-2' }}</td>
+      </tr>
+      
+      <tr>
+        <td colspan="6" align="right">SGST "&#64;" 9%:</td>
+        <td align="right">₹{{ CreditForm.get('p_sgst')?.value || '0.00' | number:'1.2-2' }}</td>
+      </tr>
+       -->
+      <tr style="background:#f0f0f0;">
+        <td colspan="6" align="right"><strong>Grand Total:</strong></td>
+        <td align="right"><strong>₹{{ CreditForm.get('p_totalAmount')?.value || totalAmount | number:'1.2-2' }}</strong></td>
+      </tr>
+    </tbody>
+  </table>
 
-    <!-- BANK DETAILS + SIGN -->
-    <tr>
-      <td class="bold">Bank Name:</td>
-      <td colspan="2">Shristi Elec bank name	
-</td>
-
-   
-      <td rowspan="5" colspan="3" style="text-align:center; vertical-align:bottom;">
-        Company seal and Sign
-      </td>
-    </tr>
-
-    <tr>
-      <td class="bold">Account Number:</td>
-      <td colspan="5"></td>
-    </tr>
-
-    <tr>
-      <td class="bold">IFSC Code:</td>
-      <td colspan="5"></td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-
-
-  <div class="footer">
-    Note: This is a computer generated debit note and does not require signature.
+  <!-- ================= FOOTER ================= -->
+  <div style="margin-top:20px; padding:15px; border-top:2px solid #000;">
+    <table width="100%" cellspacing="0" cellpadding="0">
+      <tr>
+        <td width="60%" style="vertical-align:top;">
+          <strong>Amount in words:</strong><br>
+          <!-- {{ amountInWords || 'Rupees ' + (CreditForm.get('p_totalAmount')?.value || totalAmount | numberToWords) + ' only' }} -->
+          <br><br>
+          <strong>Declaration:</strong><br>
+          We declare that this debit note is true and correct.
+        </td>
+        <td width="40%" style="text-align:center;vertical-align:bottom;">
+          <div style="border-top:1px solid #000; padding-top:10px; width:80%; margin:0 auto;">
+            <strong>Authorized Signatory</strong><br>
+            For SHRISTI ELECTRICAL
+          </div>
+        </td>
+      </tr>
+    </table>
+    
+    <div style="text-align:center; margin-top:20px; color:#666; font-size:12px;">
+      <strong>Note:</strong> This is a computer generated debit note.
+      Bank: BANK OF INDIA | A/c: 930520110000557 | IFSC: BKID0009305 | PAN: AOCPY0439F
+    </div>
   </div>
 </div>

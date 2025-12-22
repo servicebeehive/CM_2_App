@@ -146,8 +146,8 @@
           </tr>
         </ng-template>
 
-        <ng-template pTemplate="paginatorleft">
-          <div class="text-gray-600 ms-2">Total Items: {{ filteredProducts?.length || 0 }}</div>
+        <ng-template pTemplate="paginatorleft" appendTo="body">
+          <div class="total-items text-gray-600 ms-2">Total Items: {{ filteredProducts?.length || 0 }}</div>
         </ng-template>
       </p-table>
     </div>
