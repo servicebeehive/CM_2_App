@@ -64,7 +64,7 @@ export class SalesComponent {
     // -----------------------------
     //  Component state / Variables
     // -----------------------------
-
+    @ViewChild('itemSel') itemSel!:any;
     public transactionid: any;
     salesForm!: FormGroup;
     visibleDialog = false;
@@ -484,6 +484,8 @@ export class SalesComponent {
         this.calculateSummary();
     }
 
+
+
     costGreaterThanSaleValidator(): ValidatorFn {
         return (form: AbstractControl): ValidationErrors | null => {
             const totalCost = Number(form.get('p_totalcost')?.value || 0);
@@ -530,7 +532,7 @@ export class SalesComponent {
                 discountvalueper: billDetails.discountvalueper,
                 p_roundoff: billDetails.roundoff,
                 p_totalpayable: billDetails.totalpayable.toFixed(2),
-                p_paymentdue: billDetails.amountdue,
+                p_paymentdue: billDetails.amountpaid,
                 sgst_9: billDetails.sgst_9,
                 tax_18: billDetails.tax_18,
                 cgst_9: billDetails.cgst_9,
