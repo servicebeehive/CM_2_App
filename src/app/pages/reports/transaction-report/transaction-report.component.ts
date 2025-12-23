@@ -287,8 +287,8 @@ export class TransactionReportComponent {
         
         const payload = {
              
-            p_categoryid: categoryValue,
-            p_itemid: itemValue,
+            p_category: categoryValue,
+            p_item: itemValue,
             p_fromdate: this.datepipe.transform(fromDate, 'yyyy/MM/dd'),
             p_todate: this.datepipe.transform(toDate, 'yyyy/MM/dd'),
             p_username: 'admin',

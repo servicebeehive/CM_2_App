@@ -175,7 +175,7 @@
                 NANDINI ROAD, BHILAI<br />
                 GSTIN/UIN: 22AOCPY0439F1Z5<br />
                 State Name: Chhattisgarh, Code: 22<br />
-                E-Mail : {{ 'shristielectricalgw@gmail.com' }}
+                E-Mail : {{ 'shristielectrical@gmail.com' }}
                 <br />
 
                 <hr style="margin: 5px 0" />
@@ -188,8 +188,8 @@
                 Mobile: {{ invoiceForm.get('p_mobileno')?.value || '' }}<br />
                 <br />
 
-                GSTIN/UIN : {{ invoiceForm.get('p_customergstin')?.value || '-' }}<br />
-                State Name : {{ invoiceForm.get('p_customerstate')?.value || '-' }}
+                GSTIN/UIN : {{ invoiceForm.get('p_customergstin')?.value || '' }}<br />
+                State Name : {{ invoiceForm.get('p_customerstate')?.value || '' }}
             </td>
 
             <!-- RIGHT SECTION (INVOICE DETAILS) -->
@@ -222,42 +222,42 @@
 
                     <tr>
                         <td>Other References</td>
-                        <td>-</td>
+                        <td></td>
                     </tr>
 
                     <tr>
                         <td>Buyer's Order No.</td>
-                        <td>-</td>
+                        <td></td>
                     </tr>
 
                     <tr>
                         <td>Dated</td>
-                        <td>-</td>
+                        <td></td>
                     </tr>
 
                     <tr>
                         <td>Dispatch Doc No.</td>
-                        <td>-</td>
+                        <td></td>
                     </tr>
 
                     <tr>
                         <td>Delivery Note Date</td>
-                        <td>-</td>
+                        <td></td>
                     </tr>
 
                     <tr>
                         <td>Dispatched through</td>
-                        <td>-</td>
+                        <td></td>
                     </tr>
 
                     <tr>
                         <td>Destination</td>
-                        <td>-</td>
+                        <td></td>
                     </tr>
 
                     <tr>
                         <td>Terms of Delivery</td>
-                        <td>-</td>
+                        <td></td>
                     </tr>
                 </table>
             </td>
@@ -343,7 +343,7 @@
     <div style="padding: 10px; font-size: 14px">
         <strong>Amount Chargeable (in words):</strong>
         <!-- {{ amountInWords }} -->
-        -
+        
     </div>
 
     <!-- ================= GST SUMMARY ================= -->
@@ -384,12 +384,13 @@
         A/c No. : 930520110000557<br />
         Branch & IFS Code : POWER HOUSE & BKID0009305<br /><br />
 
-        Company's PAN : <b>AOCPY0439F</b> <br /><br />
-
+        Company's PAN : <b>AOCPY0439F</b>
+        <p style="text-align: right"><strong>Authorized Signatory</strong></p>
         <strong>Declaration:</strong>
         We declare that this invoice shows the actual price of the goods described and all particulars are true.
-
-        <br /><br />
-        <p style="text-align: right"><strong>Authorized Signatory</strong></p>
+        <div style="text-align:left; margin-top:10px; color:#666; font-size:12px;">
+      <strong>Note:</strong> This is a computer generated debit note.
+    </div>
+        
     </div>
 </div>

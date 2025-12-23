@@ -1,5 +1,6 @@
 :host{
     display: block;
+     overflow-anchor: none;
 }
 
 ::ng-deep .invoice{
@@ -10,6 +11,8 @@
     border-radius: 6px;
     border: 1px solid var(--surface-border);
     border-radius: 6px;   
+    overflow-anchor: none;
+    scroll-behavior: auto;
 }
  .p-datatable-thead > tr > th:nth-child(3),
   .p-datatable-tbody > tr > td:nth-child(3) {
@@ -64,10 +67,6 @@
   }
   .p-datatable-tbody>tr>td:nth-last-child(1){
     display: none !important;
-  }
-
-.p-datatable-wrapper {
-  overflow-anchor: none;
 }
 }
 }

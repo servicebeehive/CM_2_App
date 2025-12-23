@@ -449,7 +449,7 @@ if (hasEditDataChange && formReady) {
             // p_operationtype: this.mode === 'add' ? 'PUR_INSERT' : 'PUR_UPDATE',
              p_operationtype:this.mode=='itemedit'?'ITEM_UPD':'PUR_INSERT',
             p_purchaseid:this.mode=='itemedit'?"0":this.transationid.toString(),
-            // p_itembarcode:form.itembarcode,
+            p_itembarcode:form.itembarcode,
             p_itemsku: form.itemCode,
             p_itemname: form.itemName,
             p_categoryid: Number(form.category),
