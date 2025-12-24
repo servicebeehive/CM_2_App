@@ -1,4 +1,3 @@
-
 <div class="card p-6">
     <div>
         <form [formGroup]="returnForm" (ngSubmit)="onSubmit()" class="space-y-8">
@@ -6,8 +5,8 @@
                 <span class="block text-surface-900 font-bold text-xl mb-6">Return</span>
                 <!-- Buttons -->
                 <div class="flex gap-4">
-                   <button pButton type="submit" label="Submit" class="p-button-warning" [disabled]="isSubmitDisabled()"></button>
-                     <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
+                    <button pButton type="submit" label="Submit" class="p-button-warning" [disabled]="isSubmitDisabled()" && submitDisable></button>
+                    <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
                 </div>
             </div>
 
@@ -24,7 +23,18 @@
                 <div class="grid grid-cols-2 gap-x-8 gap-y-4 mb-2 w-full">
                     <div class="flex flex-col mb-1">
                         <label class="font-medium">Return Invoice No</label>
-                        <p-dropdown [options]="returnBillNoOptions" optionLabel="billno" optionValue="billno" [filter]="true" filterPlaceholder="Search Return Invoice No" formControlName="returnBillNo" placeholder="Return Invoice No" [showClear]="true" (onChange)="onReturnBillDetails($event)"> </p-dropdown>
+                        <p-dropdown
+                            [options]="returnBillNoOptions"
+                            optionLabel="billno"
+                            optionValue="billno"
+                            [filter]="true"
+                            filterPlaceholder="Search Return Invoice No"
+                            formControlName="returnBillNo"
+                            placeholder="Return Invoice No"
+                            [showClear]="true"
+                            (onChange)="onReturnBillDetails($event)"
+                        >
+                        </p-dropdown>
                         <small class="text-red-500 ms-3 mt-1" *ngIf="returnForm.get('returnBillNo')?.touched">
                             <span *ngIf="returnForm.get('returnBillNo')?.errors?.['required']">Return Bill No is required</span>
                         </small>
@@ -56,7 +66,7 @@
                     </div>
 
                     <!-- Mobile No. -->
-                    <div class="flex flex-col">
+                    <div class="flex flex-col ">
                         <label class="font-medium mb-1">Mobile No.</label>
                         <input pInputText type="number" formControlName="p_mobileno" placeholder="Mobile No." />
                         <small class="text-red-500 ms-3 mt-1" *ngIf="returnForm.get('mobile')?.errors?.['pattern']">
@@ -64,6 +74,12 @@
                         </small>
                     </div>
                 </div>
+                @if(showBillno){
+                  <div class="flex gap-2 items-center mt-4">
+                        <label class="font-medium mb-1">Invoice No:</label>
+                        <input formControlName="p_billno" placeholder="Invoice No" class="bg-transparent border-none outline-none text-red-500"/>
+                    </div>
+                }
                 <div class="mt-6">
                     <p-table
                         [value]="saleArray.controls"
@@ -79,13 +95,8 @@
                         <ng-template pTemplate="header">
                             <tr class="bg-yellow-400">
                                 <!-- <th class="text-center"><p-checkbox formControlName="update.selection" binary="true"></p-checkbox></th> -->
-                                 <th style="width: 4rem">
-                                    <p-checkbox 
-                                        binary="true" 
-                                        [ngModel]="isAllSelected()"
-                                        (onChange)="toggleSelectAll($event)"
-                                        [ngModelOptions]="{standalone: true}">
-                                    </p-checkbox>
+                                <th style="width: 4rem">
+                                    <p-checkbox binary="true" [ngModel]="isAllSelected()" (onChange)="toggleSelectAll($event)" [ngModelOptions]="{ standalone: true }"> </p-checkbox>
                                 </th>
                                 <th>Item Code</th>
                                 <th>Item Name</th>
@@ -102,12 +113,7 @@
                             <tr [formGroup]="row">
                                 <!-- <td class="text-center"><p-checkbox [(ngModel)]="update.selection"  binary="true"></p-checkbox></td> -->
                                 <td>
-                                    <p-checkbox 
-                                        binary="true" 
-                                        [ngModel]="isRowSelected(row)"
-                                        (onChange)="toggleRowSelection(row, $event)"
-                                        [ngModelOptions]="{standalone: true}">
-                                    </p-checkbox>
+                                    <p-checkbox binary="true" [ngModel]="isRowSelected(row)" (onChange)="toggleRowSelection(row, $event)" [ngModelOptions]="{ standalone: true }"> </p-checkbox>
                                 </td>
                                 <td>{{ row.get('itemsku')?.value }}</td>
                                 <td>{{ row.get('ItemName')?.value }}</td>
@@ -115,23 +121,20 @@
                                 <td>{{ row.get('uomname')?.value }}</td>
                                 <td>
                                     <div class="flex flex-col">
-                                    <input class="w-[70px]" type="number" pInputText formControlName="Quantity" placeholder="quantity" (input)="updateTotal(i)" [readOnly]="!selectedProducts.includes(row)" (keypress)="blockDecimal($event)"  [ngClass]="{ 'border-red-500': row.get('Quantity')?.errors?.['maxStock'] }"  />
-                                    <!-- <small class="text-red-500 mt-1"
-               *ngIf="row.get('Quantity')?.touched && row.get('Quantity')?.errors?.['maxStock']">
-            Quantity exceeds the available sale quantity ({{row.get('curStock')?.value + 1}}).
-        </small> -->
-        <!-- <div *ngIf="row.get('Quantity')?.touched || row.get('Quantity')?.dirty">
-            <small class="text-red-500 text-xs" *ngIf="row.get('Quantity')?.errors?.['required']">
-                Quantity is required
-            </small>
-            <small class="text-red-500 text-xs" *ngIf="row.get('Quantity')?.errors?.['maxStock']">
-                Max {{ row.get('curStock')?.value }} available
-            </small>
-            <small class="text-red-500 text-xs" *ngIf="!row.get('Quantity')?.errors && row.get('Quantity')?.value <= 0 && selectedProducts.includes(row)">
-                Must be greater than 0
-            </small>
-        </div> -->
+                                        <input
+                                            class="w-[70px]"
+                                            type="number"
+                                            pInputText
+                                            formControlName="Quantity"
+                                            placeholder="quantity"
+                                            (input)="updateTotal(i)"
+                                            [readOnly]="!selectedProducts.includes(row)"
+                                            (keypress)="blockDecimal($event)"
+                                            [ngClass]="{ 'border-red-500': row.get('Quantity')?.errors?.['maxStock'] }"
+                                        />
                                     </div>
+                                </td>
+
                                 <td>{{ row.get('MRP')?.value }}</td>
                                 <td>{{ row.get('totalPayable')?.value }}</td>
                                 <td>{{ row.get('warPeriod')?.value }}</td>
@@ -143,7 +146,7 @@
                         </ng-template>
                     </p-table>
                 </div>
-                <div class="grid grid-cols-5 gap-x-8 gap-y-4">
+                <div class="grid grid-cols-6 gap-x-8 gap-y-4">
                     <!-- Total Cost -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Total Cost</label>
@@ -154,18 +157,18 @@
                         <label class="font-medium mb-1">MRP Total</label>
                         <input pInputText formControlName="p_totalsale" placeholder="Grand Total" readonly />
                     </div>
-                     <div class="grid grid-cols-1 md:grid-cols-2">
-      <!-- Discount type -->
-        <div class="flex flex-col">
-          <label class="font-medium mb-2">Disc(%)</label>
-          <p-checkbox readonly class="w-5 h-5" binary="true" variant="filled" formControlName="p_disctype"></p-checkbox>
-        </div>
-      <!-- Discount -->
-      <div class="flex flex-col ">
-        <label class="font-medium">Discount</label>
-        <input readonly class="p-inputtext p-component font-small w-full" pInputText type="number" formControlName="p_overalldiscount" (input)="applyDiscount()" [placeholder]="discountplace"/>
-      </div>
-</div>
+                    <div class="grid grid-cols-1 md:grid-cols-2">
+                        <!-- Discount type -->
+                        <div class="flex flex-col">
+                            <label class="font-medium mb-2">Disc(%)</label>
+                            <p-checkbox readonly class="w-5 h-5" binary="true" variant="filled" formControlName="p_disctype"></p-checkbox>
+                        </div>
+                        <!-- Discount -->
+                        <div class="flex flex-col">
+                            <label class="font-medium">Discount</label>
+                            <input readonly class="p-inputtext p-component font-small w-full" pInputText type="number" formControlName="p_overalldiscount" (input)="applyDiscount()" [placeholder]="discountplace" />
+                        </div>
+                    </div>
                     <!-- Round Off -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Round Off</label>
@@ -177,12 +180,16 @@
                         <label class="font-medium mb-1">Final Receiveable</label>
                         <input pInputText formControlName="p_totalpayable" placeholder="Final Receiveable" readonly />
                     </div>
+
+                    <!-- Paid Amount -->
+                    <div class="flex flex-col">
+                        <label>Paid Amount</label>
+                        <input readOnly pInputText type="number" formControlName="p_paymentdue" />
+                        <small class="text-red-500" *ngIf="returnForm.hasError('amountNotGreater')"> Paid Amount cannot be greater than Final Payable. </small>
+                    </div>
                 </div>
             </div>
         </form>
     </div>
-    <p-dialog header="{{ mode === 'add' ? 'Add Item' : 'Edit Item' }}" [(visible)]="visibleDialog" [modal]="true" [style]="{ width: '80vw' }">
-        <app-addinventory [editData]="selectedRow" [mode]="mode" (close)="closeDialog()" (save)="onSave($event)" (childUom)="onChildUom($event)"> </app-addinventory>
-    </p-dialog>
-    <p-confirmDialog></p-confirmDialog>
+     <p-confirmDialog></p-confirmDialog>
 </div>

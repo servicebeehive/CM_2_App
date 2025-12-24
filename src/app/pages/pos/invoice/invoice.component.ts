@@ -533,7 +533,7 @@ getReceivedAmountControl(index: number): AbstractControl | null {
                 return;
             }
 
-            const popupWindow = window.open('', '_blank', 'width=900,height=1000');
+            const popupWindow = window.open('', '_blank', 'width=900,height=1500');
             if (popupWindow) {
                 popupWindow.document.open();
                 popupWindow.document.write(`
