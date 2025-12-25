@@ -380,7 +380,7 @@ export class ReturnComponent {
                 console.log('return:', billno);
                 this.returnForm.patchValue({
                     returnBillNo: billno,
-                    p_billno:res.data[0].invoiceno
+                    // p_billno:res.data[0].invoiceno
                 });
                    this.OnGetBillNo();
                 this.OnGetReturnBillNo(); 
