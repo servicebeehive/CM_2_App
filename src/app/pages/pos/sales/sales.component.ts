@@ -1,6 +1,6 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, ViewChild, inject } from '@angular/core';
-import { AbstractControl, FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 
 import { ButtonModule } from 'primeng/button';
 import { ChipModule } from 'primeng/chip';
@@ -898,37 +898,60 @@ export class SalesComponent {
         });
     }
 
-    OngetcalculatedMRP(data: any, index: number) {
-        const row = this.saleArray.at(index);
-        const qty = Number(row.get('Quantity')?.value || 1);
+ OngetcalculatedMRP(data: any, index: number) {
 
-        let apibody = {
-            ...this.getUserDetails,
-            p_itemid: data.ItemId,
-            p_qty: qty,
-            p_uomid: data.UOMId
-        };
+  const row = this.saleArray.at(index);
 
-        delete (apibody as any).p_loginuser;
+  const qty = Number(row.get('Quantity')?.value || 1);
 
-        this.orderService.getcalculatedMRP(apibody).subscribe({
-            next: (res: any) => {
-                console.log('calculated:', res.data);
-                const mrp = Number(res.data.totalmrp || 0);
-                const cost = Number(res.data.totalcost || 0);
+  let apibody = {
+    ...this.getUserDetails,
+    p_itemid: data.ItemId,
+    p_qty: qty,
+    p_uomid: data.UOMId
+  };
 
-                row.patchValue({
-                    MRP: mrp,
-                    itemcost: cost,
-                    totalPayable: qty * mrp,
-                    apiCost: qty * cost
-                });
+  delete (apibody as any).p_loginuser;
 
-                this.updateTotalCostSummary();
-                this.calculateSummary();
-            }
-        });
+  this.orderService.getcalculatedMRP(apibody).subscribe({
+    next: (res: any) => {
+
+      console.log('calculated:', res.data);
+
+      const mrp = Number(res.data.totalmrp || 0);
+      const cost = Number(res.data.totalcost || 0);
+      const conversion = Number(res.data.conversion || 1);
+
+      // 🔹 Base stock (store once)
+   const row = this.saleArray.at(index) as FormGroup;
+
+if (!row.contains('baseStock')) {
+  row.addControl(
+    'baseStock',
+    new FormControl(Number(row.get('curStock')?.value || 0))
+  );
+}
+
+      const baseStock = Number(row.get('baseStock')?.value || 0);
+
+      // 🔹 Converted stock based on UOM
+      const convertedStock = baseStock * conversion;
+
+      // 🔹 Patch values
+      row.patchValue({
+        MRP: mrp,
+        itemcost: cost,
+        totalPayable: qty * mrp,
+        apiCost: qty * cost,
+        curStock: convertedStock
+      });
+
+      this.updateTotalCostSummary();
+      this.calculateSummary();
     }
+  });
+}
+
 
     UOMId(event: any, index: number) {
         const row = this.saleArray.at(index);

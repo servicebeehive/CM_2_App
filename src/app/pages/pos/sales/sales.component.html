@@ -67,6 +67,7 @@
           [filter]="true"
           filterPlaceholder="Search Bill No."
           [showClear]="true" 
+          tabindex="2"
           (onChange)="onBillDetails($event)"
           [loading]="isLoadingBills">
         </p-dropdown>
@@ -86,6 +87,7 @@
         <p-dropdown
           [options]="cusMobileOptions"
                         class="w-full"
+                           tabindex="3"
                         optionLabel="customerphone"
                         optionValue="fieldid"
                         [filter]="true"
@@ -102,12 +104,12 @@
       </div>
      <div class="grid grid-cols-2 mt-6">
         <div class="flex items-center gap-2">
-          <p-checkbox binary="true" variant="filled" formControlName="p_gsttran"></p-checkbox>
+          <p-checkbox binary="true"   tabindex="4"variant="filled" formControlName="p_gsttran"></p-checkbox>
           <label>GST Transaction</label>
         </div>
           <div class="flex items-center gap-2">
           <label> <b> Status:</b></label>
-          <input readonly type="text" formControlName="status"  placeholder="Status" class="bg-transparent border-none outline-none"
+          <input readonly type="text"   formControlName="status"  placeholder="Status" class="bg-transparent border-none outline-none"
    [ngStyle]="{
     'color': salesForm.value.status === 'Done' ? 'green' :
              salesForm.value.status === 'Partial Cancel' ? 'grey' :
@@ -128,7 +130,7 @@
       <div class="flex flex-col">
         <label class="font-medium mb-1">Customer Name</label>
         <input
-          pInputText
+          pInputText  tabindex="5"
           showclear="[true]"
           placeholder="Customer Name"
           formControlName="p_customername" />
@@ -143,7 +145,7 @@
         <label class="font-medium mb-1">Mobile No</label>
         <input
           pInputText
-          type="number"
+          type="number"  tabindex="6"
           [placeholder]="mobilePlaceholder"
           maxlength="10"
           formControlName="p_mobileno" 
@@ -160,7 +162,7 @@
       <div class="flex flex-col">
         <label>Item</label>
 
-        <p-select
+        <p-select tabindex="1"
           #itemSel
           class="w-full mb-4"
           [options]="itemOptions"
@@ -205,7 +207,7 @@
       <!-- TRANSACTION DATE -->
       <div class="flex flex-col">
         <label class="font-medium mb-1">Transaction Date</label>
-        <p-datepicker
+        <p-datepicker  tabindex="8"
           fluid
           formControlName="p_transactiondate"
           dateFormat="dd/mm/yy"
@@ -253,7 +255,7 @@
           <tr [formGroup]="row">
             <td>{{ row.get('itemsku')?.value }}</td>
             <td>{{ row.get('ItemName')?.value }}</td>
-            <td>{{ row.get('curStock')?.value }}</td>
+            <td>{{ row.get('curStock')?.value }} </td>
             <td>
               
                <p-dropdown
