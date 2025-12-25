@@ -25,8 +25,66 @@ import { DropdownModule } from 'primeng/dropdown';
         <!-- <div  class="col-span-12 lg:col-span-10"> -->
         <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="col-span-12 lg:col-span-10">
             <div class="card">
-                <p class="mb-2"><strong>Company Info:</strong></p>
-                <div class="grid grid-cols-12 gap-4">
+    <div class="flex items-center gap-4">
+
+    <!-- LEFT : LOGO (SQUARE) -->
+<img
+  [src]="imageUrl || '/layout/images/logo.png'"
+  alt="logo"
+  class="w-[140px] h-[80px]
+         object-contain
+         border
+         rounded-md
+         bg-white
+         p-2"
+/>
+
+
+    <!-- RIGHT : UPLOAD BUTTON -->
+    <div class="flex flex-col gap-1">
+        <p-fileupload
+            #fileUpload
+            mode="basic"
+            name="companylogo"
+            accept="image/*"
+            [maxFileSize]="1000000"
+            styleClass="p-button-outlined p-button-plain"
+            chooseLabel="Upload Image"
+            (onSelect)="onFileSelect($event)"
+            (onClear)="onFileClear()"
+        ></p-fileupload>
+
+      
+    </div>
+
+</div>
+
+                 <!-- <div class="col-span-4 md:col-span-6 flex flex-col items-start">
+                        <label for="companylogo" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Company Logo</label>
+                           <div class="grid grid-cols-12 gap-4 mt-4">
+                    <div class="col-span-12 md:col-span-4">
+                        
+                             </div>
+                </div>
+                        
+                        <img [src]="this.imageUrl"  alt="logo" class="max-w-[150px] w-full h-auto">
+                        <p-fileupload
+                            #fileUpload
+                            mode="basic"
+                            name="companylogo"
+                            accept="image/*"
+                            [maxFileSize]="1000000"
+                            styleClass="p-button-outlined p-button-plain"
+                            chooseLabel="Upload Image"
+                            (onSelect)="onFileSelect($event)"
+                            (onClear)="onFileClear()"
+                        ></p-fileupload>
+                        @if (selectedFile) {
+                            <small class="text-green-600 mt-2">File selected:{{ selectedFile.name }}</small>
+                        }
+                    </div> -->
+              
+                <div class="grid grid-cols-12 gap-4 mt-4">
                     <div class="col-span-12 md:col-span-4">
                         <label class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Company Name</label>
                         <input formControlName="companyname" type="text" pInputText placeholder="Company Name" fluid />
@@ -43,23 +101,7 @@ import { DropdownModule } from 'primeng/dropdown';
                         <input formControlName="companyphone" type="text" pInputText fluid placeholder="Company Phone" maxlength="10" (keypress)="allowOnlyDigits($event)" />
                         <small class="text-red-500 mt-1" *ngIf="profileForm.get('companyphone')?.touched && profileForm.get('companyphone')?.invalid"> Enter a valid 10-digit mobile number </small>
                     </div>
-                    <div class="col-span-12 md:col-span-6 flex flex-col items-start">
-                        <label for="companylogo" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Company Logo</label>
-                        <p-fileupload
-                            #fileUpload
-                            mode="basic"
-                            name="companylogo"
-                            accept="image/*"
-                            [maxFileSize]="1000000"
-                            styleClass="p-button-outlined p-button-plain"
-                            chooseLabel="Upload Image"
-                            (onSelect)="onFileSelect($event)"
-                            (onClear)="onFileClear()"
-                        ></p-fileupload>
-                        @if (selectedFile) {
-                            <small class="text-green-600 mt-2">File selected:{{ selectedFile.name }}</small>
-                        }
-                    </div>
+                   
                 </div>
             </div>
             <div class="card">
@@ -208,6 +250,7 @@ export class UserCreate {
     cities: any[] = [];
     public getUserDetails = {};
     loggedInUserRole: string = '';
+    public imageUrl:string=''
     profileForm: FormGroup = this.fb.group({
         companyname: ['', Validators.maxLength(50)],
         companyemail: ['', [Validators.email, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/), Validators.maxLength(50)]],
@@ -318,6 +361,7 @@ export class UserCreate {
         reader.onload = () => {
             this.logoBase64 = reader.result as string;
             console.log('Base64 ready');
+            this.imageUrl = this.base64ToBlobUrl(this.logoBase64);
         };
         reader.onerror = () => {
             console.error('Error converting file to Base64');
@@ -531,6 +575,7 @@ this.inventoryService.Getreturndropdowndetails(statepayload).subscribe({
             p_warehouse:data.warehouse,
             accountno:data.accountno
         });
+        this.imageUrl = this.base64ToBlobUrl(data.companylogo);
         if (countryId) {
             this.onGetState(countryId, data.companystate,data.statecode,data.companycity);
         }
@@ -538,4 +583,20 @@ this.inventoryService.Getreturndropdowndetails(statepayload).subscribe({
     showSuccess(message: string) {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
     }
+    base64ToBlobUrl(base64: string): string {
+  const [meta, data] = base64.split(',');
+  const mime = meta.match(/:(.*?);/)![1];
+
+  const byteString = atob(data);
+  const ab = new ArrayBuffer(byteString.length);
+  const ia = new Uint8Array(ab);
+
+  for (let i = 0; i < byteString.length; i++) {
+    ia[i] = byteString.charCodeAt(i);
+  }
+
+  const blob = new Blob([ab], { type: mime });
+  return URL.createObjectURL(blob);
+}
+
 }
