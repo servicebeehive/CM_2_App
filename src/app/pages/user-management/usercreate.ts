@@ -259,13 +259,20 @@ export class UserCreate {
             p_companycity: form.companycity,
             p_companystate: form.companystate,
             p_companycountry: form.companycountry,
-            p_companypincode: '490001',
+            p_companypincode: form.companypincode,
             p_companyphone: form.companyphone,
-            p_companyemail: form.p_companycontactemail || null,
+            p_companyemail: form.companyemail,
             p_companygstno: form.companygstno,
             p_companycontactperson: form.companycontactperson,
             p_companycontactphone: form.companycontactphone,
             p_companycontactemail: form.companycontactemail,
+            p_statecode:form.statecode,
+            p_bankname:form.bankname,
+            p_branch:form.branch,
+            p_ifsc:form.ifsc,
+            p_accountno:form.accountno,
+            p_pan:form.pan,
+            p_warehouse:form.p_warehouse,
             p_companylogo: this.logoBase64 || null
         };
         this.userService.OnUserListHeaderCreate(payload).subscribe({
@@ -520,7 +527,9 @@ this.inventoryService.Getreturndropdowndetails(statepayload).subscribe({
             ifsc:data.ifsc,
             branch:data.branch,
             pan:data.pan,
-            companypincode:data.companypincode
+            companypincode:data.companypincode,
+            p_warehouse:data.warehouse,
+            accountno:data.accountno
         });
         if (countryId) {
             this.onGetState(countryId, data.companystate,data.statecode,data.companycity);

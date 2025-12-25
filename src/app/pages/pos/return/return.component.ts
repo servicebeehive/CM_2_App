@@ -307,6 +307,7 @@ export class ReturnComponent {
     }
 
     onReturnBillDetails(event: any) {
+         this.clearAllSelected();
         this.showBillno = true;
         const returnBillDetails = this.returnBillNoOptions.find((returnbillitem) => returnbillitem.billno === event.value);
         console.log(returnBillDetails);
@@ -323,7 +324,7 @@ export class ReturnComponent {
                 p_disctype: returnBillDetails.discounttype == 'Y' ? true : false,
                 p_overalldiscount: returnBillDetails.discount,
                 p_roundoff: returnBillDetails.roundoff,
-                p_billno: returnBillDetails.billno,
+                p_billno: returnBillDetails.invoiceno,
                 p_totalpayable: returnBillDetails.totalpayable.toFixed(2)
             });
 
@@ -370,6 +371,7 @@ export class ReturnComponent {
         };
     }
     OnSalesHeaderCreate(data: any) {
+        this.showBillno=true;
         const apibody = this.cleanRequestBody(this.returnForm.value);
         //   delete (apibody as any).p_loginuser;
         this.stockInService.OninsertSalesDetails(apibody).subscribe({
@@ -377,14 +379,11 @@ export class ReturnComponent {
                 const billno = res.data[0].billno;
                 console.log('return:', billno);
                 this.returnForm.patchValue({
-                    returnBillNo: billno
+                    returnBillNo: billno,
+                    p_billno:res.data[0].invoiceno
                 });
-                setTimeout(() => {
                    this.OnGetBillNo();
                 this.OnGetReturnBillNo(); 
-                console.log('return:', this.returnForm.value,this.returnBillNoOptions);
-               
-                }, 100);
                
                 
                 this.messageService.add({
@@ -610,7 +609,7 @@ export class ReturnComponent {
                     errorMessage = 'Please fill all required fields correctly.';
                 }
             }
-
+          
             this.messageService.add({
                 severity: 'error',
                 summary: 'Validation Failed',
