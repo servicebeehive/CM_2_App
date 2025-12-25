@@ -1052,7 +1052,7 @@ export class SalesComponent {
         const printContents = document.getElementById('invoicePrintSection')?.innerHTML;
         if (!printContents) return;
 
-        const popupWindow = window.open('', '_blank', 'width=900,height=1000');
+        const popupWindow = window.open('', '_blank', 'width=900,height=1500');
         popupWindow!.document.open();
 
         popupWindow!.document.write(`

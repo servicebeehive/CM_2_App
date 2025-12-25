@@ -374,17 +374,23 @@ export class ReturnComponent {
         //   delete (apibody as any).p_loginuser;
         this.stockInService.OninsertSalesDetails(apibody).subscribe({
             next: (res) => {
-                this.OnGetBillNo();
-                this.OnGetReturnBillNo();
                 const billno = res.data[0].billno;
                 console.log('return:', billno);
                 this.returnForm.patchValue({
                     returnBillNo: billno
                 });
+                setTimeout(() => {
+                   this.OnGetBillNo();
+                this.OnGetReturnBillNo(); 
+                console.log('return:', this.returnForm.value,this.returnBillNoOptions);
+               
+                }, 100);
+               
+                
                 this.messageService.add({
                     severity: 'success',
                     summary: 'Success',
-                    detail: 'Sales saved successfully!',
+                    detail: 'Sale Return saved successfully!',
                     life: 3000
                 });
             },
@@ -393,7 +399,7 @@ export class ReturnComponent {
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Error',
-                    detail: 'Failed to save sales. Please try again.',
+                    detail: 'Failed to save sale return. Please try again.',
                     life: 3000
                 });
             }
@@ -670,6 +676,10 @@ export class ReturnComponent {
             next: (res) => {
                 const billdata: any = res.data;
                 this.returnBillNoOptions = billdata.filter((item: { billno: null }) => item.billno != null);
+                // console.log('gfcgh:',this.returnBillNoOptions,data)
+                // this.returnForm.patchValue({
+                //     returnBillNo: data
+                // });
             },
             error: (err) => console.log(err)
         });

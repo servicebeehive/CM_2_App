@@ -342,7 +342,7 @@ print() {
     const printContents = document.getElementById('printSection')?.innerHTML;
     if (!printContents) return;
 
-    const popup = window.open('', '_blank', 'width=900,height=1000');
+    const popup = window.open('', '_blank', 'width=900,height=1500');
     
     popup!.document.open();
     popup!.document.write(`

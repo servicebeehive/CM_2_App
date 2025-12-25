@@ -127,7 +127,7 @@
                                     type="number"
                                     class="w-full"
                                     pInputText
-                                    [disabled]="!canPrint(row)"
+                                    [disabled]="!canPrint(row) || row.status==='Cancel'" 
                                     [(ngModel)]="row.received_amount"
                                     (ngModelChange)="updateReceivedAmount(i, $event)"
                                     [ngModelOptions]="{ standalone: true }"
