@@ -466,6 +466,7 @@ getReceivedAmountControl(index: number): AbstractControl | null {
         if(!row || !row.transactiontype)
             return false;
         return row.transactiontype.toUpperCase() ==='SALE';
+        
     }
    printInvoice(row: any) {
     
