@@ -915,9 +915,7 @@ export class SalesComponent {
 
   this.orderService.getcalculatedMRP(apibody).subscribe({
     next: (res: any) => {
-
-      console.log('calculated:', res.data);
-
+        
       const mrp = Number(res.data.totalmrp || 0);
       const cost = Number(res.data.totalcost || 0);
       const conversion = Number(res.data.conversion || 1);
@@ -970,7 +968,7 @@ if (!row.contains('baseStock')) {
         const qty = Number(row.get('Quantity')?.value || 1);
         const uomid = row.get('UOMId')?.value;
         const itemId = row.get('ItemId')?.value;
-        console.log('item:', itemId);
+       
         if (!uomid || qty <= 0) return;
 
         let apibody = {

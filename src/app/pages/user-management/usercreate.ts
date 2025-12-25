@@ -70,10 +70,13 @@ import { DropdownModule } from 'primeng/dropdown';
                         <input formControlName="companyaddress" type="text" pInputText fluid placeholder="Address" />
                     </div>
                     <div class="col-span-12 md:col-span-4">
-                        <label for="companywarehouse" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Warehouse Name</label>
-                        <input formControlName="companywarehouse" type="text" pInputText fluid placeholder="Warehouse Name" />
+                        <label for="p_warehouse" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Warehouse Name</label>
+                        <input formControlName="p_warehouse" type="text" pInputText fluid placeholder="Warehouse Name" />
                     </div>
-                    <div class="col-span-12 md:col-span-4"></div>
+                    <div class="col-span-12 md:col-span-4">
+                        <label for="companypincode" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Pincode</label>
+                        <input formControlName="companypincode" type="text" pInputText fluid placeholder="Pincode" />
+                    </div>
 
                     <div class="col-span-12 md:col-span-4">
                         <label for="companycountry" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Country <span class="text-red-500">*</span></label>
@@ -173,8 +176,8 @@ import { DropdownModule } from 'primeng/dropdown';
                     </div>
 
                     <div class="col-span-12 md:col-span-4">
-                        <label for="comapanyPAN" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Company PAN</label>
-                        <input formControlName="comapanyPAN" type="text" pInputText fluid placeholder="Company PAN" />
+                        <label for="pan" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Company PAN</label>
+                        <input formControlName="pan" type="text" pInputText fluid placeholder="Company PAN" />
                     </div>
                 </div>
             </div>
@@ -216,7 +219,15 @@ export class UserCreate {
         companycountry: ['', [Validators.required, Validators.required]],
         companystate: ['', [Validators.required, Validators.maxLength(50)]],
         companycity: ['', [Validators.required, Validators.maxLength(50)]],
-        companyphone: ['', Validators.pattern(/^[0-9]{10}$/)]
+        companyphone: ['', Validators.pattern(/^[0-9]{10}$/)],
+        companypincode:[''],
+        p_warehouse:[''],
+        statecode:[''],
+        bankname:[''],
+        accountno:[''],
+        pan:[''],
+        ifsc:[''],
+        branch:['']
     });
 
     constructor(
@@ -350,7 +361,7 @@ export class UserCreate {
             error: (err) => console.log(err)
         });
     }
-    onGetState(countryId: string, stateName: string, cityName: string) {
+    onGetState(countryId: string, stateName: string,statecode:string, cityName: string) {
         const payload = {
             ...this.getUserDetails,
             p_returntype: 'STATE',
@@ -366,12 +377,10 @@ export class UserCreate {
 
                 if (statename) {
                     this.profileForm.patchValue({
-                        companystate: statename
+                        companystate: statename,
+                        statecode:state[0].stategstcode 
                     });
-                }
-
-                if (statename) {
-                    this.onGetCity(statename, cityName);
+                     this.onGetCity(statename, cityName);
                 }
             },
             error: (err) => console.log(err)
@@ -403,18 +412,36 @@ export class UserCreate {
         console.log(data.value);
         const stateId = data.value;
         this.profileForm.patchValue({
-            companycity: ''
+            companycity: '',
         });
         this.cities = [];
 
         if (!stateId) {
             return;
         }
+        const statepayload={
+            p_returntype:'STATE',
+            p_returnvalue:1
+        };
         const payload = {
             ...this.getUserDetails,
             p_returntype: 'CITY',
             p_returnvalue: stateId
         };
+         
+this.inventoryService.Getreturndropdowndetails(statepayload).subscribe({
+    next: (res)=>{
+        
+          console.log('shgvdhv:',data.value)
+        if(res.data && res.data.length>0){  
+            const stateCode=this.states.filter(s=>s.state_id===data.value);
+            this.profileForm.patchValue({
+                statecode:stateCode[0].stategstcode
+            })
+        }
+    }
+})
+
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res) => {
                 if (res.data && res.data.length > 0) {
@@ -487,12 +514,16 @@ export class UserCreate {
             companycontactphone: data.companycontactphone,
             companycontactemail: data.companycontactemail,
             companycountry: countryId || '',
-            // companystate: stateId,
-            // companycity: data.companycity,
-            companyphone: data.companyphone
+            companyphone: data.companyphone,
+            // statecode:data.statecode,
+            bankname:data.bankname,
+            ifsc:data.ifsc,
+            branch:data.branch,
+            pan:data.pan,
+            companypincode:data.companypincode
         });
         if (countryId) {
-            this.onGetState(countryId, data.companystate, data.companycity);
+            this.onGetState(countryId, data.companystate,data.statecode,data.companycity);
         }
     }
     showSuccess(message: string) {
