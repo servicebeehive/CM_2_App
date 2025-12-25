@@ -1,5 +1,6 @@
 :host{
     display: block;
+     overflow-anchor: none;
 }
 
 ::ng-deep .invoice{
@@ -10,6 +11,8 @@
     border-radius: 6px;
     border: 1px solid var(--surface-border);
     border-radius: 6px;   
+    overflow-anchor: none;
+    scroll-behavior: auto;
 }
  .p-datatable-thead > tr > th:nth-child(3),
   .p-datatable-tbody > tr > td:nth-child(3) {
@@ -33,4 +36,37 @@
     right: auto !important;
     box-shadow: none !important;
   }
+  @media (max-width: 640px) {
+
+  /* paginator layout */
+  ::ng-deep .p-paginator {
+    display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-wrap: nowrap !important;
+  gap: 0px !important;
+  white-space: nowrap;
+  margin-top: 0px !important;
+  }
+  .p-paginator-pages{
+    display: flex !important;
+  flex-wrap: nowrap !important;
+  white-space: nowrap !important;
+  flex-direction: row;
+    max-width: 120px;
+    overflow-x: auto;
+  }
+  /* hide total items OR move below */
+  ::ng-deep .total-items {
+    font-size: 12px;
+     flex-shrink: 0;
+    margin-left: -15px !important;
+  }
+  .p-datatable-thead>tr>th:nth-last-child(1){
+    display: none !important;
+  }
+  .p-datatable-tbody>tr>td:nth-last-child(1){
+    display: none !important;
+}
+}
 }

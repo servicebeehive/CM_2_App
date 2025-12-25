@@ -121,7 +121,7 @@ export class AddinventoryComponent {
 
     ngOnInit(): void {
         this.addForm = this.fb.group(
-            {
+            {   itembarcode: ['', [Validators.maxLength(50)]],
                 itemCode: ['', [Validators.required, Validators.maxLength(50)]],
                 category: ['', Validators.required],
                 parentUOM: ['', Validators.required],
@@ -218,6 +218,7 @@ enterEditItemMode(itemData: any) {
         // patch form with itemData (same fields as before)
         console.log('edit',itemData.value);
         this.addForm.patchValue({
+            itembarcode:itemData.itembarcode,
             itemCode: itemData.itemsku || itemData.itemid,
             itemName: itemData.itemname,
             category: itemData.categoryid,
@@ -254,6 +255,7 @@ enterEditItemMode(itemData: any) {
         // patch form with itemData (same fields as before)
         console.log('update data',itemData);
         this.addForm.patchValue({
+            itembarcode:itemData.itembarcode,
             itemCode: itemData.itemsku || itemData.itemid,
             itemName: itemData.itemname,
             category: itemData.categoryid,
@@ -296,6 +298,7 @@ enterAddItemMode(itemData: any) {
         // const costperitem=(itemData.pruchaseprice/itemData.quantity).toFixed(2);
         console.log('add item:',itemData);
         this.addForm.patchValue({
+            itembarcode:itemData.itembarcode,
             itemCode: itemData.itemsku,
             itemName: itemData.itemname,
             category: itemData.categoryid,
@@ -341,7 +344,7 @@ enterAddItemMode(itemData: any) {
 
     private disableItemRelatedControls() {
         // disable fields that should not be editable after selecting an existing item
-        const controls = ['itemCode', 'parentUOM', 'category', 'itemName', 'curStock', 'location', 'minStock', 'warPeriod','p_expirydate','activeItem','gstItem','itemSearch'];
+        const controls = ['itembarcode','itemCode', 'parentUOM', 'category', 'itemName', 'curStock', 'location', 'minStock', 'warPeriod','p_expirydate','activeItem','gstItem','itemSearch'];
         controls.forEach(c => this.addForm.get(c)?.disable());
     }
 
@@ -446,7 +449,7 @@ if (hasEditDataChange && formReady) {
             // p_operationtype: this.mode === 'add' ? 'PUR_INSERT' : 'PUR_UPDATE',
              p_operationtype:this.mode=='itemedit'?'ITEM_UPD':'PUR_INSERT',
             p_purchaseid:this.mode=='itemedit'?"0":this.transationid.toString(),
-
+            p_itembarcode:form.itembarcode,
             p_itemsku: form.itemCode,
             p_itemname: form.itemName,
             p_categoryid: Number(form.category),

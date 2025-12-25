@@ -44,4 +44,43 @@
     min-width: 130px;
     max-width: 130px;
   }
+
+  /* ✅ MEDIA QUERY MUST BE OUTSIDE */
+@media (max-width: 640px) {
+
+  /* paginator layout */
+  ::ng-deep .p-paginator {
+    display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-wrap: nowrap !important;
+  gap: 0px !important;
+  white-space: nowrap;
+  }
+  .p-paginator-pages{
+    display: flex !important;
+  flex-wrap: nowrap !important;
+  white-space: nowrap !important;
+  flex-direction: row;
+    max-width: 120px;
+    overflow-x: auto;
+  }
+  /* hide total items OR move below */
+  ::ng-deep .total-items {
+    font-size: 12px;
+    margin-top: 4px;
+     flex-shrink: 0;
+    margin-left: -10px !important;
+  }
+.p-datatable-thead > tr > th:nth-child(1),
+  .p-datatable-tbody > tr > td:nth-child(1) {
+    position:static !important;
+  }
+ .p-datatable-thead > tr > th:nth-child(2),
+  .p-datatable-tbody > tr > td:nth-child(2) {
+    position:static !important;
+  }
 }
+}
+
+  

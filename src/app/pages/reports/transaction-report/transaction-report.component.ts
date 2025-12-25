@@ -264,6 +264,8 @@ export class TransactionReportComponent {
         const toDate = this.reportForm.controls['toDate'].value;
         const gstType = this.gstTransaction;
         
+         const categoryValue = category ? category.toString() : null;
+    const itemValue = item ? item.toString() : null;
         // Validate required fields
         if (!reportType) {
             this.errorSuccess('Please select a Report Type.');
@@ -285,8 +287,8 @@ export class TransactionReportComponent {
         
         const payload = {
              
-            p_categoryid: category.toString() || null,
-            p_itemid: item.toString() || null,
+            p_category: categoryValue,
+            p_item: itemValue,
             p_fromdate: this.datepipe.transform(fromDate, 'yyyy/MM/dd'),
             p_todate: this.datepipe.transform(toDate, 'yyyy/MM/dd'),
             p_username: 'admin',

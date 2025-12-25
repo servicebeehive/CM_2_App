@@ -83,12 +83,12 @@ export class LoginComponent implements OnInit {
       if (remembered === 'true') {
         const savedClientCode = localStorage.getItem('savedClientCode');
         const savedUserCode = localStorage.getItem('savedUserCode');
-        const savedPassword = localStorage.getItem('savedPassword');
+        // const savedPassword = localStorage.getItem('savedPassword');
 
         if (savedClientCode && savedUserCode) {
           this.loginForm.patchValue({
             usercode: savedUserCode,
-            pwd: savedPassword || '',
+            // pwd: savedPassword || '',
             clientcode: savedClientCode,
             rememberMe: true
           });
@@ -108,7 +108,7 @@ export class LoginComponent implements OnInit {
         localStorage.setItem('rememberMe', 'true');
         localStorage.setItem('savedClientCode', clientcode);
         localStorage.setItem('savedUserCode', usercode);
-        localStorage.setItem('savedPassword', password);
+        // localStorage.setItem('savedPassword', password);
 
         console.log('✅ Credentials saved to localStorage');
       } else {
@@ -129,7 +129,7 @@ export class LoginComponent implements OnInit {
       localStorage.removeItem('rememberMe');
       localStorage.removeItem('savedClientCode');
       localStorage.removeItem('savedUserCode');
-      localStorage.removeItem('savedPassword');
+      // localStorage.removeItem('savedPassword');
       console.log('Credentials cleared from localStorage');
     } catch (error) {
       console.error('Error clearing credentials:', error);
@@ -180,14 +180,7 @@ export class LoginComponent implements OnInit {
 
       console.log('Form Submitted:', this.loginForm.value);
     } else {
-      this.loginForm.markAllAsTouched();
-      // // Log each control's errors
-      // Object.keys(this.loginForm.controls).forEach(key => {
-      //   const control = this.loginForm.get(key);
-      //   if (control?.errors) {
-      //     console.log(`Control ${key} errors:`, control.errors);
-      //   }
-      // });
+      this.loginForm.markAllAsTouched()
     }
   }
 

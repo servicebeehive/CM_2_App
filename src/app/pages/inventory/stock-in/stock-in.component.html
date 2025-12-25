@@ -4,6 +4,9 @@
     <span class="block text-surface-900 font-bold text-2xl">Stock In</span>
     <div class="flex gap-4">
        <button pButton type="button" class="p-button-secondary" (click)="reset()">Reset</button>
+       @if(backshow){
+<button pButton type="button" label="Back" class="p-button-secondary" (click)="back()"  ></button>
+}
     </div>
   </div>
 

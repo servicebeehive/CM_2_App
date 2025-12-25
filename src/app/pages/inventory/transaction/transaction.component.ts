@@ -92,6 +92,7 @@ export class TransactionComponent {
     invoiceOptions = [];
     products: StockIn[] = [];
     filteredProducts: StockIn[] = [];
+    
     constructor(
         private fb: FormBuilder,
         private inventoryService: InventoryService,
@@ -112,16 +113,14 @@ export class TransactionComponent {
             },
             { validators: this.dateRangeValidator }
         );
-
-        const savedState = this.sharedService.getInvoiceState();
+            this.loadAllDropdowns();
+            this.onGetStockIn();
+        const savedState = this.sharedService.getTransactionState();
         if (savedState) {
             this.transactionForm.patchValue(savedState.filters);
             this.products = savedState.data;
             this.filteredProducts = [...savedState.data];
-        } else {
-            this.loadAllDropdowns();
-            this.onGetStockIn();
-        }
+        } 
     }
     dateRangeValidator(form: FormGroup) {
         const fromDate = form.get('fromDate')?.value;
@@ -177,7 +176,7 @@ export class TransactionComponent {
 
     saveCurrentState() {
         const currentFilters = this.transactionForm.value;
-        this.sharedService.setInvoiceState(currentFilters, this.products);
+        this.sharedService.setTransactionState(currentFilters, this.products);
     }
 
     onPageChange(event: any) {

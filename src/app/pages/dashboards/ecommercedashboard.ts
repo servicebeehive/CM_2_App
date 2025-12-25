@@ -40,7 +40,7 @@ import { SaleMangerDashboard } from './salemanagerdashboard';
             <app-filter-page class="top-filter-section" />
         </div>
      </div> -->
-   @if(role==='Admin'){
+   @if(role==='Admin' || role==='StoreOwner'){
         <div>
 
   <p-dropdown 

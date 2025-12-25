@@ -106,94 +106,109 @@
   <p-confirmDialog></p-confirmDialog>
 
 
+<!-- ================================
+     PRINT SECTION (INVOICE)
+================================= -->
+<div class="dn-container" style="margin:auto; width:900px; font-family: Arial;" id="printSection" >
+ <h3 style="text-align: center; padding-bottom: 10px;">DEBIT NOTE</h3>
 
-
-
-<div class="dn-container" style="padding:50px;" style="width:720px" id="printSection" >
-  <div class="header">
-    <h1>Debit Note</h1>
-  </div>
-
-  <div class="section" style="padding: 4px;">
-    <div class="company">
-          <div class="left">
-        Debit Note No: {{CreditForm.get('p_debitNote')?.value}}
-        <div class="label">Company Name: SHRISTI ELECTRICAL	</div>
-        <div class="small">Address:SHOP NO.-7 SAPNA TALKIES COMPLEX,		<br>	
-NANDINI ROAD, BHILAI		<br>
-State Name: Chhattisgarh<br> Code: 22			
-
- <br/>Email ID: {{'shristielectricalgw@gmail.com'}} <br/>GSTIN: 22AOCPY0439F1Z5
-          <!-- <br/>State: -->
-        </div>
-      </div>
-    
-    </div>
-  </div>
-<!-- <table width="100%" border="0" cellspacing="0" cellpadding="0" style="border-collapse:collapse;font-size:14px;margin-top:10px;">
-  <tr>
-    <td align="left">  <div class="right">
-        <div style="text-align:left">
-          <div class="label">Return/Debit To:</div>
-          <div class="small">Name:<br/>Address:<br/>Phone Number:<br/>GSTIN:<br/>State: Karnataka</div>
-        </div>
-      </div></td>
-    <td align="right">
-       <div>
- 
-    <div style="text-align:right">
-      <div>Document Info</div>
-      <div> <br/>Date: <br/>Place of Supply:</div>
-    </div>
-  </div>
-</td>
-  </tr>
-</table> -->
- 
-<div style="padding-top:15px; padding-bottom:15px;">
-  <table width="100%" aria-label="items" border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;font-size:14px;margin-top:10px;">
-
-  <thead>
+    <!-- ================= COMPANY & CUSTOMER INFO ================= -->
+  <table width="100%" cellspacing="0" cellpadding="0" style="margin-bottom:15px;">
     <tr>
-      <th align="left">SN</th>
-      <th align="left">Item Name</th>
-      <!-- <th align="left">HSN Code</th> -->
-      <th align="left">Unit</th>
-      <th align="left">Quantity</th>
-      <th align="left">MRP</th>
-      <!-- <th align="left">Disc</th> -->
-      <!-- <th align="left">GST</th> -->
-      <!-- <th align="left">Ad. CESS</th> -->
-      <th align="left">Amount</th>
+      <td width="50%" style="vertical-align:top; padding: 6px">
+        <strong>SHRISTI ELECTRICAL</strong><br>
+        SHOP NO.-7 SAPNA TALKIES COMPLEX,<br>
+        NANDINI ROAD, BHILAI<br>
+        GSTIN: 22AOCPY0439F1Z5 | State: Chhattisgarh (22)<br>
+        Email: shristielectrical&#64;gmail.com
+      </td>
+      <td width="50%" style="vertical-align:top;padding: 0; border:none;">
+        <table cellpadding="0" cellspacing="0" style=" border:none; border-collapse:collapse;">
+          <tr>
+            <td><strong>Debit Note No:</strong></td>
+            <td>{{ CreditForm.get('p_debitNote')?.value }}</td>
+          </tr>
+          <tr>
+            <td><strong>Date:</strong></td>
+            <td>{{ CreditForm.get('p_transactiondate')?.value | date:'dd-MMM-yyyy' }}</td>
+          </tr>
+          <tr>
+            <td><strong>Original Invoice:</strong></td>
+            <td>{{ CreditForm.get('p_originalInvoice')?.value || '' }}</td>
+          </tr>
+          <tr>
+            <td><strong>Payment Mode:</strong></td>
+            <td>CASH</td>
+          </tr>
+          <tr>
+            <td><strong>Return/Debit To:</strong></td>
+            <td><strong>{{ CreditForm.get('p_customername')?.value || '' }}</strong></td>
+          </tr>
+          <tr>
+            <td><strong>Mobile:</strong></td>
+            <td>{{ CreditForm.get('p_customermobile')?.value || '' }} </td>
+          </tr>
+          <tr>
+            <td><strong>GSTIN:</strong></td>
+            <td>{{ CreditForm.get('p_customergstin')?.value || '' }} </td>
+          </tr>
+          <tr>
+            <td><strong>State:</strong></td>
+            <td>{{ CreditForm.get('p_customerstate')?.value || '' }} </td>
+          </tr>
+        </table>
+      </td>
     </tr>
-  </thead>
+  </table>
 
-  <tbody>
-   <ng-container *ngFor="let row of replacecednlist; let i=index">
-    <tr>
-      <td>{{i+1}}</td>
-      <td>{{row.itemname}}</td>
-      <!-- <td>{{ row.itemsku }}</td> -->
-      <td>{{ row.current_stock }}</td>
-      <td>{{ row.quantity }}</td>
+  <!-- ================= CUSTOMER DETAILS ================= -->
+  <!-- <div style="background:#f5f5f5; padding:10px; margin-bottom:15px;">
+    {{ CreditForm.get('p_customeraddress')?.value || '' }}<br>
+    Mobile: {{ CreditForm.get('p_customermobile')?.value || '' }} | 
+    GSTIN: {{ CreditForm.get('p_customergstin')?.value || '-' }}<br>
+    State: {{ CreditForm.get('p_customerstate')?.value || '-' }}
+  </div> -->
+
+  <!-- ================= ITEMS TABLE ================= -->
+  <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;font-size:14px;">
+    <thead style="background:#f0f0f0;">
+      <tr>
+        <th>SNo.</th>
+        <th>Item Description</th>
+        <th>Qty</th>
+        <th>Unit</th>
+        <th>Rate</th>
+        <th>Amount</th>
+      </tr>
+    </thead>
     
-     <td>{{"₹"+row.mrp }}</td>
-    <!-- <td></td> -->
-     <!-- <td></td> -->
-      <td>{{"₹"+ row.quantity * row.mrp }}</td>
-     
+    <tbody>
+      <tr *ngFor="let row of replacecednlist; let i = index">
+        <td align="center">{{ i + 1 }}</td>
+        <td>{{ row.itemname }}</td>
+        <td align="center">{{ row.quantity }}</td>
+        <td align="center">{{ row.uomname || row.current_stock }}</td>
+        <td align="right">₹{{ row.mrp | number:'1.2-2' }}</td>
+        <td align="right">₹{{ (row.quantity * row.mrp) | number:'1.2-2' }}</td>
+      </tr>
       
-     
-     
+      <!-- Summary Rows -->
+      <!-- <tr>
+        <td colspan="6" align="right"><strong>Total Amount:</strong></td>
+        <td align="right"><strong>₹{{ totalAmount | number:'1.2-2' }}</strong></td>
+      </tr> -->
       
-    
-    </tr>
-</ng-container>
-   
-
-  
-
-    <!-- Amount in words & Total Amount block -->
+      <!-- <tr>
+        <td colspan="6" align="right">CGST "&#64;" 9%:</td>
+        <td align="right">₹{{ CreditForm.get('p_cgst')?.value || '0.00' | number:'1.2-2' }}</td>
+      </tr>
+      
+      <tr>
+        <td colspan="6" align="right">SGST "&#64;" 9%:</td>
+        <td align="right">₹{{ CreditForm.get('p_sgst')?.value || '0.00' | number:'1.2-2' }}</td>
+      </tr>
+       -->
+       <!-- Amount in words & Total Amount block -->
     <tr>
       <!-- <td  rowspan="3" class="bold">
         Amount in words:
@@ -209,8 +224,8 @@ State Name: Chhattisgarh<br> Code: 22
     </tr>
 
     <tr>
-      <td colspan="3" class="bold" align="right">Payment Mode:</td>
-       <td colspan="3" class="bold" >Cash</td>
+      <td colspan="3" class="bold" align="right"></td>
+       <td colspan="3" class="bold" ></td>
       
     </tr>
      <!-- <tr>
@@ -240,14 +255,15 @@ State Name: Chhattisgarh<br> Code: 22
       <td class="bold">IFSC Code:</td>
       <td colspan="5"></td>
     </tr>
-  </tbody>
-</table>
-</div>
+     <tr>
+      <td class="bold">Company PAN:</td>
+      <td colspan="5"></td>
+    </tr>
+    </tbody>
+  </table>
 
-
-
-
-  <div class="footer">
-    Note: This is a computer generated debit note and does not require signature.
+    <div style="text-align:left; margin-top:10px; color:#666; font-size:12px;">
+      <strong>Note:</strong> This is a computer generated debit note.
+    </div>
   </div>
-</div>
+
