@@ -107,15 +107,19 @@
           <label>GST Transaction</label>
         </div>
           <div class="flex items-center gap-2">
-          <label> <b> Status:</b></label>
-          <input readonly type="text"   formControlName="status"  placeholder="Status" class="bg-transparent border-none outline-none"
-   [ngStyle]="{
-    'color': salesForm.value.status === 'Done' ? 'green' :
-             salesForm.value.status === 'Partial Cancel' ? 'grey' :
-             salesForm.value.status === 'Cancel' ? 'red' : 'black',
-    'font-weight': 'bold'
+          <label> <b> Status: </b>  <span
+  class="font-bold"
+  [ngStyle]="{
+    'color': salesForm.get('status')?.value === 'Done' ? 'green' :
+             salesForm.get('status')?.value === 'Partial Cancel' ? 'grey' :
+             salesForm.get('status')?.value === 'Cancel' ? 'red' : 'black'
   }"
-/>
+>
+  {{ salesForm.get('status')?.value || '-' }}
+</span></label>
+ 
+
+
 </div>
         </div>
 
@@ -126,7 +130,7 @@
 
      <!-- CUSTOMER NAME -->
       <div class="flex flex-col">
-        <label class="font-medium mb-1">Customer Name</label>
+        <label class="font-medium mb-1">Customer Name <span class="text-red-500">*</span></label>
         <input
           pInputText  tabindex="5"
           showclear="[true]"
@@ -215,12 +219,25 @@
       </div>
 
     </div>
-
+<!-- <button
+  pButton
+  type="button"
+  label="Simulate Scan"
+  (click)="simulateScan('8904167705360')">
+</button> -->
 
     <!-- ================================
          SALES TABLE (FormArray)
     ================================= -->
     <div class="mt-6">
+<input
+  #barcodeInput 
+  type="text"
+ class="absolute opacity-0 pointer-events-none"
+  placeholder="Type barcode / SKU and press Enter"
+  (keydown.enter)="onBarcodeScan($event)"
+/>
+
 
       <p-table
         [value]="saleArray.controls"
