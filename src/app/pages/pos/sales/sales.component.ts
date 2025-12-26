@@ -137,7 +137,7 @@ export class SalesComponent {
                 p_roundoff: [''],
                 p_totalpayable: [0],
                 p_currencyid: [0],
-                p_paymentdue: [''],
+                p_paymentdue: ['0'],
                 p_gsttran: [true],
                 status: [''],
                 p_status: [''],
