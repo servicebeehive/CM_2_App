@@ -24,12 +24,6 @@
         </div>
     </ng-template>
   
-
-    <!-- <ng-template #footer>
-        <div class="p-3 p-button-primary p-button-sm" (click)="$event.stopPropagation()">
-            <button pButton type="button" label="Add New Item" fluid severity="primary" text size="small" icon="pi pi-plus" (click)="addNewItem(itemSelect)"></button>
-        </div>
-    </ng-template> -->
   </p-select>
 </div>
 
@@ -51,7 +45,7 @@
 <!-- Item Bar Code -->
   <div class="flex flex-col">
                 <label class="font-medium mb-1">Item BarCode</label>
-                <input pInputText formControlName="itembarcode" placeholder="Item BarCode" [readOnly]="mode==='edit'" />
+                <input pInputText formControlName="itembarcode" placeholder="Item BarCode" (input)="toUppercase($event)" (blur)="onBlurBarCode($event)" [readOnly]="mode==='edit'" />
             </div>
 <div class="flex gap-6">
                 <!-- Active -->
@@ -60,50 +54,33 @@
                 <label class="font-medium mb-1">Active Item</label>
                 <p-checkbox formControlName="activeItem" [binary]="true"></p-checkbox>
             </div>
+
             <!-- GST Item -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">GST Item</label>
                 <p-checkbox formControlName="gstItem" [binary]="true"></p-checkbox>
             </div>
             </div>
+
    <!-- Item Code -->
-        
-              <!-- <div class="flex flex-col">
-                <label class="font-medium mb-1">Item Detail <span class="text-red-500">*</span></label>
-                <p-dropdown  (onChange)="onItemCodeChange($event)" [options]="itemOptions" optionLabel="itemcombine" optionValue="itemsku" [filter]="true" filterPlaceholder="Search Item code" placeholder="Item Code"> </p-dropdown>
-            
-            </div> -->
              <div class="flex flex-col">
                 <label class="font-medium mb-1">Item Code <span class="text-red-500">*</span></label>
-                <input pInputText formControlName="itemCode" placeholder="Item Code" [readOnly]="mode==='edit'" />
+                <input pInputText formControlName="itemCode" placeholder="Item Code" (input)="toUppercase($event)" (blur)="onBlur($event)" [readOnly]="mode==='edit'" />
                 <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('itemCode')?.touched">
                     <span *ngIf="addForm.get('itemCode')?.errors?.['required']">Item Code is required</span>
                 </small>
             </div>
 
-
-            <!-- <div class="flex flex-col">
-                
-                {{itemOptions|json}}
-                <label class="font-medium mb-1">Item Code <span class="text-red-500">*</span></label>
-                <p-autoComplete fluid field="fieldname"  [suggestions]="itemOptions" (completeMethod)="filterItemCode($event)" [forceSelection]="true" formControlName="itemCode" placeholder="Item Code"> </p-autoComplete>
-                <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('itemCode')?.touched">
-                    <span *ngIf="addForm.get('itemCode')?.errors?.['required']">Item Code is required</span>
-                </small>
-            </div> -->
-
-            
-
             <!-- Current Stock -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Current Stock</label>
-                <input pInputText formControlName="curStock" placeholder="Current Stock" readonly class="grayout"/>
+                <input pInputText formControlName="curStock" placeholder="Current Stock" (input)="toUppercase($event)" readonly class="grayout"/>
             </div>
 
             <!-- Item Name -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Item Name <span class="text-red-500">*</span></label>
-                <input pInputText formControlName="itemName" placeholder="Item Name" />
+                <input pInputText formControlName="itemName" (input)="toUppercase($event)" placeholder="Item Name" />
                 <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('itemName')?.touched">
                     <span *ngIf="addForm.get('itemName')?.errors?.['required']">Item Name is required</span>
                 </small>
@@ -280,7 +257,7 @@
                   <button pButton type="button" label="Cancel"  class="p-button-secondary" (click)="onCancel()"></button>
      
            
-            <button pButton type="submit" label="Submit" class="p-button-warning" [disabled]="addForm.invalid || !isChildUOMValid()"></button>
+            <button pButton type="submit" label="Submit" class="p-button-warning" [disabled]="addForm.invalid || !isChildUOMValid() || itemCodeExists|| barcodeExists"></button>
 
         </div>
     </div>

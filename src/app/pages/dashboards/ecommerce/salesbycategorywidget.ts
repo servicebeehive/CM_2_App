@@ -18,7 +18,7 @@ interface Week {
         <div class="flex items-start justify-between mb-12">
             <span
                 class="text-surface-900 dark:text-surface-0 text-xl font-semibold"
-                >Sale trend</span
+                >Sale Trend</span
             >
             <!-- <p-select
                 [options]="month"

@@ -103,28 +103,24 @@ export class StatsWidget implements OnInit, OnChanges {
 
                 this.dashboardCards = [
                     {
-                        label: 'Total Purchase',
+                        label: 'Total Cost',
                         icon: 'pi pi-box',
                         value: data.totalpurchase,
-                        routerLink: '/layout/inventory/overview'
                     },
                     {
                         label: 'Total Sale',
                         icon: 'pi pi-shopping-cart',
                         value: data.totalsale,
-                        routerLink: '/layout/pos/sales'
                     },
                     {
                         label: 'Total Return',
                         icon: 'pi pi-arrow-down-left',
                         value: data.totalreturn,
-                        routerLink: '/layout/inventory/stock-in'
                     },
                     {
                         label: 'Total Profit',
                         icon: 'pi pi-arrow-up',
                         value: data.profit,
-                        routerLink: '/layout/inventory/stock-in'
                     },
                 ];
 

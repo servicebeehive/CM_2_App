@@ -1,5 +1,5 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, HostListener, ViewChild, inject } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 
 import { ButtonModule } from 'primeng/button';
@@ -61,9 +61,75 @@ import { Router } from '@angular/router';
     providers: [ConfirmationService, DatePipe]
 })
 export class SalesComponent {
+    isBarcodeScan = false;
+    isAutoSelect = false; // works for barcode + click
+
+    
+
     // -----------------------------
     //  Component state / Variables
     // -----------------------------
+    @ViewChild('barcodeInput') barcodeInput!: ElementRef<HTMLInputElement>;
+
+ngAfterViewInit() {
+  if (this.barcodeInput?.nativeElement) {
+    this.barcodeInput.nativeElement.focus();
+  }
+}
+
+onBarcodeScan(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const barcode = input?.value?.trim();
+  if (!barcode) return;
+
+  const matchedItem = this.itemOptions.find(
+    (item) =>
+      item.itembarcode === barcode ||
+      item.itemsku === barcode ||
+      item.itemid == barcode
+  );
+
+  if (!matchedItem) {
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Item Not Found',
+      detail: `No item found for ${barcode}`,
+      life: 2000
+    });
+    this.clearBarcodeInput();
+    return;
+  }
+
+  // 🔹 mark barcode flow
+this.isAutoSelect = true;
+this.salesForm.get('p_itemdata')?.setValue(matchedItem.itemid);
+this.OnItemChange({ value: matchedItem.itemid });
+
+
+  this.clearBarcodeInput();
+}
+
+
+simulateScan(barcode: string) {
+  this.onBarcodeScan({
+    target: { value: barcode }
+  } as unknown as Event);
+}
+
+
+clearBarcodeInput() {
+  if (this.barcodeInput?.nativeElement) {
+    this.barcodeInput.nativeElement.value = '';
+    this.barcodeInput.nativeElement.focus();
+  }
+}
+@HostListener('window:click')
+keepBarcodeFocus() {
+  this.barcodeInput?.nativeElement?.focus();
+}
+
+
+
     @ViewChild('itemSel') itemSel!:any;
     public transactionid: any;
     salesForm!: FormGroup;
@@ -98,7 +164,11 @@ export class SalesComponent {
 
     // Dropdowns / lists
     billNoOptions: any[] = [];
-
+    transactionMode:any[]=[
+        {label:'Cash',value:'Cash'},
+        {label:'UPI',value:'UPI'},
+        {label:'Card',value:'Card'}
+    ];
     // -----------------------------
     //  Constructor + Lifecycle
     // -----------------------------
@@ -130,6 +200,7 @@ export class SalesComponent {
                 p_customername: ['', Validators.required],
                 p_mobileno: ['', [Validators.required, Validators.pattern(/^[6-9]\d{9}$/)]],
                 searchMobileNo: [''],
+                transactionmode:['Cash'],
                 p_totalcost: [0],
                 p_totalsale: [0],
                 p_disctype: [false],
@@ -449,40 +520,50 @@ export class SalesComponent {
 
     // Called when an item is selected from the item dropdown
     OnItemChange(event: any) {
-        const latetData = this.itemOptions.find((item) => item.itemid == event.value);
-        if (!latetData) return;
+  const latetData = this.itemOptions.find(
+    (item) => item.itemid == event.value
+  );
+  if (!latetData) return;
 
-        // Prevent duplicate item
-        const alreadyExists = this.saleArray.controls.some((row) => row.get('ItemId')?.value === latetData.itemid);
+  // Prevent duplicate item
+  const alreadyExists = this.saleArray.controls.some(
+    (row) => row.get('ItemId')?.value === latetData.itemid
+  );
 
-        if (alreadyExists) {
-            this.messageService.add({
-                severity: 'warn',
-                summary: 'Duplicate Item',
-                detail: `${latetData.itemname} is already added.`,
-                life: 2000
-            });
+  if (alreadyExists) {
+    this.messageService.add({
+      severity: 'warn',
+      summary: 'Duplicate Item',
+      detail: `${latetData.itemname} is already added.`,
+      life: 2000
+    });
 
-            this.salesForm.get('p_itemdata')?.setValue(null, { emitEvent: false });
-            return;
-        }
+    // Clear dropdown on duplicate
+    this.salesForm.get('p_itemdata')?.setValue(null, { emitEvent: false });
+    this.isAutoSelect = false;
+    return;
+  }
 
-        // Add new row
-        this.saleArray.push(this.createSaleItem(latetData));
+  // Add new row
+  this.saleArray.push(this.createSaleItem(latetData));
+  const index = this.saleArray.length - 1;
 
-        const index = this.saleArray.length - 1;
+  // Load UOM list
+  this.OnUMO(event.value, index);
 
-        // Load UOM list for this item
-        this.OnUMO(event.value, index);
+  // Calculate MRP
+  this.calculateMRP(index);
 
-        // ⭐ Call calculateMRP immediately after item selection
-        this.calculateMRP(index);
+  // 🔑 KEY CHANGE HERE
+  // Clear only when NOT auto-select (barcode / programmatic)
+  if (!this.isAutoSelect) {
+    this.salesForm.get('p_itemdata')?.setValue(null, { emitEvent: false });
+  }
 
-        // Clear dropdown selection
-        this.salesForm.get('p_itemdata')?.setValue(null, { emitEvent: false });
+  this.isAutoSelect = false; // reset after use
+  this.calculateSummary();
+}
 
-        this.calculateSummary();
-    }
 
 
 

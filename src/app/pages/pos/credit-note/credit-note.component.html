@@ -61,7 +61,7 @@
       <th>Current Stock</th>
       <th>UOM</th>
       <th>Qty</th>
-      <th>MRP</th>
+      <th>Cost</th>
       <th>Total</th>
     </tr>
   </ng-template>
@@ -74,8 +74,8 @@
       <td>{{ row.current_stock }}</td>
       <td>{{ row.uomname }}</td>
       <td>{{ row.quantity }}</td>
-      <td>{{ row.mrp }}</td>
-      <td>{{ row.quantity * row.mrp }}</td>
+      <td>{{ row.itemcost }}</td>
+      <td>{{ row.quantity * row.itemcost }}</td>
     </tr>
   </ng-template>
     <ng-template pTemplate="paginatorleft">

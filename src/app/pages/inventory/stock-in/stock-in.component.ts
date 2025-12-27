@@ -130,12 +130,14 @@ export class StockInComponent {
         this.onGetStockIn();
         this.productForm = this.fb.group({
             p_tranpurchaseid: [null],
-            p_invoiceno: ['', [Validators.maxLength(50)]],
-            p_vendorid: [null],
-            p_invoicedate: [null],
+            p_invoiceno: ['', [Validators.maxLength(50),Validators.required]],
+            p_vendorid: [null,Validators.required],
+            p_invoicedate: [null,Validators.required],
             p_remarks: ['', [Validators.maxLength(500)]],
-            grandTotal: [0]
-        });
+            grandTotal: [0],
+            p_amountpaid :[''],
+           p_deliveryboy:[''],
+        },{validators:[this.paidAmountLessThanGrandTotal()]});
 
         const navigation = history.state;
         console.log('Navigation state:', navigation);
@@ -145,6 +147,20 @@ export class StockInComponent {
             this.populateStockForm(navigation.stockData, navigation.itemsData);
         }
         this.setupBackButtonListener();
+    }
+    
+     paidAmountLessThanGrandTotal(): ValidatorFn {
+        return (form: AbstractControl): ValidationErrors | null => {
+            const grandtotal = Number(form.get('grandTotal')?.value || 0);
+            const p_amountpaid = Number(form.get('p_amountpaid')?.value || 0);
+
+            if (grandtotal < p_amountpaid) {
+                return {
+                    amountNotGreater: true
+                };
+            }
+            return null;
+        };
     }
     onGetStockIn() {
         this.products = this.stockInService.productItem;
@@ -181,7 +197,8 @@ export class StockInComponent {
             p_invoiceno: data.invoicenumber || '',
             p_invoicedate: data.invoicedate ? new Date(data.invoicedate) : new Date(),
             p_remarks: data.remark || '',
-            p_vendorid: data.vendorid || null
+            p_vendorid: data.vendorid || null,
+            paidAmount:data.total_paid
         });
         if (itemsData && itemsData.length > 0) {
             console.log('Processing itemsData:', itemsData);
@@ -337,7 +354,8 @@ export class StockInComponent {
             invoiceNo: '',
             vendorName: '',
             invoiceDate: '',
-            remark: ''
+            remark: '',
+            paidAmount:''
         });
         this.backshow=false;
         // this.transationid='null';
@@ -385,6 +403,8 @@ export class StockInComponent {
             p_invoiceno: data.p_invoiceno,
             p_invoicedate: this.datePipe.transform(data.p_invoicedate, 'dd/MM/yyyy'),
             p_remarks: data.p_remarks,
+            p_deliveryboy:data.p_deliveryboy,
+            p_amountpaid :data.p_amountpaid ,
             p_active: 'Y'
         };
 
@@ -406,7 +426,8 @@ export class StockInComponent {
                         invoicenumber: '',
                         purchaseid: id,
                         remark: '',
-                        vendorid: 0
+                        vendorid: 0,
+                        paidAmount:0
                     };
 
                     // push only if not exists
@@ -439,7 +460,9 @@ export class StockInComponent {
             p_invoiceno: selectedPurchaseData.invoicenumber,
             p_remarks: selectedPurchaseData.remark,
             p_invoicedate: selectedPurchaseData.invoicedate ? new Date(selectedPurchaseData.invoicedate) : null,
-            grandTotal: this.grandTotal
+            grandTotal: this.grandTotal,
+             p_amountpaid:selectedPurchaseData.total_paid,
+            p_deliveryboy:selectedPurchaseData.deliveryboy
         });
         if (this.productForm.value) {
             this.addItemEnabled = true;
@@ -455,7 +478,9 @@ export class StockInComponent {
             p_invoiceno: selectedPurchaseData1.invoicenumber,
             p_remarks: selectedPurchaseData1.remark,
             p_invoicedate: selectedPurchaseData1.invoicedate ? new Date(selectedPurchaseData1.invoicedate) : null,
-            grandTotal: this.grandTotal
+            grandTotal: this.grandTotal,
+            p_amountpaid:selectedPurchaseData1.total_paid,
+            p_deliveryboy:selectedPurchaseData1.deliveryboy
         });
         if (this.productForm.value) {
             this.addItemEnabled = true;
