@@ -16,7 +16,7 @@
     <div>
 
       <!-- Two-column grid layout -->
-      <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
+      <div class="grid grid-cols-4 gap-x-8 gap-y-4 w-full">
         <!-- Transaction Id -->
         <div class="flex flex-col">
           <label class="font-medium mb-1">Transaction Id</label>
@@ -36,7 +36,7 @@
 
         <!-- Vendor Name -->
         <div class="flex flex-col">
-          <label class="font-medium mb-1">Vendor Name</label>
+          <label class="font-medium mb-1">Vendor Name <span class="text-red-500">*</span></label>
 
            <p-dropdown
             [options]="this.vendorOptions"
@@ -47,39 +47,59 @@
             formControlName="p_vendorid"
             placeholder="Vendor Name">
           </p-dropdown>
-          <!-- <small class="text-red-500 ms-3 mt-1" *ngIf="productForm.get('vendorName')?.touched">
-            <span *ngIf="productForm.get('vendorName')?.errors?.['required']">Vendor Name is required</span>
-          </small> -->
+          <small class="text-red-500 ms-3 mt-1" *ngIf="productForm.get('p_vendorid')?.touched">
+            <span *ngIf="productForm.get('p_vendorid')?.errors?.['required']">Vendor Name is required</span>
+          </small>
         </div>
 
         <!-- Invoice No -->
         <div class="flex flex-col">
-          <label class="font-medium mb-1">Invoice No.</label>
-         <input pInputText formControlName="p_invoiceno" placeholder="Invoice No." />
+          <label class="font-medium mb-1">Invoice No <span class="text-red-500">*</span></label>
+         <input pInputText formControlName="p_invoiceno" placeholder="Invoice No" />
+          <small class="text-red-500 ms-3 mt-1" *ngIf="productForm.get('p_invoiceno')?.touched">
+            <span *ngIf="productForm.get('p_invoiceno')?.errors?.['required']">Invoice No is required</span>
+          </small>
           <small class="text-red-500 ms-3 mt-1" *ngIf="productForm.get('p_invoiceno')?.errors">
-            <span *ngIf="productForm.get('p_invoiceno')?.errors?.['maxlength']">Invoice No. must have atleast 50 characters</span>
+            <span *ngIf="productForm.get('p_invoiceno')?.errors?.['maxlength']">Invoice No must have atleast 50 characters</span>
           </small>
         </div>
 
         <!-- Invoice Date -->
         <div class="flex flex-col">
-          <label class="font-medium mb-1">Invoice Date</label>
+          <label class="font-medium mb-1">Invoice Date <span class="text-red-500">*</span></label>
           <p-datepicker  fluid formControlName="p_invoicedate" dateFormat="dd/mm/yy" [maxDate]="dateTime" [showIcon]="true" placeholder="Invoice Date"></p-datepicker>
-        </div>
+         <small class="text-red-500 ms-3 mt-1" *ngIf="productForm.get('p_invoicedate')?.touched">
+            <span *ngIf="productForm.get('p_invoicedate')?.errors?.['required']">Invoice Date is required</span>
+          </small>
+          </div>
 
+        <!-- </div>
+        <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full"> -->
         <!-- Remark -->
-        <div class="flex flex-col">
+        <div class="col-span-2 flex flex-col">
           <label class="font-medium mb-1">Remark</label>
           <input pInputText formControlName="p_remarks" placeholder="Remark" />
             <small class="text-red-500 ms-3 mt-1" *ngIf="productForm.get('p_remarks')?.errors">
             <span *ngIf="productForm.get('p_remarks')?.errors?.['maxlength']">Remark must have atleast 500 characters</span>
           </small>
         </div>
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Delivery Person</label>
+         <input pInputText formControlName="p_deliveryboy" placeholder="Delivery Person" />
+        </div>
+
+         <!-- Amount Paid -->
+      <div class="flex flex-col">
+      <label class="font-medium mb-1">Paid Amount</label>
+      <input pInputText type="number" formControlName="p_amountpaid" placeholder="Paid Amount"/>
+       <small class="text-red-500" *ngIf="productForm.hasError('amountNotGreater')"> Paid Amount cannot be greater than Final Payable. </small>
+      </div>
+    
       </div>
 
       <!-- Add and Display Buttons -->
       <div class="flex mt-6 gap-4">
-         <button pButton type="submit" label="Sumbit" class="p-button-warning"></button>
+         <button pButton type="submit" label="Sumbit" class="p-button-warning" [disabled]="productForm.invalid" ></button>
         <button pButton type="button" label="Add Item" class="p-button-warning" [disabled]="!addItemEnabled" (click)="openAddDialog()"></button>
         <p class="text-red-500 flex items-center" >To Add Item, Press submit to save the header information even if header informations are blank</p>
       </div>
@@ -171,11 +191,12 @@
 </p-table>
 
     </div>
-
+<div class="flex justify-end border-t pt-4 gap-4">
     <!-- Grand Total -->
-    <div class="flex justify-end items-center gap-4 mt-6 border-t pt-4">
+    <div class="flex  items-center gap-4 mt-6">
       <label class="font-medium">Grand Total</label>
       <input pInputText type="text" [value]="grandTotal" readonly placeholder="Total" class="w-40 text-right" />
+    </div>
     </div>
   </form>
 

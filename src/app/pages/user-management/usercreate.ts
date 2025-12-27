@@ -13,13 +13,15 @@ import { RouterLink } from '@angular/router';
 import { InventoryService } from '@/core/services/inventory.service';
 import { UserService } from '@/core/services/user.service';
 import { AuthService } from '@/core/services/auth.service';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { DropdownModule } from 'primeng/dropdown';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
 @Component({
     selector: 'user-create',
     standalone: true,
-    imports: [InputText, TextareaModule, FileUploadModule, ButtonModule, InputGroupModule, RippleModule, CommonModule, ReactiveFormsModule, RouterLink, DropdownModule],
+    imports: [InputText, TextareaModule, FileUploadModule, ButtonModule, InputGroupModule, RippleModule, CommonModule, ReactiveFormsModule, RouterLink, DropdownModule,ConfirmDialogModule],
+    providers:[ConfirmationService],
     template: `<div class="card">
         <span class="text-surface-900 dark:text-surface-0 text-xl font-bold mb-6 block">Profile Creation</span>
         <!-- <div  class="col-span-12 lg:col-span-10"> -->
@@ -128,6 +130,7 @@ import { DropdownModule } from 'primeng/dropdown';
                             optionLabel="country_name"
                             optionValue="country_id"
                             fluid
+                            filterPlaceholder="Search Countries"
                             [filter]="true"
                             [showClear]="true"
                             placeholder="Select a Country"
@@ -144,12 +147,12 @@ import { DropdownModule } from 'primeng/dropdown';
 
                     <div class="col-span-12 md:col-span-4">
                         <label for="companystate" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> State <span class="text-red-500">*</span></label>
-                        <p-dropdown formControlName="companystate" [options]="states" optionLabel="state_name" optionValue="state_id" fluid placeholder="State" [showClear]="true" (onChange)="onGetStateChange($event)"></p-dropdown>
+                        <p-dropdown formControlName="companystate" [options]="states" optionLabel="state_name" optionValue="state_id" [filter]="true" fluid placeholder="State" [showClear]="true" filterPlaceholder="Search State" (onChange)="onGetStateChange($event)"></p-dropdown>
                     </div>
 
                     <div class="col-span-12 md:col-span-4">
                         <label for="companycity" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> City <span class="text-red-500">*</span></label>
-                        <p-dropdown formControlName="companycity" [options]="cities" optionLabel="city_name" optionValue="city_id" fluid [showClear]="true" placeholder="City"></p-dropdown>
+                        <p-dropdown formControlName="companycity" [options]="cities" optionLabel="city_name" optionValue="city_id" filterPlaceholder="Search City" fluid [filter]="true" [showClear]="true" placeholder="City"></p-dropdown>
                     </div>
                 </div>
             </div>
@@ -237,7 +240,10 @@ import { DropdownModule } from 'primeng/dropdown';
 
             <!-- </div> -->
         </form>
-    </div>`
+    </div>
+    
+    <p-confirmDialog></p-confirmDialog>
+`
 })
 export class UserCreate {
     @ViewChild('fileUpload') fileUpload: any;
@@ -250,34 +256,35 @@ export class UserCreate {
     cities: any[] = [];
     public getUserDetails = {};
     loggedInUserRole: string = '';
-    public imageUrl:string=''
+    public imageUrl:string | null=''
     profileForm: FormGroup = this.fb.group({
-        companyname: ['', Validators.maxLength(50)],
-        companyemail: ['', [Validators.email, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/), Validators.maxLength(50)]],
-        companygstno: ['', [Validators.required]],
-        companycontactperson: ['', Validators.maxLength(50)],
-        companyaddress: ['', Validators.maxLength(100)],
+        companyname: ['', Validators.maxLength(100)],
+        companyemail: ['', [Validators.email, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/), Validators.maxLength(100)]],
+        companygstno: ['', [Validators.required,Validators.maxLength(30)]],
+        companycontactperson: ['', Validators.maxLength(100)],
+        companyaddress: ['', Validators.maxLength(500)],
         companycontactphone: ['', Validators.pattern(/^[0-9]{10}$/)],
-        companycontactemail: ['', [Validators.email, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/), Validators.maxLength(50)]],
+        companycontactemail: ['', [Validators.email, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/), Validators.maxLength(100)]],
         companycountry: ['', [Validators.required, Validators.required]],
         companystate: ['', [Validators.required, Validators.maxLength(50)]],
         companycity: ['', [Validators.required, Validators.maxLength(50)]],
         companyphone: ['', Validators.pattern(/^[0-9]{10}$/)],
-        companypincode:[''],
-        p_warehouse:[''],
-        statecode:[''],
-        bankname:[''],
-        accountno:[''],
-        pan:[''],
-        ifsc:[''],
-        branch:['']
+        companypincode:['',[Validators.maxLength(6)]],
+        p_warehouse:['',[Validators.maxLength(100)]],
+        statecode:['',[Validators.maxLength(5)]],
+        bankname:['',[Validators.maxLength(100)]],
+        accountno:['',[Validators.maxLength(25)]],
+        pan:['',[Validators.maxLength(25)]],
+        ifsc:['',[Validators.maxLength(25)]],
+        branch:['',[Validators.maxLength(100)]]
     });
 
     constructor(
         private inventoryService: InventoryService,
         private userService: UserService,
         private authservice: AuthService,
-        private messageService: MessageService
+        private messageService: MessageService,
+        private confirmationService: ConfirmationService,
     ) {}
     ngOnInit() {
         this.loggedInUserRole = this.authservice.isLogIntType().usertypename;
@@ -290,13 +297,8 @@ export class UserCreate {
             event.preventDefault();
         }
     }
-    onSubmit() {
-        if (this.profileForm.invalid) {
-            this.profileForm.markAllAsTouched();
-            return;
-        }
-        const form = this.profileForm.value;
-        const payload = {
+    submitValue(form:any){
+         const payload = {
             p_companyname: form.companyname,
             p_companyaddress: form.companyaddress,
             p_companycity: form.companycity,
@@ -318,7 +320,7 @@ export class UserCreate {
             p_warehouse:form.p_warehouse,
             p_companylogo: this.logoBase64 || null
         };
-        this.userService.OnUserListHeaderCreate(payload).subscribe({
+         this.userService.OnUserListHeaderCreate(payload).subscribe({
             next: (res: any) => {
                 console.log('API RESULT:', res.data);
                 this.showSuccess('Profile details saved successfully');
@@ -327,6 +329,23 @@ export class UserCreate {
                 console.error(err);
             }
         });
+        }
+    onSubmit() {
+        if (this.profileForm.invalid) {
+            this.profileForm.markAllAsTouched();
+            return;
+        }
+        this.confirmationService.confirm({
+             message: 'Are you sure you want to submit?',
+            header: 'Confirm',
+            acceptLabel: 'Yes',
+            rejectLabel: 'Cancel',
+            acceptButtonStyleClass: 'p-button-primary',
+            rejectButtonStyleClass: 'p-button-secondary',
+            accept: () => {
+                this.submitValue(this.profileForm.value)
+    }
+    });
     }
 
     onFileSelect(event: any) {
@@ -422,8 +441,6 @@ export class UserCreate {
             next: (res) => {
                 this.states = res.data || [];
                 const state = this.states.filter((s) => s.state_id === stateName);
-                console.log(state[0].state_id);
-                console.log(state);
                 const statename = state[0].state_id;
 
                 if (statename) {
@@ -449,7 +466,6 @@ export class UserCreate {
                 this.cities = res.data || [];
                 const city = this.cities.filter((c) => c.city_id === cityName);
                 const cityname = city[0].city_id;
-                console.log('city', cityname);
                 if (city) {
                     this.profileForm.patchValue({
                         companycity: cityname
@@ -483,7 +499,6 @@ export class UserCreate {
 this.inventoryService.Getreturndropdowndetails(statepayload).subscribe({
     next: (res)=>{
         
-          console.log('shgvdhv:',data.value)
         if(res.data && res.data.length>0){  
             const stateCode=this.states.filter(s=>s.state_id===data.value);
             this.profileForm.patchValue({
@@ -521,24 +536,6 @@ this.inventoryService.Getreturndropdowndetails(statepayload).subscribe({
             }
         });
     }
-    //    onStateChange(StateId:any){
-    //         const state= this.states.find(s=>s.state_id===data.value) ;
-    //         if(state){
-    //             const payload={
-    //                 ...this.getUserDetails,
-    //                 "p_returntype":'CITY',
-    //                 "p_returnvalue":StateId
-    //             }
-    //             this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-    //                 next:(res)=>{
-    //                     if(res.data && res.data.length>0){
-    //                         this.cities=res.data || [];
-    //                     }
-    //                 },
-    //                  error:(err)=>console.log(err)
-    //             })
-    //         }
-    //     }
 
     patchFromData(data: any) {
         if (!data) {
@@ -583,7 +580,10 @@ this.inventoryService.Getreturndropdowndetails(statepayload).subscribe({
     showSuccess(message: string) {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
     }
-    base64ToBlobUrl(base64: string): string {
+    base64ToBlobUrl(base64: string | null | undefined): string|null {
+      if (!base64 || !base64.includes(',')) {
+    return null;
+  }
   const [meta, data] = base64.split(',');
   const mime = meta.match(/:(.*?);/)![1];
 

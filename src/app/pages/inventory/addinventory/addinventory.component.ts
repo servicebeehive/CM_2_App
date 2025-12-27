@@ -97,7 +97,8 @@ export class AddinventoryComponent {
     itemCodeOptions = [];
     parentUOMOptions = [];
     uom = [];
-  
+    itemCodeExists:boolean=false;
+    barcodeExists:boolean=false;
     uomTableDisabled=false;
     resetDisabled=false;
     products: any[] = [
@@ -173,6 +174,11 @@ blockMinus(event: KeyboardEvent) {
   if (event.key === '-' || event.key === 'Minus'|| event.key==='e' || event.key === 'e') {
     event.preventDefault();
   }
+}
+
+toUppercase(event:Event){
+    const input = event.target as HTMLInputElement;
+    input.value=input.value.toUpperCase();
 }
 
     updateCostPerItem(): void {
@@ -317,7 +323,7 @@ enterAddItemMode(itemData: any) {
           costPerItem:itemData.costprice,
             warPeriod: itemData.warrentyperiod
         });
-
+        
         // load child UOM and master child options
         this.OnChildOM(itemData.itemid);
         this.viewItem(itemData.uomid);
@@ -376,12 +382,65 @@ if (hasEditDataChange && formReady) {
         return;
     }
      
-    this.showCopyMessage = true;
-    
-    this.addForm.enable();
+    this.showCopyMessage = true;  
+    this.addForm.enable();  
     this.uomTableDisabled=false;
+
    this.addForm.get('curStock')?.setValue(0);
+   this.addForm.get('itembarcode')?.setValue('');
+    this.addForm.get('itemCode')?.setValue('');
 }
+onBlur(event:FocusEvent){
+   const itemcodevalue = (event.target as HTMLInputElement).value.trim();
+ 
+      const payload = {
+            p_username: 'admin',
+            p_returntype: 'ITEMCODEVALIDATE',
+            p_returnvalue: itemcodevalue
+        };
+
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res) => {
+               this.itemCodeExists=res?.data?.[0]?.itemno===1;
+                if(this.itemCodeExists){
+                  this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'Item Code is already exist.',
+                    life: 3000
+                });
+                }
+                
+            },
+            error: (err) => console.log(err)
+        });
+}
+onBlurBarCode(event:FocusEvent){
+   const itembarcodevalue = (event.target as HTMLInputElement).value;
+
+      const payload = {
+            p_username: 'admin',
+            p_returntype: 'ITEMBARVALIDATE',
+            p_returnvalue: itembarcodevalue
+        };
+
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res) => {
+                this.barcodeExists=res?.data[0]?.itemno===1;
+                if(this.barcodeExists){
+                  this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'Item Barcode is already exist.',
+                    life: 3000
+                });
+                }
+                
+            },
+            error: (err) => console.log(err)
+        });
+}
+
     search(event: any) {
         const query = event.query?.toLowerCase() || '';
         if (!query) {
@@ -519,6 +578,8 @@ if (hasEditDataChange && formReady) {
         });
          }
     }
+
+    
     onCancel() {
         this.close.emit();
         console.log(this.products);
@@ -538,31 +599,8 @@ if (hasEditDataChange && formReady) {
         const itemnamdata = this.itemOptions.find((item) => item.itemsku === event.value);
       
         console.log('itemnamdata', itemnamdata);
+        
       if (itemnamdata) {
-
-//   const expiry = itemnamdata.expirydate ? new Date(itemnamdata.expirydate) : null;
-
-//   this.addForm.patchValue({
-//     itemCode:itemnamdata.itemsku,
-//     itemName: itemnamdata.itemname,
-//     category: itemnamdata.categoryid,
-//     curStock: itemnamdata.currentstock,
-//     p_expirydate:expiry,
-//     gstItem: itemnamdata.gstitem ==='Y' ? true : false,       // ✅ Convert 'Y'/'N' → boolean
-//     activeItem: itemnamdata.isactive==='Y' ? true : false,   // ✅ Convert 'Y'/'N' → boolean
-//     location: itemnamdata.location,
-//     minStock: itemnamdata.minimumstock,
-//     purchasePrice: itemnamdata.pruchaseprice,   // ✅ fixed typo (was pruchaseprice)
-//     mrp: itemnamdata.saleprice,
-//     parentUOM: itemnamdata.uomid,
-//     qty:itemnamdata.qty,
-
-//     warPeriod: itemnamdata.warrentyperiod
-//   });
-
-//   console.log('✅ Form after patch:', itemnamdata.itemid);
-//   this.OnChildOM(itemnamdata.itemid)
-//   this.viewItem(itemnamdata.uomid)
 this.enterAddItemMode(itemnamdata);
 }
     }

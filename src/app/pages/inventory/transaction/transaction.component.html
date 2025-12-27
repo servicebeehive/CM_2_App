@@ -4,6 +4,7 @@
         <span class="block text-surface-900 font-bold text-2xl">Transaction</span>
           <div class="flex justify-end gap-4 mt-8">
                     <button pButton type="submit" label="Display" class="p-button-warning" [disabled]="transactionForm.invalid" (click)="display()" ></button>
+                    <button pButton type="submit" label="Submit" class="p-button-warning" (click)="submit()" [disabled]="submitDisable"></button>
                     <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
                 </div>
     </div>
@@ -12,7 +13,7 @@
         <!-- 🏷 Product Info Section -->
         <div>
 
-            <div class="grid grid-cols-2 gap-x-8 gap-y-2 w-full">
+            <div class="grid grid-cols-4 gap-x-8 gap-y-2 w-full">
                 <!-- Transaction Date From-->
                 <div class="flex flex-col">
                     <label class="font-medium mb-1">From Date <span class="text-red-500">*</span></label>
@@ -31,8 +32,7 @@
              <span *ngIf="transactionForm.errors?.['dateRangeInvalid'] && transactionForm.get('toDate')?.touched">To Date must be greater than or equal to From Date</span>
           </small>
                 </div>
-            </div>
-            <div class="grid grid-cols-2 gap-6 flex-grow mt-4">
+        
                 <!-- Category -->
                 <div class="flex flex-col">
                     <label class="font-medium mb-1">Supplier</label>
@@ -64,12 +64,17 @@
                     >
                     </p-dropdown>
                 </div>
-            </div>
-        </div>
 
+                 <!-- Total Due Amount -->
+                <div class="flex flex-col">
+                    <label class="font-medium mb-1">Total Payable Amount</label>
+                    <input pInputText placeholder="Total Payable Amount" readonly formControlName="totalPayableAmount" class="grayout" />
+                </div>
+            </div>
+</div>
         <!-- Product Table with Pagination -->
         <div>
-            <p-table [value]="filteredProducts" dataKey="code" [tableStyle]="{ 'min-width': '110rem' }" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 20, 50]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines mt-6 transaction">
+            <p-table [value]="filteredProducts" dataKey="code" [tableStyle]="{ 'min-width': '50rem' }" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 20, 50]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines mt-6 transaction">
                 <ng-template pTemplate="header">
                     <tr class="bg-yellow-400">
                         <th>Transaction Id</th>
@@ -79,6 +84,9 @@
                         <th>Supplier</th>
                         <th>Item Count</th>
                         <th>Total Amount</th>
+                        <th>Paid Amount</th>
+                        <th class="flex gap-2"><p-checkbox binary="true" formControlName="p_checked" class="border" (change)="onDueAmountFilter($event)"></p-checkbox>Due Amount</th>
+                        <th>Payable Amount</th>
                         <th>Status</th>
                         <th>Action</th>
                     </tr>
@@ -96,6 +104,23 @@
                         <td>{{ row.supplier }}</td>
                         <td>{{ row.item_count }}</td>
                         <td>{{ row.total_amount }}</td>
+                        <td>{{ row.amountpaid }}</td>
+                        <td>{{ row.total_due}}</td>
+                         <td style="width: 140px; min-width: 160px; max-width: 160px">
+                            <div class="grid items-center gap-2">
+                                <input
+                                    type="number"
+                                    class="w-full"
+                                    pInputText
+                                    [(ngModel)]="row.received_amount"
+                                    (ngModelChange)="updateReceivedAmount(i,$event)"
+                                    [ngModelOptions]="{ standalone: true }"
+                                    (input)="validateReceivedAmount(row)"
+                                    placeholder="Amount"
+                                />
+                                <small class="text-red-500" *ngIf="row.amountError"> This cannot be greater than {{ row.total_due }} </small>
+                            </div>
+                        </td>
                         <td>{{ row.status }}</td>
                         <td >
                             <div class="flex items-center justify-center g-2">

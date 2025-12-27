@@ -85,7 +85,7 @@ export class StockAdjustmentComponent {
   ];
 
   mrpUpdate = [
-    { label: 'Batch', value: 'B' },
+    { label: 'LOT', value: 'B' },
     { label: 'Item', value: 'I' }
   ];
 

@@ -103,13 +103,13 @@ interface Week {
             </ng-template>
             <ng-template #body let-product>
                 <tr>
-                    <td style="width: 35%; min-width: 7rem;">
+                    <td style="width: 50%; min-width: 7rem;">
                         {{ product.itemcombine }}
                     </td>
-                    <td style="width: 35%; min-width: 7rem;">
+                    <td style="width: 40%; min-width: 7rem;">
                         {{ product.categoryname }}
                     </td>
-                     <td style="width:30%; min-width: 7rem;">
+                     <td style="width:10%; min-width: 7rem;">
                         {{ product.currentstock }}
                     </td>
                    

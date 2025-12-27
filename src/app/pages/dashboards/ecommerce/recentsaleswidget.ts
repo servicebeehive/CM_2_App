@@ -105,20 +105,20 @@ interface ExportColumn {
                         <span class="flex items-center gap-2">Stock <p-sortIcon field="billNo"></p-sortIcon></span>
                     </th> -->
                 <th>
-                   Current Stock 
+                  Current Stock 
                     </th>
                    
                 </tr>
             </ng-template>
             <ng-template #body let-product>
                 <tr>
-                    <td style="width: 35%; min-width: 7rem;">
+                    <td style="width: 50%; min-width: 7rem;">
                         {{ product.itemcombine }}
                     </td>
-                    <td style="width: 35%; min-width: 7rem;">
+                    <td style="width: 40%; min-width: 7rem;">
                         {{ product.categoryname }}
                     </td>
-                     <td style="width:30%; min-width: 7rem;">
+                     <td style="width:10%; min-width: 7rem;">
                         {{ product.currentstock }}
                     </td>
                    

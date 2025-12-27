@@ -164,7 +164,11 @@ keepBarcodeFocus() {
 
     // Dropdowns / lists
     billNoOptions: any[] = [];
-
+    transactionMode:any[]=[
+        {label:'Cash',value:'Cash'},
+        {label:'UPI',value:'UPI'},
+        {label:'Card',value:'Card'}
+    ];
     // -----------------------------
     //  Constructor + Lifecycle
     // -----------------------------
@@ -196,6 +200,7 @@ keepBarcodeFocus() {
                 p_customername: ['', Validators.required],
                 p_mobileno: ['', [Validators.required, Validators.pattern(/^[6-9]\d{9}$/)]],
                 searchMobileNo: [''],
+                transactionmode:['Cash'],
                 p_totalcost: [0],
                 p_totalsale: [0],
                 p_disctype: [false],
@@ -203,7 +208,7 @@ keepBarcodeFocus() {
                 p_roundoff: [''],
                 p_totalpayable: [0],
                 p_currencyid: [0],
-                p_paymentdue: ['0'],
+                p_paymentdue: [''],
                 p_gsttran: [true],
                 status: [''],
                 p_status: [''],
