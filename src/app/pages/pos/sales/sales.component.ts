@@ -149,8 +149,15 @@ keepBarcodeFocus() {
     companyName:string='';
     companyAddress:string='';
     companycity:string='';
-    comapnystate:string='';
-    // company
+    companystate:string='';
+    statecode:string='';
+    companyemail:string='';
+    companygstno:string='';
+    bankname:string='';
+    accountno:string='';
+    branchname:string='';
+    ifsc:string='';
+    pan:string='';
     @ViewChild(AddinventoryComponent) addInventoryComp!: AddinventoryComponent;
 
     // Dropdowns / lists
@@ -473,14 +480,21 @@ keepBarcodeFocus() {
         const payload = this.createDropdownPayload('PROFILE');
         this.stockInService.getdropdowndetails(payload).subscribe({
             next: (res) => {
-            //     (this.profileOptions = res.data)
-            //   console.log('sgdhcsvh',this.profileOptions)
-            //   const companyname= this.profileOptions[0].companyname
-            //   console.log('gdsghsd',companyname)
             if(res.data && res.data.length>0){
                 this.profileOptions=res.data;
                 const profile=res.data[0];
-                this.companyName=profile.companyname
+                this.companyName=profile.companyname,
+                this.companyAddress=profile.companyaddress,
+                this.companystate=profile.state_name,
+                this.companycity=profile.city_name,
+                this.companyemail=profile.companyemail,
+                this.companygstno=profile.companygstno,
+                this.statecode=profile.statecode,
+                this.bankname=profile.bankname,
+                this.accountno=profile.accountno,
+                this.branchname=profile.branch,
+                this.ifsc=profile.ifsc,
+                this.pan=profile.pan
             }
             },
             error: (err) => console.log(err)
@@ -908,9 +922,11 @@ keepBarcodeFocus() {
 
         this.stockInService.OninsertSalesDetails(apibody).subscribe({
             next: (res) => {
+                const responseData=res.data[0];
                 const billno = res.data[0]?.billno;
                 this.OnGetBillNo();
                 this.OnGetItem();
+                this.patchPrintValues(responseData);
                 this.salesForm.controls['p_billno'].setValue(billno);
                 if (res.data && res.data.length > 0) {
                     this.salesForm.patchValue({
@@ -951,7 +967,22 @@ keepBarcodeFocus() {
             }
         });
     }
-
+patchPrintValues(apiData:any){
+    const patchData:any={};
+    patchData.p_transactionid=apiData.transactionid;
+    patchData.discountvalueper = apiData.discountvalueper;
+    patchData.sgst_9=apiData.sgst_9;
+    patchData.cgst_9=apiData.cgst_9;
+     patchData.tax_18=apiData.tax_18;
+      patchData.amount_before_tax=apiData.amount_before_tax;
+    this.salesForm.patchValue(patchData);
+    this.salesForm.updateValueAndValidity();
+    console.log( "fhbdv",patchData.p_transactionid, patchData.discountvalueper);
+    console.log("Form after patch:", {
+        transId: this.salesForm.get('p_transactionid')?.value,
+        discountValue: this.salesForm.get('discountvalueper')?.value,
+    });
+}
     // -----------------------------
     //  Utility / Misc
     // -----------------------------
@@ -1123,11 +1154,9 @@ if (!row.contains('baseStock')) {
     printInvoice() {
         const printContents = document.getElementById('invoicePrintSection')?.innerHTML;
         if (!printContents) return;
-        this.OnGetProfile();
-        console.log('companyname:print',this.companyName)
         const popupWindow = window.open('', '_blank', 'width=900,height=1500');
         popupWindow!.document.open();
-
+ console.log('sfhgfshg',this.salesForm.get('p_transactionid')?.value);
         popupWindow!.document.write(`
      <!DOCTYPE html>
                     <html>

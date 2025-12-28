@@ -328,11 +328,11 @@
             <!-- LEFT SIDE (COMPANY + BUYER INFO) -->
             <td width="60%" style="vertical-align: top; padding: 6px">
                 <strong>{{companyName}}</strong><br />
-                SHOP NO.-7 SAPNA TALKIES COMPLEX,<br />
-                NANDINI ROAD, BHILAI<br />
-                GSTIN/UIN: 22AOCPY0439F1Z5<br />
-                State Name: Chhattisgarh, Code: 22<br />
-                E-Mail : {{ 'shristielectricalgw@gmail.com' }}
+                {{companyAddress}},<br />
+                {{companystate}}<br />
+                GSTIN/UIN: {{companygstno}}<br />
+                State Name: {{companystate}}, Code: {{statecode}}<br />
+                E-Mail : {{companyemail }}
                 <br />
 
                 <hr style="margin: 5px 0" />
@@ -536,11 +536,11 @@
         - <br /><br />
 
         <strong>Company's Bank Details</strong><br />
-        Bank Name : <b>BANK OF INDIA</b><br />
-        A/c No. : 930520110000557<br />
-        Branch & IFS Code : POWER HOUSE & BKID0009305<br /><br />
+        Bank Name : <b>{{bankname}}</b><br />
+        A/c No. : {{accountno}}<br />
+Branch & IFS Code : {{branchname}} & {{ifsc}}<br /><br />
 
-        Company's PAN : <b>AOCPY0439F</b> <br /><br />
+        Company's PAN : <b>{{pan}}</b> <br /><br />
 
         <strong>Declaration:</strong>
         We declare that this invoice shows the actual price of the goods described and all particulars are true.
