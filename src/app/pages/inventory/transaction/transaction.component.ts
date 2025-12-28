@@ -113,6 +113,8 @@ export class TransactionComponent {
                 toDate: [this.today, Validators.required],
                 p_vendor: [''],
                 totalPayableAmount:[''],
+                finalPayableAmount:[''],
+                totalDebitNote:[''],
                 p_checked:[false],
                 p_stock:this.fb.array([])
             },

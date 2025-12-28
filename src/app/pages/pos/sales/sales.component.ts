@@ -64,8 +64,6 @@ export class SalesComponent {
     isBarcodeScan = false;
     isAutoSelect = false; // works for barcode + click
 
-    
-
     // -----------------------------
     //  Component state / Variables
     // -----------------------------
@@ -104,8 +102,6 @@ onBarcodeScan(event: Event) {
 this.isAutoSelect = true;
 this.salesForm.get('p_itemdata')?.setValue(matchedItem.itemid);
 this.OnItemChange({ value: matchedItem.itemid });
-
-
   this.clearBarcodeInput();
 }
 
@@ -127,9 +123,6 @@ clearBarcodeInput() {
 keepBarcodeFocus() {
   this.barcodeInput?.nativeElement?.focus();
 }
-
-
-
     @ViewChild('itemSel') itemSel!:any;
     public transactionid: any;
     salesForm!: FormGroup;
@@ -140,26 +133,24 @@ keepBarcodeFocus() {
     first: number = 0;
     rowsPerPage: number = 5;
     products: StockIn[] = [];
-    filteredProducts: StockIn[] = [];
-    filteredCustomerName: any[] = [];
-    filteredMobile: any[] = [];
-    globalFilter: string = '';
-    childUomStatus: boolean = false;
-    showGlobalSearch: boolean = true;
     today: Date = new Date();
     submitDisabledByBill: boolean = false;
     discountplace: string = 'Enter Amount';
     public authService = inject(AuthService);
     public getUserDetails = {};
-    searchValue: string = '';
     itemOptions: any[] = [];
-    transactionIdOptions = [];
     cusMobileOptions: any[] = [];
+    profileOptions:any={};
     public itemOptionslist: [] = [];
     public uomlist: any[] = [];
     mobilePlaceholder: string = 'Mobile No';
     backshow: boolean = false;
     isLoadingBills: boolean = false;
+    companyName:string='';
+    companyAddress:string='';
+    companycity:string='';
+    comapnystate:string='';
+    // company
     @ViewChild(AddinventoryComponent) addInventoryComp!: AddinventoryComponent;
 
     // Dropdowns / lists
@@ -200,7 +191,7 @@ keepBarcodeFocus() {
                 p_customername: ['', Validators.required],
                 p_mobileno: ['', [Validators.required, Validators.pattern(/^[6-9]\d{9}$/)]],
                 searchMobileNo: [''],
-                transactionmode:['Cash'],
+                p_paymode:['Cash'],
                 p_totalcost: [0],
                 p_totalsale: [0],
                 p_disctype: [false],
@@ -223,7 +214,6 @@ keepBarcodeFocus() {
                 cgst_9: [''],
                 discountvalueper: [],
                 amount_before_tax: [''],
-
                 // FormArray for sale rows
                 p_sale: this.fb.array([])
             },
@@ -479,12 +469,30 @@ keepBarcodeFocus() {
             error: (err) => console.log(err)
         });
     }
+     OnGetProfile() {
+        const payload = this.createDropdownPayload('PROFILE');
+        this.stockInService.getdropdowndetails(payload).subscribe({
+            next: (res) => {
+            //     (this.profileOptions = res.data)
+            //   console.log('sgdhcsvh',this.profileOptions)
+            //   const companyname= this.profileOptions[0].companyname
+            //   console.log('gdsghsd',companyname)
+            if(res.data && res.data.length>0){
+                this.profileOptions=res.data;
+                const profile=res.data[0];
+                this.companyName=profile.companyname
+            }
+            },
+            error: (err) => console.log(err)
+        });
+    }
 
     // Load initial dropdowns (items, bill no)this.OngetcalculatedMRP
     loadAllDropdowns() {
         this.OnGetItem();
         this.OnGetBillNo();
         this.OnGetCusMobile();
+        this.OnGetProfile();
     }
 
     // Load dropdown via older endpoint (Getreturndropdowndetails)
@@ -564,9 +572,6 @@ keepBarcodeFocus() {
   this.calculateSummary();
 }
 
-
-
-
     costGreaterThanSaleValidator(): ValidatorFn {
         return (form: AbstractControl): ValidationErrors | null => {
             const totalCost = Number(form.get('p_totalcost')?.value || 0);
@@ -606,6 +611,7 @@ keepBarcodeFocus() {
                 p_transactiondate: billDetails.transactiondate ? new Date(billDetails.transactiondate) : null,
                 p_mobileno: billDetails.mobileno,
                 status: billDetails.status,
+                p_paymode:billDetails.paymode,
                 p_totalcost: billDetails.totalcost.toFixed(2),
                 p_totalsale: billDetails.totalsale.toFixed(2),
                 p_disctype: billDetails.discounttype == 'Y' ? true : false,
@@ -758,11 +764,12 @@ keepBarcodeFocus() {
     // Reset form and clear sale array
     onReset() {
         this.salesForm.reset({
-            p_gsttran: true
+            p_gsttran: true,
         });
         this.backshow = false;
         this.saleArray.clear();
         this.salesForm.get('p_transactiondate')?.setValue(this.today);
+         this.salesForm.get('p_paymode')?.setValue('Cash');
     }
 
     // -----------------------------
@@ -873,7 +880,7 @@ keepBarcodeFocus() {
             p_replacesimilir: body.p_disctype === true ? 'Y' : 'N',
             p_discounttype: body.p_disctype === true ? 'Y' : 'N',
             p_creditnoteno: body.p_creditnoteno || '',
-            p_paymentmode: body.p_paymentmode || 'Cash',
+            p_paymentmode: body.p_paymode,
             p_paymentdue: Number(body.p_paymentdue) || 0,
             p_sale: (body.p_sale || []).map((x: any) => ({
                 TransactiondetailId: x.TransactiondetailId || 0,
@@ -896,6 +903,7 @@ keepBarcodeFocus() {
 
     // Send header (and sale) to API, show toast notifications on result
     OnSalesHeaderCreate(data: any) {
+  
         const apibody = this.cleanRequestBody(this.salesForm.value);
 
         this.stockInService.OninsertSalesDetails(apibody).subscribe({
@@ -1115,7 +1123,8 @@ if (!row.contains('baseStock')) {
     printInvoice() {
         const printContents = document.getElementById('invoicePrintSection')?.innerHTML;
         if (!printContents) return;
-
+        this.OnGetProfile();
+        console.log('companyname:print',this.companyName)
         const popupWindow = window.open('', '_blank', 'width=900,height=1500');
         popupWindow!.document.open();
 

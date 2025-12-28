@@ -85,6 +85,7 @@ totalAmount: number = 0;
    public  pagedProducts: StockIn[] = [];
     public first: number = 0;
     public rowsPerPage: number = 5;
+    vendorOptions = [];
     public debittnotList: ItemDetail[] = []
     public replacecednlist: ItemDetail[] = []
     public selectedItems: any[] = []
@@ -100,16 +101,17 @@ totalAmount: number = 0;
     ) { }
 
     ngOnInit(): void {
-        this.OnCreditForm()
-        this.OnReplicedn()
-        this.OnDNN()
-
-    }
+        this.OnCreditForm();
+        this.OnReplicedn();
+        this.OnDNN();
+        this.OnGetVendor();
+        }
     OnCreditForm() {
         this.CreditForm = this.fb.group({
             // itemName: ['', [Validators.maxLength(50)]],
             p_debitNote: [null],
             p_creditNote: [null],
+            p_vendorid:[''],
             p_sale: this.fb.array([])
         });
     }
@@ -161,21 +163,14 @@ totalAmount: number = 0;
         console.log("Selected Items:", this.selectedItems);
         console.log("FormArray:", this.saleArray.value);
     }
-
-
-
+ 
     reset() {
         this.CreditForm.reset();
         this.replacecednlist=[]
         this.replacecednlist=this.stroeitemlist
-        //
         let datalist:[]=[]
-        this.onSelectionChange(datalist)
-      
-        this.saleArray.clear()
-        
-
-       
+        this.onSelectionChange(datalist)   
+        this.saleArray.clear()   
     }
 
 
@@ -204,12 +199,21 @@ totalAmount: number = 0;
             }
         })
     }
+
+    OnGetVendor() {
+      const payload={
+        p_returntype:'VENDOR'
+      }
+        this.prouctsaleservice.getdropdowndetails(payload).subscribe({
+            next: (res) => (this.vendorOptions = res.data),
+            error: (err) => console.log(err)
+        });
+    }
+
     // Debit note
     OnDNN() {
-        let apibody = {
-           
-            "p_returntype": "DNN",
-
+        let apibody = { 
+            "p_returntype": "DNN"
         }
         delete (apibody as any).p_loginuser;
         this.prouctsaleservice.getdropdowndetails(apibody).subscribe({
@@ -309,6 +313,7 @@ if (apibody.p_transactiontype === "CREDITNOTE") {
             }
         })
     }
+
     RetunCredit(dnndata:any){
    
         if(dnndata.value==null) return

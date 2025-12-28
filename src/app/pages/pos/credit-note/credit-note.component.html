@@ -16,7 +16,7 @@
 
     <!-- 🏷 Product Info Section -->
       <!-- Two-column grid layout -->
-      <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
+      <div class="grid grid-cols-3 gap-x-8 gap-y-4 w-full">
  <!-- CREDIT NOTE -->
       
          
@@ -33,6 +33,25 @@
           </p-dropdown>
         
         </div>
+
+         <!-- Vendor Name -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Vendor Name</label>
+
+           <p-dropdown
+            [options]="this.vendorOptions"
+            optionLabel="fieldname"
+            optionValue="fieldid"
+            [filter]="true"
+            filterPlaceholder="Search Vendor Name"
+            formControlName="p_vendorid"
+            placeholder="Vendor Name">
+          </p-dropdown>
+          <!-- <small class="text-red-500 ms-3 mt-1" *ngIf="productForm.get('p_vendorid')?.touched">
+            <span *ngIf="productForm.get('p_vendorid')?.errors?.['required']">Vendor Name is required</span>
+          </small> -->
+        </div>
+
           <!-- DEBIT NOTE -->
 <div class="flex flex-col">
         <label class="font-medium mb-1">Credit Note</label>
@@ -42,6 +61,7 @@
            formControlName="p_creditNote"
            />
       </div>
+
 </div>
     <!-- Product Table with Pagination -->
     <div>

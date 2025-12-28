@@ -14,30 +14,7 @@
     <form [formGroup]="invoiceForm" class="space-y-8">
         <!-- 🏷 Product Info Section -->
         <div class="space-y-6">
-            <!-- First Row: Customer Mobile and Dates -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 w-full">
-                <!-- Customer Mobile -->
-                <div class="flex flex-col">
-                    <label class="font-medium mb-1">Customer Mobile</label>
-                    <p-dropdown
-                        [options]="cusMobileOptions"
-                        optionLabel="fieldname"
-                        optionValue="fieldid"
-                        [filter]="true"
-                        [showClear]="true"
-                        filterPlaceholder="Search Customer Mobile"
-                        formControlName="p_mobile"
-                        placeholder="Customer Mobile"
-                        class="w-full"
-                    >
-                    </p-dropdown>
-                </div>
-
-                 <!-- Status -->
-                <div class="flex flex-col">
-                    <label class="font-medium mb-1">Status</label>
-                    <p-dropdown [options]="statusOptions" optionLabel="fieldname" [showClear]="true" optionValue="fieldid" [filter]="true" filterPlaceholder="Select Status" formControlName="status" placeholder="Status" class="w-full"> </p-dropdown>
-                </div>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-x-8 gap-y-4 w-full">
 
                 <!-- Transaction Date From-->
                 <div class="flex flex-col">
@@ -57,10 +34,7 @@
                         <span *ngIf="invoiceForm.errors?.['dateRangeInvalid'] && invoiceForm.get('toDate')?.touched"> To Date must be greater than or equal to From Date </span>
                     </small>
                 </div>
-            </div>
 
-            <!-- Second Row: Customer Name and Status -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                 <!-- Customer Name -->
                 <div class="flex flex-col">
                     <label class="font-medium mb-1">Customer Name</label>
@@ -78,14 +52,36 @@
                     </p-dropdown>
                 </div>
 
+                  <!-- Customer Mobile -->
+                <div class="flex flex-col">
+                    <label class="font-medium mb-1">Customer Mobile</label>
+                    <p-dropdown
+                        [options]="cusMobileOptions"
+                        optionLabel="fieldname"
+                        optionValue="fieldid"
+                        [filter]="true"
+                        [showClear]="true"
+                        filterPlaceholder="Search Customer Mobile"
+                        formControlName="p_mobile"
+                        placeholder="Customer Mobile"
+                        class="w-full"
+                    >
+                    </p-dropdown>
+                </div>
+                
+              <!-- Status -->
+                <div class="flex flex-col">
+                    <label class="font-medium mb-1">Status</label>
+                    <p-dropdown [options]="statusOptions" optionLabel="fieldname" [showClear]="true" optionValue="fieldid" [filter]="true" filterPlaceholder="Select Status" formControlName="status" placeholder="Status" class="w-full"> </p-dropdown>
+                </div>
+                
                 <!-- Total Due Amount -->
                 <div class="flex flex-col">
                     <label class="font-medium mb-1">Total Due Amount</label>
                     <input pInputText placeholder="Total Due Amount" readonly class="grayout" formControlName="totalDueAmount" />
                 </div>
                
-            </div>
-
+</div>
             <!-- Action Buttons - Visible only on mobile, below Customer Name and Status -->
             <div class="flex md:hidden justify-center gap-4 mt-4">
                 <button pButton type="button" label="Display" class="p-button-warning flex-1" [disabled]="invoiceForm.invalid" (click)="display()"></button>

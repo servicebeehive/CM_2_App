@@ -146,6 +146,10 @@ export class StockInComponent {
             this.mode = navigation.mode || 'edit';
             this.populateStockForm(navigation.stockData, navigation.itemsData);
         }
+
+        if(this.mode==='edit'){
+            this.productForm.get('p_amountpaid')?.disable();
+        }
         this.setupBackButtonListener();
     }
     
@@ -198,7 +202,9 @@ export class StockInComponent {
             p_invoicedate: data.invoicedate ? new Date(data.invoicedate) : new Date(),
             p_remarks: data.remark || '',
             p_vendorid: data.vendorid || null,
-            paidAmount:data.total_paid
+           p_amountpaid:data.total_paid,
+           p_deliveryboy:data.deliveryboy,
+           grandTotal:data.total_cost
         });
         if (itemsData && itemsData.length > 0) {
             console.log('Processing itemsData:', itemsData);
@@ -358,6 +364,7 @@ export class StockInComponent {
             paidAmount:''
         });
         this.backshow=false;
+        this.productForm.get('p_amountpaid')?.enable();
         // this.transationid='null';
         this.products = [];
         this.itemOptionslist = [];
