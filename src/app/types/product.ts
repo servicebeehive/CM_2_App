@@ -32,4 +32,5 @@ export interface ItemDetail {
   transactiondetailid: number;
   uomid: number;
   uomname: string;
+  vendorid:number|null;
 }

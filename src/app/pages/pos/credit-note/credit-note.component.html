@@ -5,7 +5,7 @@
   <div class="flex justify-between items-center mb-6">
     <span class="block text-surface-900 font-bold text-2xl">Debit/Credit Link</span>
         <div class="flex  gap-4">
-  <button pButton type="button" label="Generate DN" class="p-button-primary" [disabled]="saleArray.length === 0 ||CreditForm.get('p_debitNote')?.value" (click)="Ganratedn('DEBITNOTE')"></button> 
+  <button pButton type="button" label="Generate DN" class="p-button-primary" [disabled]="CreditForm.invalid ||saleArray.length === 0 ||CreditForm.get('p_debitNote')?.value" (click)="Ganratedn('DEBITNOTE')"></button> 
         <button pButton type="button" label="Link CN" class="p-button-primary" [disabled]="CreditForm.get('p_debitNote')?.value == null" (click)="Ganratedn('CREDITNOTE')"></button>
         <button pButton type="button" label="Print" class="p-button-primary" (click)="print()" [disabled]="!CreditForm.get('p_debitNote')?.value"></button> 
          <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
@@ -36,7 +36,7 @@
 
          <!-- Vendor Name -->
         <div class="flex flex-col">
-          <label class="font-medium mb-1">Vendor Name</label>
+          <label class="font-medium mb-1">Vendor Name <span class="text-red-500">*</span></label>
 
            <p-dropdown
             [options]="this.vendorOptions"
@@ -47,9 +47,9 @@
             formControlName="p_vendorid"
             placeholder="Vendor Name">
           </p-dropdown>
-          <!-- <small class="text-red-500 ms-3 mt-1" *ngIf="productForm.get('p_vendorid')?.touched">
-            <span *ngIf="productForm.get('p_vendorid')?.errors?.['required']">Vendor Name is required</span>
-          </small> -->
+          <small class="text-red-500 ms-3 mt-1" *ngIf="CreditForm.get('p_vendorid')?.touched">
+            <span *ngIf="CreditForm.get('p_vendorid')?.errors?.['required']">Vendor Name is required</span>
+          </small>
         </div>
 
           <!-- DEBIT NOTE -->

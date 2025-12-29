@@ -146,6 +146,7 @@ keepBarcodeFocus() {
     mobilePlaceholder: string = 'Mobile No';
     backshow: boolean = false;
     isLoadingBills: boolean = false;
+    billValue:any=null;
     companyName:string='';
     companyAddress:string='';
     companycity:string='';
@@ -531,6 +532,7 @@ keepBarcodeFocus() {
             next: (res) => {
                 const billdata: any = res.data;
                 this.billNoOptions = billdata.filter((item: { billno: null }) => item.billno != null);
+                this.billValue=this.billNoOptions;
             },
             error: (err) => console.log(err)
         });
@@ -924,9 +926,8 @@ keepBarcodeFocus() {
             next: (res) => {
                 const responseData=res.data[0];
                 const billno = res.data[0]?.billno;
-                this.OnGetBillNo();
+               this.OnGetBillNo();
                 this.OnGetItem();
-                this.patchPrintValues(responseData);
                 this.salesForm.controls['p_billno'].setValue(billno);
                 if (res.data && res.data.length > 0) {
                     this.salesForm.patchValue({
@@ -934,6 +935,14 @@ keepBarcodeFocus() {
                     });
                     
                 }
+                setTimeout(()=>{
+                    if(this.billValue){
+                        const currentBill=this.billValue.find((bill:any)=>bill.billno===billno);
+                        if(currentBill){
+                            this.patchPrintValues(currentBill);
+                        }
+                    }
+                },500);
                 console.log('res', res);
                 this.messageService.add({
                     severity: 'success',
@@ -968,6 +977,7 @@ keepBarcodeFocus() {
         });
     }
 patchPrintValues(apiData:any){
+    console.log('resdhf:',apiData)
     const patchData:any={};
     patchData.p_transactionid=apiData.transactionid;
     patchData.discountvalueper = apiData.discountvalueper;
@@ -977,6 +987,7 @@ patchPrintValues(apiData:any){
       patchData.amount_before_tax=apiData.amount_before_tax;
     this.salesForm.patchValue(patchData);
     this.salesForm.updateValueAndValidity();
+    console.log('aptch:',patchData);
     console.log( "fhbdv",patchData.p_transactionid, patchData.discountvalueper);
     console.log("Form after patch:", {
         transId: this.salesForm.get('p_transactionid')?.value,

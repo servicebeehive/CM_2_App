@@ -111,7 +111,7 @@ totalAmount: number = 0;
             // itemName: ['', [Validators.maxLength(50)]],
             p_debitNote: [null],
             p_creditNote: [null],
-            p_vendorid:[''],
+            p_vendorid:['',[Validators.required]],
             p_sale: this.fb.array([])
         });
     }
@@ -136,7 +136,7 @@ totalAmount: number = 0;
             dnno: [item.dnno],
             cnno: [item.cnno],
             transactionid:[item.transactionid],
-
+            vendorid:[item.vendorid],
             // Additional computed fields
             total: [item.quantity * item.mrp],
             warPeriod: [''],
@@ -250,6 +250,7 @@ totalAmount: number = 0;
 }
 
     accpatHeaderCreate(saledata: any,type:string) {
+        const vendorid=this.CreditForm.get('p_vendorid')?.value;
         let apibody: any = {
    
     p_transactiontype: type,   // CREDITNOTE or DEBITNOTE
@@ -266,9 +267,8 @@ totalAmount: number = 0;
     p_status: "Complete",
     p_isactive: "Y",
     p_loginuser: "admin",
-    p_linktransactionid: 0,
+    p_linktransactionid: vendorid,
     p_replacesimilir: "",
-   
     p_paymentmode: "",
     p_paymentdue: 0,
     p_sale: saledata
@@ -329,9 +329,10 @@ if (apibody.p_transactiontype === "CREDITNOTE") {
                 this.replacecednlist=res.data
                 this.calculateTotal(this.replacecednlist)
                  this.CreditForm.patchValue({
-                    p_creditNote: this.replacecednlist[0]?.cnno
-                    
+                    p_creditNote: this.replacecednlist[0]?.cnno,
+                    p_vendorid:this.replacecednlist[0]?.vendorid
                 }) 
+               console.log('gdsg:',this.CreditForm.value.vendorid);
                 console.log(res.data,this.CreditForm.value)
             }
          })
