@@ -117,6 +117,7 @@ export class UserManagementComponent {
     this.visibleDialog = true;
     this.editMode = false;
     this.userForm.reset({ checked: true });
+
    this.userForm.get('p_uname')?.enable();
   this.userForm.get('p_pwd')?.enable();
   this.userForm.get('conPassword')?.enable();
@@ -143,20 +144,21 @@ console.log('user role', user.usertypename)
     p_email: user.email,
     checked:(user.isactive) === 'Y' 
     });
-    if(user.usertypecode === 'Admin'){
-   
+    if(this.loggedInUserName==='admin'){
+      console.log('shdbsbd1')
+  this.userForm.get('p_utypeid')?.disable();
+  }
+     if(user.usertypecode === 'Admin' && user.username !=='admin'){
+      console.log('shdbsbd2')
     this.userForm.get('checked')?.disable();
+    this.userForm.get('p_utypeid')?.enable();
   }
    else {
-    
+    console.log('shdbsbd3')
     this.userForm.get('checked')?.enable();
+    this.userForm.get('p_utypeid')?.disable();
   }
-  if(this.loggedInUserName==='admin'){
-  this.userForm.get('p_utypeid')?.enable(); 
-  }
-  else{
-this.userForm.get('p_utypeid')?.disable();
-  }
+  
     this.userForm.get('p_pwd')?.setValue('');
   this.userForm.get('conPassword')?.setValue('');
 

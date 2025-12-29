@@ -79,20 +79,28 @@ export class CreditNoteComponent {
     CreditForm!: FormGroup;
 
 totalAmount: number = 0;
-    public visibleDialog = false;
-    public selectedRow: any = null;
    public  selection: boolean = true;
    public  pagedProducts: StockIn[] = [];
     public first: number = 0;
     public rowsPerPage: number = 5;
+     companyName:string='';
+    companyAddress:string='';
+    companycity:string='';
+    companystate:string='';
+    statecode:string='';
+    companyemail:string='';
+    companygstno:string='';
+    bankname:string='';
+    accountno:string='';
+    branchname:string='';
+    ifsc:string='';
+    pan:string='';
+    profileOptions:any={};
     vendorOptions = [];
-    public debittnotList: ItemDetail[] = []
-    public replacecednlist: ItemDetail[] = []
-    public selectedItems: any[] = []
-    public stroeitemlist: ItemDetail[]=[]
-    // ✅ Move dropdown options into variables
-
-
+    public debittnotList: ItemDetail[] = [];
+    public replacecednlist: ItemDetail[] = [];
+    public selectedItems: any[] = [];
+    public stroeitemlist: ItemDetail[]=[];
     products: StockIn[] = [];
     constructor(
         private fb: FormBuilder,
@@ -101,10 +109,7 @@ totalAmount: number = 0;
     ) { }
 
     ngOnInit(): void {
-        this.OnCreditForm();
-        this.OnReplicedn();
-        this.OnDNN();
-        this.OnGetVendor();
+       this.loadall();
         }
     OnCreditForm() {
         this.CreditForm = this.fb.group({
@@ -115,7 +120,13 @@ totalAmount: number = 0;
             p_sale: this.fb.array([])
         });
     }
-
+   loadall(){
+ this.OnCreditForm();
+        this.OnReplacedn();
+        this.OnDNN();
+        this.OnGetVendor();
+        this.OnGetProfile();
+   }
     createSaleRow(item: any): FormGroup {
         return this.fb.group({
             transactiondetailid: [item.transactionid],
@@ -144,8 +155,6 @@ totalAmount: number = 0;
         });
     }
 
-
-
     get saleArray(): FormArray {
         return this.CreditForm.get('p_sale') as FormArray;
     }
@@ -164,6 +173,15 @@ totalAmount: number = 0;
         console.log("FormArray:", this.saleArray.value);
     }
  
+get grandTotal():number{
+    if(!this.replacecednlist || this.replacecednlist.length===0) return 0;
+      return this.replacecednlist.reduce((sum,item:any)=>{
+        const quantity = item.quantity || 0;
+        const cost=item.itemcost || 0;
+        return sum + quantity*cost;
+      },0);
+}
+
     reset() {
         this.CreditForm.reset();
         this.replacecednlist=[]
@@ -172,15 +190,38 @@ totalAmount: number = 0;
         this.onSelectionChange(datalist)   
         this.saleArray.clear()   
     }
-
-
+ createDropdownPayload(returnType: string) {
+        return {
+            p_returntype: returnType,
+        };
+    }
+ OnGetProfile() {
+        const payload = this.createDropdownPayload('PROFILE');
+        this.prouctsaleservice.getdropdowndetails(payload).subscribe({
+            next: (res) => {
+            if(res.data && res.data.length>0){
+                this.profileOptions=res.data;
+                const profile=res.data[0];
+                this.companyName=profile.companyname,
+                this.companyAddress=profile.companyaddress,
+                this.companystate=profile.state_name,
+                this.companycity=profile.city_name,
+                this.companyemail=profile.companyemail,
+                this.companygstno=profile.companygstno,
+                this.statecode=profile.statecode,
+                this.bankname=profile.bankname,
+                this.accountno=profile.accountno,
+                this.branchname=profile.branch,
+                this.ifsc=profile.ifsc,
+                this.pan=profile.pan
+            }
+            },
+            error: (err) => console.log(err)
+        });
+    }
     //REPLACEDN
-    OnReplicedn() {
-        let apibody = {
-           
-            "p_returntype": "REPLACEDN",
-
-        }
+    OnReplacedn() {
+       const apibody = this.createDropdownPayload('REPLACEDN');
         delete (apibody as any).p_loginuser;
         this.prouctsaleservice.getdropdowndetails(apibody).subscribe({
             next: (res) => {
@@ -201,9 +242,7 @@ totalAmount: number = 0;
     }
 
     OnGetVendor() {
-      const payload={
-        p_returntype:'VENDOR'
-      }
+      const payload = this.createDropdownPayload('VENDOR');
         this.prouctsaleservice.getdropdowndetails(payload).subscribe({
             next: (res) => (this.vendorOptions = res.data),
             error: (err) => console.log(err)
@@ -212,16 +251,13 @@ totalAmount: number = 0;
 
     // Debit note
     OnDNN() {
-        let apibody = { 
-            "p_returntype": "DNN"
-        }
+       const apibody = this.createDropdownPayload('DNN');
         delete (apibody as any).p_loginuser;
         this.prouctsaleservice.getdropdowndetails(apibody).subscribe({
             next: (res) => {
-                console.log(res.data)
+                console.log('ondnn',res.data)
                 const creditstore: any = res.data
-                this.debittnotList = creditstore
-               
+                this.debittnotList = creditstore             
             }
         })
     }
@@ -244,6 +280,7 @@ totalAmount: number = 0;
         acceptButtonStyleClass: 'p-button-primary',
         rejectButtonStyleClass: 'p-button-secondary',
         accept: () => {
+            this.selectedItems=[...this.saleArray.value]
             this.accpatHeaderCreate(this.saleArray.value,type);
         }
     });
@@ -286,8 +323,7 @@ if (apibody.p_transactiontype === "CREDITNOTE") {
         this.prouctsaleservice.OninsertSalesDetails(apibody).subscribe({
             next: (res) => {
                 if(res.data[0].billno!=null){
-                this.OnDNN()
-            
+                this.OnDNN();
                 this.CreditForm.patchValue({
                     p_debitNote: res.data[0].billno
                     
@@ -326,6 +362,7 @@ if (apibody.p_transactiontype === "CREDITNOTE") {
         delete (apibody as any).p_loginuser;
          this.prouctsaleservice.Getreturndropdowndetails(apibody).subscribe({
             next:(res)=>{
+                this.selectedItems=res.data;
                 this.replacecednlist=res.data
                 this.calculateTotal(this.replacecednlist)
                  this.CreditForm.patchValue({

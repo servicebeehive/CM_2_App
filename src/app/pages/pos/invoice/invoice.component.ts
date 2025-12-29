@@ -78,18 +78,27 @@ interface Image {
 export class InvoiceComponent {
     invoiceForm!: FormGroup;
    
-     visibleDialog=false;
-     selectedRow:any=null;
-     selection:boolean=true;
      pagedProducts:any[]=[];
      first:number=0;
       today: Date = new Date();
      rowsPerPage:number=5;
-    globalFilter: string = '';
     submitDisable:boolean=true;
+     companyName:string='';
+    companyAddress:string='';
+    companycity:string='';
+    companystate:string='';
+    statecode:string='';
+    companyemail:string='';
+    companygstno:string='';
+    bankname:string='';
+    accountno:string='';
+    branchname:string='';
+    ifsc:string='';
+    pan:string='';
         // ✅ Move dropdown options into variables
         cusMobileOptions = [];
         cusNameOptions = [];
+        profileOptions:any={};
         statusOptions:any[]= [];
         products: any[] = [];
         filteredProducts: any[] = [];
@@ -326,10 +335,37 @@ onDueAmountFilter(event:any){
             error: (err) => console.log(err)
         });
     }
+
+     OnGetProfile() {
+        const payload = this.createDropdownPayload('PROFILE');
+        this.inventoryService.getdropdowndetails(payload).subscribe({
+            next: (res) => {
+            if(res.data && res.data.length>0){
+                this.profileOptions=res.data;
+                const profile=res.data[0];
+                this.companyName=profile.companyname,
+                this.companyAddress=profile.companyaddress,
+                this.companystate=profile.state_name,
+                this.companycity=profile.city_name,
+                this.companyemail=profile.companyemail,
+                this.companygstno=profile.companygstno,
+                this.statecode=profile.statecode,
+                this.bankname=profile.bankname,
+                this.accountno=profile.accountno,
+                this.branchname=profile.branch,
+                this.ifsc=profile.ifsc,
+                this.pan=profile.pan
+            }
+            },
+            error: (err) => console.log(err)
+        });
+    }
+
     loadAllDropdowns() {
         this.OnGetStatus();
         this.OnGetCusName();
-        this.OnGetCusMobile();  
+        this.OnGetCusMobile(); 
+        this.OnGetProfile(); 
     }
 
 
@@ -338,7 +374,7 @@ onDueAmountFilter(event:any){
       const payload = {
         p_username:'admin',
         p_returntype:'SALEPRINT',
-        p_returnvalue:row.invoice_no
+        p_returnvalue:row.invoice_no,
       };
 
       this.saveCurrentState();

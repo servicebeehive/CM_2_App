@@ -310,7 +310,6 @@ keepBarcodeFocus() {
             itemcost: [data?.pruchaseprice || 0],
             MRP: [data?.saleprice || 0],
             totalPayable: [data ? data.saleprice : 0],
-
             curStock: [data?.currentstock || 0],
             warPeriod: [data?.warrentyperiod || 0],
             location: [data?.location || ''],
@@ -335,8 +334,6 @@ keepBarcodeFocus() {
                     itemcost: item.itemcost || 0,
                     MRP: (item.mrp || 0).toFixed(2),
                     totalPayable: ((item.quantity || 1) * (item.mrp || 0)).toFixed(2),
-                    // p_totalcost:item.
-                    // Additional fields used in UI
                     curStock: item.current_stock || 0,
                     warPeriod: item.warrenty || 0,
                     location: '',
@@ -641,8 +638,6 @@ keepBarcodeFocus() {
                 cgst_9: billDetails.cgst_9,
                 amount_before_tax: billDetails.amount_before_tax
             });
-            console.log('payment due', billDetails.totalpayable);
-            console.log('payment due', billDetails.amountdue);
         }
     }
 
@@ -977,7 +972,6 @@ keepBarcodeFocus() {
         });
     }
 patchPrintValues(apiData:any){
-    console.log('resdhf:',apiData)
     const patchData:any={};
     patchData.p_transactionid=apiData.transactionid;
     patchData.discountvalueper = apiData.discountvalueper;
@@ -987,12 +981,6 @@ patchPrintValues(apiData:any){
       patchData.amount_before_tax=apiData.amount_before_tax;
     this.salesForm.patchValue(patchData);
     this.salesForm.updateValueAndValidity();
-    console.log('aptch:',patchData);
-    console.log( "fhbdv",patchData.p_transactionid, patchData.discountvalueper);
-    console.log("Form after patch:", {
-        transId: this.salesForm.get('p_transactionid')?.value,
-        discountValue: this.salesForm.get('discountvalueper')?.value,
-    });
 }
     // -----------------------------
     //  Utility / Misc
@@ -1167,7 +1155,6 @@ if (!row.contains('baseStock')) {
         if (!printContents) return;
         const popupWindow = window.open('', '_blank', 'width=900,height=1500');
         popupWindow!.document.open();
- console.log('sfhgfshg',this.salesForm.get('p_transactionid')?.value);
         popupWindow!.document.write(`
      <!DOCTYPE html>
                     <html>

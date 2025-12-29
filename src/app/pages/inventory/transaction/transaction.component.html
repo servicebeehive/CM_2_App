@@ -80,11 +80,7 @@
                   <!-- Final Payable Amount -->
                 <div class="flex flex-col">
                     <label class="font-medium mb-1">Final Payable Amount</label>
-                    <input pInputText placeholder="Final Payable Amount" readonly formControlName="finalPayableAmount" class="grayout" 
-                     [ngClass]="{
-      'text-green-600 font-semibold': transactionForm.get('finalPayableAmount')?.value > 0,
-      'text-green-600 font-semibold': transactionForm.get('finalPayableAmount')?.value < 0
-    }" />
+                    <input pInputText placeholder="Final Payable Amount" readonly formControlName="finalPayableAmount" class="grayout"  />
                 </div>
             </div>
 </div>
