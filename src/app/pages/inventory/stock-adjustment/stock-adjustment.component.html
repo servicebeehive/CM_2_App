@@ -34,7 +34,6 @@
                                 optionLabel="itemcombine"
                                 optionValue="itemid"
                                 [filter]="true"
-                                (onChange)="onItemChange($event)"
                                 filterPlaceholder="Search Item"
                                 formControlName="item"
                                 placeholder="Item"
@@ -55,7 +54,7 @@
                     </div>
                     <!-- RIGHT SIDE (Reset + Save) -->
                     <div class="flex gap-4 w-[200px]">
-                        <button pButton type="submit" label="Save" [disabled]="updateForm.invalid&&filteredProducts.length>0" class="p-button-warning w-full"></button>
+                        <button pButton type="submit" label="Submit" [disabled]="updateForm.invalid&&filteredProducts.length>0" class="p-button-warning w-full"></button>
                         <button pButton type="button" label="Reset" class="p-button-secondary w-full" (click)="reset()"></button>
                     </div>
                 </div>
@@ -71,8 +70,8 @@
                                 <th class="w-[150px]">Category</th>
                                 <th>UOM</th>
                                 <th>Current Stock</th>
-                                <th>Batch Available</th>
-                                <th>Batch Date</th>
+                                <th>LOT Available</th>
+                                <th>LOT Date</th>
                                 <th>Cost/Item</th>
                                 <th>MRP</th>
                                 <th>Adj Type</th>
@@ -93,7 +92,7 @@
                                 <td>{{ row.batchdate | date:'dd-MM-yyyy'}}</td>
                                 <td>{{ row.costprice }}</td>
                                 <td>
-                                    <div class="grid items-center gap-2"><input class="w-[70px]" type="number" pInputText [min]="1" placeholder="{{ row.saleprice }}" [formControl]="row.mrpControl" (keydown)="blockMinus($event)" /></div>
+                                    <div class="grid items-center gap-2"><input class="w-[100px]" type="number" pInputText [min]="1" placeholder="{{ row.saleprice }}" [formControl]="row.mrpControl" (keydown)="blockMinus($event)" /></div>
                                     <!-- <small class="text-red-500" *ngIf="row.mrpControl.touched && row.mrpControl.errors?.['required']"> MRP is required. </small> -->
 
                                     <!-- Min(1) -->
@@ -110,15 +109,6 @@
                                            Adj type cannot be greater than current stock ({{ row.curStock }}).
                                         </span> -->
                                     </div>
-                                    <!-- <input  -->
-                                    <!-- <p-autocomplete
-                                        [(ngModel)]="row.adjustmentType"
-                                        [dropdown]="true"
-                                        [suggestions]="filteredAdjustment"
-                                        (completeMethod)="search($event)"
-                                        (onSelect)="onAdjustmentChange($event, row, i)"
-                                        placeholder="Increase/Decrease">
-                                    </p-autocomplete> -->
                                 </td>
 
                                 <!-- Quantity -->

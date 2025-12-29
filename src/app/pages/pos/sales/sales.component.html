@@ -1,495 +1,470 @@
-<div class="card p-6">
-
-  <!-- ================================
+<div class="card p-3 md:p-6">
+    <!-- ================================
        SALES FORM SECTION
   ================================= -->
-  <form [formGroup]="salesForm" (ngSubmit)="onSubmit()" class="space-y-8">
-
-    <!-- ================================
+    <form [formGroup]="salesForm" (ngSubmit)="onSubmit()" class="space-y-6 md:space-y-8">
+        <!-- ================================
          HEADER + ACTION BUTTONS
     ================================= -->
-    <div class="flex justify-between items-center mb-6">
-      <span class="block text-surface-900 font-bold text-xl mb-6">Sales</span>
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4 md:mb-6">
+            <span class="block text-surface-900 font-bold text-lg md:text-xl mb-2 md:mb-6">Sales</span>
 
-      <div class="flex gap-4">
+            <div class="flex flex-wrap gap-2 md:gap-4 w-full md:w-auto">
+                <!-- SUBMIT -->
+                <button pButton type="submit" label="Submit" class="p-button-warning w-full md:w-auto" [disabled]="isSubmitDisabled() || submitDisabledByBill || salesForm.hasError('costNotGreater') || salesForm.hasError('amountNotGreater')"></button>
+                <!-- PRINT -->
+                <button pButton type="button" ngxPrint printSectionId="invoicePrintSection" label="Print" (click)="printInvoice()" class="p-button-primary w-full md:w-auto" [disabled]="!this.salesForm.get('p_billno')?.value"></button>
 
-        <!-- SUBMIT -->
-        <button
-          pButton
-          type="submit"
-          label="Submit"
-          class="p-button-warning"
-          [disabled]="isSubmitDisabled() || submitDisabledByBill || salesForm.hasError('costNotGreater')">
-        </button>
-        <!-- PRINT -->
-        <button
-          pButton
-          type="button"
-          ngxPrint
-          printSectionId="invoicePrintSection"
-          label="Print" (click)="printInvoice()"
-          class="p-button-primary"
-          [disabled]="!this.salesForm.get('p_billno')?.value"
-          >
-        </button>
+                <!-- RESET -->
+                <button pButton type="button" label="Reset" class="p-button-secondary w-full md:w-auto" (click)="onReset()"></button>
+                @if (backshow) {
+                    <button pButton type="button" label="Back" class="p-button-secondary w-full md:w-auto" (click)="back()"></button>
+                }
+            </div>
+        </div>
 
-       
-         <!-- RESET -->
-        <button
-          pButton
-          type="button"
-          label="Reset"
-          class="p-button-secondary"
-          (click)="onReset()">
-        </button>
-
-
-      </div>
-    </div>
-
-
-    <!-- ================================
+        <!-- ================================
          ITEM SELECT SECTION
     ================================= -->
-    <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 md:gap-x-8 gap-y-3 md:gap-y-4 w-full">
+            <!-- BILL NO -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1 text-sm md:text-base">Invoice No</label>
 
-      <!-- ITEM DROPDOWN -->
-      <div class="flex flex-col">
-        <label>Item</label>
+                <p-dropdown
+                    [options]="billNoOptions"
+                    optionLabel="billno"
+                    optionValue="billno"
+                    placeholder="Invoice No."
+                    formControlName="p_billno"
+                    [filter]="true"
+                    filterPlaceholder="Search Bill No."
+                    [showClear]="true"
+                    tabindex="2"
+                    (onChange)="onBillDetails($event)"
+                    [loading]="isLoadingBills"
+                >
+                </p-dropdown>
 
-        <p-select
-          #itemSel
-          class="w-full mb-4"
-          [options]="itemOptions"
-          optionLabel="itemcombine"
-          optionValue="itemid"
-          formControlName="p_itemdata"
-          [filter]="true"
-          filterBy="itemcombine"
-          placeholder="Select Item"
-          [showClear]="true"
-          (onChange)="OnItemChange($event)"
-          [disabled]="submitDisabledByBill">
-
-          <!-- Selected Template -->
-          <ng-template #selectedItem let-item>
-            <div class="flex items-center gap-2">
-              <div>{{ item.itemcombine }}</div>
+                <small class="text-red-500 mt-1 text-xs" *ngIf="salesForm.get('p_billno')?.touched">
+                    <span *ngIf="salesForm.get('p_billno')?.errors?.['required']"> Bill No is required </span>
+                </small>
             </div>
-          </ng-template>
+            <!-- GST CHECKBOX -->
+            <!-- SEARCH MOBILE NO -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1 text-sm md:text-base">Search Mobile No</label>
 
-          <!-- Dropdown Template -->
-          <ng-template #item let-details>
-            <div class="flex items-center justify-between w-full">
-  <div>{{ details.itemcombine }}</div>
+                <p-dropdown
+                    [options]="cusMobileOptions"
+                    class="w-full"
+                    tabindex="3"
+                    optionLabel="customerphone"
+                    optionValue="fieldid"
+                    [filter]="true"
+                    [showClear]="true"
+                    type="number"
+                    maxlength="10"
+                    formControlName="searchMobileNo"
+                    filterPlaceholder="Search Customer Mobile"
+                    placeholder="Search Customer Mobile"
+                    (onFilter)="onMobileFilter($event)"
+                    (onChange)="onMobileSelect($event)"
+                    (keypress)="allowOnlyNumbers($event)"
+                >
+                </p-dropdown>
+            </div>
 
- <span
-  class="text-sm"
-  [ngClass]="details.currentstock == 0 
-    ? 'text-red-500' 
-    : 'text-green-600'"
->
-  Stock: {{ details.currentstock }}
-</span>
-</div>
+            <!-- MOBILE -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1 text-sm md:text-base">Mobile No <span class="text-red-500">*</span></label>
+                <input pInputText type="number" tabindex="6" [placeholder]="mobilePlaceholder" maxlength="10" formControlName="p_mobileno" (keypress)="allowOnlyNumbers($event)" class="text-sm md:text-base" />
+                <small class="text-red-500 ms-1 md:ms-3 mt-1 text-xs" *ngIf="salesForm.get('p_mobileno')?.touched">
+                    <span *ngIf="salesForm.get('p_mobileno')?.errors?.['required']">Mobile No. is required</span>
+                </small>
+                <small class="text-red-500 mt-1 text-xs" *ngIf="salesForm.get('p_mobileno')?.errors?.['pattern']"> Please enter a valid 10-digit mobile number </small>
+            </div>
 
-          </ng-template>
+            <!-- CUSTOMER NAME -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1 text-sm md:text-base">Customer Name <span class="text-red-500">*</span></label>
+                <input pInputText tabindex="5" showclear="[true]" placeholder="Customer Name" formControlName="p_customername" class="text-sm md:text-base" />
+                <small class="text-red-500 ms-1 md:ms-3 mt-1 text-xs" *ngIf="salesForm.get('p_customername')?.touched">
+                    <span *ngIf="salesForm.get('p_customername')?.errors?.['required']">Customer Name is required</span>
+                </small>
+            </div>
 
-        </p-select>
-      </div>
-  <!-- GST CHECKBOX -->
-      <div class="flex justify-between">
-        <div class="flex items-center gap-2">
-          <p-checkbox binary="true" variant="filled" formControlName="p_gsttran"></p-checkbox>
-          <label>GST Transaction</label>
+            <!-- MODE OF TRANSACTION -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1 text-sm md:text-base">Transaction Mode</label>
+
+                <p-dropdown
+                    [options]="transactionMode"
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Transaction Mode"
+                    formControlName="transactionmode"
+                    [filter]="true"
+                    filterPlaceholder="Search Bill No."
+                    [showClear]="true"
+                    tabindex="2"
+                    (onChange)="onBillDetails($event)"
+                    [loading]="isLoadingBills"
+                >
+                </p-dropdown>
+            </div>
+
+            <!-- TRANSACTION DATE -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1 text-sm md:text-base">Transaction Date</label>
+                <p-datepicker tabindex="8" fluid formControlName="p_transactiondate" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="Transaction Date" [maxDate]="today"> </p-datepicker>
+            </div>
+
+            <div class="flex items-center gap-2 md:gap-4 mt-0 md:mt-6">
+                <p-checkbox binary="true" tabindex="4" variant="filled" formControlName="p_gsttran"></p-checkbox>
+                <label class="text-sm md:text-base">GST Transaction</label>
+            </div>
+
+            <div class="flex items-center gap-2 md:gap-4 mt-0 md:mt-6">
+                <label class="text-sm md:text-base">
+                    <b> Status &nbsp; &nbsp;</b>
+                    <span
+                        class="font-bold text-sm md:text-base"
+                        [ngStyle]="{
+                            color: salesForm.get('status')?.value === 'Done' ? 'green' : salesForm.get('status')?.value === 'Partial Cancel' ? 'grey' : salesForm.get('status')?.value === 'Cancel' ? 'red' : 'black'
+                        }"
+                    >
+                        {{ salesForm.get('status')?.value }}
+                    </span></label
+                >
+            </div>
+        <!-- </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-4 md:gap-x-8 w-full mt-4"> -->
+           <!-- ITEM DROPDOWN -->
+            <div class="col-span-2 flex flex-col">
+                <label class="text-sm md:text-base">Item</label>
+
+                <p-select
+                    tabindex="1"
+                    #itemSel
+                    class="w-full mb-3 md:mb-4"
+                    [options]="itemOptions"
+                    optionLabel="itemcombine"
+                    optionValue="itemid"
+                    formControlName="p_itemdata"
+                    [filter]="true"
+                    filterBy="itemcombine"
+                    placeholder="Select Item"
+                    [showClear]="true"
+                    (onChange)="OnItemChange($event)"
+                    [disabled]="submitDisabledByBill"
+                >
+                    <!-- Selected Template -->
+                    <ng-template #selectedItem let-item>
+                        <div class="flex items-center gap-2">
+                            <div class="text-sm md:text-base">{{ item.itemcombine }}</div>
+                        </div>
+                    </ng-template>
+
+                    <!-- Dropdown Template -->
+                    <ng-template #item let-details>
+                        <div class="flex items-center justify-between w-full">
+                            <div class="text-sm md:text-base">{{ details.itemcombine }}</div>
+
+                            <span class="text-xs md:text-sm" [ngClass]="details.currentstock == 0 ? 'text-red-500' : 'text-green-600'"> Stock: {{ details.currentstock }} </span>
+                        </div>
+                    </ng-template>
+                </p-select>
+            </div>
         </div>
-          <div class="flex items-center gap-2">
-          <label> <b> Status:</b></label>
-          <input type="text" formControlName="status"  placeholder="Status" 
-   [ngStyle]="{
-    'color': salesForm.value.status === 'Complete' ? 'green' :
-             salesForm.value.status === 'Partial' ? 'grey' :
-             salesForm.value.status === 'Cancel' ? 'red' : 'black',
-    'font-weight': 'bold'
-  }"
-/>
-        </div>
-      </div>
-    </div>
 
+        <!-- <button
+  pButton
+  type="button"
+  label="Simulate Scan"
+  (click)="simulateScan('8904167705360')">
+</button> -->
 
-    <!-- ================================
-         BILL DETAILS + CUSTOMER INFO
-    ================================= -->
-    <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
-
-      <!-- BILL NO -->
-      <div class="flex flex-col">
-        <label class="font-medium mb-1">Bill No</label>
-
-        <p-dropdown
-          [options]="billNoOptions"
-          optionLabel="billno"
-          optionValue="billno"
-          placeholder="Bill No."
-          formControlName="p_billno"
-          [filter]="true"
-          filterPlaceholder="Search Bill No."
-          [showClear]="true" 
-          (onChange)="onBillDetails($event)">
-        </p-dropdown>
-
-        <small class="text-red-500 mt-1" *ngIf="salesForm.get('p_billno')?.touched">
-          <span *ngIf="salesForm.get('p_billno')?.errors?.['required']">
-            Bill No is required
-          </span>
-        </small>
-      </div>
-
-      <!-- TRANSACTION DATE -->
-      <div class="flex flex-col">
-        <label class="font-medium mb-1">Transaction Date</label>
-        <p-datepicker
-          fluid
-          formControlName="p_transactiondate"
-          dateFormat="dd/mm/yy"
-          [showIcon]="true"
-          placeholder="Transaction Date"
-          [maxDate]="today">
-        </p-datepicker>
-      </div>
-
-
-      <!-- CUSTOMER NAME -->
-      <div class="flex flex-col">
-        <label class="font-medium mb-1">Customer Name</label>
-        <input
-          pInputText
-          placeholder="Customer Name"
-          formControlName="p_customername" />
-      </div>
-
-      <!-- MOBILE -->
-      <div class="flex flex-col">
-        <label class="font-medium mb-1">Mobile No.</label>
-        <input
-          pInputText
-          type="number"
-          placeholder="Mobile No."
-          maxlength="10"
-          formControlName="p_mobileno" 
-          (keypress)="allowOnlyNumbers($event)"/>
-
-        <small class="text-red-500 mt-1" *ngIf="salesForm.get('p_mobileno')?.errors?.['pattern'] ">
-          Please enter a valid 10-digit mobile number
-        </small>
-      </div>
-
-    
-
-    </div>
-
-
-    <!-- ================================
+        <!-- ================================
          SALES TABLE (FormArray)
     ================================= -->
-    <div class="mt-6">
+        <div class="mt-4 md:mt-6">
+            <input #barcodeInput type="text" class="absolute opacity-0 pointer-events-none" placeholder="Type barcode / SKU and press Enter" (keydown.enter)="onBarcodeScan($event)" />
 
-      <p-table
-        [value]="saleArray.controls"
-        dataKey="ItemId"
-        [responsiveLayout]="'scroll'"
-        [paginator]="true"
-                        [rows]="10"
-         [rowsPerPageOptions]="[5, 10, 20, 50]"
-        class="p-datatable-gridlines mt-6 sale-report">
+            <div class="overflow-x-auto">
+                <p-table [value]="saleArray.controls" dataKey="ItemId" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="5" [rowsPerPageOptions]="[5, 10, 20, 50]" class="p-datatable-gridlines sale-report">
+                    <!-- HEADER -->
+                    <ng-template pTemplate="header">
+                        <tr class="bg-yellow-400">
+                            <th class="text-xs md:text-sm">Item Code</th>
+                            <th class="text-xs md:text-sm">Item Name</th>
+                            <th class="text-xs md:text-sm">Current Stock</th>
+                            <th class="text-xs md:text-sm">UOM</th>
+                            <th class="text-xs md:text-sm">Qty</th>
+                            <th class="text-xs md:text-sm">MRP</th>
+                            <th class="text-xs md:text-sm">Total</th>
+                            <th class="text-xs md:text-sm">Warranty</th>
+                            <th class="text-xs md:text-sm">Location</th>
+                            <th class="text-center text-xs md:text-sm">Action</th>
+                        </tr>
+                    </ng-template>
 
-        <!-- HEADER -->
-        <ng-template pTemplate="header">
-          <tr class="bg-yellow-400">
-            <th>Item Code</th>
-            <th>Item Name</th>
-            <th>Current Stock</th>
-            <th>UOM</th>
-            <th>Qty</th>
-            <th>MRP</th>
-            <th>Total</th>
-            <th>Warranty</th>
-            <th>Location</th>
-            <th class="text-center">Action</th>
-          </tr>
-        </ng-template>
+                    <!-- ROWS -->
+                    <ng-template pTemplate="body" let-row let-i="rowIndex">
+                        <tr [formGroup]="row">
+                            <td class="text-xs md:text-sm">{{ row.get('itemsku')?.value }}</td>
+                            <td class="text-xs md:text-sm">{{ row.get('ItemName')?.value }}</td>
+                            <td class="text-xs md:text-sm">{{ row.get('curStock')?.value }}</td>
+                            <td>
+                                <p-dropdown [options]="uomlist[i]" optionLabel="fieldname" optionValue="fieldid" placeholder="UOM" formControlName="UOMId" [filter]="true" filterPlaceholder="Search Uom name" appendTo="body" (onChange)="UOMId(row, i)" class="text-xs md:text-sm">
+                                </p-dropdown>
+                            </td>
 
-        <!-- ROWS -->
-        <ng-template pTemplate="body" let-row let-i="rowIndex">
-          <tr [formGroup]="row">
-            <td>{{ row.get('itemsku')?.value }}</td>
-            <td>{{ row.get('ItemName')?.value }}</td>
-            <td>{{ row.get('curStock')?.value }}</td>
-            <td>
-              
-               <p-dropdown
-          [options]="uomlist[i]"
-          optionLabel="fieldname"
-          optionValue="fieldid"
-          placeholder="UOM"
-          formControlName="UOMId"
-          [filter]="true"
-          filterPlaceholder="Search Uom name"
-           appendTo="body"
-          (onChange)="UOMId(row,i)">
-        </p-dropdown>
-              <!-- {{ row.get('UOMId')?.value }} -->
+                            <!-- QUANTITY INPUT -->
+                            <td>
+                                <input
+                                    pInputText
+                                    type="number"
+                                    formControlName="Quantity"
+                                    min="1"
+                                    step="1"
+                                    class="w-[60px] md:w-[70px] text-xs md:text-sm"
+                                    (keypress)="blockDecimal($event)"
+                                    (input)="updateTotal(i)"
+                                    (input)="OnQtyChange(i)"
+                                    [ngClass]="{ 'border-red-500': row.get('Quantity')?.errors?.['maxStock'] }"
+                                />
+                            </td>
 
+                            <td class="text-xs md:text-sm">{{ row.get('MRP')?.value }}</td>
+                            <td class="text-xs md:text-sm">{{ row.get('totalPayable')?.value }}</td>
+                            <td class="text-xs md:text-sm">{{ row.get('warPeriod')?.value }}</td>
+                            <td class="text-xs md:text-sm">{{ row.get('location')?.value }}</td>
 
-            </td>
+                            <!-- DELETE -->
+                            <td class="text-center">
+                                <i class="pi pi-trash text-red-500 cursor-pointer text-sm md:text-base" (click)="removeItem(i)"> </i>
+                            </td>
+                        </tr>
+                    </ng-template>
 
-            <!-- QUANTITY INPUT -->
-            <td>
-              <input
-                pInputText
-                type="number"
-                formControlName="Quantity"
-                min="1"
-                step="1"
-                class="w-[70px]"
-                (keypress)="blockDecimal($event)"
-                (input)="updateTotal(i)" (input)="OnQtyChange(i)"
-                [ngClass]="{ 'border-red-500': row.get('Quantity')?.errors?.['maxStock'] }" />
-            </td>
+                    <!-- FOOTER TEXT -->
+                    <ng-template pTemplate="paginatorleft">
+                        <div class="text-gray-600 ms-2 text-xs md:text-sm">Total Items: {{ saleArray.length }}</div>
+                    </ng-template>
+                </p-table>
+            </div>
+        </div>
 
-            <td>{{ row.get('MRP')?.value }}</td>
-            <td>{{ row.get('totalPayable')?.value }}</td>
-            <td>{{ row.get('warPeriod')?.value }}</td>
-            <td>{{ row.get('location')?.value }}</td>
-
-            <!-- DELETE -->
-            <td class="text-center">
-              <i
-                class="pi pi-trash text-red-500 cursor-pointer"
-                (click)="removeItem(i)">
-              </i>
-            </td>
-
-          </tr>
-        </ng-template>
-
-        <!-- FOOTER TEXT -->
-        <ng-template pTemplate="paginatorleft">
-          <div class="text-gray-600 ms-2">
-            Total Items: {{ saleArray.length }}
-          </div>
-        </ng-template>
-
-      </p-table>
-    </div>
-
-
-    <!-- ================================
+        <!-- ================================
          SUMMARY SECTION
     ================================= -->
-    <div class="grid grid-cols-6 gap-x-8 gap-y-4 m-3 mt-4">
+        <div class="grid grid-cols-7 gap-x-8 gap-y-4 m-3 mt-4">
+            <!-- Total Cost -->
+            <div class="flex flex-col">
+                <label>Cost Total</label>
+                <input pInputText readonly type="number" formControlName="p_totalcost" />
+            </div>
 
-      <!-- Total Cost -->
-      <div class="flex flex-col">
-        <label>Total Cost</label>
-        <input pInputText readonly type="number" formControlName="p_totalcost" />
-      </div>
+            <!-- MRP Total -->
+            <div class="flex flex-col">
+                <label>MRP Total</label>
+                <input pInputText readonly type="number" formControlName="p_totalsale" />
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2">
+                <!-- Discount type -->
+                <div class="flex flex-col">
+                    <label class="font-medium mb-2">Disc(%)</label>
+                    <p-checkbox class="w-5 h-5" binary="true" variant="filled" formControlName="p_disctype"></p-checkbox>
+                </div>
+                <!-- Discount -->
+                <div class="flex flex-col">
+                    <label class="font-medium">Discount</label>
+                    <input class="p-inputtext p-component font-small w-full" pInputText type="number" formControlName="p_overalldiscount" (input)="applyDiscount()" [placeholder]="discountplace" />
+                </div>
+            </div>
+            <!-- Round Off -->
+            <div class="flex flex-col">
+                <label>Round Off</label>
+                <input type="number" pInputText readonly type="number" formControlName="p_roundoff" />
+            </div>
 
-      <!-- MRP Total -->
-      <div class="flex flex-col">
-        <label>MRP Total</label>
-        <input pInputText readonly type="number" formControlName="p_totalsale" />
-      </div>
- <div class="grid grid-cols-1 md:grid-cols-2">
-      <!-- Discount type -->
-        <div class="flex flex-col">
-          <label class="font-medium mb-2">Disc(%)</label>
-          <p-checkbox class="w-5 h-5" binary="true" variant="filled" formControlName="p_disctype"></p-checkbox>
+            <!-- Total Sale -->
+            <div class="flex flex-col">
+                <label>Total Sale</label>
+                <input pInputText readonly type="number" formControlName="p_totalsale" />
+            </div>
+
+            <!-- Final Payable -->
+            <div class="flex flex-col">
+                <label>Final Payable</label>
+                <input pInputText readonly type="number" formControlName="p_totalpayable" />
+                <small class="text-red-500" *ngIf="salesForm.hasError('costNotGreater')"> This Cost must be greater than Total Cost. </small>
+            </div>
+
+            <!-- Paid Amount -->
+            <div class="flex flex-col">
+                <label>Paid Amount</label>
+                <input pInputText type="number" (keypress)="blockDecimal($event)" min="1" formControlName="p_paymentdue" placeholder="0"/>
+                <small class="text-red-500" *ngIf="salesForm.hasError('amountNotGreater')"> Paid Amount cannot be greater than Final Payable. </small>
+            </div>
         </div>
-      <!-- Discount -->
-      <div class="flex flex-col ">
-        <label class="font-medium">Discount</label>
-        <input class="p-inputtext p-component font-small w-full" pInputText type="number" formControlName="p_overalldiscount" (input)="applyDiscount()" [placeholder]="discountplace"/>
-      </div>
+    </form>
+
+    <p-confirmDialog></p-confirmDialog>
 </div>
-      <!-- Round Off -->
-      <div class="flex flex-col">
-        <label>Round Off</label>
-        <input type="number" pInputText readonly type="number" formControlName="p_roundoff" />
-      </div>
-
-      <!-- Total Sale -->
-      <div class="flex flex-col">
-        <label>Total Sale</label>
-        <input pInputText readonly type="number" formControlName="p_totalsale" />
-      </div>
-
-      <!-- Final Payable -->
-      <div class="flex flex-col">
-        <label>Final Payable</label>
-        <input pInputText readonly type="number" formControlName="p_totalpayable" />
-        <small class="text-red-500" 
-       *ngIf="salesForm.hasError('costNotGreater')">
-  This Cost must be greater than Total Cost.
-</small>
-      </div>
-
-    </div>
-
-  </form>
-
-  <p-confirmDialog></p-confirmDialog>
-
-</div>
-
 
 <!-- ================================
      PRINT SECTION (INVOICE)
 ================================= -->
-<div id="invoicePrintSection" style="width:900px; margin:auto; font-family:Arial;">
+<div id="invoicePrintSection" style="width: 900px; margin: auto; font-family: Arial">
+    <h3 style="text-align: center">TAX INVOICE</h3>
 
-  <h3 style="text-align: center;">TAX INVOICE</h3>
+    <!-- ================= HEADER SECTION ================= -->
+    <table width="100%" border="1" cellspacing="0" cellpadding="0" style="border-collapse: collapse">
+        <tr>
+            <!-- LEFT SIDE (COMPANY + BUYER INFO) -->
+            <td width="60%" style="vertical-align: top; padding: 6px">
+                <strong>SHRISTI ELECTRICAL</strong><br />
+                SHOP NO.-7 SAPNA TALKIES COMPLEX,<br />
+                NANDINI ROAD, BHILAI<br />
+                GSTIN/UIN: 22AOCPY0439F1Z5<br />
+                State Name: Chhattisgarh, Code: 22<br />
+                E-Mail : {{ 'shristielectricalgw@gmail.com' }}
+                <br />
 
-  <!-- ================= HEADER SECTION ================= -->
-  <table width="100%" border="1" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
-    <tr>
+                <hr style="margin: 5px 0" />
 
-      <!-- LEFT SIDE (COMPANY + BUYER INFO) -->
-      <td width="60%" style="vertical-align:top; padding: 6px;">
+                <strong>Buyer (Bill to)</strong><br /><br />
 
-        <strong>SHRISTI ELECTRICAL</strong><br>
-        SHOP NO.-7 SAPNA TALKIES COMPLEX,<br>
-        NANDINI ROAD, BHILAI<br>
-        GSTIN/UIN: 22AOCPY0439F1Z5<br>
-        State Name: Chhattisgarh, Code: 22<br>
-        E-Mail : {{'shristielectricalgw@gmail.com'}}
-        <br>
+                <strong>{{ salesForm.get('p_customername')?.value }}</strong
+                ><br />
+                {{ salesForm.get('p_customeraddress')?.value }}<br />
+                Mobile: {{ salesForm.get('p_mobileno')?.value }}<br />
+                <br />
 
-        <hr style="margin:5px 0;">
+                GSTIN/UIN : {{ salesForm.get('p_customergstin')?.value || '-' }}<br />
+                State Name : {{ salesForm.get('p_customerstate')?.value || '-' }}
+            </td>
 
-        <strong>Buyer (Bill to)</strong><br><br>
+            <!-- RIGHT SECTION (INVOICE DETAILS) -->
+            <td width="40%" style="vertical-align: top">
+                <table width="100%" border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse">
+                    <tr>
+                        <td><strong>Invoice No.</strong></td>
+                        <td>{{ salesForm.get('p_billno')?.value }}</td>
+                    </tr>
 
-        <strong>{{ salesForm.get('p_customername')?.value }}</strong><br>
-        {{ salesForm.get('p_customeraddress')?.value }}<br>
-        Mobile: {{ salesForm.get('p_mobileno')?.value }}<br>
-        <br>
+                    <tr>
+                        <td><strong>Dated</strong></td>
+                        <td>{{ salesForm.get('p_transactiondate')?.value | date: 'dd-MMM-yy' }}</td>
+                    </tr>
 
-        GSTIN/UIN : {{ salesForm.get('p_customergstin')?.value || '-' }}<br>
-        State Name : {{ salesForm.get('p_customerstate')?.value || '-' }}
-      </td>
+                    <tr>
+                        <td>Delivery Note</td>
+                        <td>-</td>
+                    </tr>
 
-      <!-- RIGHT SECTION (INVOICE DETAILS) -->
-      <td width="40%" style="vertical-align:top;">
-        <table width="100%" border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;">
+                    <tr>
+                        <td><strong>Mode of Payment</strong></td>
+                        <td><strong>CASH</strong></td>
+                    </tr>
 
-          <tr>
-            <td><strong>Invoice No.</strong></td>
-            <td>{{ salesForm.get('p_billno')?.value }}</td>
-          </tr>
+                    <tr>
+                        <td>Reference No. & Date</td>
+                        <td>{{ salesForm.get('p_transactionid')?.value }} dt. {{ salesForm.get('p_transactiondate')?.value | date: 'dd-MMM-yy' }}</td>
+                    </tr>
 
-          <tr>
-            <td><strong>Dated</strong></td>
-            <td>{{ salesForm.get('p_transactiondate')?.value | date:'dd-MMM-yy' }}</td>
-          </tr>
+                    <tr>
+                        <td>Other References</td>
+                        <td>-</td>
+                    </tr>
 
-          <tr>
-            <td>Delivery Note</td>
-            <td>-</td>
-          </tr>
+                    <tr>
+                        <td>Buyer's Order No.</td>
+                        <td>-</td>
+                    </tr>
 
-          <tr>
-            <td><strong>Mode/Terms of Payment</strong></td>
-            <td><strong>BALANCE</strong></td>
-          </tr>
+                    <tr>
+                        <td>Dated</td>
+                        <td>-</td>
+                    </tr>
 
-          <tr>
-            <td>Reference No. & Date</td>
-            <td>{{ salesForm.get('p_transactionid')?.value }} dt. {{ salesForm.get('p_transactiondate')?.value | date:'dd-MMM-yy' }}</td>
-          </tr>
+                    <tr>
+                        <td>Dispatch Doc No.</td>
+                        <td>-</td>
+                    </tr>
 
-          <tr>
-            <td>Other References</td>
-            <td>-</td>
-          </tr>
+                    <tr>
+                        <td>Delivery Note Date</td>
+                        <td>-</td>
+                    </tr>
 
-          <tr>
-            <td>Buyer's Order No.</td>
-            <td>-</td>
-          </tr>
+                    <tr>
+                        <td>Dispatched through</td>
+                        <td>-</td>
+                    </tr>
 
-          <tr>
-            <td>Dated</td>
-            <td>-</td>
-          </tr>
+                    <tr>
+                        <td>Destination</td>
+                        <td>-</td>
+                    </tr>
 
-          <tr>
-            <td>Dispatch Doc No.</td>
-            <td>-</td>
-          </tr>
+                    <tr>
+                        <td>Terms of Delivery</td>
+                        <td>-</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 
-          <tr>
-            <td>Delivery Note Date</td>
-            <td>-</td>
-          </tr>
+    <!-- ================= ITEM TABLE ================= -->
+    <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; font-size: 14px; margin-top: 10px">
+        <thead>
+            <tr style="text-align: center; font-weight: bold">
+                <td>Sl No.</td>
+                <td>Description of Goods</td>
+                <td>HSN/SAC</td>
+                <td>Quantity</td>
+                <td>Rate</td>
+                <td>per</td>
+                <td>Disc %</td>
+                <td>Amount</td>
+            </tr>
+        </thead>
 
-          <tr>
-            <td>Dispatched through</td>
-            <td>-</td>
-          </tr>
+        <tbody>
+            <tr *ngFor="let item of saleRows; let i = index">
+                <td>{{ i + 1 }}</td>
+                <td>{{ item.get('ItemName')?.value }}</td>
+                <td>{{ item.get('HSN')?.value || 8544 }}</td>
+                <td>{{ item.get('Quantity')?.value }} PCS</td>
+                <td>₹{{ item.get('MRP')?.value | number: '1.2-2' }}</td>
+                <td>PCS</td>
+                <td>{{ item.get('discount')?.value || '' }}</td>
+                <td>₹{{ item.get('totalPayable')?.value | number: '1.2-2' }}</td>
+            </tr>
 
-          <tr>
-            <td>Destination</td>
-            <td>-</td>
-          </tr>
+            <!-- SUB TOTAL -->
+            <tr>
+                <td colspan="7" style="text-align: right; font-weight: bold">Total</td>
+                <td>₹{{ salesForm.get('p_totalsale')?.value | number: '1.2-2' }}</td>
+                <!-- <td>₹{{ salesForm.get('p_totalpayable')?.value | number:'1.2-2' }}</td> -->
+            </tr>
+            <tr>
+                <td colspan="7" style="text-align: right; font-weight: bold">Discount {{ salesForm.get('p_disctype')?.value ? salesForm.get('p_overalldiscount')?.value + '%' : '' }}</td>
 
-          <tr>
-            <td>Terms of Delivery</td>
-            <td>-</td>
-          </tr>
+                <td>{{ !salesForm.get('p_disctype')?.value ? '₹' : '' }}{{ !salesForm.get('p_disctype')?.value ? salesForm.get('p_overalldiscount')?.value : '₹' + salesForm.get('discountvalueper')?.value }}</td>
+            </tr>
+            <!-- <tr *ngIf="salesForm.get('p_disctype')?.value==='Y'">
+        <td colspan="7" style="text-align:right;font-weight:bold;"> Discount</td>
+      
+        <td>YES</td>
+      </tr> -->
 
-        </table>
-      </td>
-
-    </tr>
-  </table>
-
-  <!-- ================= ITEM TABLE ================= -->
-  <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;font-size:14px;margin-top:10px;">
-    <thead>
-      <tr style="text-align:center;font-weight:bold;">
-        <td>Sl No.</td>
-        <td>Description of Goods</td>
-        <td>HSN/SAC</td>
-        <td>Quantity</td>
-        <td>Rate</td>
-        <td>per</td>
-        <td>Disc %</td>
-        <td>Amount</td>
-      </tr>
-    </thead>
-
-    <tbody>
-
-      <tr *ngFor="let item of saleRows; let i = index">
-        <td>{{ i + 1 }}</td>
-        <td>{{ item.get('ItemName')?.value }}</td>
-        <td>{{ item.get('HSN')?.value || 8544 }}</td>
-        <td>{{ item.get('Quantity')?.value }} PCS</td>
-        <td>{{ item.get('MRP')?.value | number:'1.2-2' }}</td>
-        <td>PCS</td>
-        <td>{{ item.get('discount')?.value || '' }}</td>
-        <td>{{ item.get('totalPayable')?.value | number:'1.2-2' }}</td>
-      </tr>
-
-      <!-- SUB TOTAL -->
-      <tr>
-        <td colspan="7" style="text-align:right;font-weight:bold;">Sub Total</td>
-        <td>{{ salesForm.get('p_totalsale')?.value | number:'1.2-2' }}</td>
-      </tr>
-
-      <!-- CGST -->
-      <!-- <tr>
+            <!-- CGST -->
+            <!-- <tr>
         <td colspan="7" style="text-align:right;"><b>CGST</b></td>
         <td>{{ salesForm.get('p_cgst')?.value }}</td>
       </tr>
@@ -500,79 +475,75 @@
         <td>{{ salesForm.get('p_sgst')?.value }}</td>
       </tr> -->
 
-      <!-- ROUND OFF -->
-      <tr>
-        <td colspan="7" style="text-align:right;"><b>ROUND OFF +/-</b></td>
-        <td>{{ salesForm.get('p_roundoff')?.value }}</td>
-      </tr>
+            <!-- ROUND OFF -->
+            <tr>
+                <td colspan="7" style="text-align: right"><b>ROUND OFF +/-</b></td>
+                <td>{{ salesForm.get('p_roundoff')?.value | number: '1.2-2' }}</td>
+            </tr>
+        </tbody>
 
-    </tbody>
+        <!-- GRAND TOTAL -->
+        <tfoot>
+            <tr style="font-weight: bold">
+                <!-- <td colspan="3" style="text-align:right;">Total Qty</td>
+        <td>{{ salesForm.get('p_totalqty')?.value }} PCS</td> -->
+                <td colspan="7" align="right" style="text-align: right; font-weight: bold">Grand Total</td>
+                <td style="font-weight: bold">₹{{ salesForm.get('p_totalpayable')?.value | number: '1.2-2' }}</td>
+            </tr>
+        </tfoot>
+    </table>
 
-    <!-- GRAND TOTAL -->
-    <tfoot>
-      <tr style="font-weight:bold;">
-        <td colspan="3" style="text-align:right;">Total Qty</td>
-        <td>{{ salesForm.get('p_totalqty')?.value }} PCS</td>
-        <td colspan="3"></td>
-        <td>₹ {{ salesForm.get('p_totalpayable')?.value }}</td>
-      </tr>
-    </tfoot>
-  </table>
+    <!-- ================= AMOUNT IN WORDS ================= -->
+    <div style="padding: 10px; font-size: 14px">
+        <strong>Amount Chargeable (in words):</strong>
+        <!-- {{ amountInWords }} -->
+        -
+    </div>
 
-  <!-- ================= AMOUNT IN WORDS ================= -->
-  <div style="padding:10px;font-size:14px;">
-    <strong>Amount Chargeable (in words):</strong>
-    <!-- {{ amountInWords }} --> -
-  </div>
+    <!-- ================= GST SUMMARY ================= -->
+    <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; font-size: 14px; margin-top: 10px">
+        <tr style="font-weight: bold; text-align: center">
+            <td>HSN/SAC</td>
+            <td>Taxable Value</td>
+            <td>Rate</td>
+            <td>CGST Amount</td>
+            <td>Rate</td>
+            <td>SGST Amount</td>
+            <td>Total Tax Amount</td>
+        </tr>
 
-  <!-- ================= GST SUMMARY ================= -->
-  <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;font-size:14px;margin-top:10px;">
-    <tr style="font-weight:bold;text-align:center;">
-      <td>HSN/SAC</td>
-      <td>Taxable Value</td>
-      <td>Rate</td>
-      <td>CGST Amount</td>
-      <td>Rate</td>
-      <td>SGST Amount</td>
-      <td>Total Tax Amount</td>
-    </tr>
+        <tr style="text-align: center">
+            <td>8544</td>
+            <td>₹{{ salesForm.get('amount_before_tax')?.value | number: '1.2-2' }}</td>
+            <td>9%</td>
+            <td>₹{{ salesForm.get('cgst_9')?.value | number: '1.2-2' }}</td>
+            <td>9%</td>
+            <td>₹{{ salesForm.get('sgst_9')?.value | number: '1.2-2' }}</td>
+            <td>₹{{ salesForm.get('tax_18')?.value | number: '1.2-2' }}</td>
+            <!-- sgst_9:billDetails.sgst_9,
+      tax_18:billDetails.tax_18,
+      cgst_9:billDetails.cgst_9,
+      amount_before_tax:billDetails.amount_before_tax, -->
+        </tr>
+    </table>
 
-    <tr style="text-align:center;">
-      <td>8544</td>
-      <td>{{ salesForm.get('p_totalsale')?.value }}</td>
-      <td>9%</td>
-      <td>{{ salesForm.get('p_cgst')?.value }}</td>
-      <td>9%</td>
-      <td>{{ salesForm.get('p_sgst')?.value }}</td>
-      <td>{{ salesForm.get('p_cgst')?.value + salesForm.get('p_sgst')?.value }}</td>
-    </tr>
-  </table>
+    <!-- ================= BANK DETAILS ================= -->
+    <div style="padding: 10px; font-size: 14px">
+        <strong>Tax Amount (in words):</strong>
+        <!-- {{ taxAmountInWords }} -->
+        - <br /><br />
 
-  <!-- ================= BANK DETAILS ================= -->
-  <div style="padding:10px;font-size:14px;">
+        <strong>Company's Bank Details</strong><br />
+        Bank Name : <b>BANK OF INDIA</b><br />
+        A/c No. : 930520110000557<br />
+        Branch & IFS Code : POWER HOUSE & BKID0009305<br /><br />
 
-    <strong>Tax Amount (in words):</strong> 
-    <!-- {{ taxAmountInWords }} --> -
-    <br><br>
+        Company's PAN : <b>AOCPY0439F</b> <br /><br />
 
-    <strong>Company's Bank Details</strong><br>
-    Bank Name : <b>BANK OF INDIA</b><br>
-    A/c No. : 930520110000557<br>
-    Branch & IFS Code : POWER HOUSE & BKID0009305<br><br>
+        <strong>Declaration:</strong>
+        We declare that this invoice shows the actual price of the goods described and all particulars are true.
 
-    Company's PAN : <b>AOCPY0439F</b>
-    <br><br>
-
-    <strong>Declaration:</strong>
-    We declare that this invoice shows the actual price of the goods described and all particulars are true.
-
-    <br><br>
-    <p style="text-align:right;"><strong>Authorized Signatory</strong></p>
-
-  </div>
-
+        <br /><br />
+        <p style="text-align: right"><strong>Authorized Signatory</strong></p>
+    </div>
 </div>
-
-
-
-

@@ -18,6 +18,7 @@ import { DashboardService } from '@/core/services/dashboard.service';
 import { Skeleton, SkeletonModule } from "primeng/skeleton";
 import { RouterModule } from '@angular/router';
 import { KnobModule } from 'primeng/knob';
+import { AuthService } from '@/core/services/auth.service';
 
 @Component({
     selector: 'app-sales-dashboard',
@@ -37,7 +38,8 @@ import { KnobModule } from 'primeng/knob';
     KnobModule,
         FormsModule,
         RouterModule,
-        SkeletonModule
+        SkeletonModule,
+        RecentSalesWidget, RevenueOverViewWidget, SalesByCategoryWidget
 ],
     template: `
       <!-- Top Filter Section -->
@@ -87,7 +89,7 @@ import { KnobModule } from 'primeng/knob';
                             class="text-4xl font-bold"
                             [ngClass]="card.value < 0 ? 'text-red-600' : 'text-surface-900 dark:text-surface-0'"
                         >
-                            ₹{{ card.value }}
+                            Count# {{ card.value }}
                         </span>
                     </div>
                 </div>
@@ -106,6 +108,23 @@ import { KnobModule } from 'primeng/knob';
         <!-- Recent Sales and Top Products -->
        <div class="col-span-12 xl:col-span-4">
         
+        </div>
+        
+     </div>
+       <div class="grid grid-cols-12 gap-8">
+       
+        <!-- Revenue Section -->
+        <div class="col-span-12 xl:col-span-4">
+            <app-revenue-overview-widget />
+        </div>
+        <div class="col-span-12 lg:col-span-4">
+            <app-recent-sales-widget />
+        </div>
+       
+        
+        <!-- Recent Sales and Top Products -->
+       <div class="col-span-12 xl:col-span-4">
+            <app-sales-by-category-widget />
         </div>
         
      </div>
@@ -131,10 +150,13 @@ selectedFilter = 'MONTH';  // default value
     skeletonItems = [1, 2, 3, 4];
 
     dashboardCards: any = [];
-
-    constructor(private OnttopBarService: DashboardService) {}
+    products!: any[];
+    constructor(private OnttopBarService: DashboardService,public authservice:AuthService) {}
 
     ngOnInit(): void {
+         const isUserRoleType:any=this.authservice.isLogIntType()
+
+    this.role=isUserRoleType?.usertypecode
         this.OnGettopBarCard(this.selectedFilter);
     }
 
@@ -159,7 +181,7 @@ selectedFilter = 'MONTH';  // default value
 
         this.OnttopBarService.GettopBarCard(apibody).subscribe({
             next: (res) => {
-              
+                    console.log('username',res.username)
                        const data = res?.data[0];
 
                 this.dashboardCards = [
@@ -167,25 +189,25 @@ selectedFilter = 'MONTH';  // default value
                         label: 'Total Item -  Sold & Return',
                         icon: 'pi pi-box',
                         value: data.total_items,
-                        routerLink: '/layout/inventory/overview'
+                        // routerLink: '/layout/inventory/overview'
                     },
                     {
                         label: 'Purchase',
                         icon: 'pi pi-shopping-cart',
-                        value: data.totalsale,
-                        routerLink: '/layout/pos/sales'
+                        value: data.total_purchase,
+                        routerLink: '/layout/inventory/transaction'
                     },
                     {
                         label: 'Sale',
                         icon: 'pi pi-arrow-down-left',
-                        value: data.totalreturn,
-                        routerLink: '/layout/inventory/stock-in'
+                        value: data.total_sale,
+                        routerLink: '/layout/pos/invoice'
                     },
                     {
                         label: 'Return',
                         icon: 'pi pi-arrow-up',
-                        value: data.profit,
-                        routerLink: '/layout/inventory/stock-in'
+                        value: data.total_return,
+                        routerLink: '/layout/pos/invoice'
                     },
                 ];
                 
@@ -198,6 +220,29 @@ selectedFilter = 'MONTH';  // default value
                 this.loading = false;
             }
         });
+    }
+
+     OnGetSales(){
+        let  apibody={
+   
+     
+   "p_reporttype": "LOWSTOCK",
+   "p_warehouse":"",
+   "p_period":"",
+   "p_category":null,
+   "p_item":null,
+
+
+   }
+         this.OnttopBarService.GettopBarCard(apibody).subscribe({
+             next:(res)=>{
+            console.log(res)
+            const data=res.data
+            this.products=data
+            console.log(this.products)
+        }
+
+         })
     }
 onFilterChange(event: any) {
     console.log(event)

@@ -78,7 +78,7 @@ interface Image {
 export class CreditNoteComponent {
     CreditForm!: FormGroup;
 
-
+totalAmount: number = 0;
     public visibleDialog = false;
     public selectedRow: any = null;
    public  selection: boolean = true;
@@ -322,6 +322,7 @@ if (apibody.p_transactiontype === "CREDITNOTE") {
          this.prouctsaleservice.Getreturndropdowndetails(apibody).subscribe({
             next:(res)=>{
                 this.replacecednlist=res.data
+                this.calculateTotal(this.replacecednlist)
                  this.CreditForm.patchValue({
                     p_creditNote: this.replacecednlist[0]?.cnno
                     
@@ -330,40 +331,92 @@ if (apibody.p_transactiontype === "CREDITNOTE") {
             }
          })
     }
-print() {
-  const printContents = document.getElementById('printSection')?.innerHTML;
-  if (!printContents) return;
 
-  const popup = window.open('', '_blank', 'width=900,height=650');
 
-  popup!.document.open();
-  popup!.document.write(`
-    <html>
-      <head>
-     
-        <style>
-          @page {
-            size: A4;
-            margin:40px;
-          }
-
-          @media print {
-            body { font-family: Arial, sans-serif; padding:50px }
-
-            header, footer {
-              display: none !important;
-              visibility: hidden !important;
-            }
-          }
-        </style>
-      </head>
-      <body onload="window.print(); window.close();">
-        ${printContents}
-      </body>
-    </html>
-  `);
-
- // popup!.document.close();
+calculateTotal(data:any[]) {
+  this.totalAmount = data.reduce((sum, row) => {
+    return sum + (row.quantity * row.mrp);
+  }, 0);
 }
+print() {
+    const printContents = document.getElementById('printSection')?.innerHTML;
+    if (!printContents) return;
 
+    const popup = window.open('', '_blank', 'width=900,height=1500');
+    
+    popup!.document.open();
+    popup!.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Debit Note</title>
+            <style>
+                /* Consistent with invoice print styling */
+                body { 
+                    font-family: Arial, sans-serif; 
+                    margin: 0;
+                    padding: 20px;
+                    width: 900px;
+                    margin: 0 auto;
+                }
+                
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+                
+                th, td {
+                    border: 1px solid #000;
+                    padding: 6px;
+                }
+                
+                .text-center { text-align: center; }
+                .text-right { text-align: right; }
+                .bold { font-weight: bold; }
+                
+                @media print {
+                    body { 
+                        font-family: Arial, sans-serif; 
+                        margin: 0;
+                        padding: 20px;
+                    }
+                    
+                    table { 
+                        border-collapse: collapse; 
+                        width: 100%;
+                    }
+                    
+                    th, td { 
+                        border: 1px solid #000; 
+                        padding: 6px;
+                    }
+                    
+                    /* Hide header/footer in print */
+                    header, footer {
+                        display: none !important;
+                    }
+                    
+                    /* Ensure proper page breaks */
+                    .page-break {
+                        page-break-before: always;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            ${printContents}
+            <script>
+                window.onload = function() {
+                    window.print();
+                    window.onafterprint = function() {
+                        window.close();
+                    };
+                };
+            </script>
+        </body>
+        </html>
+    `);
+    
+    popup!.document.close();
+}
 }

@@ -8,6 +8,8 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
+import { UserService } from '@/core/services/user.service';
+import { InventoryService } from '@/core/services/inventory.service';
 
 @Component({
     selector: '[app-topbar]',
@@ -15,20 +17,33 @@ import { InputIconModule } from 'primeng/inputicon';
     imports: [RouterModule, CommonModule, StyleClassModule, AppBreadcrumb, InputTextModule, ButtonModule, IconFieldModule, InputIconModule],
     template: `<div class="layout-topbar">
         <div class="topbar-start">
+           
             <button #menubutton type="button" class="topbar-menubutton p-link p-trigger" (click)="onMenuButtonClick()">
                 <i class="pi pi-bars"></i>
             </button>
+
+            <div class="flex items-center gap-2">
+               <img
+  [src]="companyLogo"
+  alt="logo"
+  class="w-[40px] h-[40px]
+         object-contain"
+/>
+            <p class="text-2xl font-bold text-primary">{{companyName}}</p>
+
+</div>
+
             <nav app-breadcrumb class="topbar-breadcrumb"></nav>
         </div>
 
         <div class="topbar-end">
             <ul class="topbar-menu">
-                <li class="topbar-search">
+                <!-- <li class="topbar-search">
                     <p-iconfield>
                         <p-inputicon class="pi pi-search" />
                         <input type="text" pInputText placeholder="Search" class="w-48 sm:w-full" />
                     </p-iconfield>
-                </li>
+                </li> -->
                 <li class="ml-3">
                     <p-button icon="pi pi-palette" rounded (onClick)="onConfigButtonClick()"></p-button>
                 </li>
@@ -41,11 +56,15 @@ import { InputIconModule } from 'primeng/inputicon';
         </div>
     </div>`
 })
-export class AppTopbar {
+export class AppTopbar  {
     @ViewChild('menubutton') menuButton!: ElementRef;
-
-    constructor(public layoutService: LayoutService) {}
-
+     companyName:string='';
+     companyLogo:string='';
+     public imageUrl:string='';
+    constructor(public layoutService: LayoutService, private inventoryService:InventoryService) {}
+   ngOnInit(){
+     this.onGetData();
+   }
     onMenuButtonClick() {
         this.layoutService.onMenuToggle();
     }
@@ -56,5 +75,25 @@ export class AppTopbar {
 
     onConfigButtonClick() {
         this.layoutService.showConfigSidebar();
+    }
+     createDropdownPayload(returnType:string){
+       return{
+         uname: "admin",
+    p_username: "admin",
+    p_returntype: returnType
+       }
+    }
+    onGetData(){
+        const  payload= this.createDropdownPayload('PROFILE');
+        this.inventoryService.getdropdowndetails(payload).subscribe({
+            
+            next:(res)=>
+            { if(res.data){
+                    this.companyName=res.data[0].companyname;
+                    this.companyLogo=res.data[0].companylogo;
+            }
+            },
+            error: (err) => console.log(err)
+        });
     }
 }

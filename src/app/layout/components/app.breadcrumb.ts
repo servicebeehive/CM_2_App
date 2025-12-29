@@ -26,7 +26,7 @@ interface Breadcrumb {
                 let-last="last"
                 [ngForOf]="breadcrumbs$ | async"
             >
-                <li>{{ item.label }}</li>
+                <!-- <li>{{ item.label }}</li>          commented doesnot show dashboard-->   
                 <li *ngIf="!last" class="layout-breadcrumb-chevron">/</li>
             </ng-template>
         </ol>

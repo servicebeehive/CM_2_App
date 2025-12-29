@@ -100,16 +100,16 @@
 
       <!-- BILL NO -->
       <div class="flex flex-col">
-        <label class="font-medium mb-1">Replace Bill No</label>
+        <label class="font-medium mb-1">Replace Invoice No</label>
 
         <p-dropdown
           [options]="replaceBillNoOptions"
           optionLabel="billno"
           optionValue="billno"
-          placeholder=" Replace Bill No."
+          placeholder=" Replace Invoice No"
           formControlName="p_billno"
           [filter]="true"
-          filterPlaceholder="Search Bill No."
+          filterPlaceholder="Search Invoice No"
           [showClear]="true"
           (onChange)="onReplaceBillDetails($event)">
         </p-dropdown>
@@ -146,11 +146,11 @@
 
       <!-- MOBILE -->
       <div class="flex flex-col">
-        <label class="font-medium mb-1">Mobile No.</label>
+        <label class="font-medium mb-1">Mobile No</label>
         <input
           pInputText
           type="number"
-          placeholder="Mobile No."
+          placeholder="Mobile No"
           maxlength="10"
           formControlName="p_mobileno" 
           (keypress)="allowOnlyNumbers($event)"/>
@@ -264,12 +264,12 @@
       <!-- Discount type -->
         <div class="flex flex-col">
           <label class="font-medium mb-2">Disc(%)</label>
-          <p-checkbox readonly class="w-5 h-5" binary="true" variant="filled" formControlName="p_disctype"></p-checkbox>
+          <p-checkbox class="w-5 h-5" binary="true" variant="filled" formControlName="p_disctype"></p-checkbox>
         </div>
       <!-- Discount -->
       <div class="flex flex-col ">
         <label class="font-medium">Discount</label>
-        <input readonly class="p-inputtext p-component font-small w-full" pInputText type="number" formControlName="p_overalldiscount" (input)="applyDiscount()" [placeholder]="discountplace"/>
+        <input class="p-inputtext p-component font-small w-full" pInputText type="number" formControlName="p_overalldiscount" (input)="applyDiscount()" [placeholder]="discountplace"/>
       </div>
 </div>
       <!-- Round Off -->

@@ -145,6 +145,8 @@ export class ForgotPassword {
 onSubmit(){
   if(this.forgetForm.valid){
    console.log('forget');
+
+   
     this.route.navigate(['/login']);
   }
 }

@@ -85,7 +85,7 @@ export class StockAdjustmentComponent {
   ];
 
   mrpUpdate = [
-    { label: 'Batch', value: 'B' },
+    { label: 'LOT', value: 'B' },
     { label: 'Item', value: 'I' }
   ];
 
@@ -314,11 +314,8 @@ export class StockAdjustmentComponent {
   // -------------------------
   createDropdownPayload(returnType: string) {
     return {
-       
       p_username: 'admin',
-      p_returntype: returnType,
-          
-            
+      p_returntype: returnType,     
     };
   }
 
@@ -342,12 +339,9 @@ export class StockAdjustmentComponent {
   categoryRelavantItem(id: any) {
     this.itemOptions = [];
     const payload = {
-       
       p_username: "admin",
       p_returntype: "CATEGORYITEM",
       p_returnvalue: id.toString(),
-      
-       
     };
     
     this.inventoryService.Getreturndropdowndetails(payload).subscribe({
@@ -397,14 +391,11 @@ export class StockAdjustmentComponent {
       return;
     }
 
-    const payload = {
-       
+    const payload = {      
       p_categoryid: category || null,
       p_itemid: item || null,
       p_username: 'admin',
-      p_updatetype: this.updateForm.controls['mrpUpdate'].value,
-          
-            
+      p_updatetype: this.updateForm.controls['mrpUpdate'].value,     
     };
 
     this.showData = false; // Hide previous data while loading
@@ -453,12 +444,8 @@ export class StockAdjustmentComponent {
     }
 
     const payload = {
-       
-      p_stock: trimmed,
-       
-          
-      p_updatetype: this.updateForm.controls['mrpUpdate'].value,
-            
+      p_stock: trimmed,      
+      p_updatetype: this.updateForm.controls['mrpUpdate'].value,     
     };
   
     // call API
@@ -470,10 +457,6 @@ export class StockAdjustmentComponent {
       },
       error: (err) => console.error(err)
     });
-  }
-
-  onItemChange(event: any) {
-    // No automatic filtering
   }
 
   // -------------------------

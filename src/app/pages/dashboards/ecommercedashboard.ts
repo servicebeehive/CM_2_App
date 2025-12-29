@@ -40,9 +40,8 @@ import { SaleMangerDashboard } from './salemanagerdashboard';
             <app-filter-page class="top-filter-section" />
         </div>
      </div> -->
-   
-
-        <div *ngIf="role === 'Admin'||role === 'admin'">
+   @if(role==='Admin' || role==='StoreOwner'){
+        <div>
 
   <p-dropdown 
             [options]="filterOptions" 
@@ -77,10 +76,14 @@ import { SaleMangerDashboard } from './salemanagerdashboard';
         
      </div>
 </div>
-<div *ngIf="role === 'SalesManager'">
+   }
+   @else{
+<div>
     <app-sales-dashboard></app-sales-dashboard>
 
 </div>
+   }
+
 
     `
 })

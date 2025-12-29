@@ -24,6 +24,7 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { AddinventoryComponent } from '@/pages/inventory/addinventory/addinventory.component';
 import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
 import { AuthService } from '@/core/services/auth.service';
+import { select } from '@ngrx/store';
 
 @Component({
     selector: 'app-retrun',
@@ -48,12 +49,12 @@ import { AuthService } from '@/core/services/auth.service';
         ConfirmDialogModule,
         CheckboxModule,
         AddinventoryComponent,
-         DatePipe,
+        DatePipe
         // GlobalFilterComponent
     ],
     templateUrl: './return.component.html',
     styleUrl: './return.component.scss',
-    providers: [ConfirmationService,DatePipe]
+    providers: [ConfirmationService, DatePipe]
 })
 export class ReturnComponent {
     returnForm!: FormGroup;
@@ -63,32 +64,34 @@ export class ReturnComponent {
     pagedProducts: StockIn[] = [];
     first: number = 0;
     rowsPerPage: number = 5;
+    submitDisable: boolean = true;
     products: StockIn[] = [];
-    filteredProducts: any [] = [];
+    filteredProducts: any[] = [];
     filteredCustomerName: any[] = [];
-    itemOptions: any[]=[];
-  filteredMobile: any[] = [];
-    selectedProducts:any[]=[];
+    itemOptions: any[] = [];
+    filteredMobile: any[] = [];
+    selectedProducts: any[] = [];
     globalFilter: string = '';
     childUomStatus: boolean = false;
-    showGlobalSearch:boolean=true;
+    showGlobalSearch: boolean = true;
     today: Date = new Date();
-    discountplace:string='Enter Amount';
+    showBillno: boolean = false;
+    discountplace: string = 'Enter Amount';
     //for testing
-      @ViewChild(AddinventoryComponent) addInventoryComp!: AddinventoryComponent;
- // ✅ Move dropdown options into variables
-    returnBillNoOptions:any[] = [];
+    @ViewChild(AddinventoryComponent) addInventoryComp!: AddinventoryComponent;
+    // ✅ Move dropdown options into variables
+    returnBillNoOptions: any[] = [];
 
     // ✅ Move dropdown options into variables
     billNoOptions: any[] = [];
-public authService = inject(AuthService);
-  public getUserDetails = {};
+    public authService = inject(AuthService);
+    public getUserDetails = {};
     constructor(
         private fb: FormBuilder,
         private stockInService: InventoryService,
         private confirmationService: ConfirmationService,
         private returnService: InventoryService,
-        private messageService:MessageService,
+        private messageService: MessageService,
         public datepipe: DatePipe
     ) {}
 
@@ -97,63 +100,61 @@ public authService = inject(AuthService);
         this.initializeForm();
         // this.onGetStockIn();
     }
- initializeForm(): void {
-this.returnForm = this.fb.group({
-            returnBillNo: ['', Validators.required],
+    initializeForm(): void {
+        this.returnForm = this.fb.group({
+            returnBillNo: [null, Validators.required],
             p_itemdata: [null],
-      p_transactiontype: [''],
-      p_itemid: [null],
-      p_billno: [null],
-      p_transactionid: [0],
-      p_transactiondate: [this.today,[Validators.required]],
-      p_customername: [''],
-      p_mobileno: ['',[Validators.pattern(/^[6-9]\d{9}$/)]],
-      p_totalcost: [0],
-      p_totalsale: [0],
-      p_disctype:[false],
-      p_overalldiscount: [''],
-      p_roundoff: [''],
-      p_totalpayable: [0],
-      p_currencyid: [0],
-      p_gsttran: [true],
-      p_status: [''],
-      p_isactive: [''],
-      p_loginuser: [''],
-      p_linktransactionid: [0],
-      p_replacesimilir: [''],
-      p_creditnoteno: [''],
-      p_paymentmode: [''],
-      p_paymentdue: [0],
-            p_sale: this.fb.array([]),
-
+            p_transactiontype: [''],
+            p_itemid: [null],
+            p_billno: [''],
+            p_transactionid: [0],
+            p_transactiondate: [this.today, [Validators.required]],
+            p_customername: [''],
+            p_mobileno: ['', [Validators.pattern(/^[6-9]\d{9}$/)]],
+            p_totalcost: [0],
+            p_totalsale: [0],
+            p_disctype: [false],
+            p_overalldiscount: [''],
+            p_roundoff: [''],
+            p_totalpayable: [0],
+            p_currencyid: [0],
+            p_gsttran: [true],
+            p_status: [''],
+            p_isactive: [''],
+            p_loginuser: [''],
+            p_linktransactionid: [0],
+            p_replacesimilir: [''],
+            p_creditnoteno: [''],
+            p_paymentmode: [''],
+            p_paymentdue: ['0'],
+            p_sale: this.fb.array([])
         });
         this.returnForm.get('discountLabel')?.valueChanges.subscribe(() => {
             this.updatedFinalAmount();
         });
-        this.returnForm.get('p_disctype')?.valueChanges.subscribe(value=>{
-      if(!value){
-   this.discountplace="Enter Amount";
-}
-else{
-  this.discountplace="Enter %";
-}
-//  this.returnForm.get('p_overalldiscount')?.setValue('', { emitEvent: false });
- this.applyDiscount();
-    });
- }
-  blockDecimal(event: KeyboardEvent) {
-    if (event.key === '.' || event.key === ',' || event.key === 'e' || event.key === 'E'|| event.key === '-') {
-      event.preventDefault();  // block decimal
+        this.returnForm.get('p_disctype')?.valueChanges.subscribe((value) => {
+            if (!value) {
+                this.discountplace = 'Enter Amount';
+            } else {
+                this.discountplace = 'Enter %';
+            }
+            //  this.returnForm.get('p_overalldiscount')?.setValue('', { emitEvent: false });
+            this.applyDiscount();
+        });
     }
-  }
-    
-     get saleArray(): FormArray {
-    return this.returnForm.get('p_sale') as FormArray;
-  }
-   get saleRows(): FormGroup[] {
-    return this.saleArray.controls as FormGroup[];
-  }
-   isRowSelected(row: FormGroup): boolean {
+    blockDecimal(event: KeyboardEvent) {
+        if (event.key === '.' || event.key === ',' || event.key === 'e' || event.key === 'E' || event.key === '-') {
+            event.preventDefault(); // block decimal
+        }
+    }
+
+    get saleArray(): FormArray {
+        return this.returnForm.get('p_sale') as FormArray;
+    }
+    get saleRows(): FormGroup[] {
+        return this.saleArray.controls as FormGroup[];
+    }
+    isRowSelected(row: FormGroup): boolean {
         return this.selectedProducts.includes(row);
     }
 
@@ -162,229 +163,247 @@ else{
         if (this.saleArray.length === 0) return false;
         return this.selectedProducts.length === this.saleArray.length;
     }
+    clearAllSelected(): void {
+        const rows = this.saleArray.controls as FormGroup[];
+        this.selectedProducts = [];
+        rows.forEach((row, index) => {
+            this.updateTotal(index);
+        });
+        this.updateSelectedTotal();
+        this.submitDisable = true;
+    }
 
-    // Toggle selection for a single row
+    // Add this method to your component
+    updateSubmitButtonState(): void {
+        // Enable submit if any row is selected AND has quantity > 0
+        this.submitDisable = this.selectedProducts.length === 0 || !this.selectedProducts.some((row) => row.get('Quantity')?.value > 0);
+    }
+
+    // Then call it in both methods:
     toggleRowSelection(row: FormGroup, event: any): void {
         const isChecked = event.checked;
-        
+
         if (isChecked) {
-            // Add to selection
             this.selectedProducts.push(row);
-            
-            // Initialize quantity to 1 if not already set
             if (!row.get('Quantity')?.value || row.get('Quantity')?.value === 0) {
                 row.get('Quantity')?.setValue(1);
                 this.updateTotal(this.saleArray.controls.indexOf(row));
             }
         } else {
-            // Remove from selection
             const index = this.selectedProducts.indexOf(row);
             if (index > -1) {
                 this.selectedProducts.splice(index, 1);
-                
-                // Reset quantity to 0 when deselected
-                row.get('Quantity')?.setValue(0);
                 this.updateTotal(this.saleArray.controls.indexOf(row));
             }
         }
-        
+
+        // Call the helper method
+        this.updateSubmitButtonState();
         this.updateSelectedTotal();
     }
 
-    // Toggle select all
     toggleSelectAll(event: any): void {
         const isChecked = event.checked;
         const currentRows = this.saleArray.controls as FormGroup[];
-        
+
         if (isChecked) {
-            // Select all rows
             this.selectedProducts = [...currentRows];
             currentRows.forEach((row, index) => {
-                // Initialize quantity to 1 for newly selected rows
                 if (!row.get('Quantity')?.value || row.get('Quantity')?.value === 0) {
                     row.get('Quantity')?.setValue(1);
                 }
             });
         } else {
-            // Deselect all rows
             this.selectedProducts = [];
-            currentRows.forEach(row => {
-                // Reset quantity to 0 for deselected rows
+            currentRows.forEach((row) => {
                 row.get('Quantity')?.setValue(0);
             });
         }
-        
-        // Update totals for all rows
+
         currentRows.forEach((_, index) => {
             this.updateTotal(index);
         });
-        
+
         this.updateSelectedTotal();
-    }
-     mapSaleItems(apiItems: any[]) {
-    this.saleArray.clear(); // Remove old rows if any
 
-    apiItems.forEach((item,i) => {
-      this.saleArray.push(
-        this.fb.group({
-            TransactiondetailId: item.transactiondetailid || 0,
-          ItemId: item.itemid || 0,    // use itemsku when itemid not present
-          ItemName: item.itemname || '',
-          UOMId: item.uomid || 0,
-          uomname: item.uomname,
-          Quantity: item.quantity || 1,
-          itemcost: item.itemcost || 0,
-          MRP: (item.mrp || 0).toFixed(2),
-          totalPayable: ((item.quantity || 1) * (item.mrp || 0)).toFixed(2),
-          // p_totalcost:item.
-          // Additional fields used in UI
-          curStock: item.current_stock || 0,
-          warPeriod: 0,
-          location: "",
-          itemsku: item.itemsku || ''
-        })
-      );
-      this.updateTotal(i);
-    });
-   this.calculateSummary();
-    // If items were added, update totals for the last row and overall summary
-    const index = this.saleArray.length - 1;
-    this.updateTotal(index);
-    this.calculateSummary();
-  }
+        // Call the helper method
+        this.updateSubmitButtonState();
+    }
+
+    mapSaleItems(apiItems: any[]) {
+        this.saleArray.clear(); // Remove old rows if any
+
+        apiItems.forEach((item, i) => {
+            this.saleArray.push(
+                this.fb.group({
+                    TransactiondetailId: item.transactiondetailid || 0,
+                    ItemId: item.itemid || 0, // use itemsku when itemid not present
+                    ItemName: item.itemname || '',
+                    UOMId: item.uomid || 0,
+                    uomname: item.uomname,
+                    Quantity: item.quantity || 1,
+                    originalQuantity: item.quantity,
+                    itemcost: item.itemcost || 0,
+                    MRP: (item.mrp || 0).toFixed(2),
+                    totalPayable: ((item.quantity || 1) * (item.mrp || 0)).toFixed(2),
+                    // p_totalcost:item.
+                    // Additional fields used in UI
+                    curStock: item.current_stock || 0,
+                    warPeriod: item.warrenty,
+                    location: '',
+                    itemsku: item.itemsku || ''
+                })
+            );
+            this.updateTotal(i);
+        });
+        this.calculateSummary();
+        // If items were added, update totals for the last row and overall summary
+        const index = this.saleArray.length - 1;
+        this.updateTotal(index);
+        this.calculateSummary();
+    }
     SaleDetails(data: any) {
-    const apibody = {
-      ...this.getUserDetails,
-      "p_returntype": "SALEDETAIL",
-      "p_returnvalue": data.transactionid,
-    };
+        const apibody = {
+            ...this.getUserDetails,
+            p_returntype: 'SALEDETAIL',
+            p_returnvalue: data.transactionid
+        };
 
-    this.stockInService.Getreturndropdowndetails(apibody).subscribe({
-      next: (res) => {
-        console.log(res.data)
-        this.mapSaleItems(res.data);
-        if(res.data && res.data.length>0 && res.data[0].discounttype){
-          this.returnForm.patchValue({
-            p_disctype:(res.data[0].discounttype==='Y')
-          });
+        this.stockInService.Getreturndropdowndetails(apibody).subscribe({
+            next: (res) => {
+                console.log(res.data);
+                this.mapSaleItems(res.data);
+                if (res.data && res.data.length > 0 && res.data[0].discounttype) {
+                    this.returnForm.patchValue({
+                        p_disctype: res.data[0].discounttype === 'Y'
+                    });
+                }
+            }
+        });
+    }
+    onBillDetails(event: any) {
+        this.clearAllSelected();
+        this.showBillno = false;
+        console.log(event.value);
+        const billDetails = this.billNoOptions.find((billitem) => billitem.billno === event.value);
+        console.log('bill', billDetails);
+        if (billDetails) {
+            this.SaleDetails(billDetails);
+
+            this.returnForm.patchValue({
+                p_transactionid: billDetails.transactionid,
+                p_customername: billDetails.customername,
+                p_transactiondate: billDetails.transactiondate ? new Date(billDetails.transactiondate) : null,
+                p_mobileno: billDetails.mobileno,
+                p_totalcost: billDetails.totalcost,
+                p_totalsale: billDetails.totalsale,
+                p_paymentdue: billDetails.amountpaid,
+                p_disctype: billDetails.discounttype == 'Y' ? true : false,
+                p_overalldiscount: billDetails.discount,
+                p_roundoff: billDetails.roundoff,
+                p_totalpayable: billDetails.totalpayable
+            });
         }
-      }
-    });
-  }
- onBillDetails(event: any) {
-    console.log(event.value);
-    const billDetails = this.billNoOptions.find(billitem => billitem.billno === event.value);
-    console.log('bill',billDetails);
-    if (billDetails) {
-      this.SaleDetails(billDetails);
-
-      this.returnForm.patchValue({
-        p_transactionid: billDetails.transactionid,
-        p_customername:billDetails.customername,
-        p_transactiondate: billDetails.transactiondate ? new Date(billDetails.transactiondate) : null,
-        p_mobileno: billDetails.mobileno,
-        p_totalcost: billDetails.totalcost,
-        p_totalsale: billDetails.totalsale,
-         p_disctype: billDetails.discounttype=='Y'?true:false,
-        p_overalldiscount: billDetails.discount,
-        p_roundoff: billDetails.roundoff,
-        p_totalpayable: billDetails.totalpayable
-      });
     }
-    
-  }
-  
-  onReturnBillDetails(event:any){
-    const returnBillDetails= this.returnBillNoOptions.find(returnbillitem =>returnbillitem.billno === event.value);
-    console.log(returnBillDetails)
-    if(returnBillDetails){
-      this.SaleDetails(returnBillDetails);
-      this.returnForm.patchValue({
-          p_transactionid: returnBillDetails.transactionid,
-        p_customername:returnBillDetails.customername,
-        p_transactiondate: returnBillDetails.transactiondate ? new Date(returnBillDetails.transactiondate) : null,
-        p_mobileno: returnBillDetails.mobileno,
-        p_totalcost: (returnBillDetails.totalcost).toFixed(2),
-        p_totalsale: (returnBillDetails.totalsale).toFixed(2),
-         p_disctype: returnBillDetails.discounttype=='Y'?true:false,
-        p_overalldiscount: returnBillDetails.discount,
-        p_roundoff: returnBillDetails.roundoff,
-        p_totalpayable: (returnBillDetails.totalpayable).toFixed(2),
-      });
-    }
-  }
- cleanRequestBody(body: any) {
-   const formattedDate = this.datepipe.transform(
-      body.p_transactiondate,
-      'dd/MM/yyyy'
-    );
-    return {
-      ...this.getUserDetails,
-      p_transactiontype: "RETURN",
-      p_transactionid: 0 ,
-      p_transactiondate: formattedDate || "",
-      p_customername: body.p_customername || "",
-      p_mobileno: body.p_mobileno || "",
-      p_totalcost: Number(body.p_totalcost) || 0,
-      p_totalsale: Number(body.p_totalsale) || 0,
-      p_overalldiscount: Number(body.p_overalldiscount) || 0,
-      p_roundoff: body.p_roundoff ? body.p_roundoff.toString() : "0.00",
-      p_totalpayable: Number(body.p_totalpayable) || 0,
-      p_currencyid: Number(body.p_currencyid) || 0,
-      p_gsttran: body.p_gsttran === true ? "Y" :
-        body.p_gsttran === false ? "N" : "N",
-      p_status: body.p_status || "Complete",
-      p_isactive: "Y",
-      p_linktransactionid:body.p_transactionid ?? 0,
-      // p_replacesimilir: body.p_replacesimilir || "",
-       p_replacesimilir:body.p_disctype === true ?"Y" : "N",
-      p_creditnoteno: body.p_creditnoteno || "",
-      p_paymentmode: body.p_paymentmode || "Cash",
-      p_paymentdue: Number(body.p_paymentdue) || 0,
-      p_sale: (body.p_sale || []).map((x: any) => ({
-        TransactiondetailId: 0,
-        ItemId: x.ItemId,
-        ItemName: x.ItemName,
-        UOMId: x.UOMId,
-        Quantity: x.Quantity,
-        itemcost: x.itemcost,
-        MRP: x.MRP,
-        totalPayable: x.totalPayable,
-        currentstock:x.curStock,
-      }))
-    };
-  }
-OnSalesHeaderCreate(data: any) {
-    const apibody = this.cleanRequestBody(this.returnForm.value);
-   //   delete (apibody as any).p_loginuser;
 
-    this.stockInService.OninsertSalesDetails(apibody).subscribe({
-      next: (res) => {
-        console.log(res.data);
-      
-      //   this.OnGetReturnBillNo();
-      //     // const billno = res.data[0]?.billno;
-      //   this.returnForm.patchValue({
-      //   returnBillNo: res.data[0].billno   
-      // })
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Success',
-          detail: 'Sales saved successfully!',
-          life: 3000
+    onReturnBillDetails(event: any) {
+         this.clearAllSelected();
+        this.showBillno = true;
+        const returnBillDetails = this.returnBillNoOptions.find((returnbillitem) => returnbillitem.billno === event.value);
+        console.log(returnBillDetails);
+        if (returnBillDetails) {
+            this.SaleDetails(returnBillDetails);
+            this.returnForm.patchValue({
+                p_transactionid: returnBillDetails.transactionid,
+                p_customername: returnBillDetails.customername,
+                p_transactiondate: returnBillDetails.transactiondate ? new Date(returnBillDetails.transactiondate) : null,
+                p_mobileno: returnBillDetails.mobileno,
+                p_totalcost: returnBillDetails.totalcost.toFixed(2),
+                p_totalsale: returnBillDetails.totalsale.toFixed(2),
+                p_paymentdue: returnBillDetails.amountpaid,
+                p_disctype: returnBillDetails.discounttype == 'Y' ? true : false,
+                p_overalldiscount: returnBillDetails.discount,
+                p_roundoff: returnBillDetails.roundoff,
+                p_billno: returnBillDetails.invoiceno,
+                p_totalpayable: returnBillDetails.totalpayable.toFixed(2)
+            });
+
+            console.log('billno:', returnBillDetails.billno);
+        }
+    }
+    cleanRequestBody(body: any) {
+       console.log('rest1', body);
+        const formattedDate = this.datepipe.transform(body.p_transactiondate, 'dd/MM/yyyy');
+        return {
+            ...this.getUserDetails,
+            p_transactiontype: 'RETURN',
+            p_transactionid: 0,
+            p_transactiondate: formattedDate || '',
+            p_customername: body.p_customername || '',
+            p_mobileno: body.p_mobileno || '',
+            p_totalcost: Number(body.p_totalcost) || 0,
+            p_totalsale: Number(body.p_totalsale) || 0,
+            p_overalldiscount: Number(body.p_overalldiscount) || 0,
+            p_roundoff: body.p_roundoff ? body.p_roundoff.toString() : '0.00',
+            p_totalpayable: Number(body.p_totalpayable) || 0,
+            p_currencyid: Number(body.p_currencyid) || 0,
+            p_gsttran: body.p_gsttran === true ? 'Y' : body.p_gsttran === false ? 'N' : 'N',
+            p_status: body.p_status || 'Done',
+            p_isactive: 'Y',
+            p_linktransactionid: body.p_transactionid ?? 0,
+            // p_replacesimilir: body.p_replacesimilir || "",
+            p_replacesimilir: body.p_disctype === true ? 'Y' : 'N',
+            p_creditnoteno: body.p_creditnoteno || '',
+            p_paymentmode: body.p_paymentmode || 'Cash',
+            p_paymentdue: Number(body.p_paymentdue) || 0,
+            p_sale: (body.p_sale || []).map((x: any) => ({
+                TransactiondetailId: 0,
+                ItemId: x.ItemId,
+                ItemName: x.ItemName,
+                UOMId: x.UOMId,
+                Quantity: x.Quantity,
+                itemcost: x.itemcost,
+                MRP: x.MRP,
+                warrenty: x.warPeriod,
+                totalPayable: x.totalPayable,
+                currentstock: x.curStock
+            }))
+        };
+    }
+    OnSalesHeaderCreate(data: any) {
+        this.showBillno=true;
+        const apibody = this.cleanRequestBody(this.returnForm.value);
+        //   delete (apibody as any).p_loginuser;
+        this.stockInService.OninsertSalesDetails(apibody).subscribe({
+            next: (res) => {
+                const billno = res.data[0].billno;
+                console.log('return:', billno);
+                this.returnForm.patchValue({
+                    returnBillNo: billno,
+                    // p_billno:res.data[0].invoiceno
+                });
+                   this.OnGetBillNo();
+                this.OnGetReturnBillNo(); 
+               
+                
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Success',
+                    detail: 'Sale Return saved successfully!',
+                    life: 3000
+                });
+            },
+            error: (err) => {
+                console.error(err);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'Failed to save sale return. Please try again.',
+                    life: 3000
+                });
+            }
         });
-      },
-      error: (err) => {
-        console.error(err);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to save sales. Please try again.',
-          life: 3000
-        });
-      }
-    });
-  }
+    }
 
     applyGlobalFilter() {
         const searchTerm = this.globalFilter?.toLowerCase() || '';
@@ -392,24 +411,51 @@ OnSalesHeaderCreate(data: any) {
             return Object.values(p).some((value) => String(value).toLowerCase().includes(searchTerm));
         });
     }
-    updateTotal(index:number) {
-        const row=this.saleArray.at(index) as FormGroup;
+    updateTotal(index: number) {
+        const row = this.saleArray.at(index) as FormGroup;
 
-        const qty = Number(row.get('Quantity')?.value ||0);
-        const stock=Number(row.get('curStock')?.value || 0);
+        const qty = Number(row.get('Quantity')?.value || 0);
+        const originalQty = Number(row.get('originalQuantity')?.value || 0);
+        // const stock=Number(row.get('curStock')?.value || 0);
         const mrp = Number(row.get('MRP')?.value || 0);
         const total = +(mrp * qty).toFixed(2);
-        if(qty>(stock+1)){
-          row.get('Quantity')?.setErrors({maxStock:true});
-      return;
-    } else {
-      // Clear error if valid
-      row.get('Quantity')?.setErrors(null);
-    }
+        console.log('original quantity', originalQty);
+        const isSelected = this.selectedProducts.includes(row);
+        if (isSelected) {
+            if (qty === null || qty === undefined || isNaN(qty)) {
+                row.get('Quantity')?.setErrors({ required: true });
+                this.showValidationMessage('Quantity is required', 'error');
+                return;
+            }
+            if (qty <= 0) {
+                row.get('Quantity')?.setErrors({ required: true });
+                this.showValidationMessage('Quantity must be greater than 0', 'error');
+                return;
+            }
+            if (qty > originalQty) {
+                (row.get('Quantity')?.setErrors({ MaxQuantity: true }), this.showValidationMessage(`Cannot return more than ${originalQty} units (original sale quantity)`, 'warn'));
+                return;
+            }
 
-        row.patchValue({totalPayable: total});
+            // if (stock > 0 && qty > stock) {
+            //     // This is a warning, not necessarily an error for returns
+            //     row.get('Quantity')?.setErrors({ stockWarning: true });
+            //     this.showValidationMessage(`Note: Only ${stock} units currently in stock`, 'info');
+            // }
+        } else {
+            row.get('Quantity')?.setErrors(null);
+        }
+        row.patchValue({ totalPayable: total });
         this.calculateSummary();
         this.updateSelectedTotal();
+    }
+    showValidationMessage(message: string, severity: 'error' | 'warn' | 'info' | 'success') {
+        this.messageService.add({
+            severity: severity,
+            summary: severity === 'error' ? 'Validation Error' : severity === 'warn' ? 'Warning' : 'Information',
+            detail: message,
+            life: 3000
+        });
     }
     calculateTotals() {
         const totalMrp = this.filteredProducts.reduce((sum, p) => sum + (p.mrp || 0) * (p.Quantity || 0), 0);
@@ -436,19 +482,22 @@ OnSalesHeaderCreate(data: any) {
         );
         this.returnForm.patchValue({ finalPayable: roundedAmount }, { emitEvent: false });
     }
-    updateSelectedTotal(){
-        const totalMrp=this.selectedProducts.reduce((sum, item)=>{
-          const qty=Number(item.Quantity) || 0;
-          const mrp = Number(item.mrp) || 0;
-          return sum + (qty * mrp);
-        },0);
-        this.returnForm.patchValue({
-            mrpTotal:totalMrp.toFixed(2)
-        },{emitEvent:false});
+    updateSelectedTotal() {
+        const totalMrp = this.selectedProducts.reduce((sum, item) => {
+            const qty = Number(item.Quantity) || 0;
+            const mrp = Number(item.mrp) || 0;
+            return sum + qty * mrp;
+        }, 0);
+        this.returnForm.patchValue(
+            {
+                mrpTotal: totalMrp.toFixed(2)
+            },
+            { emitEvent: false }
+        );
         this.updatedFinalAmount();
     }
-    onSelectionChange(){
-         console.log('Selected rows:', this.selectedProducts);
+    onSelectionChange() {
+        console.log('Selected rows:', this.selectedProducts);
     }
     onPageChange(event: any) {
         this.first = event.first;
@@ -475,96 +524,104 @@ OnSalesHeaderCreate(data: any) {
         this.childUomStatus = status;
         return this.childUomStatus;
     }
-     applyDiscount() {
-    const totalSale = Number(this.returnForm.get('p_totalsale')?.value || 0) ;
-    const discountValue = Number(this.returnForm.get('p_overalldiscount')?.value || 0);
-    const isPresent = this.returnForm.get('p_disctype')?.value;
-   let discountAmount=0;
+    applyDiscount() {
+        const totalSale = Number(this.returnForm.get('p_totalsale')?.value || 0);
+        const discountValue = Number(this.returnForm.get('p_overalldiscount')?.value || 0);
+        const isPresent = this.returnForm.get('p_disctype')?.value;
+        let discountAmount = 0;
 
-    if(isPresent){
-      discountAmount=(totalSale*discountValue)/100;
-    }else{
-      discountAmount=discountValue;
-    }
-    let finalPayable = totalSale - discountAmount;
-
-    // Round off to 2 decimals difference and then round to integer for payable
-    const roundOff = +(finalPayable - Math.floor(finalPayable)).toFixed(2);
-
-    this.returnForm.patchValue({
-      p_roundoff: roundOff,
-      p_totalpayable: Math.round(finalPayable)
-    });
-  }
- calculateSummary() {
-    let totalCost = 0;
-    let totalMRP = 0;
-    let totalSale = 0;
-
-    this.saleArray.controls.forEach((row: AbstractControl) => {
-      const qty = Number(row.get('Quantity')?.value || 0);
-      const cost = Number(row.get('itemcost')?.value || 0);
-      const mrp = Number(row.get('MRP')?.value || 0);
-
-      totalCost += qty * cost;
-      totalMRP += qty * mrp;
-      totalSale += qty * mrp;
-    });
-
-    // Assign summary values
-    this.returnForm.patchValue({
-      p_totalcost: (totalCost).toFixed(2),
-      p_totalsale: (totalMRP).toFixed(2),
-      p_roundoff: 0,
-      p_totalpayable: (totalMRP).toFixed(2)
-    });
-
-    // Apply discount/rounding adjustments
-    this.applyDiscount();
-  }
-
-    hold() {}
-    print() {}
-    onSave(updatedData: any) {
-        const mappedData = {
-            selection: true,
-            code: updatedData.itemCode.label || updatedData.itemCode,
-            name: updatedData.itemName,
-            category: updatedData.category,
-            curStock: updatedData.curStock,
-            purchasePrice: updatedData.purchasePrice,
-            Quantity: updatedData.qty,
-            total: (updatedData.purchasePrice || 0) * (updatedData.qty || 0),
-            uom: updatedData.uom,
-            mrp: updatedData.mrp,
-            discount: updatedData.discount,
-            minStock: updatedData.minStock,
-            warPeriod: updatedData.warPeriod,
-            location: updatedData.location
-        };
-        const index = this.filteredProducts.findIndex((p) => p.code === this.selectedRow?.code);
-        if (index !== -1) {
-            this.products[index] = { ...this.products[index], ...mappedData };
+        if (isPresent) {
+            discountAmount = (totalSale * discountValue) / 100;
+        } else {
+            discountAmount = discountValue;
         }
-        if (this.mode === 'add') {
-            this.products.push(mappedData);
-        }
-        this.filteredProducts = [...this.products];
-        this.calculateTotals();
-        this.closeDialog();
+        let finalPayable = totalSale - discountAmount;
+
+        // Round off to 2 decimals difference and then round to integer for payable
+        const roundOff = +(finalPayable - Math.floor(finalPayable)).toFixed(2);
+
+        this.returnForm.patchValue({
+            p_roundoff: roundOff,
+            p_totalpayable: Math.round(finalPayable)
+        });
     }
-    
+    calculateSummary() {
+        let totalCost = 0;
+        let totalMRP = 0;
+        let totalSale = 0;
+
+        this.saleArray.controls.forEach((row: AbstractControl) => {
+            const qty = Number(row.get('Quantity')?.value || 0);
+            const cost = Number(row.get('itemcost')?.value || 0);
+            const mrp = Number(row.get('MRP')?.value || 0);
+
+            totalCost += qty * cost;
+            totalMRP += qty * mrp;
+            totalSale += qty * mrp;
+        });
+
+        // Assign summary values
+        this.returnForm.patchValue({
+            p_totalcost: totalCost.toFixed(2),
+            p_totalsale: totalMRP.toFixed(2),
+            p_roundoff: 0,
+            p_totalpayable: totalMRP.toFixed(2)
+        });
+
+        // Apply discount/rounding adjustments
+        this.applyDiscount();
+    }
+
+    isSubmitDisabled(): boolean {
+        if (this.selectedProducts.length === 0) {
+            return true;
+        }
+        const hasValidQuatity = this.selectedProducts.some((row) => {
+            const quantity = Number(row.get('Quantity')?.value || 0);
+            const originalQty = Number(row.get('originalQuantity')?.value || 0);
+            if (row.get('Quantity')?.invalid) {
+                return true;
+            }
+            if (quantity <= 0 || isNaN(quantity)) {
+                return true;
+            }
+            if (quantity > originalQty) {
+                return true;
+            }
+            return false;
+        });
+        return hasValidQuatity;
+    }
     onSubmit() {
-    //    if (this.isSubmitDisabled()) {
-    //   this.messageService.add({
-    //     severity: 'error',
-    //     summary: 'Validation Failed',
-    //     detail: 'Please correct all errors before submitting.',
-    //     life: 2500
-    //   });
-    //   return;
-    // }
+        if (this.isSubmitDisabled()) {
+            let errorMessage = '';
+            if (this.selectedProducts.length === 0) {
+                errorMessage = 'Please select at least one item to return.';
+            } else {
+                const hasValidQuantity = this.selectedProducts.some((row) => {
+                    const quantity = Number(row.get('Quantity')?.value || 0);
+                    return quantity > 0;
+                });
 
+                if (!hasValidQuantity) {
+                    errorMessage = 'Please enter quantity greater than 0 for selected items.';
+                } else if (this.returnForm.invalid) {
+                    errorMessage = 'Please fill all required fields correctly.';
+                }
+            }
+          
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Validation Failed',
+                detail: errorMessage || 'Please correct all errors before submitting.',
+                life: 3000
+            });
+
+            // Mark all fields as touched to show validation errors
+            this.returnForm.markAllAsTouched();
+
+            return;
+        }
         this.confirmationService.confirm({
             message: 'Are you sure you want to make changes?',
             header: 'Confirm',
@@ -583,6 +640,7 @@ OnSalesHeaderCreate(data: any) {
         this.filteredProducts = [];
         this.pagedProducts = [];
         this.first = 0;
+        this.showBillno = false;
         this.returnForm.patchValue(
             {
                 mrpTotal: '',
@@ -593,37 +651,41 @@ OnSalesHeaderCreate(data: any) {
             },
             { emitEvent: false }
         );
-         this.saleArray.clear(); 
+        this.saleArray.clear();
     }
-createDropdownPayload(returnType: string) {
-    return {
-      p_returntype: returnType,
-      ...this.getUserDetails,
-    };
-  }
+    createDropdownPayload(returnType: string) {
+        return {
+            p_returntype: returnType,
+            ...this.getUserDetails
+        };
+    }
     OnGetBillNo() {
-    const payload = this.createDropdownPayload("NEWTRANSACTIONID");
-    this.returnService.getdropdowndetails(payload).subscribe({
-      next: (res) => {
-        const billdata: any = res.data;
-        this.billNoOptions = billdata.filter((item: { billno: null; }) => item.billno != null);
-      },
-      error: (err) => console.log(err)
-    });
-  }
-   OnGetReturnBillNo() {
-    const payload = this.createDropdownPayload("RETURN");
-    this.returnService.getdropdowndetails(payload).subscribe({
-      next: (res) => {
-        const billdata: any = res.data;
-        this.returnBillNoOptions = billdata.filter((item: { billno: null; }) => item.billno != null);
-      },
-      error: (err) => console.log(err)
-    });
-  }
+        const payload = this.createDropdownPayload('SALERETURN');
+        this.returnService.getdropdowndetails(payload).subscribe({
+            next: (res) => {
+                const billdata: any = res.data;
+                this.billNoOptions = billdata.filter((item: { billno: null }) => item.billno != null);
+            },
+            error: (err) => console.log(err)
+        });
+    }
+    OnGetReturnBillNo() {
+        const payload = this.createDropdownPayload('RETURN');
+        this.returnService.getdropdowndetails(payload).subscribe({
+            next: (res) => {
+                const billdata: any = res.data;
+                this.returnBillNoOptions = billdata.filter((item: { billno: null }) => item.billno != null);
+                // console.log('gfcgh:',this.returnBillNoOptions,data)
+                // this.returnForm.patchValue({
+                //     returnBillNo: data
+                // });
+            },
+            error: (err) => console.log(err)
+        });
+    }
 
     loadAllDropdowns() {
-    this.OnGetBillNo();
-    this.OnGetReturnBillNo();
-  }
+        this.OnGetBillNo();
+        this.OnGetReturnBillNo();
+    }
 }

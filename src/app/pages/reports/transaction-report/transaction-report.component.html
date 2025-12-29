@@ -1,118 +1,126 @@
 <div class="card p-6">
   <!-- Header Row: Stock In + Buttons -->
-  <div class="flex justify-between items-center mb-6">
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
     <span class="block text-surface-900 font-bold text-2xl">Transaction Report</span>
-     <!-- Add and Display Buttons -->
-      <div class="flex gap-6">
-         <button pButton type="submit" label="Display" class="p-button-warning"(click)="Onreturndropdowndetails()" [disabled]="reportForm.invalid"></button>
-        <button pButton type="button" label="Download" icon="pi pi-download" iconPos="right" class="p-button-warning"></button>
-        <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
-      </div>
+    
+    <!-- Buttons - Hidden on mobile, shown in header on desktop -->
+    <div class="hidden md:flex gap-4">
+      <button pButton type="submit" label="Display" class="p-button-warning" 
+        (click)="Onreturndropdowndetails()" [disabled]="reportForm.invalid">
+      </button>
+      <button pButton type="button" label="Download" icon="pi pi-download" iconPos="right" 
+        class="p-button-warning" (click)="onDownloadClick()">
+      </button>
+      <button pButton type="button" label="Reset" 
+        class="p-button-secondary" (click)="reset()">
+      </button>
+    </div>
   </div>
 
   <form [formGroup]="reportForm" class="space-y-8">
-
     <!-- 🏷 Product Info Section -->
-        <!-- Report Type -->
-         <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
-        <div class="flex flex-col">
-          <label class="font-medium mb-1">Report Type <span class="text-red-500">*</span></label>
-           <p-dropdown
-            [options]="reportTypeOptions"
-            optionLabel="label"
-            optionValue="value"
-            [filter]="true"
-            [showClear]="true"
-            filterPlaceholder="Select Report Type"
-            formControlName="reportType"
-            placeholder="Report Type"
-            (onChange)="onReportChange($event)"
-          >
-          </p-dropdown>
-          <!-- <small class="text-red-500 ms-3 mt-1" *ngIf="reportForm.get('vendorName')?.touched">
-            <span *ngIf="reportForm.get('vendorName')?.errors?.['required']">Vendor Name is required</span>
-          </small> -->
-        </div>
-        
-        <!-- <div class="flex items-center gap-2">
-           <p-checkbox formControlName="gstTransaction" [binary]="true"></p-checkbox>
-                <label class="font-medium mb-1">GST Transaction</label>
-            </div> -->
-            @if(reportForm.get('reportType')?.value ==='SALE' || reportForm.get('reportType')?.value ==='RETURN'){
- <div class="flex flex-wrap mt-6 gap-4">
-   <div class="flex items-center">
-        <p-radiobutton name="gstType1" value="all" [(ngModel)]="gstTransaction" [ngModelOptions]="{standalone: true}" inputId="all" />
-        <label for="all" class="ml-2">All</label>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 w-full">
+      <!-- Report Type -->
+      <div class="flex flex-col">
+        <label class="font-medium mb-1">Report Type <span class="text-red-500">*</span></label>
+        <p-dropdown
+          [options]="reportTypeOptions"
+          optionLabel="label"
+          optionValue="value"
+          [filter]="true"
+          [showClear]="true"
+          filterPlaceholder="Select Report Type"
+          formControlName="reportType"
+          placeholder="Report Type"
+          (onChange)="onReportChange($event)"
+        >
+        </p-dropdown>
       </div>
-    <div class="flex items-center">
-        <p-radiobutton name="gstType1" value="Y" [(ngModel)]="gstTransaction" [ngModelOptions]="{standalone: true}" inputId="gst" />
-        <label for="gst" class="ml-2">GST</label>
-    </div>
-
-    <div class="flex items-center">
-        <p-radiobutton name="gstType1" value="N" [(ngModel)]="gstTransaction" [ngModelOptions]="{standalone: true}" inputId="nonGst" />
-        <label for="nonGst" class="ml-2">Non-GST</label>
-    </div>
-    </div>
-            }
-            @else if (reportForm.get('reportType')?.value ==='DEBITNOTE') {
-              <div class="flex flex-wrap mt-6 gap-4">
-                 <div class="flex items-center">
-        <p-radiobutton name="gstType" value="none" [(ngModel)]="gstTransaction" [ngModelOptions]="{standalone: true}" inputId="all" />
-        <label for="all" class="ml-2">All</label>
-      </div>
-    <div class="flex items-center">
-        <p-radiobutton name="gstType1" value="N" [(ngModel)]="gstTransaction" [ngModelOptions]="{standalone: true}" inputId="dn" />
-        <label for="dn" class="ml-2">DN</label>
-    </div>
-
-    <div class="flex items-center">
-        <p-radiobutton name="gstType" value="Y" [(ngModel)]="gstTransaction" [ngModelOptions]="{standalone: true}" inputId="cn" />
-        <label for="cn" class="ml-2">CN</label>
-    </div>
-      <div class="flex items-center">
-        <p-radiobutton name="gstType" value="all" [(ngModel)]="gstTransaction" [ngModelOptions]="{standalone: true}" inputId="none" />
-        <label for="nondn" class="ml-2">No DN</label>
-      </div>
-    </div>
-            }
-            @else{
-               <div class="flex flex-col"></div>
-            }
-           
-   
-        <!-- Transaction Date From-->
-          <div class="flex flex-col">
-          <label class="font-medium mb-1">From Date <span class="text-red-500">*</span></label>
-          <p-datepicker  fluid formControlName="fromDate" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="From Date"></p-datepicker>
-           <small class="text-red-500 ms-3 mt-1" *ngIf="reportForm.get('fromDate')?.touched">
-            <span *ngIf="reportForm.get('fromDate')?.errors?.['required']">From Date is required</span>
-          </small>
-        </div>
-
-        <!-- Transaction Date To -->
-        <div class="flex flex-col">
-          <label class="font-medium mb-1">To Date <span class="text-red-500">*</span></label>
-          <p-datepicker  fluid formControlName="toDate" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="To Date" ></p-datepicker>
-          <small class="text-red-500 ms-3 mt-1" *ngIf="reportForm.get('toDate')?.touched">
-            <span *ngIf="reportForm.get('toDate')?.errors?.['required']">To Date is required</span>
-             <span *ngIf="reportForm.errors?.['dateRangeInvalid'] && reportForm.get('toDate')?.touched">To Date must be greater than or equal to From Date</span>
-          </small>
-        </div>
-
-         <!-- Category -->
-            <div class="flex flex-col">
-                <label class="font-medium mb-1">Category</label>
-                <p-dropdown [options]="categoryOptions" optionLabel="fieldname" (onChange)="onCategoryItem($event)" optionValue="fieldid" [filter]="true" [showClear]="true" filterPlaceholder="Search Category" formControlName="category" placeholder="Category" [disabled]="!reportForm.get('reportType')?.value"> </p-dropdown>
+      
+      <!-- GST Transaction Radio Buttons -->
+      <div class="flex flex-col md:flex-row md:items-end">
+        @if(reportForm.get('reportType')?.value === 'SALE' || reportForm.get('reportType')?.value === 'RETURN') {
+          <div class="flex flex-wrap gap-4 mt-2 md:mt-0">
+            <div class="flex items-center">
+              <p-radiobutton name="gstType1" value="all" [(ngModel)]="gstTransaction" [ngModelOptions]="{standalone: true}" inputId="all" />
+              <label for="all" class="ml-2">All</label>
             </div>
-
-       <!-- Item Name -->
-            <div class="flex flex-col">
-                <label class="font-medium mb-1">Item Name</label>
-                <p-dropdown [options]="itemOptions" optionLabel="itemcombine" optionValue="itemid" [filter]="true" [showClear]="true" filterPlaceholder="Search Item" formControlName="item" placeholder="Item" [disabled]="!reportForm.get('reportType')?.value"> </p-dropdown>
+            <div class="flex items-center">
+              <p-radiobutton name="gstType1" value="Y" [(ngModel)]="gstTransaction" [ngModelOptions]="{standalone: true}" inputId="gst" />
+              <label for="gst" class="ml-2">GST</label>
             </div>
-</div>
-    
+            <div class="flex items-center">
+              <p-radiobutton name="gstType1" value="N" [(ngModel)]="gstTransaction" [ngModelOptions]="{standalone: true}" inputId="nonGst" />
+              <label for="nonGst" class="ml-2">Non-GST</label>
+            </div>
+          </div>
+        }
+        @else if (reportForm.get('reportType')?.value === 'DEBITNOTE') {
+          <div class="flex flex-wrap gap-4 mt-2 md:mt-0">
+            <div class="flex items-center">
+              <p-radiobutton name="gstType" value="none" [(ngModel)]="gstTransaction" [ngModelOptions]="{standalone: true}" inputId="all" />
+              <label for="all" class="ml-2">All</label>
+            </div>
+            <div class="flex items-center">
+              <p-radiobutton name="gstType1" value="N" [(ngModel)]="gstTransaction" [ngModelOptions]="{standalone: true}" inputId="dn" />
+              <label for="dn" class="ml-2">DN</label>
+            </div>
+            <div class="flex items-center">
+              <p-radiobutton name="gstType" value="Y" [(ngModel)]="gstTransaction" [ngModelOptions]="{standalone: true}" inputId="cn" />
+              <label for="cn" class="ml-2">CN</label>
+            </div>
+            <div class="flex items-center">
+              <p-radiobutton name="gstType" value="all" [(ngModel)]="gstTransaction" [ngModelOptions]="{standalone: true}" inputId="none" />
+              <label for="nondn" class="ml-2">No DN</label>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Transaction Date From -->
+      <div class="flex flex-col">
+        <label class="font-medium mb-1">From Date <span class="text-red-500">*</span></label>
+        <p-datepicker fluid formControlName="fromDate" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="From Date"></p-datepicker>
+        <small class="text-red-500 ms-3 mt-1" *ngIf="reportForm.get('fromDate')?.touched">
+          <span *ngIf="reportForm.get('fromDate')?.errors?.['required']">From Date is required</span>
+        </small>
+      </div>
+
+      <!-- Transaction Date To -->
+      <div class="flex flex-col">
+        <label class="font-medium mb-1">To Date <span class="text-red-500">*</span></label>
+        <p-datepicker fluid formControlName="toDate" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="To Date"></p-datepicker>
+        <small class="text-red-500 ms-3 mt-1" *ngIf="reportForm.get('toDate')?.touched">
+          <span *ngIf="reportForm.get('toDate')?.errors?.['required']">To Date is required</span>
+          <span *ngIf="reportForm.errors?.['dateRangeInvalid'] && reportForm.get('toDate')?.touched">To Date must be greater than or equal to From Date</span>
+        </small>
+      </div>
+
+      <!-- Category -->
+      <div class="flex flex-col">
+        <label class="font-medium mb-1">Category</label>
+        <p-dropdown [options]="categoryOptions" optionLabel="fieldname" (onChange)="onCategoryItem($event)" optionValue="fieldid" [filter]="true" [showClear]="true" filterPlaceholder="Search Category" formControlName="category" placeholder="Category" [disabled]="!reportForm.get('reportType')?.value"> </p-dropdown>
+      </div>
+
+      <!-- Item Name -->
+      <div class="flex flex-col">
+        <label class="font-medium mb-1">Item Name</label>
+        <p-dropdown [options]="itemOptions" optionLabel="itemcombine" optionValue="itemid" [filter]="true" [showClear]="true" filterPlaceholder="Search Item" formControlName="item" placeholder="Item" [disabled]="!reportForm.get('reportType')?.value"> </p-dropdown>
+      </div>
+    </div>
+
+    <!-- Action Buttons - Visible only on mobile, below form fields -->
+    <div class="flex md:hidden justify-center gap-2 mt-6">
+      <button pButton type="submit" label="Display" class="p-button-warning flex-1" 
+        (click)="Onreturndropdowndetails()" [disabled]="reportForm.invalid">
+      </button>
+      <button pButton type="button" label="Download"
+        class="p-button-warning flex-1" (click)="onDownloadClick()">
+      </button>
+      <button pButton type="button" label="Reset" 
+        class="p-button-secondary flex-1" (click)="reset()">
+      </button>
+    </div>
 
     <!-- Product Table with Pagination -->
     <div>
@@ -134,16 +142,15 @@
 
          <ng-template pTemplate="body" let-row let-i="rowIndex">
           <tr>
-           <td *ngFor="let col of columns" [ngClass]="col.widthClass">{{row[col.fields]}}</td>
+           <td *ngFor="let col of columns" [ngClass]="col.widthClass">{{ col.formatter?col.formatter(row[col.fields]):row[col.fields]}}</td>
           </tr>
         </ng-template>
 
-        <ng-template pTemplate="paginatorleft">
-          <div class="text-gray-600 ms-2">Total Items: {{ filteredProducts?.length || 0 }}</div>
+        <ng-template pTemplate="paginatorleft" appendTo="body">
+          <div class="total-items text-gray-600 ms-2">Total Items: {{ filteredProducts?.length || 0 }}</div>
         </ng-template>
       </p-table>
     </div>
-
   </form>
 
   <!-- Confirm Dialog -->

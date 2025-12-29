@@ -71,7 +71,7 @@ export class TransactionReportComponent {
     categoryOptions = [];
     itemOptions = [];
     products: StockIn[] = [];
-    filteredProducts: StockIn[] = [];
+    filteredProducts: any[] = [];
     
     reportTypeOptions: any[] = [
         { label: 'Sale', value: 'SALE' },
@@ -109,10 +109,27 @@ export class TransactionReportComponent {
             this.filteredProducts = [];
             return;
         }
-        else if (type === 'SALE' || type === 'REPLACE') {
+        const formatDate=(dateValue:any): string =>{
+            if(!dateValue)
+                return '';
+            if(typeof dateValue ==='string' && /^\d{2}\/\d{2}\/\d{4}$/.test(dateValue)){
+                return dateValue;
+            }
+            try{
+                const date=new Date(dateValue);
+                if (!isNaN(date.getTime())) {
+                const day = date.getDate().toString().padStart(2, '0');
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const year = date.getFullYear();
+                return `${day}/${month}/${year}`;
+            }
+        } catch {}
+            return dateValue;
+        };
+         if (type === 'SALE' || type === 'REPLACE') {
             this.columns = [
                 { fields: 'invoiceno', header: 'Invoice No' },
-                { fields: 'invoicedate', header: 'Invoice Date' },
+                { fields: 'invoicedate', header: 'Invoice Date',formatter:formatDate },
                 { fields: 'category', header: 'Category', widthClass: 'fixed-category-col' },
                 { fields: 'item', header: 'Item', widthClass: 'fixed-item-col' },
                 { fields: 'uom', header: 'UOM' },
@@ -128,7 +145,7 @@ export class TransactionReportComponent {
         else if (type === 'RETURN' ) {
             this.columns = [
                 { fields: 'returninvoiceno', header: 'Invoice No' },
-                { fields: 'returninvoicedate', header: 'Invoice Date' },
+                { fields: 'returninvoicedate', header: 'Invoice Date',formatter:formatDate },
                 { fields: 'saleinvoiceno', header: 'Sale Invoice No', widthClass: 'fixed-saleinvoice-col' },
                 { fields: 'category', header: 'Category', widthClass: 'fixed-category-col' },
                 { fields: 'item', header: 'Item', widthClass: 'fixed-item-col' },
@@ -145,9 +162,9 @@ export class TransactionReportComponent {
         else if (type === 'PURCHASE') {
             this.columns = [
                 { fields: 'purchaseid', header: 'Purchase id' },
-                { fields: 'purchasedate', header: 'Purchase Date' },
+                { fields: 'purchasedate', header: 'Purchase Date',formatter:formatDate },
                 { fields: 'invoiceno', header: 'Invoice No' },
-                { fields: 'invoicedate', header: 'Invoice Date' },
+                { fields: 'invoicedate', header: 'Invoice Date',formatter:formatDate },
                 { fields: 'category', header: 'Category', widthClass: 'fixed-category-col' },
                 { fields: 'item', header: 'Item', widthClass: 'fixed-item-col' },
                 { fields: 'uom', header: 'UOM' },
@@ -163,7 +180,7 @@ export class TransactionReportComponent {
                 { fields: 'debitnote', header: 'Debit Note' },
                 { fields: 'creditnote', header: 'Credit Note' },
                 { fields: 'repinvoiceno', header: 'Invoice No' },
-                { fields: 'repinvoicedate', header: 'Invoice Date' },
+                { fields: 'repinvoicedate', header: 'Invoice Date',formatter:formatDate },
                 { fields: 'category', header: 'Category', widthClass: 'fixed-category-col' },
                 { fields: 'item', header: 'Item', widthClass: 'fixed-item-col' },
                 { fields: 'uom', header: 'UOM' },
@@ -247,6 +264,8 @@ export class TransactionReportComponent {
         const toDate = this.reportForm.controls['toDate'].value;
         const gstType = this.gstTransaction;
         
+         const categoryValue = category ? category.toString() : null;
+    const itemValue = item ? item.toString() : null;
         // Validate required fields
         if (!reportType) {
             this.errorSuccess('Please select a Report Type.');
@@ -268,8 +287,8 @@ export class TransactionReportComponent {
         
         const payload = {
              
-            p_categoryid: category.toString() || null,
-            p_itemid: item.toString() || null,
+            p_category: categoryValue,
+            p_item: itemValue,
             p_fromdate: this.datepipe.transform(fromDate, 'yyyy/MM/dd'),
             p_todate: this.datepipe.transform(toDate, 'yyyy/MM/dd'),
             p_username: 'admin',
@@ -418,7 +437,109 @@ export class TransactionReportComponent {
         this.OnGetCategory();
         this.OnGetItem();
     }
+    downloadExcel() {
+    if (!this.filteredProducts || this.filteredProducts.length === 0) {
+        this.errorSuccess('No data available to download.');
+        return;
+    }
+
+    // Generate CSV content
+    const csvContent = this.generateCSV();
     
+    // Create and trigger download
+    this.downloadFile(csvContent, 'text/csv;charset=utf-8;', '.csv');
+    
+    this.showSuccess('Excel file downloaded successfully!');
+}
+
+private generateCSV(): string {
+    // Create header row
+    const headers = this.columns.map(col => this.escapeCSV(col.header));
+    const headerRow = headers.join(',');
+    
+    // Create data rows
+    const dataRows = this.filteredProducts.map(item => {
+        const row = this.columns.map(col => {
+            const value = item[col.fields];
+            const formattedValue = col.formatter ? col.formatter(value) : value;
+            return this.escapeCSV(formattedValue);
+        });
+        return row.join(',');
+    });
+    
+    // Combine header and data rows
+    return [headerRow, ...dataRows].join('\n');
+}
+
+private escapeCSV(value: any): string {
+    if (value === null || value === undefined || value === '') {
+        return '';
+    }
+    
+    const stringValue = String(value);
+    
+    // Escape double quotes
+    const escapedValue = stringValue.replace(/"/g, '""');
+    
+    // Wrap in quotes if contains comma, double quote, or newline
+    if (/[,"\n\r]/.test(escapedValue)) {
+        return `"${escapedValue}"`;
+    }
+    
+    return escapedValue;
+}
+
+private downloadFile(data: string, mimeType: string, extension: string) {
+    const blob = new Blob([data], { type: mimeType });
+    const url = window.URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = this.generateFileName() + extension;
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    window.URL.revokeObjectURL(url);
+}
+
+private generateFileName(): string {
+    const reportType = this.reportForm.get('reportType')?.value || 'Transaction';
+    const fromDate = this.reportForm.get('fromDate')?.value;
+    const toDate = this.reportForm.get('toDate')?.value;
+    
+    let fileName = `${reportType}_Report`;
+    
+    if (fromDate && toDate) {
+        const fromStr = this.datepipe.transform(fromDate, 'yyyy-MM-dd');
+        const toStr = this.datepipe.transform(toDate, 'yyyy-MM-dd');
+        fileName += `_${fromStr}_to_${toStr}`;
+    }
+    
+    return fileName;
+}
+
+onDownloadClick() {
+    // Check if form is valid
+    if (this.reportForm.invalid) {
+        this.errorSuccess('Please fill all required fields before downloading.');
+        return;
+    }
+    
+    // Check if we have data
+    if (!this.filteredProducts || this.filteredProducts.length === 0) {
+        if (!this.showData) {
+            this.errorSuccess('Please click "Display" first to load data before downloading.');
+            return;
+        } else {
+            this.errorSuccess('No data available to download.');
+            return;
+        }
+    }
+    
+    this.downloadExcel();
+}
     showSuccess(message: string) {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
     }
