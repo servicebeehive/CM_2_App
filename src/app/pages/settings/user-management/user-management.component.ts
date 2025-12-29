@@ -145,16 +145,13 @@ console.log('user role', user.usertypename)
     checked:(user.isactive) === 'Y' 
     });
     if(this.loggedInUserName==='admin'){
-      console.log('shdbsbd1')
   this.userForm.get('p_utypeid')?.disable();
   }
      if(user.usertypecode === 'Admin' && user.username !=='admin'){
-      console.log('shdbsbd2')
     this.userForm.get('checked')?.disable();
     this.userForm.get('p_utypeid')?.enable();
   }
    else {
-    console.log('shdbsbd3')
     this.userForm.get('checked')?.enable();
     this.userForm.get('p_utypeid')?.disable();
   }
