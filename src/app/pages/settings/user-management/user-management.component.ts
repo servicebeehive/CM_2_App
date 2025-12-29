@@ -144,18 +144,25 @@ console.log('user role', user.usertypename)
     p_email: user.email,
     checked:(user.isactive) === 'Y' 
     });
-    if(this.loggedInUserName==='admin'){
-  this.userForm.get('p_utypeid')?.disable();
-  }
-     if(user.usertypecode === 'Admin' && user.username !=='admin'){
-    this.userForm.get('checked')?.disable();
-    this.userForm.get('p_utypeid')?.enable();
-  }
-   else {
-    this.userForm.get('checked')?.enable();
-    this.userForm.get('p_utypeid')?.disable();
-  }
   
+if(user.username==='admin'){
+  this.userForm.get('p_utypeid')?.disable();
+  this.userForm.get('checked')?.disable();
+}
+else if(user.username!=='admin' && user.usertypename==='Admin'){
+   this.userForm.get('p_utypeid')?.enable();
+  this.userForm.get('checked')?.enable();
+}
+else if(this.loggedInUserRole=='Admin' && user.username!=='admin'){
+   this.userForm.get('p_utypeid')?.enable();
+  this.userForm.get('checked')?.enable();
+}
+else if( user.usertypename !=='Admin' ){
+ this.userForm.get('p_utypeid')?.disable();
+  this.userForm.get('checked')?.disable();
+}
+
+
     this.userForm.get('p_pwd')?.setValue('');
   this.userForm.get('conPassword')?.setValue('');
 

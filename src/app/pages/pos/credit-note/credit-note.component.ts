@@ -378,13 +378,13 @@ if (apibody.p_transactiontype === "CREDITNOTE") {
 
 calculateTotal(data:any[]) {
   this.totalAmount = data.reduce((sum, row) => {
-    return sum + (row.quantity * row.mrp);
+    return sum + (row.quantity * row.itemcost);
   }, 0);
 }
 print() {
     const printContents = document.getElementById('printSection')?.innerHTML;
     if (!printContents) return;
-
+    
     const popup = window.open('', '_blank', 'width=900,height=1500');
     
     popup!.document.open();
