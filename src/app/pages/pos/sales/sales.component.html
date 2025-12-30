@@ -11,7 +11,13 @@
 
             <div class="flex flex-wrap gap-2 md:gap-4 w-full md:w-auto">
                 <!-- SUBMIT -->
-                <button pButton type="submit" label="Submit" class="p-button-warning w-full md:w-auto" [disabled]=" salesForm.invalid || isSubmitDisabled() || submitDisabledByBill || salesForm.hasError('costNotGreater') || salesForm.hasError('amountNotGreater')"></button>
+                <button
+                    pButton
+                    type="submit"
+                    label="Submit"
+                    class="p-button-warning w-full md:w-auto"
+                    [disabled]="salesForm.invalid || isSubmitDisabled() || submitDisabledByBill || salesForm.hasError('costNotGreater') || salesForm.hasError('amountNotGreater')"
+                ></button>
                 <!-- PRINT -->
                 <button pButton type="button" ngxPrint printSectionId="invoicePrintSection" label="Print" (click)="printInvoice()" class="p-button-primary w-full md:w-auto" [disabled]="!this.salesForm.get('p_billno')?.value"></button>
 
@@ -21,7 +27,7 @@
                     <button pButton type="button" label="Back" class="p-button-secondary w-full md:w-auto" (click)="back()"></button>
                 }
             </div>
-            </div>
+        </div>
 
         <!-- ================================
          ITEM SELECT SECTION
@@ -58,7 +64,6 @@
                 <p-dropdown
                     [options]="cusMobileOptions"
                     class="w-full"
-                    
                     optionLabel="customerphone"
                     optionValue="fieldid"
                     [filter]="true"
@@ -95,9 +100,9 @@
                 </small>
             </div>
 
-             <!-- ITEM DROPDOWN -->
+            <!-- ITEM DROPDOWN -->
             <div class="flex flex-col col-span-2">
-                <label class="text-sm md:text-base">Item</label>
+                <label class="font-medium mb-1 text-sm md:text-base">Item</label>
 
                 <p-select
                     tabindex="1"
@@ -136,32 +141,27 @@
             <div class="flex flex-col">
                 <label class="font-medium mb-1 text-sm md:text-base">Transaction Mode</label>
 
-                <p-dropdown
-                    [options]="transactionMode"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Transaction Mode"
-                    formControlName="p_paymode"
-                    [filter]="true"
-                    tabindex="10"
-                    filterPlaceholder="Search Transaction Mode"
-                    [showClear]="true"
-                >
+                <p-dropdown [options]="transactionMode" optionLabel="label" optionValue="value" placeholder="Transaction Mode" formControlName="p_paymode" [filter]="true" tabindex="10" filterPlaceholder="Search Transaction Mode" [showClear]="true">
                 </p-dropdown>
             </div>
 
             <!-- TRANSACTION DATE -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1 text-sm md:text-base">Transaction Date</label>
-                <p-datepicker  fluid formControlName="p_transactiondate" tabindex="11" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="Transaction Date" [maxDate]="today"> </p-datepicker>
+                <p-datepicker fluid formControlName="p_transactiondate" tabindex="11" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="Transaction Date" [maxDate]="today"> </p-datepicker>
+            </div>
+            <!-- Delivery Person -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1 text-sm md:text-base">Delivery Person</label>
+                <input pInputText formControlName="p_deliveryboy" placeholder="Delivery Person" />
             </div>
 
-            <div class="flex items-center gap-2 md:gap-4">
+            <div class="flex items-center gap-2 md:gap-4 mt-0 md:mt-6">
                 <p-checkbox binary="true" variant="filled" formControlName="p_gsttran"></p-checkbox>
-                <label class="text-sm md:text-base">GST Transaction</label>
+                <label class="font-medium mb-1 text-sm md:text-base">GST Transaction</label>
             </div>
 
-           <div class="flex items-center gap-2 md:gap-4">
+            <div class="flex items-center gap-2 md:gap-4 mt-0 md:mt-6">
                 <label class="text-xl">
                     <b> Status &nbsp; &nbsp;</b>
                     <span
@@ -174,9 +174,8 @@
                     </span></label
                 >
             </div>
-        <!-- </div>
+            <!-- </div>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-4 md:gap-x-8 w-full mt-4"> -->
-          
         </div>
 
         <!-- <button
@@ -217,7 +216,19 @@
                             <td class="text-xs md:text-sm">{{ row.get('ItemName')?.value }}</td>
                             <td class="text-xs md:text-sm">{{ row.get('curStock')?.value }}</td>
                             <td>
-                                <p-dropdown [options]="uomlist[i]" optionLabel="fieldname" optionValue="fieldid" placeholder="UOM" formControlName="UOMId" [filter]="true"  tabindex="2" filterPlaceholder="Search Uom name" appendTo="body" (onChange)="UOMId(row, i)" class="text-xs md:text-sm">
+                                <p-dropdown
+                                    [options]="uomlist[i]"
+                                    optionLabel="fieldname"
+                                    optionValue="fieldid"
+                                    placeholder="UOM"
+                                    formControlName="UOMId"
+                                    [filter]="true"
+                                    tabindex="2"
+                                    filterPlaceholder="Search Uom name"
+                                    appendTo="body"
+                                    (onChange)="UOMId(row, i)"
+                                    class="text-xs md:text-sm"
+                                >
                                 </p-dropdown>
                             </td>
 
@@ -229,7 +240,7 @@
                                     formControlName="Quantity"
                                     min="1"
                                     step="1"
-                                     tabindex="3"
+                                    tabindex="3"
                                     class="w-[60px] md:w-[70px] text-xs md:text-sm"
                                     (keypress)="blockDecimal($event)"
                                     (input)="updateTotal(i)"
@@ -265,24 +276,24 @@
             <!-- Total Cost -->
             <div class="flex flex-col">
                 <label>Cost Total</label>
-                <input pInputText readonly type="number"  tabindex="-1" formControlName="p_totalcost" />
+                <input pInputText readonly type="number" tabindex="-1" formControlName="p_totalcost" />
             </div>
 
             <!-- MRP Total -->
             <div class="flex flex-col">
                 <label>MRP Total</label>
-                <input pInputText readonly type="number"  tabindex="-1" formControlName="p_totalsale" />
+                <input pInputText readonly type="number" tabindex="-1" formControlName="p_totalsale" />
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2">
                 <!-- Discount type -->
                 <div class="flex flex-col">
                     <label class="font-medium mb-2">Disc(%)</label>
-                    <p-checkbox class="w-5 h-5" binary="true"  tabindex="4" variant="filled" formControlName="p_disctype"></p-checkbox>
+                    <p-checkbox class="w-5 h-5" binary="true" tabindex="4" variant="filled" formControlName="p_disctype"></p-checkbox>
                 </div>
                 <!-- Discount -->
                 <div class="flex flex-col">
                     <label class="font-medium">Discount</label>
-                    <input class="p-inputtext p-component font-small w-full"  tabindex="5" pInputText type="number" formControlName="p_overalldiscount" (input)="applyDiscount()" [placeholder]="discountplace" />
+                    <input class="p-inputtext p-component font-small w-full" tabindex="5" pInputText type="number" formControlName="p_overalldiscount" (input)="applyDiscount()" [placeholder]="discountplace" />
                 </div>
             </div>
             <!-- Round Off -->
@@ -294,20 +305,20 @@
             <!-- Total Sale -->
             <div class="flex flex-col">
                 <label>Total Sale</label>
-                <input pInputText readonly type="number"  tabindex="-1" formControlName="p_totalsale" />
+                <input pInputText readonly type="number" tabindex="-1" formControlName="p_totalsale" />
             </div>
 
             <!-- Final Payable -->
             <div class="flex flex-col">
                 <label>Final Payable</label>
-                <input pInputText readonly  tabindex="-1" type="number" formControlName="p_totalpayable" />
+                <input pInputText readonly tabindex="-1" type="number" formControlName="p_totalpayable" />
                 <small class="text-red-500" *ngIf="salesForm.hasError('costNotGreater')"> This Cost must be greater than Total Cost. </small>
             </div>
 
             <!-- Paid Amount -->
             <div class="flex flex-col">
                 <label>Paid Amount</label>
-                <input pInputText type="number" (keypress)="blockDecimal($event)" min="1"  tabindex="6" formControlName="p_paymentdue" placeholder="0"/>
+                <input pInputText type="number" (keypress)="blockDecimal($event)" min="1" tabindex="6" formControlName="p_paymentdue" placeholder="0" />
                 <small class="text-red-500" *ngIf="salesForm.hasError('amountNotGreater')"> Paid Amount cannot be greater than Final Payable. </small>
             </div>
         </div>
@@ -327,12 +338,13 @@
         <tr>
             <!-- LEFT SIDE (COMPANY + BUYER INFO) -->
             <td width="60%" style="vertical-align: top; padding: 6px">
-                <strong>{{companyName}}</strong><br />
-                {{companyAddress}},<br />
-                {{companystate}}<br />
-                GSTIN/UIN: {{companygstno}}<br />
-                State Name: {{companystate}}, Code: {{statecode}}<br />
-                E-Mail : {{companyemail }}
+                <strong>{{ companyName }}</strong
+                ><br />
+                {{ companyAddress }},<br />
+                {{ companystate }}<br />
+                GSTIN/UIN: {{ companygstno }}<br />
+                State Name: {{ companystate }}, Code: {{ statecode }}<br />
+                E-Mail : {{ companyemail }}
                 <br />
 
                 <hr style="margin: 5px 0" />
@@ -369,7 +381,9 @@
 
                     <tr>
                         <td><strong>Mode of Payment</strong></td>
-                        <td><strong>{{salesForm.get('p_paymode')?.value}}</strong></td>
+                        <td>
+                            <strong>{{ salesForm.get('p_paymode')?.value }}</strong>
+                        </td>
                     </tr>
 
                     <tr>
@@ -532,11 +546,12 @@
         - <br /><br />
 
         <strong>Company's Bank Details</strong><br />
-        Bank Name : <b>{{bankname}}</b><br />
-        A/c No. : {{accountno}}<br />
-Branch & IFS Code : {{branchname}} & {{ifsc}}<br /><br />
+        Bank Name : <b>{{ bankname }}</b
+        ><br />
+        A/c No. : {{ accountno }}<br />
+        Branch & IFS Code : {{ branchname }} & {{ ifsc }}<br /><br />
 
-        Company's PAN : <b>{{pan}}</b> <br /><br />
+        Company's PAN : <b>{{ pan }}</b> <br /><br />
 
         <strong>Declaration:</strong>
         We declare that this invoice shows the actual price of the goods described and all particulars are true.

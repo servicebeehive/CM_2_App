@@ -136,7 +136,6 @@ export class StockInComponent {
             p_remarks: ['', [Validators.maxLength(500)]],
             grandTotal: [0],
             p_amountpaid :[''],
-           p_deliveryboy:[''],
         },{validators:[this.paidAmountLessThanGrandTotal()]});
 
         const navigation = history.state;
@@ -203,7 +202,6 @@ export class StockInComponent {
             p_remarks: data.remark || '',
             p_vendorid: data.vendorid || null,
            p_amountpaid:data.total_paid,
-           p_deliveryboy:data.deliveryboy,
            grandTotal:data.total_cost
         });
         if (itemsData && itemsData.length > 0) {
@@ -410,7 +408,6 @@ export class StockInComponent {
             p_invoiceno: data.p_invoiceno,
             p_invoicedate: this.datePipe.transform(data.p_invoicedate, 'dd/MM/yyyy'),
             p_remarks: data.p_remarks,
-            p_deliveryboy:data.p_deliveryboy,
             p_amountpaid :data.p_amountpaid ,
             p_active: 'Y'
         };
@@ -469,7 +466,6 @@ export class StockInComponent {
             p_invoicedate: selectedPurchaseData.invoicedate ? new Date(selectedPurchaseData.invoicedate) : null,
             grandTotal: this.grandTotal,
              p_amountpaid:selectedPurchaseData.total_paid,
-            p_deliveryboy:selectedPurchaseData.deliveryboy
         });
         if (this.productForm.value) {
             this.addItemEnabled = true;
@@ -487,7 +483,6 @@ export class StockInComponent {
             p_invoicedate: selectedPurchaseData1.invoicedate ? new Date(selectedPurchaseData1.invoicedate) : null,
             grandTotal: this.grandTotal,
             p_amountpaid:selectedPurchaseData1.total_paid,
-            p_deliveryboy:selectedPurchaseData1.deliveryboy
         });
         if (this.productForm.value) {
             this.addItemEnabled = true;

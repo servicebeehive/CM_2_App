@@ -64,7 +64,6 @@ import { AuthService } from '@/core/services/auth.service';
         class="col-span-12 md:col-span-6 xl:col-span-3"
         *ngFor="let card of (loading ? skeletonItems : dashboardCards)"
         [routerLink]="!loading ? card.routerLink : null"
-        style="cursor: pointer;"
     >
         <div class="card h-full">
 
@@ -89,7 +88,7 @@ import { AuthService } from '@/core/services/auth.service';
                             class="text-4xl font-bold"
                             [ngClass]="card.value < 0 ? 'text-red-600' : 'text-surface-900 dark:text-surface-0'"
                         >
-                            Count# {{ card.value }}
+                            Count- {{ card.value }}
                         </span>
                     </div>
                 </div>

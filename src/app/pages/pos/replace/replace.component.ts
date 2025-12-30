@@ -583,6 +583,7 @@ allowOnlyNumbers(event: any) {
       p_totalcost: Number(body.p_totalcost) || 0,
       p_totalsale: Number(body.p_totalsale) || 0,
       p_overalldiscount: Number(body.p_overalldiscount) || 0,
+      p_discounttype: body.p_disctype === true?'Y':'N',
       p_roundoff: body.p_roundoff ? body.p_roundoff.toString() : "0.00",
       p_totalpayable: Number(body.p_totalpayable) || 0,
       p_currencyid: Number(body.p_currencyid) || 0,

@@ -83,7 +83,9 @@ totalAmount: number = 0;
    public  pagedProducts: StockIn[] = [];
     public first: number = 0;
     public rowsPerPage: number = 5;
+    currentDate:Date=new Date();
      companyName:string='';
+     suppliername:string='';
     companyAddress:string='';
     companycity:string='';
     companystate:string='';
@@ -257,21 +259,12 @@ get grandTotal():number{
             next: (res) => {
                 console.log('ondnn',res.data)
                 const creditstore: any = res.data
-                this.debittnotList = creditstore             
+                this.debittnotList = creditstore 
+                
             }
         })
     }
    Ganratedn(type:string) {
-    if (this.saleArray.length === 0) {
-        this.messageService.add({
-            severity: 'error',
-            summary: 'No Items Selected',
-            detail: 'Please select at least one item before submitting.',
-            life: 2500
-        });
-        return; // ❗ no popup, no confirm dialog
-    }
-
     this.confirmationService.confirm({
         message: 'Are you sure you want to submit?',
         header: 'Confirm',
@@ -281,8 +274,10 @@ get grandTotal():number{
         rejectButtonStyleClass: 'p-button-secondary',
         accept: () => {
             this.selectedItems=[...this.saleArray.value]
+            console.log('seleected:',this.selectedItems);
+
             this.accpatHeaderCreate(this.saleArray.value,type);
-        }
+    }
     });
 }
 
@@ -303,7 +298,6 @@ get grandTotal():number{
     p_gsttran: "N",
     p_status: "Complete",
     p_isactive: "Y",
-    p_loginuser: "admin",
     p_linktransactionid: vendorid,
     p_replacesimilir: "",
     p_paymentmode: "",
@@ -314,7 +308,7 @@ get grandTotal():number{
 // ⭐ ADD CONDITION
 if (apibody.p_transactiontype === "CREDITNOTE") {
     apibody.p_customername =this.replacecednlist[0]?.dnno;   // add key
-    apibody.p_creditnoteno =this.replacecednlist[0]?.dnno;   // add 
+    apibody.p_creditnoteno =this.CreditForm.get('p_creditNote')?.value; 
 } else {
     delete apibody.p_customername;           // remove key
 }
@@ -324,12 +318,13 @@ if (apibody.p_transactiontype === "CREDITNOTE") {
             next: (res) => {
                 if(res.data[0].billno!=null){
                 this.OnDNN();
+                 console.log('seleectedsdjds:',this.CreditForm.value.p_sale);
+                this.RetunCredit({value:res.data[0].billno });
                 this.CreditForm.patchValue({
-                    p_debitNote: res.data[0].billno
-                    
-                })  
+                    p_debitNote: res.data[0].billno    
+                }) 
+
                 }
-              
               //  this.RetunCredit(res.data[0].billno)
                 this.messageService.add({
                     severity: 'success',
@@ -368,9 +363,8 @@ if (apibody.p_transactiontype === "CREDITNOTE") {
                  this.CreditForm.patchValue({
                     p_creditNote: this.replacecednlist[0]?.cnno,
                     p_vendorid:this.replacecednlist[0]?.vendorid
-                }) 
-               console.log('gdsg:',this.CreditForm.value.vendorid);
-                console.log(res.data,this.CreditForm.value)
+                })
+                this.suppliername=res.data[0].suppliername 
             }
          })
     }

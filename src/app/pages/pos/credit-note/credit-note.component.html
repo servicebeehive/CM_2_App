@@ -148,11 +148,11 @@
           </tr>
           <tr>
             <td><strong>Date:</strong></td>
-            <td>{{ CreditForm.get('p_transactiondate')?.value | date:'dd-MMM-yyyy' }}</td>
+            <td>{{ currentDate | date:'dd-MMM-yyyy' }}</td>
           </tr>
           <tr>
             <td><strong>Vendor Name:</strong></td>
-            <td>{{ CreditForm.get('p_vendorid')?.value || '' }}</td>
+            <td>{{suppliername}}</td>
           </tr>
           <tr>
             <td><strong>Payment Mode:</strong></td>
