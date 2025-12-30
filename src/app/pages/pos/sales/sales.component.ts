@@ -459,7 +459,6 @@ keepBarcodeFocus() {
     createDropdownPayload(returnType: string) {
         return {
             p_returntype: returnType,
-            ...this.getUserDetails
         };
     }
 
@@ -528,7 +527,13 @@ keepBarcodeFocus() {
 
     // Load Bill No dropdown
     OnGetBillNo() {
-        const payload = this.createDropdownPayload('NEWTRANSACTIONID');
+        //   const loginusername = this.authService.isLogIntType().username;
+        //   console.log('gdsfsd:',loginusername)
+       const payload={
+         ...this.getUserDetails,
+            p_returntype: 'NEWTRANSACTIONID',
+            // p_username:loginusername
+       }
         this.salesService.getdropdowndetails(payload).subscribe({
             next: (res) => {
                 const billdata: any = res.data;
