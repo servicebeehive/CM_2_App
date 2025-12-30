@@ -123,10 +123,37 @@ clearBarcodeInput() {
     this.barcodeInput.nativeElement.focus();
   }
 }
-@HostListener('window:click')
-keepBarcodeFocus() {
+// @HostListener('window:click')
+// keepBarcodeFocus() {
+//   this.barcodeInput?.nativeElement?.focus();
+// }
+
+@HostListener('window:click', ['$event'])
+keepBarcodeFocus(event: MouseEvent) {
+  const target = event.target as HTMLElement;
+
+  // If user clicked on an input or textarea → DO NOTHING
+  if (
+    target.tagName === 'INPUT' ||
+    target.tagName === 'TEXTAREA' ||
+    target.isContentEditable
+  ) {
+    return;
+  }
+
+  // Otherwise keep barcode focused
   this.barcodeInput?.nativeElement?.focus();
 }
+
+@HostListener('window:keydown', ['$event'])
+handleKeyboardSubmit(event: KeyboardEvent) {
+  // Ctrl + Enter
+  if (event.ctrlKey && event.key === 'Enter') {
+    event.preventDefault();
+    this.onSubmit();
+  }
+}
+
     @ViewChild('itemSel') itemSel!:any;
     public transactionid: any;
     salesForm!: FormGroup;
