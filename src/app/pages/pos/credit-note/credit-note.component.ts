@@ -79,19 +79,28 @@ export class CreditNoteComponent {
     CreditForm!: FormGroup;
 
 totalAmount: number = 0;
-    public visibleDialog = false;
-    public selectedRow: any = null;
    public  selection: boolean = true;
    public  pagedProducts: StockIn[] = [];
     public first: number = 0;
     public rowsPerPage: number = 5;
-    public debittnotList: ItemDetail[] = []
-    public replacecednlist: ItemDetail[] = []
-    public selectedItems: any[] = []
-    public stroeitemlist: ItemDetail[]=[]
-    // ✅ Move dropdown options into variables
-
-
+     companyName:string='';
+    companyAddress:string='';
+    companycity:string='';
+    companystate:string='';
+    statecode:string='';
+    companyemail:string='';
+    companygstno:string='';
+    bankname:string='';
+    accountno:string='';
+    branchname:string='';
+    ifsc:string='';
+    pan:string='';
+    profileOptions:any={};
+    vendorOptions = [];
+    public debittnotList: ItemDetail[] = [];
+    public replacecednlist: ItemDetail[] = [];
+    public selectedItems: any[] = [];
+    public stroeitemlist: ItemDetail[]=[];
     products: StockIn[] = [];
     constructor(
         private fb: FormBuilder,
@@ -100,20 +109,24 @@ totalAmount: number = 0;
     ) { }
 
     ngOnInit(): void {
-        this.OnCreditForm()
-        this.OnReplicedn()
-        this.OnDNN()
-
-    }
+       this.loadall();
+        }
     OnCreditForm() {
         this.CreditForm = this.fb.group({
             // itemName: ['', [Validators.maxLength(50)]],
             p_debitNote: [null],
             p_creditNote: [null],
+            p_vendorid:['',[Validators.required]],
             p_sale: this.fb.array([])
         });
     }
-
+   loadall(){
+ this.OnCreditForm();
+        this.OnReplacedn();
+        this.OnDNN();
+        this.OnGetVendor();
+        this.OnGetProfile();
+   }
     createSaleRow(item: any): FormGroup {
         return this.fb.group({
             transactiondetailid: [item.transactionid],
@@ -134,15 +147,13 @@ totalAmount: number = 0;
             dnno: [item.dnno],
             cnno: [item.cnno],
             transactionid:[item.transactionid],
-
+            vendorid:[item.vendorid],
             // Additional computed fields
             total: [item.quantity * item.mrp],
             warPeriod: [''],
             location: ['']
         });
     }
-
-
 
     get saleArray(): FormArray {
         return this.CreditForm.get('p_sale') as FormArray;
@@ -161,31 +172,56 @@ totalAmount: number = 0;
         console.log("Selected Items:", this.selectedItems);
         console.log("FormArray:", this.saleArray.value);
     }
-
-
+ 
+get grandTotal():number{
+    if(!this.replacecednlist || this.replacecednlist.length===0) return 0;
+      return this.replacecednlist.reduce((sum,item:any)=>{
+        const quantity = item.quantity || 0;
+        const cost=item.itemcost || 0;
+        return sum + quantity*cost;
+      },0);
+}
 
     reset() {
         this.CreditForm.reset();
         this.replacecednlist=[]
         this.replacecednlist=this.stroeitemlist
-        //
         let datalist:[]=[]
-        this.onSelectionChange(datalist)
-      
-        this.saleArray.clear()
-        
-
-       
+        this.onSelectionChange(datalist)   
+        this.saleArray.clear()   
     }
-
-
+ createDropdownPayload(returnType: string) {
+        return {
+            p_returntype: returnType,
+        };
+    }
+ OnGetProfile() {
+        const payload = this.createDropdownPayload('PROFILE');
+        this.prouctsaleservice.getdropdowndetails(payload).subscribe({
+            next: (res) => {
+            if(res.data && res.data.length>0){
+                this.profileOptions=res.data;
+                const profile=res.data[0];
+                this.companyName=profile.companyname,
+                this.companyAddress=profile.companyaddress,
+                this.companystate=profile.state_name,
+                this.companycity=profile.city_name,
+                this.companyemail=profile.companyemail,
+                this.companygstno=profile.companygstno,
+                this.statecode=profile.statecode,
+                this.bankname=profile.bankname,
+                this.accountno=profile.accountno,
+                this.branchname=profile.branch,
+                this.ifsc=profile.ifsc,
+                this.pan=profile.pan
+            }
+            },
+            error: (err) => console.log(err)
+        });
+    }
     //REPLACEDN
-    OnReplicedn() {
-        let apibody = {
-           
-            "p_returntype": "REPLACEDN",
-
-        }
+    OnReplacedn() {
+       const apibody = this.createDropdownPayload('REPLACEDN');
         delete (apibody as any).p_loginuser;
         this.prouctsaleservice.getdropdowndetails(apibody).subscribe({
             next: (res) => {
@@ -204,20 +240,24 @@ totalAmount: number = 0;
             }
         })
     }
+
+    OnGetVendor() {
+      const payload = this.createDropdownPayload('VENDOR');
+        this.prouctsaleservice.getdropdowndetails(payload).subscribe({
+            next: (res) => (this.vendorOptions = res.data),
+            error: (err) => console.log(err)
+        });
+    }
+
     // Debit note
     OnDNN() {
-        let apibody = {
-           
-            "p_returntype": "DNN",
-
-        }
+       const apibody = this.createDropdownPayload('DNN');
         delete (apibody as any).p_loginuser;
         this.prouctsaleservice.getdropdowndetails(apibody).subscribe({
             next: (res) => {
-                console.log(res.data)
+                console.log('ondnn',res.data)
                 const creditstore: any = res.data
-                this.debittnotList = creditstore
-               
+                this.debittnotList = creditstore             
             }
         })
     }
@@ -240,12 +280,14 @@ totalAmount: number = 0;
         acceptButtonStyleClass: 'p-button-primary',
         rejectButtonStyleClass: 'p-button-secondary',
         accept: () => {
+            this.selectedItems=[...this.saleArray.value]
             this.accpatHeaderCreate(this.saleArray.value,type);
         }
     });
 }
 
     accpatHeaderCreate(saledata: any,type:string) {
+        const vendorid=this.CreditForm.get('p_vendorid')?.value;
         let apibody: any = {
    
     p_transactiontype: type,   // CREDITNOTE or DEBITNOTE
@@ -262,9 +304,8 @@ totalAmount: number = 0;
     p_status: "Complete",
     p_isactive: "Y",
     p_loginuser: "admin",
-    p_linktransactionid: 0,
+    p_linktransactionid: vendorid,
     p_replacesimilir: "",
-   
     p_paymentmode: "",
     p_paymentdue: 0,
     p_sale: saledata
@@ -282,8 +323,7 @@ if (apibody.p_transactiontype === "CREDITNOTE") {
         this.prouctsaleservice.OninsertSalesDetails(apibody).subscribe({
             next: (res) => {
                 if(res.data[0].billno!=null){
-                this.OnDNN()
-            
+                this.OnDNN();
                 this.CreditForm.patchValue({
                     p_debitNote: res.data[0].billno
                     
@@ -309,6 +349,7 @@ if (apibody.p_transactiontype === "CREDITNOTE") {
             }
         })
     }
+
     RetunCredit(dnndata:any){
    
         if(dnndata.value==null) return
@@ -321,12 +362,14 @@ if (apibody.p_transactiontype === "CREDITNOTE") {
         delete (apibody as any).p_loginuser;
          this.prouctsaleservice.Getreturndropdowndetails(apibody).subscribe({
             next:(res)=>{
+                this.selectedItems=res.data;
                 this.replacecednlist=res.data
                 this.calculateTotal(this.replacecednlist)
                  this.CreditForm.patchValue({
-                    p_creditNote: this.replacecednlist[0]?.cnno
-                    
+                    p_creditNote: this.replacecednlist[0]?.cnno,
+                    p_vendorid:this.replacecednlist[0]?.vendorid
                 }) 
+               console.log('gdsg:',this.CreditForm.value.vendorid);
                 console.log(res.data,this.CreditForm.value)
             }
          })
@@ -335,13 +378,13 @@ if (apibody.p_transactiontype === "CREDITNOTE") {
 
 calculateTotal(data:any[]) {
   this.totalAmount = data.reduce((sum, row) => {
-    return sum + (row.quantity * row.mrp);
+    return sum + (row.quantity * row.itemcost);
   }, 0);
 }
 print() {
     const printContents = document.getElementById('printSection')?.innerHTML;
     if (!printContents) return;
-
+    
     const popup = window.open('', '_blank', 'width=900,height=1500');
     
     popup!.document.open();

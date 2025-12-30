@@ -5,7 +5,7 @@
   <div class="flex justify-between items-center mb-6">
     <span class="block text-surface-900 font-bold text-2xl">Debit/Credit Link</span>
         <div class="flex  gap-4">
-  <button pButton type="button" label="Generate DN" class="p-button-primary" [disabled]="saleArray.length === 0 ||CreditForm.get('p_debitNote')?.value" (click)="Ganratedn('DEBITNOTE')"></button> 
+  <button pButton type="button" label="Generate DN" class="p-button-primary" [disabled]="CreditForm.invalid ||saleArray.length === 0 ||CreditForm.get('p_debitNote')?.value" (click)="Ganratedn('DEBITNOTE')"></button> 
         <button pButton type="button" label="Link CN" class="p-button-primary" [disabled]="CreditForm.get('p_debitNote')?.value == null" (click)="Ganratedn('CREDITNOTE')"></button>
         <button pButton type="button" label="Print" class="p-button-primary" (click)="print()" [disabled]="!CreditForm.get('p_debitNote')?.value"></button> 
          <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
@@ -16,10 +16,8 @@
 
     <!-- 🏷 Product Info Section -->
       <!-- Two-column grid layout -->
-      <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
- <!-- CREDIT NOTE -->
-      
-         
+      <div class="grid grid-cols-3 gap-x-8 gap-y-4 w-full">
+ <!-- CREDIT NOTE -->        
         <div class="flex flex-col">
             <label class="font-medium mb-1">Debit Note</label>
            <p-dropdown (onChange)="RetunCredit($event)"
@@ -33,6 +31,25 @@
           </p-dropdown>
         
         </div>
+
+         <!-- Vendor Name -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Vendor Name <span class="text-red-500">*</span></label>
+
+           <p-dropdown
+            [options]="this.vendorOptions"
+            optionLabel="fieldname"
+            optionValue="fieldid"
+            [filter]="true"
+            filterPlaceholder="Search Vendor Name"
+            formControlName="p_vendorid"
+            placeholder="Vendor Name">
+          </p-dropdown>
+          <small class="text-red-500 ms-3 mt-1" *ngIf="CreditForm.get('p_vendorid')?.touched">
+            <span *ngIf="CreditForm.get('p_vendorid')?.errors?.['required']">Vendor Name is required</span>
+          </small>
+        </div>
+
           <!-- DEBIT NOTE -->
 <div class="flex flex-col">
         <label class="font-medium mb-1">Credit Note</label>
@@ -42,6 +59,7 @@
            formControlName="p_creditNote"
            />
       </div>
+
 </div>
     <!-- Product Table with Pagination -->
     <div>
@@ -94,10 +112,10 @@
 </p-table>
 
     </div>
-
-
-
-  
+   <div class="flex justify-end border-t pt-4 gap-4">
+      <label class="font-medium">Grand Total</label>
+      <input pInputText type="string" [value]="grandTotal | number:'1.2-2'" readonly placeholder="Total" class="w-40 text-right">
+   </div>
   </form>
 
   </div>
@@ -116,11 +134,11 @@
   <table width="100%" cellspacing="0" cellpadding="0" style="margin-bottom:15px;">
     <tr>
       <td width="50%" style="vertical-align:top; padding: 6px">
-        <strong>SHRISTI ELECTRICAL</strong><br>
-        SHOP NO.-7 SAPNA TALKIES COMPLEX,<br>
-        NANDINI ROAD, BHILAI<br>
-        GSTIN: 22AOCPY0439F1Z5 | State: Chhattisgarh (22)<br>
-        Email: shristielectrical&#64;gmail.com
+        <strong>{{companyName}}</strong><br>
+        {{companyAddress}},<br>
+        {{companycity}}<br>
+        GSTIN: {{companygstno}} | State: {{companystate}} ({{statecode}})<br>
+        Email: {{companyemail}}
       </td>
       <td width="50%" style="vertical-align:top;padding: 0; border:none;">
         <table cellpadding="0" cellspacing="0" style=" border:none; border-collapse:collapse;">
@@ -133,12 +151,12 @@
             <td>{{ CreditForm.get('p_transactiondate')?.value | date:'dd-MMM-yyyy' }}</td>
           </tr>
           <tr>
-            <td><strong>Original Invoice:</strong></td>
-            <td>{{ CreditForm.get('p_originalInvoice')?.value || '' }}</td>
+            <td><strong>Vendor Name:</strong></td>
+            <td>{{ CreditForm.get('p_vendorid')?.value || '' }}</td>
           </tr>
           <tr>
             <td><strong>Payment Mode:</strong></td>
-            <td>CASH</td>
+            <td>{{CreditForm.get('p_paymode')?.value}}</td>
           </tr>
           <tr>
             <td><strong>Return/Debit To:</strong></td>
@@ -183,13 +201,13 @@
     </thead>
     
     <tbody>
-      <tr *ngFor="let row of replacecednlist; let i = index">
+      <tr *ngFor="let row of selectedItems; let i = index">
         <td align="center">{{ i + 1 }}</td>
         <td>{{ row.itemname }}</td>
         <td align="center">{{ row.quantity }}</td>
         <td align="center">{{ row.uomname || row.current_stock }}</td>
-        <td align="right">₹{{ row.mrp | number:'1.2-2' }}</td>
-        <td align="right">₹{{ (row.quantity * row.mrp) | number:'1.2-2' }}</td>
+        <td align="right">₹{{ row.itemcost | number:'1.2-2' }}</td>
+        <td align="right">₹{{ (row.quantity * row.itemcost) | number:'1.2-2' }}</td>
       </tr>
       
       <!-- Summary Rows -->
@@ -220,7 +238,7 @@
       <td colspan="5"  class="bold" style="text-align:right;">
         Total Amount:
       </td>
-      <td> <strong>₹{{ totalAmount }}</strong></td>
+      <td align="right"> <strong>₹{{ totalAmount | number:'1.2-2' }}</strong></td>
     </tr>
 
     <tr>
@@ -237,7 +255,7 @@
     <!-- BANK DETAILS + SIGN -->
     <tr>
       <td class="bold">Bank Name:</td>
-      <td colspan="2">Shristi Elec bank name	
+      <td colspan="2">{{bankname}}
 </td>
 
    
@@ -248,16 +266,16 @@
 
     <tr>
       <td class="bold">Account Number:</td>
-      <td colspan="5"></td>
+      <td colspan="5">{{accountno}}</td>
     </tr>
 
     <tr>
       <td class="bold">IFSC Code:</td>
-      <td colspan="5"></td>
+      <td colspan="5">{{ifsc}}</td>
     </tr>
      <tr>
       <td class="bold">Company PAN:</td>
-      <td colspan="5"></td>
+      <td colspan="5">{{pan}}</td>
     </tr>
     </tbody>
   </table>

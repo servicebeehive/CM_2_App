@@ -113,6 +113,8 @@ export class TransactionComponent {
                 toDate: [this.today, Validators.required],
                 p_vendor: [''],
                 totalPayableAmount:[''],
+                finalPayableAmount:[''],
+                totalDebitNote:[''],
                 p_checked:[false],
                 p_stock:this.fb.array([])
             },
@@ -186,6 +188,8 @@ export class TransactionComponent {
                     this.totalDueAmount();
                     this.initialzeFormArray();
                     this.saveCurrentState();
+                    this.onGetDebitnote(p_vendor);
+                    this.totalfinalpayable();
                     if (this.products.length == 0) {
                         let message = 'No Data Available for this Category and Item';
                         this.showSuccess(message);
@@ -212,6 +216,17 @@ export class TransactionComponent {
     },0);
   this.transactionForm.get('totalPayableAmount')?.setValue(totalSaleDue);
    }
+
+totalfinalpayable(){
+    if(!this.products ||  this.products.length===0){
+        this.transactionForm.get('finalPayableAmount')?.setValue('0');
+        return;
+    }
+    const totalPayableAmount= this.transactionForm.get('totalPayableAmount')?.value;
+    const totalDebitNote=this.transactionForm.get('totalDebitNote')?.value;
+    const totalFinalAmount = (totalPayableAmount-totalDebitNote).toFixed(2);
+    this.transactionForm.get('finalPayableAmount')?.setValue(totalFinalAmount);
+}
 
    private initialzeFormArray():void{
     const stockArray = this.getStockArray();
@@ -258,6 +273,36 @@ onDueAmountFilter(event:any){
         this.products = [];
         
     }
+
+onGetDebitnote(data?:any){
+    const payload={
+        p_returntype:'DNNSUM',
+        p_returnvalue:data || null
+    };
+    this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+        next : (res)=>{
+            console.log('result',res.data);
+            const debitnote=res.data[0].total_dn_amount;
+           console.log('dn:',debitnote)
+        if( res.data){
+           const data=res.data[0];
+           this.transactionForm.patchValue({
+            totalDebitNote:data.total_dn_amount
+           });
+            console.log('Setting totalDebitNote to:', data.total_dn_amount);
+        }
+        else{
+            this.transactionForm.patchValue({
+                    totalDebitNote: 0
+                });
+        }
+        },
+          error: (err) => {
+            console.error('Error fetching debit note:', err);
+        }
+    })
+}
+
     createDropdownPayload(returnType: string) {
         return {
             p_username: 'admin',
@@ -281,6 +326,7 @@ onDueAmountFilter(event:any){
     loadAllDropdowns() {
         this.OnGetVendor();
         this.OnGetInvoice();
+        this.onGetDebitnote();
     }
 
 

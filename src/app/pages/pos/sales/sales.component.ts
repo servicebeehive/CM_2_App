@@ -63,8 +63,8 @@ import { Router } from '@angular/router';
 export class SalesComponent {
     isBarcodeScan = false;
     isAutoSelect = false; // works for barcode + click
-
     
+
 
     // -----------------------------
     //  Component state / Variables
@@ -78,6 +78,7 @@ ngAfterViewInit() {
 }
 
 onBarcodeScan(event: Event) {
+this.isBarcodeScan=true
   const input = event.target as HTMLInputElement;
   const barcode = input?.value?.trim();
   if (!barcode) return;
@@ -104,9 +105,8 @@ onBarcodeScan(event: Event) {
 this.isAutoSelect = true;
 this.salesForm.get('p_itemdata')?.setValue(matchedItem.itemid);
 this.OnItemChange({ value: matchedItem.itemid });
-
-
   this.clearBarcodeInput();
+ this.isBarcodeScan = false; // 🔑 reset after scan
 }
 
 
@@ -127,9 +127,6 @@ clearBarcodeInput() {
 keepBarcodeFocus() {
   this.barcodeInput?.nativeElement?.focus();
 }
-
-
-
     @ViewChild('itemSel') itemSel!:any;
     public transactionid: any;
     salesForm!: FormGroup;
@@ -140,26 +137,32 @@ keepBarcodeFocus() {
     first: number = 0;
     rowsPerPage: number = 5;
     products: StockIn[] = [];
-    filteredProducts: StockIn[] = [];
-    filteredCustomerName: any[] = [];
-    filteredMobile: any[] = [];
-    globalFilter: string = '';
-    childUomStatus: boolean = false;
-    showGlobalSearch: boolean = true;
     today: Date = new Date();
     submitDisabledByBill: boolean = false;
     discountplace: string = 'Enter Amount';
     public authService = inject(AuthService);
     public getUserDetails = {};
-    searchValue: string = '';
     itemOptions: any[] = [];
-    transactionIdOptions = [];
     cusMobileOptions: any[] = [];
+    profileOptions:any={};
     public itemOptionslist: [] = [];
     public uomlist: any[] = [];
     mobilePlaceholder: string = 'Mobile No';
     backshow: boolean = false;
     isLoadingBills: boolean = false;
+    billValue:any=null;
+    companyName:string='';
+    companyAddress:string='';
+    companycity:string='';
+    companystate:string='';
+    statecode:string='';
+    companyemail:string='';
+    companygstno:string='';
+    bankname:string='';
+    accountno:string='';
+    branchname:string='';
+    ifsc:string='';
+    pan:string='';
     @ViewChild(AddinventoryComponent) addInventoryComp!: AddinventoryComponent;
 
     // Dropdowns / lists
@@ -200,7 +203,7 @@ keepBarcodeFocus() {
                 p_customername: ['', Validators.required],
                 p_mobileno: ['', [Validators.required, Validators.pattern(/^[6-9]\d{9}$/)]],
                 searchMobileNo: [''],
-                transactionmode:['Cash'],
+                p_paymode:['Cash'],
                 p_totalcost: [0],
                 p_totalsale: [0],
                 p_disctype: [false],
@@ -223,7 +226,6 @@ keepBarcodeFocus() {
                 cgst_9: [''],
                 discountvalueper: [],
                 amount_before_tax: [''],
-
                 // FormArray for sale rows
                 p_sale: this.fb.array([])
             },
@@ -312,7 +314,6 @@ keepBarcodeFocus() {
             itemcost: [data?.pruchaseprice || 0],
             MRP: [data?.saleprice || 0],
             totalPayable: [data ? data.saleprice : 0],
-
             curStock: [data?.currentstock || 0],
             warPeriod: [data?.warrentyperiod || 0],
             location: [data?.location || ''],
@@ -337,8 +338,6 @@ keepBarcodeFocus() {
                     itemcost: item.itemcost || 0,
                     MRP: (item.mrp || 0).toFixed(2),
                     totalPayable: ((item.quantity || 1) * (item.mrp || 0)).toFixed(2),
-                    // p_totalcost:item.
-                    // Additional fields used in UI
                     curStock: item.current_stock || 0,
                     warPeriod: item.warrenty || 0,
                     location: '',
@@ -479,12 +478,37 @@ keepBarcodeFocus() {
             error: (err) => console.log(err)
         });
     }
+     OnGetProfile() {
+        const payload = this.createDropdownPayload('PROFILE');
+        this.stockInService.getdropdowndetails(payload).subscribe({
+            next: (res) => {
+            if(res.data && res.data.length>0){
+                this.profileOptions=res.data;
+                const profile=res.data[0];
+                this.companyName=profile.companyname,
+                this.companyAddress=profile.companyaddress,
+                this.companystate=profile.state_name,
+                this.companycity=profile.city_name,
+                this.companyemail=profile.companyemail,
+                this.companygstno=profile.companygstno,
+                this.statecode=profile.statecode,
+                this.bankname=profile.bankname,
+                this.accountno=profile.accountno,
+                this.branchname=profile.branch,
+                this.ifsc=profile.ifsc,
+                this.pan=profile.pan
+            }
+            },
+            error: (err) => console.log(err)
+        });
+    }
 
     // Load initial dropdowns (items, bill no)this.OngetcalculatedMRP
     loadAllDropdowns() {
         this.OnGetItem();
         this.OnGetBillNo();
         this.OnGetCusMobile();
+        this.OnGetProfile();
     }
 
     // Load dropdown via older endpoint (Getreturndropdowndetails)
@@ -509,6 +533,7 @@ keepBarcodeFocus() {
             next: (res) => {
                 const billdata: any = res.data;
                 this.billNoOptions = billdata.filter((item: { billno: null }) => item.billno != null);
+                this.billValue=this.billNoOptions;
             },
             error: (err) => console.log(err)
         });
@@ -564,9 +589,6 @@ keepBarcodeFocus() {
   this.calculateSummary();
 }
 
-
-
-
     costGreaterThanSaleValidator(): ValidatorFn {
         return (form: AbstractControl): ValidationErrors | null => {
             const totalCost = Number(form.get('p_totalcost')?.value || 0);
@@ -606,6 +628,7 @@ keepBarcodeFocus() {
                 p_transactiondate: billDetails.transactiondate ? new Date(billDetails.transactiondate) : null,
                 p_mobileno: billDetails.mobileno,
                 status: billDetails.status,
+                p_paymode:billDetails.paymode,
                 p_totalcost: billDetails.totalcost.toFixed(2),
                 p_totalsale: billDetails.totalsale.toFixed(2),
                 p_disctype: billDetails.discounttype == 'Y' ? true : false,
@@ -619,8 +642,6 @@ keepBarcodeFocus() {
                 cgst_9: billDetails.cgst_9,
                 amount_before_tax: billDetails.amount_before_tax
             });
-            console.log('payment due', billDetails.totalpayable);
-            console.log('payment due', billDetails.amountdue);
         }
     }
 
@@ -732,6 +753,9 @@ keepBarcodeFocus() {
 
     // Submit handler with confirmation and validation
     onSubmit() {
+         if (this.isBarcodeScan) {
+    return;
+  }
         if (this.isSubmitDisabled()) {
             this.messageService.add({
                 severity: 'error',
@@ -758,11 +782,12 @@ keepBarcodeFocus() {
     // Reset form and clear sale array
     onReset() {
         this.salesForm.reset({
-            p_gsttran: true
+            p_gsttran: true,
         });
         this.backshow = false;
         this.saleArray.clear();
         this.salesForm.get('p_transactiondate')?.setValue(this.today);
+         this.salesForm.get('p_paymode')?.setValue('Cash');
     }
 
     // -----------------------------
@@ -873,7 +898,7 @@ keepBarcodeFocus() {
             p_replacesimilir: body.p_disctype === true ? 'Y' : 'N',
             p_discounttype: body.p_disctype === true ? 'Y' : 'N',
             p_creditnoteno: body.p_creditnoteno || '',
-            p_paymentmode: body.p_paymentmode || 'Cash',
+            p_paymentmode: body.p_paymode,
             p_paymentdue: Number(body.p_paymentdue) || 0,
             p_sale: (body.p_sale || []).map((x: any) => ({
                 TransactiondetailId: x.TransactiondetailId || 0,
@@ -896,12 +921,14 @@ keepBarcodeFocus() {
 
     // Send header (and sale) to API, show toast notifications on result
     OnSalesHeaderCreate(data: any) {
+  
         const apibody = this.cleanRequestBody(this.salesForm.value);
 
         this.stockInService.OninsertSalesDetails(apibody).subscribe({
             next: (res) => {
+                const responseData=res.data[0];
                 const billno = res.data[0]?.billno;
-                this.OnGetBillNo();
+               this.OnGetBillNo();
                 this.OnGetItem();
                 this.salesForm.controls['p_billno'].setValue(billno);
                 if (res.data && res.data.length > 0) {
@@ -910,6 +937,14 @@ keepBarcodeFocus() {
                     });
                     
                 }
+                setTimeout(()=>{
+                    if(this.billValue){
+                        const currentBill=this.billValue.find((bill:any)=>bill.billno===billno);
+                        if(currentBill){
+                            this.patchPrintValues(currentBill);
+                        }
+                    }
+                },500);
                 console.log('res', res);
                 this.messageService.add({
                     severity: 'success',
@@ -943,7 +978,17 @@ keepBarcodeFocus() {
             }
         });
     }
-
+patchPrintValues(apiData:any){
+    const patchData:any={};
+    patchData.p_transactionid=apiData.transactionid;
+    patchData.discountvalueper = apiData.discountvalueper;
+    patchData.sgst_9=apiData.sgst_9;
+    patchData.cgst_9=apiData.cgst_9;
+     patchData.tax_18=apiData.tax_18;
+      patchData.amount_before_tax=apiData.amount_before_tax;
+    this.salesForm.patchValue(patchData);
+    this.salesForm.updateValueAndValidity();
+}
     // -----------------------------
     //  Utility / Misc
     // -----------------------------
@@ -1115,10 +1160,8 @@ if (!row.contains('baseStock')) {
     printInvoice() {
         const printContents = document.getElementById('invoicePrintSection')?.innerHTML;
         if (!printContents) return;
-
         const popupWindow = window.open('', '_blank', 'width=900,height=1500');
         popupWindow!.document.open();
-
         popupWindow!.document.write(`
      <!DOCTYPE html>
                     <html>

@@ -356,6 +356,7 @@ allowOnlyNumbers(event: any) {
         p_mobileno: billDetails.mobileno,
         p_totalcost: (billDetails.totalcost).toFixed(2),
         p_totalsale: (billDetails.totalsale).toFixed(2),
+        p_disctype: billDetails.discounttype == 'Y' ? true : false,
         p_overalldiscount: billDetails.discount,
         p_roundoff: billDetails.roundoff,
         p_totalpayable: (billDetails.totalpayable).toFixed(2),
@@ -650,8 +651,5 @@ allowOnlyNumbers(event: any) {
 
   showSuccess(message: string) {
     this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
-  }
-  newSale(){
-
   }
 }

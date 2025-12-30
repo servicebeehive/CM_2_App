@@ -14,30 +14,7 @@
     <form [formGroup]="invoiceForm" class="space-y-8">
         <!-- 🏷 Product Info Section -->
         <div class="space-y-6">
-            <!-- First Row: Customer Mobile and Dates -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 w-full">
-                <!-- Customer Mobile -->
-                <div class="flex flex-col">
-                    <label class="font-medium mb-1">Customer Mobile</label>
-                    <p-dropdown
-                        [options]="cusMobileOptions"
-                        optionLabel="fieldname"
-                        optionValue="fieldid"
-                        [filter]="true"
-                        [showClear]="true"
-                        filterPlaceholder="Search Customer Mobile"
-                        formControlName="p_mobile"
-                        placeholder="Customer Mobile"
-                        class="w-full"
-                    >
-                    </p-dropdown>
-                </div>
-
-                 <!-- Status -->
-                <div class="flex flex-col">
-                    <label class="font-medium mb-1">Status</label>
-                    <p-dropdown [options]="statusOptions" optionLabel="fieldname" [showClear]="true" optionValue="fieldid" [filter]="true" filterPlaceholder="Select Status" formControlName="status" placeholder="Status" class="w-full"> </p-dropdown>
-                </div>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-x-8 gap-y-4 w-full">
 
                 <!-- Transaction Date From-->
                 <div class="flex flex-col">
@@ -57,10 +34,7 @@
                         <span *ngIf="invoiceForm.errors?.['dateRangeInvalid'] && invoiceForm.get('toDate')?.touched"> To Date must be greater than or equal to From Date </span>
                     </small>
                 </div>
-            </div>
 
-            <!-- Second Row: Customer Name and Status -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                 <!-- Customer Name -->
                 <div class="flex flex-col">
                     <label class="font-medium mb-1">Customer Name</label>
@@ -78,14 +52,36 @@
                     </p-dropdown>
                 </div>
 
+                  <!-- Customer Mobile -->
+                <div class="flex flex-col">
+                    <label class="font-medium mb-1">Customer Mobile</label>
+                    <p-dropdown
+                        [options]="cusMobileOptions"
+                        optionLabel="fieldname"
+                        optionValue="fieldid"
+                        [filter]="true"
+                        [showClear]="true"
+                        filterPlaceholder="Search Customer Mobile"
+                        formControlName="p_mobile"
+                        placeholder="Customer Mobile"
+                        class="w-full"
+                    >
+                    </p-dropdown>
+                </div>
+                
+              <!-- Status -->
+                <div class="flex flex-col">
+                    <label class="font-medium mb-1">Status</label>
+                    <p-dropdown [options]="statusOptions" optionLabel="fieldname" [showClear]="true" optionValue="fieldid" [filter]="true" filterPlaceholder="Select Status" formControlName="status" placeholder="Status" class="w-full"> </p-dropdown>
+                </div>
+                
                 <!-- Total Due Amount -->
                 <div class="flex flex-col">
                     <label class="font-medium mb-1">Total Due Amount</label>
                     <input pInputText placeholder="Total Due Amount" readonly class="grayout" formControlName="totalDueAmount" />
                 </div>
                
-            </div>
-
+</div>
             <!-- Action Buttons - Visible only on mobile, below Customer Name and Status -->
             <div class="flex md:hidden justify-center gap-4 mt-4">
                 <button pButton type="button" label="Display" class="p-button-warning flex-1" [disabled]="invoiceForm.invalid" (click)="display()"></button>
@@ -170,12 +166,12 @@
         <tr>
             <!-- LEFT SIDE (COMPANY + BUYER INFO) -->
             <td width="60%" style="vertical-align: top; padding: 6px">
-                <strong>SHRISTI ELECTRICAL</strong><br />
-                SHOP NO.-7 SAPNA TALKIES COMPLEX,<br />
-                NANDINI ROAD, BHILAI<br />
-                GSTIN/UIN: 22AOCPY0439F1Z5<br />
-                State Name: Chhattisgarh, Code: 22<br />
-                E-Mail : {{ 'shristielectrical@gmail.com' }}
+                <strong>{{companyName}}</strong><br />
+                {{companyAddress}},<br />
+                {{companystate}}<br />
+                GSTIN/UIN: {{companygstno}}<br />
+                State Name: {{companystate}}, Code: {{statecode}}<br />
+                E-Mail : {{companyemail }}
                 <br />
 
                 <hr style="margin: 5px 0" />
@@ -212,7 +208,7 @@
 
                     <tr>
                         <td><strong>Mode of Payment</strong></td>
-                        <td><strong>CASH</strong></td>
+                        <td><strong>{{invoiceForm.get('p_paymode')}}</strong></td>
                     </tr>
 
                     <tr>
@@ -284,7 +280,7 @@
             <tr *ngFor="let item of invoiceData; let i = index">
                 <td>{{ i + 1 }}</td>
                 <td>{{ item.itemname }}</td>
-                <td>8544</td>
+                <td>{{item.hsncode}}</td>
                 <td>{{ item.quantity }} {{ item.uomname }}</td>
                 <td>₹{{ item.mrp | number: '1.2-2' }}</td>
                 <td>{{ item.uomname }}</td>
@@ -359,7 +355,7 @@
         </tr>
 
         <tr style="text-align: center">
-            <td>8544</td>
+            <td></td>
             <td>₹{{ invoiceForm.get('amount_before_tax')?.value | number: '1.2-2' }}</td>
             <td>9%</td>
             <td>₹{{ invoiceForm.get('cgst_9')?.value | number: '1.2-2' }}</td>
@@ -379,12 +375,12 @@
         <!-- {{ taxAmountInWords }} -->
         - <br /><br />
 
-        <strong>Company's Bank Details</strong><br />
-        Bank Name : <b>BANK OF INDIA</b><br />
-        A/c No. : 930520110000557<br />
-        Branch & IFS Code : POWER HOUSE & BKID0009305<br /><br />
+         <strong>Company's Bank Details</strong><br />
+        Bank Name : <b>{{bankname}}</b><br />
+        A/c No. : {{accountno}}<br />
+Branch & IFS Code : {{branchname}} & {{ifsc}}<br /><br />
 
-        Company's PAN : <b>AOCPY0439F</b>
+        Company's PAN : <b>{{pan}}</b> <br /><br />
         <p style="text-align: right"><strong>Authorized Signatory</strong></p>
         <strong>Declaration:</strong>
         We declare that this invoice shows the actual price of the goods described and all particulars are true.

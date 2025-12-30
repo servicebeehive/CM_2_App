@@ -21,7 +21,7 @@
                     <button pButton type="button" label="Back" class="p-button-secondary w-full md:w-auto" (click)="back()"></button>
                 }
             </div>
-        </div>
+            </div>
 
         <!-- ================================
          ITEM SELECT SECTION
@@ -94,54 +94,8 @@
                 </small>
             </div>
 
-            <!-- MODE OF TRANSACTION -->
-            <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">Transaction Mode</label>
-
-                <p-dropdown
-                    [options]="transactionMode"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Transaction Mode"
-                    formControlName="transactionmode"
-                    [filter]="true"
-                    filterPlaceholder="Search Bill No."
-                    [showClear]="true"
-                    tabindex="2"
-                    (onChange)="onBillDetails($event)"
-                    [loading]="isLoadingBills"
-                >
-                </p-dropdown>
-            </div>
-
-            <!-- TRANSACTION DATE -->
-            <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">Transaction Date</label>
-                <p-datepicker tabindex="8" fluid formControlName="p_transactiondate" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="Transaction Date" [maxDate]="today"> </p-datepicker>
-            </div>
-
-            <div class="flex items-center gap-2 md:gap-4 mt-0 md:mt-6">
-                <p-checkbox binary="true" tabindex="4" variant="filled" formControlName="p_gsttran"></p-checkbox>
-                <label class="text-sm md:text-base">GST Transaction</label>
-            </div>
-
-            <div class="flex items-center gap-2 md:gap-4 mt-0 md:mt-6">
-                <label class="text-sm md:text-base">
-                    <b> Status &nbsp; &nbsp;</b>
-                    <span
-                        class="font-bold text-sm md:text-base"
-                        [ngStyle]="{
-                            color: salesForm.get('status')?.value === 'Done' ? 'green' : salesForm.get('status')?.value === 'Partial Cancel' ? 'grey' : salesForm.get('status')?.value === 'Cancel' ? 'red' : 'black'
-                        }"
-                    >
-                        {{ salesForm.get('status')?.value }}
-                    </span></label
-                >
-            </div>
-        <!-- </div>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-4 md:gap-x-8 w-full mt-4"> -->
-           <!-- ITEM DROPDOWN -->
-            <div class="col-span-2 flex flex-col">
+             <!-- ITEM DROPDOWN -->
+            <div class="flex flex-col col-span-2">
                 <label class="text-sm md:text-base">Item</label>
 
                 <p-select
@@ -176,6 +130,54 @@
                     </ng-template>
                 </p-select>
             </div>
+
+            <!-- MODE OF TRANSACTION -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1 text-sm md:text-base">Transaction Mode</label>
+
+                <p-dropdown
+                    [options]="transactionMode"
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Transaction Mode"
+                    formControlName="p_paymode"
+                    [filter]="true"
+                    filterPlaceholder="Search Bill No."
+                    [showClear]="true"
+                    tabindex="2"
+                    (onChange)="onBillDetails($event)"
+                    [loading]="isLoadingBills"
+                >
+                </p-dropdown>
+            </div>
+
+            <!-- TRANSACTION DATE -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1 text-sm md:text-base">Transaction Date</label>
+                <p-datepicker tabindex="8" fluid formControlName="p_transactiondate" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="Transaction Date" [maxDate]="today"> </p-datepicker>
+            </div>
+
+            <div class="flex items-center gap-2 md:gap-4">
+                <p-checkbox binary="true" tabindex="4" variant="filled" formControlName="p_gsttran"></p-checkbox>
+                <label class="text-sm md:text-base">GST Transaction</label>
+            </div>
+
+           <div class="flex items-center gap-2 md:gap-4">
+                <label class="text-xl">
+                    <b> Status &nbsp; &nbsp;</b>
+                    <span
+                        class="font-bold text-xl"
+                        [ngStyle]="{
+                            color: salesForm.get('status')?.value === 'Done' ? 'green' : salesForm.get('status')?.value === 'Partial Cancel' ? 'grey' : salesForm.get('status')?.value === 'Cancel' ? 'red' : 'black'
+                        }"
+                    >
+                        {{ salesForm.get('status')?.value }}
+                    </span></label
+                >
+            </div>
+        <!-- </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-4 md:gap-x-8 w-full mt-4"> -->
+          
         </div>
 
         <!-- <button
@@ -196,16 +198,16 @@
                     <!-- HEADER -->
                     <ng-template pTemplate="header">
                         <tr class="bg-yellow-400">
-                            <th class="text-xs md:text-sm">Item Code</th>
-                            <th class="text-xs md:text-sm">Item Name</th>
-                            <th class="text-xs md:text-sm">Current Stock</th>
-                            <th class="text-xs md:text-sm">UOM</th>
-                            <th class="text-xs md:text-sm">Qty</th>
-                            <th class="text-xs md:text-sm">MRP</th>
-                            <th class="text-xs md:text-sm">Total</th>
-                            <th class="text-xs md:text-sm">Warranty</th>
-                            <th class="text-xs md:text-sm">Location</th>
-                            <th class="text-center text-xs md:text-sm">Action</th>
+                            <th>Item Code</th>
+                            <th>Item Name</th>
+                            <th>Current Stock</th>
+                            <th>UOM</th>
+                            <th>Qty</th>
+                            <th>MRP</th>
+                            <th>Total</th>
+                            <th>Warranty</th>
+                            <th>Location</th>
+                            <th>Action</th>
                         </tr>
                     </ng-template>
 
@@ -325,12 +327,12 @@
         <tr>
             <!-- LEFT SIDE (COMPANY + BUYER INFO) -->
             <td width="60%" style="vertical-align: top; padding: 6px">
-                <strong>SHRISTI ELECTRICAL</strong><br />
-                SHOP NO.-7 SAPNA TALKIES COMPLEX,<br />
-                NANDINI ROAD, BHILAI<br />
-                GSTIN/UIN: 22AOCPY0439F1Z5<br />
-                State Name: Chhattisgarh, Code: 22<br />
-                E-Mail : {{ 'shristielectricalgw@gmail.com' }}
+                <strong>{{companyName}}</strong><br />
+                {{companyAddress}},<br />
+                {{companystate}}<br />
+                GSTIN/UIN: {{companygstno}}<br />
+                State Name: {{companystate}}, Code: {{statecode}}<br />
+                E-Mail : {{companyemail }}
                 <br />
 
                 <hr style="margin: 5px 0" />
@@ -367,7 +369,7 @@
 
                     <tr>
                         <td><strong>Mode of Payment</strong></td>
-                        <td><strong>CASH</strong></td>
+                        <td><strong>{{salesForm.get('p_paymode')?.value}}</strong></td>
                     </tr>
 
                     <tr>
@@ -520,10 +522,6 @@
             <td>9%</td>
             <td>₹{{ salesForm.get('sgst_9')?.value | number: '1.2-2' }}</td>
             <td>₹{{ salesForm.get('tax_18')?.value | number: '1.2-2' }}</td>
-            <!-- sgst_9:billDetails.sgst_9,
-      tax_18:billDetails.tax_18,
-      cgst_9:billDetails.cgst_9,
-      amount_before_tax:billDetails.amount_before_tax, -->
         </tr>
     </table>
 
@@ -534,11 +532,11 @@
         - <br /><br />
 
         <strong>Company's Bank Details</strong><br />
-        Bank Name : <b>BANK OF INDIA</b><br />
-        A/c No. : 930520110000557<br />
-        Branch & IFS Code : POWER HOUSE & BKID0009305<br /><br />
+        Bank Name : <b>{{bankname}}</b><br />
+        A/c No. : {{accountno}}<br />
+Branch & IFS Code : {{branchname}} & {{ifsc}}<br /><br />
 
-        Company's PAN : <b>AOCPY0439F</b> <br /><br />
+        Company's PAN : <b>{{pan}}</b> <br /><br />
 
         <strong>Declaration:</strong>
         We declare that this invoice shows the actual price of the goods described and all particulars are true.
