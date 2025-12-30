@@ -335,6 +335,18 @@ allowOnlyNumbers(event: any) {
   OnItemChange(event: any) {
     const latetData = this.itemOptions.find(item => item.itemid == event.value);
     console.log(latetData);
+    if(!latetData) return;
+    const alreadyExists = this.saleArray.controls.some((row)=>row.get('ItemId')?.value === latetData.itemid);
+    if(alreadyExists){
+      this.messageService.add({
+        severity:'warn',
+        summary:'Duplicate Item',
+        detail:`${latetData.itemname} is already added.`,
+        life:2000
+      });
+      this.replaceForm.get('p_itemdata')?.setValue(null,{emitEvent:false});
+      return;
+    }
     if (latetData) {
       // Push new row and update totals
       this.saleArray.push(this.createSaleItem(latetData));

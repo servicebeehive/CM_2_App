@@ -555,12 +555,11 @@ handleKeyboardSubmit(event: KeyboardEvent) {
 
     // Load Bill No dropdown
     OnGetBillNo() {
-        //   const loginusername = this.authService.isLogIntType().username;
-        //   console.log('gdsfsd:',loginusername)
+          const loginusername = this.authService.isLogIntType().username;
+          console.log('gdsfsd:',loginusername)
        const payload={
-         ...this.getUserDetails,
             p_returntype: 'NEWTRANSACTIONID',
-            // p_username:loginusername
+            p_username:loginusername
        }
         this.salesService.getdropdowndetails(payload).subscribe({
             next: (res) => {
