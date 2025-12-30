@@ -63,6 +63,8 @@ import { Router } from '@angular/router';
 export class SalesComponent {
     isBarcodeScan = false;
     isAutoSelect = false; // works for barcode + click
+    
+
 
     // -----------------------------
     //  Component state / Variables
@@ -76,6 +78,7 @@ ngAfterViewInit() {
 }
 
 onBarcodeScan(event: Event) {
+this.isBarcodeScan=true
   const input = event.target as HTMLInputElement;
   const barcode = input?.value?.trim();
   if (!barcode) return;
@@ -103,6 +106,7 @@ this.isAutoSelect = true;
 this.salesForm.get('p_itemdata')?.setValue(matchedItem.itemid);
 this.OnItemChange({ value: matchedItem.itemid });
   this.clearBarcodeInput();
+ this.isBarcodeScan = false; // 🔑 reset after scan
 }
 
 
@@ -749,6 +753,9 @@ keepBarcodeFocus() {
 
     // Submit handler with confirmation and validation
     onSubmit() {
+         if (this.isBarcodeScan) {
+    return;
+  }
         if (this.isSubmitDisabled()) {
             this.messageService.add({
                 severity: 'error',
