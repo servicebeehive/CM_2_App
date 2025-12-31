@@ -117,7 +117,7 @@ totalAmount: number = 0;
         this.CreditForm = this.fb.group({
             // itemName: ['', [Validators.maxLength(50)]],
             p_debitNote: [null],
-            p_creditNote: [null],
+            p_creditNote: [null,Validators.maxLength(25)],
             p_vendorid:['',[Validators.required]],
             p_sale: this.fb.array([])
         });
@@ -131,29 +131,13 @@ totalAmount: number = 0;
    }
     createSaleRow(item: any): FormGroup {
         return this.fb.group({
-            transactiondetailid: [item.transactionid],
+            transactiondetailid: [item.transactiondetailid],
             itemid: [item.itemid],
             itemsku: [item.itemsku],
             itembarcode: [item.itembarcode],
             itemname: [item.itemname],
             uomid: [item.uomid],
-            uomname: [item.uomname],
-            current_stock: [item.current_stock],
-            quantity: [item.quantity],
-            itemcost: [item.itemcost],
-            mrp: [item.mrp],
-            discount: [item.discount],
-            similaritem: [item.similaritem],
-            billno: [item.billno],
-            discounttype: [item.discounttype],
-            dnno: [item.dnno],
-            cnno: [item.cnno],
-            transactionid:[item.transactionid],
-            vendorid:[item.vendorid],
-            // Additional computed fields
-            total: [item.quantity * item.mrp],
-            warPeriod: [''],
-            location: ['']
+            uomname: [item.uomname]
         });
     }
 

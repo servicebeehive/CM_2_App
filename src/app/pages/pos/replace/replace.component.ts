@@ -7,6 +7,8 @@ import {
   FormGroup,
   FormsModule,
   ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
   Validators
 } from '@angular/forms';
 
@@ -143,7 +145,9 @@ export class ReplaceComponent {
       p_similar:[true],
       // FormArray for sale rows
       p_sale: this.fb.array([])
-    });
+    }, {
+                validators: [this.costGreaterThanSaleValidator()]
+            });
     this.replaceForm.get('p_billno')?.valueChanges.subscribe(value=>{
       if(value){
         this.disableItemSearchSubmit();
@@ -184,6 +188,19 @@ else{
   get saleRows(): FormGroup[] {
     return this.saleArray.controls as FormGroup[];
   }
+  costGreaterThanSaleValidator(): ValidatorFn {
+        return (form: AbstractControl): ValidationErrors | null => {
+            const totalCost = Number(form.get('p_totalcost')?.value || 0);
+            const finalPayable = Number(form.get('p_totalpayable')?.value || 0);
+
+            // ❗ Condition: final payable must be >= total cost
+            if (finalPayable < totalCost) {
+                return { costNotGreater: true };
+            }
+
+            return null;
+        };
+    }
 disableItemSearchSubmit(){
   this.replaceForm.get('itemSearch')?.disable();
   this.submitDisabledByBill=true;
@@ -344,15 +361,17 @@ allowOnlyNumbers(event: any) {
         detail:`${latetData.itemname} is already added.`,
         life:2000
       });
-      this.replaceForm.get('p_itemdata')?.setValue(null,{emitEvent:false});
+      
+         this.replaceForm.get('p_itemdata')?.setValue(null, { emitEvent: false });
       return;
     }
-    if (latetData) {
       // Push new row and update totals
       this.saleArray.push(this.createSaleItem(latetData));
       const index = this.saleArray.length - 1;
       this.updateTotal(index);
-    }
+      setTimeout(() => {
+    this.replaceForm.get('p_itemdata')?.setValue(null, { emitEvent: false });
+  });
   }
 
   // Called when bill dropdown value changes

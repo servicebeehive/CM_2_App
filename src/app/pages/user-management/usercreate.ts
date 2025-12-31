@@ -88,18 +88,18 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
               
                 <div class="grid grid-cols-12 gap-4 mt-4">
                     <div class="col-span-12 md:col-span-4">
-                        <label class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Company Name</label>
+                        <label class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Company Name <span class="text-red-500">*</span></label>
                         <input formControlName="companyname" type="text" pInputText placeholder="Company Name" fluid />
                     </div>
 
                     <div class="col-span-12 md:col-span-4">
-                        <label for="companyemail" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Company Email </label>
+                        <label for="companyemail" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Company Email <span class="text-red-500">*</span></label>
                         <input formControlName="companyemail" type="email" pInputText fluid placeholder="Company Email" />
                         <small class="text-red-500 mt-1" *ngIf="profileForm.get('companyemail')?.touched && profileForm.get('companyemail')?.invalid"> Enter a valid email address </small>
                     </div>
 
                     <div class="col-span-12 md:col-span-4">
-                        <label for="companyphone" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Company Phone</label>
+                        <label for="companyphone" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Company Phone <span class="text-red-500">*</span></label>
                         <input formControlName="companyphone" type="text" pInputText fluid placeholder="Company Phone" maxlength="10" (keypress)="allowOnlyDigits($event)" />
                         <small class="text-red-500 mt-1" *ngIf="profileForm.get('companyphone')?.touched && profileForm.get('companyphone')?.invalid"> Enter a valid 10-digit mobile number </small>
                     </div>
@@ -110,15 +110,15 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
                 <p class="mb-2"><strong>Company Address:</strong></p>
                 <div class="grid grid-cols-12 gap-4">
                     <div class="col-span-12 md:col-span-4">
-                        <label for="companyaddress" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> Address</label>
+                        <label for="companyaddress" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> Address <span class="text-red-500">*</span></label>
                         <input formControlName="companyaddress" type="text" pInputText fluid placeholder="Address" />
                     </div>
                     <div class="col-span-12 md:col-span-4">
-                        <label for="p_warehouse" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Warehouse Name</label>
+                        <label for="p_warehouse" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Warehouse Name <span class="text-red-500">*</span></label>
                         <input formControlName="p_warehouse" type="text" pInputText fluid placeholder="Warehouse Name" />
                     </div>
                     <div class="col-span-12 md:col-span-4">
-                        <label for="companypincode" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Pincode</label>
+                        <label for="companypincode" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Pincode <span class="text-red-500">*</span></label>
                         <input formControlName="companypincode" type="text" pInputText fluid placeholder="Pincode" />
                     </div>
 
@@ -180,16 +180,16 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
             </div>
 
             <div class="card">
-                <p class="mb-2"><strong>Company GST:</strong></p>
+                <p class="mb-2"><strong>Company GST: </strong></p>
                 <div class="grid grid-cols-12 gap-4">
                     <div class="col-span-12 md:col-span-4">
-                        <label for="companygstno" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> GST No </label>
+                        <label for="companygstno" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> GST No <span class="text-red-500">*</span></label>
                         <input formControlName="companygstno" type="text" pInputText fluid placeholder="GST No." maxlength="15" />
                         <small class="text-red-500 mt-1" *ngIf="profileForm.get('companygstno')?.touched && profileForm.get('companygstno')?.invalid"> Enter a valid gst number </small>
                     </div>
 
                     <div class="col-span-12 md:col-span-4">
-                        <label for="statecode" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">State Code</label>
+                        <label for="statecode" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">State Code <span class="text-red-500">*</span></label>
                         <input formControlName="statecode" type="text" pInputText fluid placeholder="State Code" maxlength="15" />
                         <small class="text-red-500 mt-1" *ngIf="profileForm.get('statecode')?.touched && profileForm.get('statecode')?.invalid"> Enter a valid State Code </small>
                     </div>
@@ -200,28 +200,28 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
                 <p class="mb-2"><strong>Company Bank Info:</strong></p>
                 <div class="grid grid-cols-12 gap-4">
                     <div class="col-span-12 md:col-span-4">
-                        <label for="bankname" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Bank Name</label>
+                        <label for="bankname" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Bank Name <span class="text-red-500">*</span></label>
                         <input formControlName="bankname" type="text" pInputText fluid placeholder="Bank Name" />
                     </div>
                     <div class="col-span-12 md:col-span-4">
-                        <label for="branch" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Branch</label>
+                        <label for="branch" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Branch <span class="text-red-500">*</span></label>
                         <input formControlName="branch" type="text" pInputText fluid placeholder="Branch" />
                     </div>
 
                     <div class="col-span-12 md:col-span-4"></div>
 
                     <div class="col-span-12 md:col-span-4">
-                        <label for="ifsc" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> IFSC </label>
+                        <label for="ifsc" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> IFSC <span class="text-red-500">*</span></label>
                         <input formControlName="ifsc" type="text" pInputText fluid placeholder="IFSC" />
                     </div>
 
                     <div class="col-span-12 md:col-span-4">
-                        <label for="accountno" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Account No</label>
+                        <label for="accountno" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Account No <span class="text-red-500">*</span></label>
                         <input formControlName="accountno" type="text" pInputText fluid placeholder="Account No" />
                     </div>
 
                     <div class="col-span-12 md:col-span-4">
-                        <label for="pan" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Company PAN</label>
+                        <label for="pan" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Company PAN <span class="text-red-500">*</span></label>
                         <input formControlName="pan" type="text" pInputText fluid placeholder="Company PAN" />
                     </div>
                 </div>
@@ -258,25 +258,25 @@ export class UserCreate {
     loggedInUserRole: string = '';
     public imageUrl:string | null=''
     profileForm: FormGroup = this.fb.group({
-        companyname: ['', Validators.maxLength(100)],
-        companyemail: ['', [Validators.email, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/), Validators.maxLength(100)]],
+        companyname: ['', [Validators.required,Validators.maxLength(100)]],
+        companyemail: ['', [Validators.required,Validators.email, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/), Validators.maxLength(100)]],
         companygstno: ['', [Validators.required,Validators.maxLength(30)]],
         companycontactperson: ['', Validators.maxLength(100)],
-        companyaddress: ['', Validators.maxLength(500)],
+        companyaddress: ['', [Validators.required,Validators.maxLength(500)]],
         companycontactphone: ['', Validators.pattern(/^[0-9]{10}$/)],
         companycontactemail: ['', [Validators.email, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/), Validators.maxLength(100)]],
         companycountry: ['', [Validators.required, Validators.required]],
         companystate: ['', [Validators.required, Validators.maxLength(50)]],
         companycity: ['', [Validators.required, Validators.maxLength(50)]],
-        companyphone: ['', Validators.pattern(/^[0-9]{10}$/)],
-        companypincode:['',[Validators.maxLength(6)]],
-        p_warehouse:['',[Validators.maxLength(100)]],
-        statecode:['',[Validators.maxLength(5)]],
-        bankname:['',[Validators.maxLength(100)]],
-        accountno:['',[Validators.maxLength(25)]],
-        pan:['',[Validators.maxLength(25)]],
-        ifsc:['',[Validators.maxLength(25)]],
-        branch:['',[Validators.maxLength(100)]]
+        companyphone: ['', [Validators.required,Validators.pattern(/^[0-9]{10}$/)]],
+        companypincode:['',[Validators.required,Validators.maxLength(6)]],
+        p_warehouse:['',[Validators.required,Validators.maxLength(100)]],
+        statecode:['',[Validators.required,Validators.maxLength(5)]],
+        bankname:['',[Validators.required,Validators.maxLength(100)]],
+        accountno:['',[Validators.required,Validators.maxLength(25)]],
+        pan:['',[Validators.required,Validators.maxLength(25)]],
+        ifsc:['',[Validators.required,Validators.maxLength(25)]],
+        branch:['',[Validators.required,Validators.maxLength(100)]]
     });
 
     constructor(

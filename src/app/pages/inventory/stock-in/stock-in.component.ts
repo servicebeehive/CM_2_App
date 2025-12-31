@@ -131,11 +131,11 @@ export class StockInComponent {
         this.productForm = this.fb.group({
             p_tranpurchaseid: [null],
             p_invoiceno: ['', [Validators.maxLength(50),Validators.required]],
-            p_vendorid: [null,Validators.required],
-            p_invoicedate: [null,Validators.required],
+            p_vendorid: [null,[Validators.required]],
+            p_invoicedate: [null,[Validators.required,Validators.maxLength(50)]],
             p_remarks: ['', [Validators.maxLength(500)]],
             grandTotal: [0],
-            p_amountpaid :[''],
+            p_amountpaid :[0,Validators.maxLength(8)],
         },{validators:[this.paidAmountLessThanGrandTotal()]});
 
         const navigation = history.state;
@@ -409,7 +409,8 @@ export class StockInComponent {
             p_invoicedate: this.datePipe.transform(data.p_invoicedate, 'dd/MM/yyyy'),
             p_remarks: data.p_remarks,
             p_amountpaid :data.p_amountpaid ,
-            p_active: 'Y'
+            p_active: 'Y',
+            p_deliveryboy:''
         };
 
         this.stockInService.OnPurchesHeaderCreate(payload).subscribe({

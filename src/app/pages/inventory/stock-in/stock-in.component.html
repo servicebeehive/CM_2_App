@@ -87,7 +87,7 @@
          <!-- Amount Paid -->
       <div class="flex flex-col">
       <label class="font-medium mb-1">Paid Amount</label>
-      <input pInputText type="number" formControlName="p_amountpaid" placeholder="Paid Amount"  />
+      <input pInputText type="number" minlength="8" formControlName="p_amountpaid" placeholder="Paid Amount"  />
        <small class="text-red-500" *ngIf="productForm.hasError('amountNotGreater')"> Paid Amount cannot be greater than Final Payable. </small>
       </div>
     

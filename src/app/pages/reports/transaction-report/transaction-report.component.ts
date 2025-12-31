@@ -177,6 +177,7 @@ export class TransactionReportComponent {
         }
         else if (type === 'DEBITNOTE') {
             this.columns = [
+                { fields:'suppliername', header:'Supplier Name'},
                 { fields: 'debitnote', header: 'Debit Note' },
                 { fields: 'creditnote', header: 'Credit Note' },
                 { fields: 'repinvoiceno', header: 'Invoice No' },
