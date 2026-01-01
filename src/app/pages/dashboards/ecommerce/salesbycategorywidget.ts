@@ -50,7 +50,7 @@ export class SalesByCategoryWidget {
             label: 'This Month',
             value: 1,
             data: [
-                [35, 19, 40, 61, 16, 55, 30],
+                [35, 19, 40, 61, 16, 55, 30], 
                 [48, 78, 10, 29, 76, 77, 10],
             ],
         },
