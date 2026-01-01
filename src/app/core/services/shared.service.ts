@@ -51,7 +51,7 @@ export class ShareService {
     let headerApiBody = JSON.parse(stored);
 
     // 🔥 Keys you want to forcefully override
-    const removeKeys = ["uname", "p_loginuser", "clientcode", "x-access-token","p_username"];
+    const removeKeys = ["uname", "p_loginuser", "clientcode", "x-access-token"];
 
     // 🔥 Remove from incoming payload if exists
     removeKeys.forEach(key => {

@@ -7,6 +7,8 @@ import {
   FormGroup,
   FormsModule,
   ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
   Validators
 } from '@angular/forms';
 
@@ -143,7 +145,9 @@ export class ReplaceComponent {
       p_similar:[true],
       // FormArray for sale rows
       p_sale: this.fb.array([])
-    });
+    }, {
+                validators: [this.costGreaterThanSaleValidator()]
+            });
     this.replaceForm.get('p_billno')?.valueChanges.subscribe(value=>{
       if(value){
         this.disableItemSearchSubmit();
@@ -184,6 +188,19 @@ else{
   get saleRows(): FormGroup[] {
     return this.saleArray.controls as FormGroup[];
   }
+  costGreaterThanSaleValidator(): ValidatorFn {
+        return (form: AbstractControl): ValidationErrors | null => {
+            const totalCost = Number(form.get('p_totalcost')?.value || 0);
+            const finalPayable = Number(form.get('p_totalpayable')?.value || 0);
+
+            // ❗ Condition: final payable must be >= total cost
+            if (finalPayable < totalCost) {
+                return { costNotGreater: true };
+            }
+
+            return null;
+        };
+    }
 disableItemSearchSubmit(){
   this.replaceForm.get('itemSearch')?.disable();
   this.submitDisabledByBill=true;
@@ -335,12 +352,26 @@ allowOnlyNumbers(event: any) {
   OnItemChange(event: any) {
     const latetData = this.itemOptions.find(item => item.itemid == event.value);
     console.log(latetData);
-    if (latetData) {
+    if(!latetData) return;
+    const alreadyExists = this.saleArray.controls.some((row)=>row.get('ItemId')?.value === latetData.itemid);
+    if(alreadyExists){
+      this.messageService.add({
+        severity:'warn',
+        summary:'Duplicate Item',
+        detail:`${latetData.itemname} is already added.`,
+        life:2000
+      });
+      
+         this.replaceForm.get('p_itemdata')?.setValue(null, { emitEvent: false });
+      return;
+    }
       // Push new row and update totals
       this.saleArray.push(this.createSaleItem(latetData));
       const index = this.saleArray.length - 1;
       this.updateTotal(index);
-    }
+      setTimeout(() => {
+    this.replaceForm.get('p_itemdata')?.setValue(null, { emitEvent: false });
+  });
   }
 
   // Called when bill dropdown value changes
@@ -583,6 +614,7 @@ allowOnlyNumbers(event: any) {
       p_totalcost: Number(body.p_totalcost) || 0,
       p_totalsale: Number(body.p_totalsale) || 0,
       p_overalldiscount: Number(body.p_overalldiscount) || 0,
+      p_discounttype: body.p_disctype === true?'Y':'N',
       p_roundoff: body.p_roundoff ? body.p_roundoff.toString() : "0.00",
       p_totalpayable: Number(body.p_totalpayable) || 0,
       p_currencyid: Number(body.p_currencyid) || 0,

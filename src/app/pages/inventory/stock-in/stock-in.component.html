@@ -83,15 +83,11 @@
             <span *ngIf="productForm.get('p_remarks')?.errors?.['maxlength']">Remark must have atleast 500 characters</span>
           </small>
         </div>
-        <div class="flex flex-col">
-          <label class="font-medium mb-1">Delivery Person</label>
-         <input pInputText formControlName="p_deliveryboy" placeholder="Delivery Person" />
-        </div>
 
          <!-- Amount Paid -->
       <div class="flex flex-col">
       <label class="font-medium mb-1">Paid Amount</label>
-      <input pInputText type="number" formControlName="p_amountpaid" placeholder="Paid Amount"  />
+      <input pInputText type="number" minlength="8" formControlName="p_amountpaid" placeholder="Paid Amount"  />
        <small class="text-red-500" *ngIf="productForm.hasError('amountNotGreater')"> Paid Amount cannot be greater than Final Payable. </small>
       </div>
     

@@ -123,10 +123,37 @@ clearBarcodeInput() {
     this.barcodeInput.nativeElement.focus();
   }
 }
-@HostListener('window:click')
-keepBarcodeFocus() {
+// @HostListener('window:click')
+// keepBarcodeFocus() {
+//   this.barcodeInput?.nativeElement?.focus();
+// }
+
+@HostListener('window:click', ['$event'])
+keepBarcodeFocus(event: MouseEvent) {
+  const target = event.target as HTMLElement;
+
+  // If user clicked on an input or textarea → DO NOTHING
+  if (
+    target.tagName === 'INPUT' ||
+    target.tagName === 'TEXTAREA' ||
+    target.isContentEditable
+  ) {
+    return;
+  }
+
+  // Otherwise keep barcode focused
   this.barcodeInput?.nativeElement?.focus();
 }
+
+@HostListener('window:keydown', ['$event'])
+handleKeyboardSubmit(event: KeyboardEvent) {
+  // Ctrl + Enter
+  if (event.ctrlKey && event.key === 'Enter') {
+    event.preventDefault();
+    this.onSubmit();
+  }
+}
+
     @ViewChild('itemSel') itemSel!:any;
     public transactionid: any;
     salesForm!: FormGroup;
@@ -200,12 +227,13 @@ keepBarcodeFocus() {
                 p_billno: [null],
                 p_transactionid: [0],
                 p_transactiondate: [this.today, [Validators.required]],
-                p_customername: ['', Validators.required],
+                p_customername: ['', [Validators.required,Validators.maxLength(100)]],
                 p_mobileno: ['', [Validators.required, Validators.pattern(/^[6-9]\d{9}$/)]],
                 searchMobileNo: [''],
                 p_paymode:['Cash'],
                 p_totalcost: [0],
                 p_totalsale: [0],
+                p_deliveryboy:['',Validators.maxLength(100)],
                 p_disctype: [false],
                 p_overalldiscount: [''],
                 p_roundoff: [''],
@@ -403,6 +431,7 @@ keepBarcodeFocus() {
         this.salesForm.patchValue({
             p_customername: data.customername || '',
             p_mobileno: data.mobileno || '',
+            p_deliveryboy:data.deliveryboy,
             p_gsttran: data.gstin || '',
             p_billno: data.billno || '',
             p_transactionid: data.transactionid || 0,
@@ -527,12 +556,11 @@ keepBarcodeFocus() {
 
     // Load Bill No dropdown
     OnGetBillNo() {
-        //   const loginusername = this.authService.isLogIntType().username;
-        //   console.log('gdsfsd:',loginusername)
+          const loginusername = this.authService.isLogIntType().username;
+          console.log('gdsfsd:',loginusername)
        const payload={
-         ...this.getUserDetails,
             p_returntype: 'NEWTRANSACTIONID',
-            // p_username:loginusername
+            p_username:loginusername
        }
         this.salesService.getdropdowndetails(payload).subscribe({
             next: (res) => {
@@ -637,6 +665,7 @@ keepBarcodeFocus() {
                 p_totalcost: billDetails.totalcost.toFixed(2),
                 p_totalsale: billDetails.totalsale.toFixed(2),
                 p_disctype: billDetails.discounttype == 'Y' ? true : false,
+                p_deliveryboy:billDetails.deliveryboy,
                 p_overalldiscount: billDetails.discount,
                 discountvalueper: billDetails.discountvalueper,
                 p_roundoff: billDetails.roundoff,
@@ -899,10 +928,10 @@ keepBarcodeFocus() {
             p_status: body.p_status || 'Done',
             p_isactive: 'Y',
             p_linktransactionid: 0,
+             p_creditnoteno: body.p_deliveryboy || '',
             // p_replacesimilir: body.p_replacesimilir || "",
             p_replacesimilir: body.p_disctype === true ? 'Y' : 'N',
             p_discounttype: body.p_disctype === true ? 'Y' : 'N',
-            p_creditnoteno: body.p_creditnoteno || '',
             p_paymentmode: body.p_paymode,
             p_paymentdue: Number(body.p_paymentdue) || 0,
             p_sale: (body.p_sale || []).map((x: any) => ({

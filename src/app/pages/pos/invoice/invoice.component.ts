@@ -464,7 +464,7 @@ getReceivedAmountControl(index: number): AbstractControl | null {
         // Call API
         this.inventoryService.updatestockadjustment(payload).subscribe({
             next: (res: any) => {
-                this.showSuccess(res?.message || 'Amounts saved successfully');
+                this.showSuccess('Transaction has been saved successfully');
                 
                 // Refresh the data
                 this.display();

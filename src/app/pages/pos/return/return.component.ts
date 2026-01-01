@@ -351,6 +351,7 @@ export class ReturnComponent {
             p_status: body.p_status || 'Done',
             p_isactive: 'Y',
             p_linktransactionid: body.p_transactionid ?? 0,
+             p_discounttype: body.p_disctype === true ? 'Y' : 'N',
             // p_replacesimilir: body.p_replacesimilir || "",
             p_replacesimilir: body.p_disctype === true ? 'Y' : 'N',
             p_creditnoteno: body.p_creditnoteno || '',
