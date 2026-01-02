@@ -22,7 +22,6 @@ import { SkeletonModule } from 'primeng/skeleton';
         class="col-span-12 md:col-span-6 xl:col-span-3"
         *ngFor="let card of (loading ? skeletonItems : dashboardCards)"
         [routerLink]="!loading ? card.routerLink : null"
-        style="cursor: pointer;"
     >
         <div class="card h-full">
 

@@ -222,16 +222,12 @@ selectedFilter = 'MONTH';  // default value
     }
 
      OnGetSales(){
-        let  apibody={
-   
-     
+        let  apibody={  
    "p_reporttype": "LOWSTOCK",
    "p_warehouse":"",
    "p_period":"",
    "p_category":null,
    "p_item":null,
-
-
    }
          this.OnttopBarService.GettopBarCard(apibody).subscribe({
              next:(res)=>{
