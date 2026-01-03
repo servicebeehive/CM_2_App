@@ -95,6 +95,7 @@ export class InvoiceComponent {
     branchname:string='';
     ifsc:string='';
     pan:string='';
+    hsncode:string='';
         // ✅ Move dropdown options into variables
         cusMobileOptions = [];
         cusNameOptions = [];
@@ -254,7 +255,9 @@ totalDueAmount():void{
     }
     return total;
   },0);
-  this.invoiceForm.get('totalDueAmount')?.setValue(totalSaleDue);
+ const roundedTotal = Number(totalSaleDue.toFixed(2));
+
+this.invoiceForm.get('totalDueAmount')?.setValue(roundedTotal);
 }
    private initialzeFormArray():void{
      const stockArray = this.getStockArray();
@@ -521,7 +524,7 @@ getReceivedAmountControl(index: number): AbstractControl | null {
             console.log('API Result:', res.data);
             if(Array.isArray(res.data) && res.data.length>0){
                 this.invoiceData=res.data;
-
+          this.hsncode=res.data[0].hsncode;
             }
             
             this.populateInvoiceForm(res.data[0]);

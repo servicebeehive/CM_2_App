@@ -159,7 +159,7 @@
              <!-- MRP -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">MRP <span class="text-red-500">*</span></label>
-                <input pInputText type="number" min="1" formControlName="mrp" placeholder="MRP" (keydown)="blockMinus($event)"/>
+                <input pInputText type="number" min="1" formControlName="mrp" placeholder="MRP" (keydown)="blockMinus($event)" (keypress)="allowOnlyNumbers($event)"/>
                 <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('mrp')?.touched || addForm.hasError('mrpGreaterThanPurchase')">
                     <span *ngIf="addForm.get('mrp')?.errors?.['required']">MRP is required</span>
                     <span *ngIf="addForm.hasError('mrpGreaterThanPurchase')">MRP must be greater than or equal to Purchase Price</span>
@@ -227,8 +227,7 @@
       [ngModelOptions]="{standalone: true}"
       (ngModelChange)="isChildUOMValid()"
       placeholder="MRP"
-      class="min-[]"
-      (keypress)="allowOnlyNumbers($event)" />
+     />
       <br>
       <small class="text-red-500" *ngIf="product.mrpError">
   MRP/conversion must be greater than {{ (addForm.get('mrp')?.value / product.conversion) | number:'1.2-2' }}

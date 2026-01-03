@@ -211,7 +211,7 @@ export class TransactionComponent {
         return;
     }
     const totalSaleDue=this.products.reduce((total,product)=>{
-        const dueAmount=Number(product.total_due) || 0;
+        const dueAmount=Number(product.total_due).toFixed(2) || 0;
         return total+ dueAmount;
     },0);
   this.transactionForm.get('totalPayableAmount')?.setValue(totalSaleDue);

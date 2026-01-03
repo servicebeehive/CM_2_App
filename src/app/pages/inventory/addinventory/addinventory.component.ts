@@ -484,7 +484,7 @@ onBlurBarCode(event:FocusEvent){
              let requiredMinMrpUom = parentMrp / conv;
 
     // Apply rule: mrpUom > (mrp / conversion)
-    if (mrpUom <= requiredMinMrpUom) {
+    if (mrpUom < requiredMinMrpUom) {
       row.mrpError = true;
     } else {
       row.mrpError = false;
