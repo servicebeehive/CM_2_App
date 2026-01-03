@@ -316,6 +316,9 @@ export class ProductlistComponent {
     
     generateBarcode(code: string) {
         const canvas = document.createElement("canvas");
+        if(!code){
+            return;
+        }
         JsBarcode(canvas, code, { format: "CODE128", width: 3, height: 50 });
         return canvas.toDataURL("image/png");
     }

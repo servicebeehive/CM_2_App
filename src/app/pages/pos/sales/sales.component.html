@@ -44,7 +44,6 @@
                     placeholder="Invoice No."
                     formControlName="p_billno"
                     [filter]="true"
-                    tabindex="12"
                     filterPlaceholder="Search Bill No."
                     [showClear]="true"
                     (onChange)="onBillDetails($event)"
@@ -70,7 +69,6 @@
                     [showClear]="true"
                     type="number"
                     maxlength="10"
-                    tabindex="7"
                     formControlName="searchMobileNo"
                     filterPlaceholder="Search Customer Mobile"
                     placeholder="Search Customer Mobile"
@@ -84,7 +82,7 @@
             <!-- MOBILE -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1 text-sm md:text-base">Mobile No <span class="text-red-500">*</span></label>
-                <input pInputText type="number" tabindex="8" [placeholder]="mobilePlaceholder" maxlength="10" formControlName="p_mobileno" (keypress)="allowOnlyNumbers($event)" class="text-sm md:text-base" />
+                <input pInputText type="number"  [placeholder]="mobilePlaceholder" maxlength="10" formControlName="p_mobileno" (keypress)="allowOnlyNumbers($event)" class="text-sm md:text-base" />
                 <small class="text-red-500 ms-1 md:ms-3 mt-1 text-xs" *ngIf="salesForm.get('p_mobileno')?.touched">
                     <span *ngIf="salesForm.get('p_mobileno')?.errors?.['required']">Mobile No. is required</span>
                 </small>
@@ -94,7 +92,7 @@
             <!-- CUSTOMER NAME -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1 text-sm md:text-base">Customer Name <span class="text-red-500">*</span></label>
-                <input pInputText showclear="[true]" tabindex="9" placeholder="Customer Name" formControlName="p_customername" class="text-sm md:text-base" />
+                <input pInputText showclear="[true]"  placeholder="Customer Name" formControlName="p_customername" class="text-sm md:text-base" />
                 <small class="text-red-500 ms-1 md:ms-3 mt-1 text-xs" *ngIf="salesForm.get('p_customername')?.touched">
                     <span *ngIf="salesForm.get('p_customername')?.errors?.['required']">Customer Name is required</span>
                 </small>
@@ -141,14 +139,14 @@
             <div class="flex flex-col">
                 <label class="font-medium mb-1 text-sm md:text-base">Transaction Mode</label>
 
-                <p-dropdown [options]="transactionMode" optionLabel="label" optionValue="value" placeholder="Transaction Mode" formControlName="p_paymode" [filter]="true" tabindex="10" filterPlaceholder="Search Transaction Mode" [showClear]="true">
+                <p-dropdown [options]="transactionMode" optionLabel="label" optionValue="value" placeholder="Transaction Mode" formControlName="p_paymode" [filter]="true" filterPlaceholder="Search Transaction Mode" [showClear]="true">
                 </p-dropdown>
             </div>
 
             <!-- TRANSACTION DATE -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1 text-sm md:text-base">Transaction Date</label>
-                <p-datepicker fluid formControlName="p_transactiondate" tabindex="11" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="Transaction Date" [maxDate]="today"> </p-datepicker>
+                <p-datepicker fluid formControlName="p_transactiondate"  dateFormat="dd/mm/yy" [showIcon]="true" placeholder="Transaction Date" [maxDate]="today"> </p-datepicker>
             </div>
             <!-- Delivery Person -->
             <div class="flex flex-col">
@@ -217,13 +215,14 @@
                             <td class="text-xs md:text-sm">{{ row.get('curStock')?.value }}</td>
                             <td>
                                 <p-dropdown
+                                #uomDropdown
                                     [options]="uomlist[i]"
                                     optionLabel="fieldname"
                                     optionValue="fieldid"
                                     placeholder="UOM"
                                     formControlName="UOMId"
                                     [filter]="true"
-                                    tabindex="2"
+                                    
                                     filterPlaceholder="Search Uom name"
                                     appendTo="body"
                                     (onChange)="UOMId(row, i)"
@@ -240,7 +239,7 @@
                                     formControlName="Quantity"
                                     min="1"
                                     step="1"
-                                    tabindex="3"
+                                   
                                     class="w-[60px] md:w-[70px] text-xs md:text-sm"
                                     (keypress)="blockDecimal($event)"
                                     (input)="updateTotal(i)"
@@ -262,7 +261,7 @@
                     </ng-template>
 
                     <!-- FOOTER TEXT -->
-                    <ng-template pTemplate="paginatorleft">
+                    <ng-template pTemplate="paginatorleft" tabindex="-1">
                         <div class="text-gray-600 ms-2 text-xs md:text-sm">Total Items: {{ saleArray.length }}</div>
                     </ng-template>
                 </p-table>
@@ -288,12 +287,12 @@
                 <!-- Discount type -->
                 <div class="flex flex-col">
                     <label class="font-medium mb-2">Disc(%)</label>
-                    <p-checkbox class="w-5 h-5" binary="true" tabindex="4" variant="filled" formControlName="p_disctype"></p-checkbox>
+                    <p-checkbox class="w-5 h-5" binary="true" variant="filled" formControlName="p_disctype"></p-checkbox>
                 </div>
                 <!-- Discount -->
                 <div class="flex flex-col">
                     <label class="font-medium">Discount</label>
-                    <input class="p-inputtext p-component font-small w-full" tabindex="5" pInputText type="number" formControlName="p_overalldiscount" (input)="applyDiscount()" [placeholder]="discountplace" />
+                    <input class="p-inputtext p-component font-small w-full" pInputText type="number" formControlName="p_overalldiscount" (input)="applyDiscount()" [placeholder]="discountplace" />
                 </div>
             </div>
             <!-- Round Off -->
@@ -318,7 +317,7 @@
             <!-- Paid Amount -->
             <div class="flex flex-col">
                 <label>Paid Amount</label>
-                <input pInputText type="number" (keypress)="blockDecimal($event)" min="1" tabindex="6" formControlName="p_paymentdue" placeholder="0" />
+                <input pInputText type="number" (keypress)="blockDecimal($event)" min="1" formControlName="p_paymentdue" placeholder="0" />
                 <small class="text-red-500" *ngIf="salesForm.hasError('amountNotGreater')"> Paid Amount cannot be greater than Final Payable. </small>
             </div>
         </div>

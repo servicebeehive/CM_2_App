@@ -1,52 +1,64 @@
 <div class="card p-6">
     <div>
         <form [formGroup]="updateForm" class="space-y-8">
-    <div class="flex justify-between items-center mb-6">
-        <span class="block text-surface-900 font-bold text-xl mb-6">Item Update</span>
-    </div>
-    
+            <div class="flex justify-between items-center mb-6">
+                <span class="block text-surface-900 font-bold text-xl mb-6">Item Update</span>
+            </div>
+
             <!-- 🏷 Product Info Section -->
             <div>
                 <!-- ✅ Changed to a 2-column grid for half-width fields -->
                 <!-- <div *ngIf="showGlobalSearch" class="flex mb-3">
                     <input type="text" pInputText placeholder="Search..." class="w-full p-inputtext" formControlName="globalFilter" (input)="applyGlobalFilter()" /> -->
-                     <!-- <div *ngIf="showGlobalSearch" class="mb-3">
+                <!-- <div *ngIf="showGlobalSearch" class="mb-3">
                         <app-global-filter  [(value)]="globalFilter" placeholder="Search Items..." (valueChange)="applyGlobalFilter()"></app-global-filter>
                      </div> -->
                 <!-- </div> -->
-              
+
                 <div class="flex justify-between items-end w-full gap-6">
                     <!-- LEFT SIDE -->
                     <div class="grid grid-cols-3 gap-6 flex-grow">
-                          <!-- Category -->
-                    <div class="flex flex-col">
-                        <label class="font-medium mb-1">Category</label>
-                        <p-dropdown [options]="categoryOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" [showClear]="true" filterPlaceholder="Search Category" formControlName="category" placeholder="Category" (onChange)="onCategoryItem($event)"> </p-dropdown>
-                    </div>
-                    <!-- Item -->
-                    <div class="flex flex-col">
-                        <label class="font-medium mb-1">Item</label>
-                        <p-dropdown [options]="itemOptions" optionLabel="itemcombine" optionValue="itemid" [filter]="true" [showClear]="true" filterPlaceholder="Search Item" formControlName="item" placeholder="Item"> </p-dropdown>
-                    </div>
-                    <div class="flex flex-col">
+                        <!-- Category -->
+                        <div class="flex flex-col">
+                            <label class="font-medium mb-1">Category</label>
+                            <p-dropdown
+                                [options]="categoryOptions"
+                                optionLabel="fieldname"
+                                optionValue="fieldid"
+                                [filter]="true"
+                                [showClear]="true"
+                                filterPlaceholder="Search Category"
+                                formControlName="category"
+                                placeholder="Category"
+                                (onChange)="onCategoryItem($event)"
+                            >
+                            </p-dropdown>
+                        </div>
+                        <!-- Item -->
+                        <div class="flex flex-col">
+                            <label class="font-medium mb-1">Item</label>
+                            <p-dropdown [options]="itemOptions" optionLabel="itemcombine" optionValue="itemid" [filter]="true" [showClear]="true" filterPlaceholder="Search Item" formControlName="item" placeholder="Item"> </p-dropdown>
+                        </div>
+                        <div class="flex flex-col">
                             <label class="font-medium mb-1 invisible">label</label>
                             <button pButton type="button" label="Filter" class="w-[100px]" (click)="Onreturndropdowndetails()"></button>
                         </div>
-                </div>
-                  <!-- Buttons -->
-        <div class="flex gap-4">
-            <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
-            <!-- <button pButton type="button" label="Delete All" class="p-button-danger" (click)="deleteAll()"></button> -->
-            <button pButton disabled type="button" label="BarCode Print" (click)="openBarcodeDialog()" class="p-button-secondary"></button>
-        </div>
+                    </div>
+                    <!-- Buttons -->
+                    <div class="flex gap-4">
+                        <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
+                        <!-- <button pButton type="button" label="Delete All" class="p-button-danger" (click)="deleteAll()"></button> -->
+                        <button pButton disabled type="button" label="BarCode Print" (click)="openBarcodeDialog()" class="p-button-secondary"></button>
+                    </div>
                 </div>
                 <div class="mt-6">
                     <p-table
                         [value]="filteredProducts"
                         dataKey="code"
                         [paginator]="true"
-                         [(selection)]="selectedItems"
-                        [rows]="10" selectionMode="multiple"
+                        [(selection)]="selectedItems"
+                        [rows]="10"
+                        selectionMode="multiple"
                         [rowsPerPageOptions]="[5, 10, 20, 50]"
                         [responsiveLayout]="'scroll'"
                         class="p-datatable-gridlines mt-6"
@@ -65,47 +77,33 @@
                                 <th>GST Item</th>
                                 <th>Active</th>
                                 <th>BarCode</th>
-                                
+
                                 <th class="text-center">Action</th>
                             </tr>
                         </ng-template>
                         <ng-template pTemplate="body" let-row let-i="rowIndex">
                             <tr>
                                 <!-- <td class="text-center"><p-checkbox [(ngModel)]="update.selection"  binary="true"></p-checkbox></td> -->
-                                 <td><p-tableCheckbox [value]="row" /></td>
+                                <td><p-tableCheckbox [value]="row" /></td>
                                 <td>{{ row.itemcombine }}</td>
                                 <td class="!min-w-[120px]">{{ row.categoryname }}</td>
                                 <!-- <td>{{ row.uomname }}</td> -->
                                 <td class="w-[60px]">{{ row.currentstock }}</td>
                                 <td class="w-[60px]">{{ row.costprice }}</td>
                                 <td class="w-[60px]">{{ row.saleprice }}</td>
-                                <td>{{row.location}}</td>
-                               <td class="w-[60px]">{{row.gstitem}}</td>
+                                <td>{{ row.location }}</td>
+                                <td class="w-[60px]">{{ row.gstitem }}</td>
                                 <td class="w-[60px]">{{ row.isactive }}</td>
                                 <td class="w-[140px]">
-                                     <img [src]="generateBarcode(row.itembarcode)" alt="barcode"/>
+                                    <img [src]="generateBarcode(row.itembarcode)" alt="barcode" />
                                     <!-- <input pInputText type="text" class="w-[50px]"  maxlength="3" minlength="3"    [attr.data-id]="row.itemid" (keypress)="allowOnlyNumbers($event)"> -->
                                 </td>
                                 <td class="text-center w-[60px]">
                                     <div class="flex g-2">
-                                        <button 
-    pButton 
-    type="button" 
-    icon="pi pi-print" 
-    disabled
-    class="p-button-text p-button-sm"
-    (click)="printSingleBarcode(row)">
-  </button>
-   <button 
-    pButton 
-    type="button" 
-    icon="pi pi-pencil" 
-    class="p-button-text p-button-sm text-red-500"
-    (click)="openEditDialog(row)">
-  </button>
+                                        <button pButton type="button" icon="pi pi-print" disabled class="p-button-text p-button-sm" (click)="printSingleBarcode(row)"></button>
+                                        <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm text-red-500" (click)="openEditDialog(row)"></button>
                                     </div>
-                                     
-                                    
+
                                     <!-- <i class="pi pi-trash ms-2 cursor-pointer text-red-500" (click)="deleteItem(update)"></i> -->
                                 </td>
                             </tr>
@@ -118,40 +116,24 @@
             </div>
         </form>
     </div>
-<p-dialog header="{{ 'Edit Item' }}" [(visible)]="visibleDialog" [modal]="true" [style]="{ width: '80vw' }">
-    <app-addinventory  [itemOptions]="itemOptions"
-      [categoryOptions]="categoryOptions"
-      [uomOptions]="uomOptions"
-       [editData]="selectedRow" [mode]="mode" (close)="closeDialog()" (save)="onSave($event)"></app-addinventory>
-</p-dialog>
-<p-confirmDialog></p-confirmDialog>
-
+    <p-dialog header="{{ 'Edit Item' }}" [(visible)]="visibleDialog" [modal]="true" [style]="{ width: '80vw' }">
+        <app-addinventory [itemOptions]="itemOptions" [categoryOptions]="categoryOptions" [uomOptions]="uomOptions" [editData]="selectedRow" [mode]="mode" (close)="closeDialog()" (save)="onSave($event)"></app-addinventory>
+    </p-dialog>
+    <p-confirmDialog></p-confirmDialog>
 </div>
 <!-- BARCODE PRINT DIALOG -->
-<p-dialog 
-  header="Print Barcodes" 
-  [(visible)]="barcodeDialog" 
-  [modal]="true"
-  [style]="{ width: '600px' }"
-  [contentStyle]="{ 'max-height': '75vh', overflow: 'auto' }">
+<p-dialog header="Print Barcodes" [(visible)]="barcodeDialog" [modal]="true" [style]="{ width: '600px' }" [contentStyle]="{ 'max-height': '75vh', overflow: 'auto' }">
+    <div id="print-barcode-area">
+        <div *ngFor="let item of paginatedItems" class="flex flex-col items-center mb-2 p-3">
+            <h4 style="margin: 0">{{ item.itemcombine }}</h4>
+            <img style="margin: 0" [src]="generateBarcode(item.barcode)" alt="barcode" />
+        </div>
+    </div>
 
-  <div id="print-barcode-area">
-
-      <div *ngFor="let item of paginatedItems" 
-           class="flex flex-col items-center mb-2 p-3">
-
-          <h4 style="margin: 0">{{ item.itemcombine }}</h4>
-          <img style="margin:0" [src]="generateBarcode(item.barcode)" alt="barcode"/>
-
-      </div>
-
-  </div>
-
-  <ng-template pTemplate="footer">
-    
-      <!-- PAGINATION -->
-       <div class="flex justify-between w-100">
-        <!-- <div class="flex justify-center items-center gap-3 mt-4">
+    <ng-template pTemplate="footer">
+        <!-- PAGINATION -->
+        <div class="flex justify-between w-100">
+            <!-- <div class="flex justify-center items-center gap-3 mt-4">
           <button 
             pButton 
             icon="pi pi-angle-left" 
@@ -168,20 +150,12 @@
             [disabled]="currentPage === totalPages">
           </button>
       </div> -->
-      <div class=" flex gap-2">
-         <button pButton label="Close" class="p-button-secondary" (click)="barcodeDialog=false"></button>
-      <button pButton label="Print" icon="pi pi-print" (click)="printBarcodes()"></button>
-      </div>
+            <div class="flex gap-2">
+                <button pButton label="Close" class="p-button-secondary" (click)="barcodeDialog = false"></button>
+                <button pButton label="Print" icon="pi pi-print" (click)="printBarcodes()"></button>
+            </div>
+        </div>
 
-       </div>
-      
-
-      <!-- ACTION BUTTONS -->
-     
-
-  </ng-template>
-
+        <!-- ACTION BUTTONS -->
+    </ng-template>
 </p-dialog>
-
-
-

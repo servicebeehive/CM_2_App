@@ -258,7 +258,6 @@ export class ItemReportComponent {
         { fields: 'categoryname', header: 'Category' },
         { fields: 'currentstock', header: 'Stock' },
         { fields: 'uomname', header: 'UOM' },
-        { fields: 'quantity', header: 'Qty' },
         { fields: 'costprice', header: 'Cost Price' },
         { fields: 'saleprice', header: 'MRP' },
         { fields: 'gstitem', header: 'GST Item' },

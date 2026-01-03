@@ -1,5 +1,5 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, ElementRef, HostListener, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, HostListener, QueryList, ViewChild, ViewChildren, inject } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 
 import { ButtonModule } from 'primeng/button';
@@ -10,7 +10,7 @@ import { FluidModule } from 'primeng/fluid';
 import { InputTextModule } from 'primeng/inputtext';
 import { RippleModule } from 'primeng/ripple';
 import { SelectModule } from 'primeng/select';
-import { DropdownModule } from 'primeng/dropdown';
+import { Dropdown, DropdownModule } from 'primeng/dropdown';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { TableModule } from 'primeng/table';
 import { TextareaModule } from 'primeng/textarea';
@@ -70,13 +70,17 @@ export class SalesComponent {
     //  Component state / Variables
     // -----------------------------
     @ViewChild('barcodeInput') barcodeInput!: ElementRef<HTMLInputElement>;
-
+    @ViewChildren('uomDropdown') uomDropdown!:QueryList<Dropdown>;
 ngAfterViewInit() {
-  if (this.barcodeInput?.nativeElement) {
+    setTimeout(()=>{
+       this.focusBarcode(); 
+    })
+}
+focusBarcode(){
+ if (this.barcodeInput?.nativeElement) {
     this.barcodeInput.nativeElement.focus();
   }
 }
-
 onBarcodeScan(event: Event) {
 this.isBarcodeScan=true
   const input = event.target as HTMLInputElement;
@@ -109,7 +113,15 @@ this.OnItemChange({ value: matchedItem.itemid });
  this.isBarcodeScan = false; // 🔑 reset after scan
 }
 
-
+focusLastRowUOM(){
+    setTimeout(()=>{
+        const dropdowns= this.uomDropdown.toArray();
+        const lastDropdown = dropdowns[dropdowns.length-1];
+        if(lastDropdown){
+            lastDropdown.focus();
+        }
+    })
+}
 simulateScan(barcode: string) {
   this.onBarcodeScan({
     target: { value: barcode }
@@ -128,7 +140,8 @@ clearBarcodeInput() {
 //   this.barcodeInput?.nativeElement?.focus();
 // }
 
-@HostListener('window:click', ['$event'])
+
+
 keepBarcodeFocus(event: MouseEvent) {
   const target = event.target as HTMLElement;
 
@@ -444,6 +457,7 @@ handleKeyboardSubmit(event: KeyboardEvent) {
             discountvalueper: data.discountvalueper || 0,
             p_roundoff: data.roundoff || 0,
             p_totalpayable: data.totalpayable || 0,
+            p_paymentdue:data.amountpaid,
             sgst_9: data.sgst_9 || 0,
             tax_18: data.tax_18 || 0,
             cgst_9: data.cgst_9 || 0,
@@ -604,6 +618,7 @@ handleKeyboardSubmit(event: KeyboardEvent) {
 
   // Add new row
   this.saleArray.push(this.createSaleItem(latetData));
+  this.focusLastRowUOM();
   const index = this.saleArray.length - 1;
 
   // Load UOM list
@@ -960,10 +975,10 @@ handleKeyboardSubmit(event: KeyboardEvent) {
 
         this.stockInService.OninsertSalesDetails(apibody).subscribe({
             next: (res) => {
-                const responseData=res.data[0];
                 const billno = res.data[0]?.billno;
                this.OnGetBillNo();
                 this.OnGetItem();
+               this.OnGetCusMobile();
                 this.salesForm.controls['p_billno'].setValue(billno);
                 if (res.data && res.data.length > 0) {
                     this.salesForm.patchValue({
@@ -979,6 +994,7 @@ handleKeyboardSubmit(event: KeyboardEvent) {
                         }
                     }
                 },500);
+                 console.log('mobile option:',this.cusMobileOptions);
                 console.log('res', res);
                 this.messageService.add({
                     severity: 'success',

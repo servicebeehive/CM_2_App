@@ -191,7 +191,7 @@
     <!-- Grand Total -->
     <div class="flex  items-center gap-4 mt-6">
       <label class="font-medium">Grand Total</label>
-      <input pInputText type="text" [value]="grandTotal" readonly placeholder="Total" class="w-40 text-right" />
+      <input pInputText type="text" [value]="grandTotal |number: '1.2-2'" readonly placeholder="Total" class="w-40 text-right" />
     </div>
     </div>
   </form>
