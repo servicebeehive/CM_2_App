@@ -248,8 +248,8 @@
                                 />
                             </td>
 
-                            <td class="text-xs md:text-sm">{{ row.get('MRP')?.value }}</td>
-                            <td class="text-xs md:text-sm">{{ row.get('totalPayable')?.value }}</td>
+                            <td class="text-xs md:text-sm">{{ row.get('MRP')?.value | number: '1.2-2' }}</td>
+                            <td class="text-xs md:text-sm">{{ row.get('totalPayable')?.value | number: '1.2-2'}}</td>
                             <td class="text-xs md:text-sm">{{ row.get('warPeriod')?.value }}</td>
                             <td class="text-xs md:text-sm">{{ row.get('location')?.value }}</td>
 

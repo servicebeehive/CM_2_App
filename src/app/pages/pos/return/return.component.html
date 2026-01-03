@@ -135,8 +135,8 @@
                                     </div>
                                 </td>
 
-                                <td>{{ row.get('MRP')?.value }}</td>
-                                <td>{{ row.get('totalPayable')?.value }}</td>
+                                <td>{{ row.get('MRP')?.value | number: '1.2-2'}}</td>
+                                <td>{{ row.get('totalPayable')?.value | number: '1.2-2'}}</td>
                                 <td>{{ row.get('warPeriod')?.value }}</td>
                                 <td>{{ row.get('location')?.value }}</td>
                             </tr>
