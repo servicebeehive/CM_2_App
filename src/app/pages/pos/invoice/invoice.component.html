@@ -114,9 +114,9 @@
                         <td>{{ row.invoice_date | date: 'dd/MM/yyyy' }}</td>
                         <td>{{ row.transactiontype }}</td>
                         <td>{{ row.customer }}</td>
-                        <td>{{ row.total_amount }}</td>
-                        <td>{{ row.paid_amount }}</td>
-                        <td>{{ row.due_amount }}</td>
+                        <td>{{ row.total_amount | number: '1.2-2' }}</td>
+                        <td>{{ row.paid_amount |number:'1.2-2'}}</td>
+                        <td>{{ row.due_amount |number:'1.2-2'}}</td>
                         <td style="width: 140px; min-width: 160px; max-width: 160px">
                             <div class="grid items-center gap-2">
                                 <input
@@ -355,7 +355,7 @@
         </tr>
 
         <tr style="text-align: center">
-            <td></td>
+            <td>{{hsncode}}</td>
             <td>₹{{ invoiceForm.get('amount_before_tax')?.value | number: '1.2-2' }}</td>
             <td>9%</td>
             <td>₹{{ invoiceForm.get('cgst_9')?.value | number: '1.2-2' }}</td>

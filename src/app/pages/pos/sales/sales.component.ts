@@ -190,8 +190,8 @@ export class SalesComponent {
     branchname: string = '';
     ifsc: string = '';
     pan: string = '';
-    Uomname: string[] = [];
-    hsncode:string[]=[];
+    Uomname: string = '';
+    hsncode:string='';
     @ViewChild(AddinventoryComponent) addInventoryComp!: AddinventoryComponent;
 
     // Dropdowns / lists
@@ -652,7 +652,7 @@ export class SalesComponent {
         };
     }
 
-    // Called when bill dropdown value changes
+   // Called when bill dropdown value changes
     onBillDetails(event: any) {
         const billDetails = this.billNoOptions.find((billitem) => billitem.billno === event.value);
         if (billDetails) {
@@ -947,11 +947,16 @@ export class SalesComponent {
                 itemcost: x.itemcost,
                 warrenty: x.warPeriod,
                 MRP: x.MRP,
+                uomname:x.uomname,
                 totalPayable: x.totalPayable,
                 currentstock: x.curStock
             }))
+          
         };
     }
+//       getUomName(uomId: number): string {
+//   return this.uomList.find(u => u.id === uomId)?.name || '';
+// }
 
     // -----------------------------
     //  API Submit + Notifications
@@ -1030,14 +1035,6 @@ export class SalesComponent {
             }
         });
     }
-    getUomName(index: number): string {
-    return this.Uomname[index] || '';
-}
-
-// Add method to get HSN code for a specific item
-getHsnCode(index: number): string {
-    return this.hsncode[index] || '';
-}
     patchPrintValues(apiData: any) {
         const patchData: any = {};
         console.log('shadj',patchData,apiData)
@@ -1072,13 +1069,10 @@ getHsnCode(index: number): string {
                 if (!this.uomlist[index].length) return;
                 let matchUom = this.uomlist[index].find((uom: any) => uom.fieldname === uomValue);
                 // ⭐ Auto-select FIRST UOM
-                if (!matchUom) {
-                    matchUom = this.uomlist[index][0];
-                    // const firstUom = this.uomlist[index][0];
-                }
-                this.Uomname[index] = matchUom.fieldname;
+                console.log(matchUom)
                 row.patchValue({
-                    UOMId: matchUom.fieldid
+                    UOMId: matchUom.fieldid,
+                    // UOMName:matchUom.fieldname
                 });
                
                 // ⭐ Immediately calculate MRP + TOTAL + COST
