@@ -364,6 +364,7 @@ export class SalesComponent {
                     ItemId: item.itemid || 0, // use itemsku when itemid not present
                     ItemName: item.itemname || '',
                     UOMId: item.uomname || 0,
+                    UOMName:item.uomname,
                     Quantity: item.quantity || 1,
                     itemcost: item.itemcost || 0,
                     MRP: (item.mrp || 0).toFixed(2),
@@ -943,11 +944,11 @@ export class SalesComponent {
                 ItemId: x.ItemId,
                 ItemName: x.ItemName,
                 UOMId: x.UOMId,
+                UOMName:x.UOMName,
                 Quantity: x.Quantity,
                 itemcost: x.itemcost,
                 warrenty: x.warPeriod,
                 MRP: x.MRP,
-                uomname:x.uomname,
                 totalPayable: x.totalPayable,
                 currentstock: x.curStock
             }))
@@ -1072,7 +1073,7 @@ export class SalesComponent {
                 console.log(matchUom)
                 row.patchValue({
                     UOMId: matchUom.fieldid,
-                    // UOMName:matchUom.fieldname
+                    UOMName:matchUom.fieldname
                 });
                
                 // ⭐ Immediately calculate MRP + TOTAL + COST
@@ -1128,17 +1129,26 @@ export class SalesComponent {
         });
     }
 
-    UOMId(event: any, index: number) {
-        const row = this.saleArray.at(index);
+UOMId(event: any, index: number) {
+    const row = this.saleArray.at(index);
 
-        // Get current row data
-        const rowData = {
-            ItemId: row.get('ItemId')?.value,
-            UOMId: event.value
-        };
-        console.log('calculate mrp:', event.value);
-        this.OngetcalculatedMRP(event.value, index);
-    }
+    const selectedUomId = event.value.UOMId;
+
+    // 🔹 find selected UOM from existing uomlist
+    console.log(this.uomlist[index],event)
+    const selectedUom = this.uomlist[index]?.find(
+        (uom: any) => uom.fieldid === selectedUomId
+    );
+
+    // 🔹 ONLY patch UOMName (keep your MRP call unchanged)
+    row.patchValue({
+        UOMName: selectedUom?.fieldname || ''
+    });
+ console.log(row.value)
+    // ❌ DO NOT CHANGE THIS (as you requested)
+    this.OngetcalculatedMRP(event.value, index);
+}
+
     calculateMRP(index: number) {
         const row = this.saleArray.at(index);
 
