@@ -251,7 +251,7 @@ export class ReturnComponent {
                     curStock: item.current_stock || 0,
                     warPeriod: item.warrenty,
                     location: '',
-                    itemsku: item.itemsku || ''
+                    itemsku: item.itemsku || '',
                 })
             );
          this.updateTotal(i);

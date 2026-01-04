@@ -187,6 +187,7 @@ handleKeyboardSubmit(event: KeyboardEvent) {
     profileOptions:any={};
     public itemOptionslist: [] = [];
     public uomlist: any[] = [];
+    Uomid:string='';
     mobilePlaceholder: string = 'Mobile No';
     backshow: boolean = false;
     isLoadingBills: boolean = false;
@@ -262,6 +263,8 @@ handleKeyboardSubmit(event: KeyboardEvent) {
                 p_replacesimilir: [''],
                 p_creditnoteno: [''],
                 p_paymentmode: [''],
+                UomName:[''],
+                HsnCode:[''],
                 sgst_9: [''],
                 tax_18: [''],
                 cgst_9: [''],
@@ -351,6 +354,7 @@ handleKeyboardSubmit(event: KeyboardEvent) {
             ItemId: [data?.itemid || 0],
             ItemName: [data?.itemname || ''],
             UOMId: [data?.uomid || 0],
+            UomName:[data?.uomname || ''],
             Quantity: [1],
             itemcost: [data?.pruchaseprice || 0],
             MRP: [data?.saleprice || 0],
@@ -375,6 +379,7 @@ handleKeyboardSubmit(event: KeyboardEvent) {
                     ItemId: item.itemid || 0, // use itemsku when itemid not present
                     ItemName: item.itemname || '',
                     UOMId: item.uomname || 0,
+                    UomName:[item.uomname || ''],
                     Quantity: item.quantity || 1,
                     itemcost: item.itemcost || 0,
                     MRP: (item.mrp || 0).toFixed(2),
@@ -385,8 +390,9 @@ handleKeyboardSubmit(event: KeyboardEvent) {
                     itemsku: item.itemsku || ''
                 })
             );
-            
-            this.OnUMO(item.itemid || item.itemsku, index);
+            console.log('uomvalue',this.saleArray.at(index).get('UOMId')?.value)
+            const uomValue=this.saleArray.at(index).get('UOMId')?.value;
+            this.OnUMO(item.itemid || item.itemsku, index,uomValue);
         });
 
         // If items were added, update totals for the last row and overall summary
@@ -1047,27 +1053,41 @@ patchPrintValues(apiData:any){
     showSuccess(message: string) {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
     }
-    OnUMO(value: any, index: number) {
+    OnUMO(value: any, index: number, uomValue?:string) {
         let apibody = {
             ...this.getUserDetails,
             p_returntype: 'SALEUOM',
             p_returnvalue: value
         };
-
+  console.log("values",value,index);
+   
         this.salesService.Getreturndropdowndetails(apibody).subscribe({
             next: (res) => {
                 this.uomlist[index] = res.data;
-
+                  const firstUom = this.uomlist[index][0];
                 const row = this.saleArray.at(index);
-
+                const uomArray=this.uomlist[index];
                 // ⭐ Auto-select FIRST UOM
-                if (this.uomlist[index] && this.uomlist[index].length > 0) {
-                    const firstUom = this.uomlist[index][0];
-
-                    row.patchValue({
-                        UOMId: firstUom.fieldid
+             const select=uomArray.filter((u:any)=>u.fieldid===this.Uomid)
+             console.log("select",select)
+                if (uomArray && uomArray.length > 0) {
+                    console.log("uomindex",uomArray[index])
+  let matchUom=this.uomlist.find((uom:any)=>uom.fieldname===uomValue);   
+                //   this.salesForm.controls['UomName'].setValue(matchUom.fieldname)
+                   if(uomValue){
+                       row.patchValue({
+                        UOMId: matchUom.fieldid,
+                        UomName: matchUom?.fieldname
                     });
-
+                   }
+                   else{
+                   row.patchValue({
+                        UOMId:firstUom.fieldid,
+                        UomName: this.Uomid
+                    });
+                   }
+                   
+                    console.log('UOMNAME', this.salesForm.get('UomName')?.value)
                     // ⭐ Immediately calculate MRP + TOTAL + COST
                     this.calculateMRP(index);
                 }
@@ -1136,6 +1156,8 @@ if (!row.contains('baseStock')) {
             ItemId: row.get('ItemId')?.value,
             UOMId: event.value
         };
+         this.Uomid=event.value.UOMId;
+        console.log(this.Uomid)
         console.log('calculate mrp:', event.value);
         this.OngetcalculatedMRP(event.value, index);
     }

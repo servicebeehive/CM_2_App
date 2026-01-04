@@ -624,7 +624,7 @@ allowOnlyNumbers(event: any) {
       p_isactive: "Y",
       p_linktransactionid: 0,
       // p_replacesimilir: body.p_replacesimilir || "",
-       p_replacesimilir:body.p_disctype === true ?"Y" : "N",
+       p_replacesimilir:body.p_similar === true ?"Y" : "N",
       p_creditnoteno: body.p_creditnoteno || "",
       p_paymentmode: body.p_paymentmode || "Cash",
       p_paymentdue: Number(body.p_paymentdue) || 0,

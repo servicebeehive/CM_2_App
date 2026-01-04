@@ -329,7 +329,7 @@
 <!-- ================================
      PRINT SECTION (INVOICE)
 ================================= -->
-<div id="invoicePrintSection" style="width: 900px; margin: auto; font-family: Arial">
+<div id="invoicePrintSection" style="width: 900px; margin: auto; font-family: Arial; font-size: 5px;">
     <h3 style="text-align: center">TAX INVOICE</h3>
 
     <!-- ================= HEADER SECTION ================= -->
@@ -454,9 +454,9 @@
                 <td>{{ i + 1 }}</td>
                 <td>{{ item.get('ItemName')?.value }}</td>
                 <td>{{ item.get('HSN')?.value || 8544 }}</td>
-                <td>{{ item.get('Quantity')?.value }} PCS</td>
+                <td>{{ item.get('Quantity')?.value }} {{item.get('UomName')?.value}}</td>
                 <td>₹{{ item.get('MRP')?.value | number: '1.2-2' }}</td>
-                <td>PCS</td>
+                <td>{{ item.get('UomName')?.value}}</td>
                 <td>{{ item.get('discount')?.value || '' }}</td>
                 <td>₹{{ item.get('totalPayable')?.value | number: '1.2-2' }}</td>
             </tr>
@@ -518,7 +518,6 @@
     <!-- ================= GST SUMMARY ================= -->
     <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; font-size: 14px; margin-top: 10px">
         <tr style="font-weight: bold; text-align: center">
-            <td>HSN/SAC</td>
             <td>Taxable Value</td>
             <td>Rate</td>
             <td>CGST Amount</td>
@@ -528,7 +527,6 @@
         </tr>
 
         <tr style="text-align: center">
-            <td>8544</td>
             <td>₹{{ salesForm.get('amount_before_tax')?.value | number: '1.2-2' }}</td>
             <td>9%</td>
             <td>₹{{ salesForm.get('cgst_9')?.value | number: '1.2-2' }}</td>
@@ -552,10 +550,11 @@
 
         Company's PAN : <b>{{ pan }}</b> <br /><br />
 
+        <p style="text-align: right"><strong>Authorized Signatory</strong></p>
+        <br />
         <strong>Declaration:</strong>
         We declare that this invoice shows the actual price of the goods described and all particulars are true.
 
-        <br /><br />
-        <p style="text-align: right"><strong>Authorized Signatory</strong></p>
+        
     </div>
 </div>
