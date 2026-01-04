@@ -232,7 +232,7 @@ export class ReturnComponent {
 
     mapSaleItems(apiItems: any[]) {
         this.saleArray.clear(); // Remove old rows if any
-
+         this.selectedProducts=[];
         apiItems.forEach((item, i) => {
             this.saleArray.push(
                 this.fb.group({
@@ -241,7 +241,7 @@ export class ReturnComponent {
                     ItemName: item.itemname || '',
                     UOMId: item.uomid || 0,
                     uomname: item.uomname,
-                    Quantity: item.quantity || 1,
+                    Quantity: item.quantity,
                     originalQuantity: item.quantity,
                     itemcost: item.itemcost || 0,
                     MRP: (item.mrp || 0).toFixed(2),
@@ -254,7 +254,7 @@ export class ReturnComponent {
                     itemsku: item.itemsku || ''
                 })
             );
-            this.updateTotal(i);
+         this.updateTotal(i);
         });
         this.calculateSummary();
         // If items were added, update totals for the last row and overall summary
@@ -307,7 +307,6 @@ export class ReturnComponent {
     }
 
     onReturnBillDetails(event: any) {
-         this.clearAllSelected();
         this.showBillno = true;
         const returnBillDetails = this.returnBillNoOptions.find((returnbillitem) => returnbillitem.billno === event.value);
         console.log(returnBillDetails);
@@ -334,6 +333,10 @@ export class ReturnComponent {
     cleanRequestBody(body: any) {
        console.log('rest1', body);
         const formattedDate = this.datepipe.transform(body.p_transactiondate, 'dd/MM/yyyy');
+        const selectedItems=(body.p_sale || []).filter((item:any, index:number)=>{
+            const row=this.saleArray.at(index) as FormGroup;
+            return this.selectedProducts.includes(row) && Number(item.Quantity)>0;
+        })
         return {
             ...this.getUserDetails,
             p_transactiontype: 'RETURN',
@@ -357,7 +360,7 @@ export class ReturnComponent {
             p_creditnoteno: body.p_creditnoteno || '',
             p_paymentmode: body.p_paymentmode || 'Cash',
             p_paymentdue: Number(body.p_paymentdue) || 0,
-            p_sale: (body.p_sale || []).map((x: any) => ({
+            p_sale: selectedItems.map((x: any) => ({
                 TransactiondetailId: 0,
                 ItemId: x.ItemId,
                 ItemName: x.ItemName,
@@ -483,20 +486,26 @@ export class ReturnComponent {
         );
         this.returnForm.patchValue({ finalPayable: roundedAmount }, { emitEvent: false });
     }
-    updateSelectedTotal() {
-        const totalMrp = this.selectedProducts.reduce((sum, item) => {
-            const qty = Number(item.Quantity) || 0;
-            const mrp = Number(item.mrp) || 0;
-            return sum + qty * mrp;
-        }, 0);
-        this.returnForm.patchValue(
-            {
-                mrpTotal: totalMrp.toFixed(2)
-            },
-            { emitEvent: false }
-        );
-        this.updatedFinalAmount();
-    }
+   updateSelectedTotal() {
+    let totalCost = 0;
+    let totalMRP = 0;
+
+    this.selectedProducts.forEach((item: FormGroup) => {
+        const qty = Number(item.get('Quantity')?.value) || 0;
+        const mrp = Number(item.get('MRP')?.value) || 0;
+        const cost = Number(item.get('itemcost')?.value) || 0;
+        
+        totalMRP += qty * mrp;
+        totalCost += qty * cost;
+    });
+
+    this.returnForm.patchValue({
+        p_totalcost: totalCost.toFixed(2),
+        p_totalsale: totalMRP.toFixed(2)
+    }, { emitEvent: false });
+
+    this.applyDiscount();
+}
     onSelectionChange() {
         console.log('Selected rows:', this.selectedProducts);
     }
@@ -551,7 +560,7 @@ export class ReturnComponent {
         let totalMRP = 0;
         let totalSale = 0;
 
-        this.saleArray.controls.forEach((row: AbstractControl) => {
+        this.selectedProducts.forEach((row: FormGroup) => {
             const qty = Number(row.get('Quantity')?.value || 0);
             const cost = Number(row.get('itemcost')?.value || 0);
             const mrp = Number(row.get('MRP')?.value || 0);
