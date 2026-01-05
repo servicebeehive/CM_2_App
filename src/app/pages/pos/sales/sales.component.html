@@ -225,7 +225,7 @@
                                     
                                     filterPlaceholder="Search Uom name"
                                     appendTo="body"
-                                    (onChange)="UOMId(row, i)"
+                                    (onChange)="UOMId($event, i)"
                                     class="text-xs md:text-sm"
                                 >
                                 </p-dropdown>
@@ -445,13 +445,13 @@
         </thead>
 
         <tbody>
-            <tr *ngFor="let item of saleRows; let i = index">
+            <tr *ngFor="let item of saleRows; let i = index" style="text-align: center">
                 <td>{{ i + 1 }}</td>
                 <td>{{ item.get('ItemName')?.value }}</td>
                 <td>{{ item.get('HSN')?.value || 8544 }}</td>
-                <td>{{ item.get('Quantity')?.value }} {{item.get('UomName')?.value}}</td>
+                <td>{{ item.get('Quantity')?.value }} {{item.get('UomName')?.value || item.get('UOMName')?.value }}</td>
                 <td>₹{{ item.get('MRP')?.value | number: '1.2-2' }}</td>
-                <td>{{ item.get('UomName')?.value}}</td>
+                <td>{{ item.get('UomName')?.value || item.get('UOMName')?.value}}</td>
                 <td>{{ item.get('discount')?.value || '' }}</td>
                 <td>₹{{ item.get('totalPayable')?.value | number: '1.2-2' }}</td>
             </tr>
