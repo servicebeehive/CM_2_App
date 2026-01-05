@@ -503,6 +503,7 @@ allowOnlyNumbers(event: any) {
   onReset() {
     this.replaceForm.reset();
     this.saleArray.clear();
+      this.replaceForm.get('p_similar')?.setValue(true);
      this.replaceForm.get('p_transactiondate')?.setValue(this.today);
   }
 
@@ -654,6 +655,7 @@ allowOnlyNumbers(event: any) {
     this.stockInService.OninsertSalesDetails(apibody).subscribe({
       next: (res) => {
         console.log(res.data);
+        this.OnGetItem();
           this.OnGetBillNo()
         this.replaceForm.patchValue({
           p_billno:res.data[0].billno

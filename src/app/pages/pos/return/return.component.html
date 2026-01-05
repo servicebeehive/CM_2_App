@@ -5,7 +5,7 @@
                 <span class="block text-surface-900 font-bold text-xl mb-6">Return</span>
                 <!-- Buttons -->
                 <div class="flex gap-4">
-                    <button pButton type="submit" label="Submit" class="p-button-warning" [disabled]="isSubmitDisabled()" && submitDisable></button>
+                    <button pButton type="submit" label="Submit" class="p-button-warning" [disabled]="isSubmitDisabled() || isReturnInvoiceView"></button>
                     <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
                 </div>
             </div>
@@ -128,7 +128,7 @@
                                             formControlName="Quantity"
                                             placeholder="quantity"
                                             (input)="updateTotal(i)"
-                                            [readOnly]="!selectedProducts.includes(row)"
+                                            [readOnly]="!selectedProducts.includes(row) || isReturnInvoiceView"
                                             (keypress)="blockDecimal($event)"
                                             [ngClass]="{ 'border-red-500': row.get('Quantity')?.errors?.['maxStock'] }"
                                         />

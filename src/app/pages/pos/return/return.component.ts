@@ -48,8 +48,6 @@ import { select } from '@ngrx/store';
         DialogModule,
         ConfirmDialogModule,
         CheckboxModule,
-        AddinventoryComponent,
-        DatePipe
         // GlobalFilterComponent
     ],
     templateUrl: './return.component.html',
@@ -76,6 +74,7 @@ export class ReturnComponent {
     showGlobalSearch: boolean = true;
     today: Date = new Date();
     showBillno: boolean = false;
+    isReturnInvoiceView: boolean = false;
     discountplace: string = 'Enter Amount';
     //for testing
     @ViewChild(AddinventoryComponent) addInventoryComp!: AddinventoryComponent;
@@ -279,11 +278,13 @@ export class ReturnComponent {
                     });
                 }
             }
+            
         });
     }
     onBillDetails(event: any) {
         this.clearAllSelected();
         this.showBillno = false;
+        this.isReturnInvoiceView=false;
         console.log(event.value);
         const billDetails = this.billNoOptions.find((billitem) => billitem.billno === event.value);
         console.log('bill', billDetails);
@@ -308,10 +309,16 @@ export class ReturnComponent {
 
     onReturnBillDetails(event: any) {
         this.showBillno = true;
+           this.isReturnInvoiceView = true;
         const returnBillDetails = this.returnBillNoOptions.find((returnbillitem) => returnbillitem.billno === event.value);
         console.log(returnBillDetails);
         if (returnBillDetails) {
             this.SaleDetails(returnBillDetails);
+             setTimeout(() => {
+            this.selectedProducts = [...this.saleArray.controls];
+             this.updateSelectedTotal(); // Update totals based on selection
+            this.updateSubmitButtonState(); // Update button state
+        }, 200); 
             this.returnForm.patchValue({
                 p_transactionid: returnBillDetails.transactionid,
                 p_customername: returnBillDetails.customername,
@@ -328,8 +335,11 @@ export class ReturnComponent {
             });
 
             console.log('billno:', returnBillDetails.billno);
+
         }
     }
+  
+
     cleanRequestBody(body: any) {
        console.log('rest1', body);
         const formattedDate = this.datepipe.transform(body.p_transactiondate, 'dd/MM/yyyy');
@@ -651,6 +661,8 @@ export class ReturnComponent {
         this.pagedProducts = [];
         this.first = 0;
         this.showBillno = false;
+        this.isReturnInvoiceView=false;
+        this.selectedProducts=[];
         this.returnForm.patchValue(
             {
                 mrpTotal: '',

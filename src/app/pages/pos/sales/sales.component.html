@@ -329,18 +329,18 @@
 <!-- ================================
      PRINT SECTION (INVOICE)
 ================================= -->
-<div id="invoicePrintSection" style="width: 900px; margin: auto; font-family: Arial; font-size: 5px;">
+<div id="invoicePrintSection" style="width: 900px; margin: auto; font-family: Arial; ">
     <h3 style="text-align: center">TAX INVOICE</h3>
 
     <!-- ================= HEADER SECTION ================= -->
-    <table width="100%" border="1" cellspacing="0" cellpadding="0" style="border-collapse: collapse">
+    <table width="100%" border="1" cellspacing="0" cellpadding="0" style="border-collapse: collapse; font-size: 10px;">
         <tr>
             <!-- LEFT SIDE (COMPANY + BUYER INFO) -->
             <td width="60%" style="vertical-align: top; padding: 6px">
                 <strong>{{ companyName }}</strong
                 ><br />
                 {{ companyAddress }},<br />
-                {{ companystate }}<br />
+                {{ companycity }}<br />
                 GSTIN/UIN: {{ companygstno }}<br />
                 State Name: {{ companystate }}, Code: {{ statecode }}<br />
                 E-Mail : {{ companyemail }}
@@ -391,11 +391,6 @@
                     </tr>
 
                     <tr>
-                        <td>Other References</td>
-                        <td>-</td>
-                    </tr>
-
-                    <tr>
                         <td>Buyer's Order No.</td>
                         <td>-</td>
                     </tr>
@@ -435,7 +430,7 @@
     </table>
 
     <!-- ================= ITEM TABLE ================= -->
-    <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; font-size: 14px; margin-top: 10px">
+    <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; font-size: 10px; margin-top: 10px">
         <thead>
             <tr style="text-align: center; font-weight: bold">
                 <td>Sl No.</td>
@@ -509,14 +504,14 @@
     </table>
 
     <!-- ================= AMOUNT IN WORDS ================= -->
-    <div style="padding: 10px; font-size: 14px">
+    <div style="padding: 10px; font-size: 10px">
         <strong>Amount Chargeable (in words):</strong>
         <!-- {{ amountInWords }} -->
         -
     </div>
 
     <!-- ================= GST SUMMARY ================= -->
-    <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; font-size: 14px; margin-top: 10px">
+    <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; font-size: 10px; margin-top: 10px">
         <tr style="font-weight: bold; text-align: center">
             <td>Taxable Value</td>
             <td>Rate</td>
@@ -537,24 +532,36 @@
     </table>
 
     <!-- ================= BANK DETAILS ================= -->
-    <div style="padding: 10px; font-size: 14px">
-        <strong>Tax Amount (in words):</strong>
-        <!-- {{ taxAmountInWords }} -->
-        - <br /><br />
-
-        <strong>Company's Bank Details</strong><br />
-        Bank Name : <b>{{ bankname }}</b
-        ><br />
-        A/c No. : {{ accountno }}<br />
-        Branch & IFS Code : {{ branchname }} & {{ ifsc }}<br /><br />
-
-        Company's PAN : <b>{{ pan }}</b> <br /><br />
-
-        <p style="text-align: right"><strong>Authorized Signatory</strong></p>
-        <br />
-        <strong>Declaration:</strong>
-        We declare that this invoice shows the actual price of the goods described and all particulars are true.
-
-        
-    </div>
+  <div>
+    <table width="100%" cellspacing="0" cellpadding="0" style="border-collapse: collapse; font-size: 10px; margin-top: 5px; border: none;">
+        <tr>
+            <!-- LEFT COLUMN -->
+            <td width="70%" style="vertical-align: top; padding: 0; border: none;">
+                <div style="margin-bottom: 10px;">
+                    <strong>Tax Amount (in words):</strong> <!-- {{ taxAmountInWords }} --> -
+                </div>
+                
+                <div >
+                    <strong>Company's Bank Details</strong><br />
+                    Bank Name: <b>{{ bankname }}</b><br />
+                    A/c No.: {{ accountno }}<br />
+                    Branch: {{ branchname }}<br />
+                    IFSC: {{ ifsc }}<br />
+                    PAN: <b>{{ pan }}</b>
+                </div>
+            </td>
+            </tr>
+            <tr>
+            <!-- RIGHT COLUMN (Signature) -->
+            <td width="30%" style="padding: 0; border: none; text-align: right;">
+                <div style=" display: flex; flex-direction: column;justify-content: flex-end;">
+                    <strong>Authorized Signatory</strong><br />
+                </div>
+            </td>
+        </tr>
+    </table>
+     <div style="margin-top: 2px; font-size: 10px;">
+                    <strong>Declaration:</strong> This invoice shows the actual price of goods and all particulars are true.
+                </div>
+</div>
 </div>

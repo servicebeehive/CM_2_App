@@ -17,7 +17,7 @@
     <!-- 🏷 Product Info Section -->
       <!-- Two-column grid layout -->
       <div class="grid grid-cols-3 gap-x-8 gap-y-4 w-full">
- <!-- CREDIT NOTE -->        
+ <!-- DEBIT NOTE -->        
         <div class="flex flex-col">
             <label class="font-medium mb-1">Debit Note</label>
            <p-dropdown (onChange)="RetunCredit($event)"
@@ -50,7 +50,7 @@
           </small>
         </div>
 
-          <!-- DEBIT NOTE -->
+          <!-- CREDIT NOTE -->
 <div class="flex flex-col">
         <label class="font-medium mb-1">Credit Note</label>
           <input
@@ -69,12 +69,13 @@
   [(selection)]="selectedItems"
   (selectionChange)="onSelectionChange($event)"
  [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" [responsiveLayout]="'scroll'"
- class="p-datatable-gridlines mt-6"
+ class="p-datatable-gridlines mt-6 credit"
 >
   <ng-template pTemplate="header">
     <tr class="bg-yellow-400">
       <th><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
       <th>Replace Invoice No</th>
+      <th>Replace Date</th>
       <th>Item Code</th>
       <th>Item Name</th>
       <th>Current Stock</th>
@@ -89,6 +90,7 @@
     <tr>
       <td><p-tableCheckbox [value]="row"></p-tableCheckbox></td>
       <td>{{ row.billno}}</td>
+      <td>{{ row.replace_date | date: 'dd/MM/yyyy'}}</td>
       <td>{{ row.itemsku }}</td>
       <td>{{ row.itemname }}</td>
       <td>{{ row.current_stock }}</td>

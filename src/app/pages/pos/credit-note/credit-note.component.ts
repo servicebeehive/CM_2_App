@@ -170,11 +170,13 @@ get grandTotal():number{
 
     reset() {
         this.CreditForm.reset();
+         this.saleArray.clear()   
         this.replacecednlist=[]
         this.replacecednlist=this.stroeitemlist
-        let datalist:[]=[]
-        this.onSelectionChange(datalist)   
-        this.saleArray.clear()   
+        // let datalist:[]=[]
+        // this.onSelectionChange(datalist)  
+     this.selectedItems=[]
+       
     }
  createDropdownPayload(returnType: string) {
         return {

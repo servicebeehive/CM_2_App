@@ -465,6 +465,7 @@ handleKeyboardSubmit(event: KeyboardEvent) {
             p_roundoff: data.roundoff || 0,
             p_totalpayable: data.totalpayable || 0,
             p_paymentdue:data.amountpaid,
+            UomName:data.uomname,
             sgst_9: data.sgst_9 || 0,
             tax_18: data.tax_18 || 0,
             cgst_9: data.cgst_9 || 0,
@@ -1066,12 +1067,12 @@ patchPrintValues(apiData:any){
                 this.uomlist[index] = res.data;
                   const firstUom = this.uomlist[index][0];
                 const row = this.saleArray.at(index);
-                const uomArray=this.uomlist[index];
+                const uomArray=res.data;
                 // ⭐ Auto-select FIRST UOM
              const select=uomArray.filter((u:any)=>u.fieldid===this.Uomid)
              console.log("select",select)
                 if (uomArray && uomArray.length > 0) {
-                    console.log("uomindex",uomArray[index])
+                    console.log("uomindex",uomArray)
   let matchUom=this.uomlist.find((uom:any)=>uom.fieldname===uomValue);   
                 //   this.salesForm.controls['UomName'].setValue(matchUom.fieldname)
                    if(uomValue){
