@@ -472,12 +472,11 @@ onBlurBarCode(event:FocusEvent){
   if (!this.products || this.products.length === 0) return true;
 
   const parentMrp = Number(this.addForm.get('mrp')?.value || 0);
-
   for (const row of this.products) {
     const hasChild = !!row.childUOM?.toString().trim();
     const hasConversion = !!row.conversion?.toString().trim();
     const hasMrp = !!row.mrpUom?.toString().trim();
-
+    
     // ✅ Case 1: completely empty row → OK
     if (!hasChild && !hasConversion && !hasMrp) {
       row.mrpError = false;
@@ -669,8 +668,18 @@ getFilteredChildUOM() {
 }
 onItemParentUM(event:any){
     this.viewItem(event.value)
-
+    this.clearChildUOMValues();
 }
+clearChildUOMValues() {
+    if (this.products && this.products.length > 0) {
+        this.products.forEach(row => {
+            row.childUOM = '';
+            row.conversion = '';
+            row.mrpUom = '';
+            row.mrpError = false;
+        });
+    }
+  }
 viewItem(id: number) {
   console.log(id)
  this.ChilduomOptions=[]

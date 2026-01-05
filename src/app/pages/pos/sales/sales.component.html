@@ -445,7 +445,7 @@
         </thead>
 
         <tbody>
-            <tr *ngFor="let item of saleRows; let i = index">
+            <tr *ngFor="let item of saleRows; let i = index" style="text-align: center">
                 <td>{{ i + 1 }}</td>
                 <td>{{ item.get('ItemName')?.value }}</td>
                 <td>{{ item.get('HSN')?.value || 8544 }}</td>
