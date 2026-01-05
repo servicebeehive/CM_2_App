@@ -471,6 +471,7 @@ handleKeyboardSubmit(event: KeyboardEvent) {
             cgst_9: data.cgst_9 || 0,
             amount_before_tax: data.amount_before_tax || 0
         });
+        console.log('ghghh',this.salesForm.get('UomName')?.value);
         this.saleArray.clear();
 
         // Add items to FormArray
@@ -1073,13 +1074,15 @@ patchPrintValues(apiData:any){
              console.log("select",select)
                 if (uomArray && uomArray.length > 0) {
                     console.log("uomindex",uomArray)
-  let matchUom=this.uomlist.find((uom:any)=>uom.fieldname===uomValue);   
-                //   this.salesForm.controls['UomName'].setValue(matchUom.fieldname)
+  let matchUom=this.uomlist[index].find((uom:any)=>uom.fieldname===uomValue);
+   console.log("match",matchUom)   
+                  this.salesForm.controls['UomName'].setValue(matchUom.fieldname)
                    if(uomValue){
                        row.patchValue({
                         UOMId: matchUom.fieldid,
-                        UomName: matchUom?.fieldname
+                        UomName: matchUom.fieldname
                     });
+                        
                    }
                    else{
                    row.patchValue({
@@ -1239,7 +1242,7 @@ if (!row.contains('baseStock')) {
         popupWindow!.document.write(`
      <!DOCTYPE html>
                     <html>
-                    <head
+                    <head>
                         <style>
                            @page {
                         margin: 0;
