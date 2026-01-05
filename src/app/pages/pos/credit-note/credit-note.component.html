@@ -17,7 +17,7 @@
     <!-- 🏷 Product Info Section -->
       <!-- Two-column grid layout -->
       <div class="grid grid-cols-3 gap-x-8 gap-y-4 w-full">
- <!-- CREDIT NOTE -->        
+ <!-- DEBIT NOTE -->        
         <div class="flex flex-col">
             <label class="font-medium mb-1">Debit Note</label>
            <p-dropdown (onChange)="RetunCredit($event)"
@@ -50,7 +50,7 @@
           </small>
         </div>
 
-          <!-- DEBIT NOTE -->
+          <!-- CREDIT NOTE -->
 <div class="flex flex-col">
         <label class="font-medium mb-1">Credit Note</label>
           <input
@@ -69,12 +69,13 @@
   [(selection)]="selectedItems"
   (selectionChange)="onSelectionChange($event)"
  [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" [responsiveLayout]="'scroll'"
- class="p-datatable-gridlines mt-6"
+ class="p-datatable-gridlines mt-6 credit"
 >
   <ng-template pTemplate="header">
     <tr class="bg-yellow-400">
       <th><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
       <th>Replace Invoice No</th>
+      <th>Replace Date</th>
       <th>Item Code</th>
       <th>Item Name</th>
       <th>Current Stock</th>
@@ -89,6 +90,7 @@
     <tr>
       <td><p-tableCheckbox [value]="row"></p-tableCheckbox></td>
       <td>{{ row.billno}}</td>
+      <td>{{ row.replace_date}}</td>
       <td>{{ row.itemsku }}</td>
       <td>{{ row.itemname }}</td>
       <td>{{ row.current_stock }}</td>
@@ -133,7 +135,7 @@
  <h3 style="text-align: center; padding-bottom: 10px;">DEBIT NOTE</h3>
 
     <!-- ================= COMPANY & CUSTOMER INFO ================= -->
-  <table width="100%" cellspacing="0" cellpadding="0" style="margin-bottom:15px;">
+  <table width="100%" cellspacing="0" cellpadding="0" style="margin-bottom:15px; font-size:10px;">
     <tr>
       <td width="50%" style="vertical-align:top; padding: 6px">
         <strong>{{companyName}}</strong><br>
@@ -190,7 +192,7 @@
   </div> -->
 
   <!-- ================= ITEMS TABLE ================= -->
-  <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;font-size:14px;">
+  <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;font-size:10px;">
     <thead style="background:#f0f0f0;">
       <tr>
         <th>SNo.</th>
@@ -282,7 +284,7 @@
     </tbody>
   </table>
 
-    <div style="text-align:left; margin-top:10px; color:#666; font-size:12px;">
+    <div style="text-align:left; margin-top:10px; color:#666; font-size:10px;">
       <strong>Note:</strong> This is a computer generated debit note.
     </div>
   </div>

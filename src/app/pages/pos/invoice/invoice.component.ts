@@ -580,8 +580,11 @@ getReceivedAmountControl(index: number): AbstractControl | null {
                     <!DOCTYPE html>
                     <html>
                     <head>
-                        <title>Invoice Print</title>
                         <style>
+                          @page {
+                        margin: 0;
+                        size: auto;
+                    }
                             /* Your print styles here */
                             body { font-family: Arial, sans-serif; }
                             /* Add more styles as needed */

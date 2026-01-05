@@ -170,11 +170,13 @@ get grandTotal():number{
 
     reset() {
         this.CreditForm.reset();
+         this.saleArray.clear()   
         this.replacecednlist=[]
         this.replacecednlist=this.stroeitemlist
-        let datalist:[]=[]
-        this.onSelectionChange(datalist)   
-        this.saleArray.clear()   
+        // let datalist:[]=[]
+        // this.onSelectionChange(datalist)  
+     this.selectedItems=[]
+       
     }
  createDropdownPayload(returnType: string) {
         return {
@@ -370,8 +372,12 @@ print() {
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Debit Note</title>
+         
             <style>
+               @page {
+                        margin: 0;
+                        size: auto;
+                    }
                 /* Consistent with invoice print styling */
                 body { 
                     font-family: Arial, sans-serif; 

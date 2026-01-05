@@ -467,38 +467,50 @@ onBlurBarCode(event:FocusEvent){
             this.resetChildUOMTable();
         }
     }
-    isChildUOMValid(): boolean {
-        if (!this.products || this.products.length === 0) return true;
-             let parentMrp = Number(this.addForm.get('mrp')?.value || 0);
-        let hasAnyValue = false;
-        for (const row of this.products) {
-            const hasChild = row.childUOM?.toString().trim() !== '';
-            const hasConversion = row.conversion?.toString().trim() !== '';
-            const hasMrp = row.mrpUom?.toString().trim() !== '';
-            let conv=Number(row.conversion || 0);
-            let mrpUom=Number(row.mrpUom || 0);
-            if(!conv || !mrpUom){
-                row.mrpError = false;
-                continue;
-            }
-             let requiredMinMrpUom = parentMrp / conv;
+  isChildUOMValid(): boolean {
+      this.addForm.updateValueAndValidity();
+  if (!this.products || this.products.length === 0) return true;
 
-    // Apply rule: mrpUom > (mrp / conversion)
+  const parentMrp = Number(this.addForm.get('mrp')?.value || 0);
+
+  for (const row of this.products) {
+    const hasChild = !!row.childUOM?.toString().trim();
+    const hasConversion = !!row.conversion?.toString().trim();
+    const hasMrp = !!row.mrpUom?.toString().trim();
+
+    // ✅ Case 1: completely empty row → OK
+    if (!hasChild && !hasConversion && !hasMrp) {
+      row.mrpError = false;
+      continue;
+    }
+
+    // ❌ Case 2: partially filled row → INVALID
+    if (!(hasChild && hasConversion && hasMrp)) {
+      row.mrpError = false;
+      return false;
+    }
+
+    // ✅ Case 3: all fields present → validate numbers
+    const conv = Number(row.conversion);
+    const mrpUom = Number(row.mrpUom);
+
+    if (!conv || !mrpUom) {
+      row.mrpError = false;
+      return false;
+    }
+
+    const requiredMinMrpUom = parentMrp / conv;
+
     if (mrpUom < requiredMinMrpUom) {
       row.mrpError = true;
+      return false;
     } else {
       row.mrpError = false;
     }
-            if (hasChild || hasConversion || hasMrp) {
-                hasAnyValue = true;
+  }
+  return true;
+}
 
-                if (!hasChild || !hasConversion || !hasMrp) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
 
     mapFormToPayload(form: any, childUOM: any[]) {
        console.log(form)

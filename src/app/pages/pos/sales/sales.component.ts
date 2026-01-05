@@ -173,11 +173,11 @@ export class SalesComponent {
     profileOptions: any = {};
     public itemOptionslist: [] = [];
     public uomlist: any[] = [];
+    Uomid: string = '';
     mobilePlaceholder: string = 'Mobile No';
     backshow: boolean = false;
     isLoadingBills: boolean = false;
     billValue: any = null;
-    itemValue:any=null;
     companyName: string = '';
     companyAddress: string = '';
     companycity: string = '';
@@ -190,8 +190,6 @@ export class SalesComponent {
     branchname: string = '';
     ifsc: string = '';
     pan: string = '';
-    Uomname: string = '';
-    hsncode:string='';
     @ViewChild(AddinventoryComponent) addInventoryComp!: AddinventoryComponent;
 
     // Dropdowns / lists
@@ -251,6 +249,8 @@ export class SalesComponent {
                 p_replacesimilir: [''],
                 p_creditnoteno: [''],
                 p_paymentmode: [''],
+                UomName: [''],
+                HsnCode: [''],
                 sgst_9: [''],
                 tax_18: [''],
                 cgst_9: [''],
@@ -340,6 +340,7 @@ export class SalesComponent {
             ItemId: [data?.itemid || 0],
             ItemName: [data?.itemname || ''],
             UOMId: [data?.uomid || 0],
+            UomName: [data?.uomname || ''],
             Quantity: [1],
             itemcost: [data?.pruchaseprice || 0],
             MRP: [data?.saleprice || 0],
@@ -364,7 +365,7 @@ export class SalesComponent {
                     ItemId: item.itemid || 0, // use itemsku when itemid not present
                     ItemName: item.itemname || '',
                     UOMId: item.uomname || 0,
-                    UOMName:item.uomname,
+                    UomName: [item.uomname || ''],
                     Quantity: item.quantity || 1,
                     itemcost: item.itemcost || 0,
                     MRP: (item.mrp || 0).toFixed(2),
@@ -375,9 +376,11 @@ export class SalesComponent {
                     itemsku: item.itemsku || ''
                 })
             );
+            console.log('uomvalue', this.saleArray.at(index).get('UOMId')?.value);
             const uomValue = this.saleArray.at(index).get('UOMId')?.value;
             this.OnUMO(item.itemid || item.itemsku, index, uomValue);
         });
+
         // If items were added, update totals for the last row and overall summary
         const index = this.saleArray.length - 1;
 
@@ -448,11 +451,13 @@ export class SalesComponent {
             p_roundoff: data.roundoff || 0,
             p_totalpayable: data.totalpayable || 0,
             p_paymentdue: data.amountpaid,
+            UomName: data.uomname,
             sgst_9: data.sgst_9 || 0,
             tax_18: data.tax_18 || 0,
             cgst_9: data.cgst_9 || 0,
             amount_before_tax: data.amount_before_tax || 0
         });
+        console.log('ghghh', this.salesForm.get('UomName')?.value);
         this.saleArray.clear();
 
         // Add items to FormArray
@@ -499,9 +504,7 @@ export class SalesComponent {
     OnGetItem() {
         const payload = this.createDropdownPayload('ITEM');
         this.stockInService.getdropdowndetails(payload).subscribe({
-            next: (res) => {(this.itemOptions = res.data)
-                   this.itemValue=res.data
-            },
+            next: (res) => (this.itemOptions = res.data),
             error: (err) => console.log(err)
         });
     }
@@ -563,7 +566,6 @@ export class SalesComponent {
     // Load Bill No dropdown
     OnGetBillNo() {
         const loginusername = this.authService.isLogIntType().username;
-        console.log('gdsfsd:', loginusername);
         const payload = {
             p_returntype: 'NEWTRANSACTIONID',
             p_username: loginusername
@@ -653,7 +655,7 @@ export class SalesComponent {
         };
     }
 
-   // Called when bill dropdown value changes
+    // Called when bill dropdown value changes
     onBillDetails(event: any) {
         const billDetails = this.billNoOptions.find((billitem) => billitem.billno === event.value);
         if (billDetails) {
@@ -673,7 +675,7 @@ export class SalesComponent {
                 discountvalueper: billDetails.discountvalueper,
                 p_roundoff: billDetails.roundoff,
                 p_totalpayable: billDetails.totalpayable.toFixed(2),
-                p_paymentdue: (billDetails.amountpaid).toFixed(2),
+                p_paymentdue: billDetails.amountpaid,
                 sgst_9: billDetails.sgst_9,
                 tax_18: billDetails.tax_18,
                 cgst_9: billDetails.cgst_9,
@@ -696,8 +698,6 @@ export class SalesComponent {
                     this.salesForm.patchValue({
                         status: res.data[0].status || ''
                     });
-                     this.Uomname = res.data[0].uomcode;
-                     this.hsncode=res.data[0].hsncode;
                 }
                 this.mapSaleItems(res.data);
 
@@ -944,7 +944,6 @@ export class SalesComponent {
                 ItemId: x.ItemId,
                 ItemName: x.ItemName,
                 UOMId: x.UOMId,
-                UOMName:x.UOMName,
                 Quantity: x.Quantity,
                 itemcost: x.itemcost,
                 warrenty: x.warPeriod,
@@ -952,12 +951,8 @@ export class SalesComponent {
                 totalPayable: x.totalPayable,
                 currentstock: x.curStock
             }))
-          
         };
     }
-//       getUomName(uomId: number): string {
-//   return this.uomList.find(u => u.id === uomId)?.name || '';
-// }
 
     // -----------------------------
     //  API Submit + Notifications
@@ -966,6 +961,7 @@ export class SalesComponent {
     // Send header (and sale) to API, show toast notifications on result
     OnSalesHeaderCreate(data: any) {
         const apibody = this.cleanRequestBody(this.salesForm.value);
+
         this.stockInService.OninsertSalesDetails(apibody).subscribe({
             next: (res) => {
                 const billno = res.data[0]?.billno;
@@ -978,6 +974,7 @@ export class SalesComponent {
                         status: 'Done'
                     });
                 }
+                console.log('uom',this.salesForm.get('p_sale')?.value);
                 setTimeout(() => {
                     if (this.billValue) {
                         const currentBill = this.billValue.find((bill: any) => bill.billno === billno);
@@ -985,24 +982,8 @@ export class SalesComponent {
                             this.patchPrintValues(currentBill);
                         }
                     }
-                    if(this.itemValue){
-                        const saleItems = this.salesForm.value.p_sale; 
-                        console.log(this.itemValue)
-                        if (this.itemValue && saleItems?.length) {
-  saleItems.forEach((saleItem: any) => {
-    const itemData = this.itemValue.find(
-      (i: any) => i.itemid === saleItem.ItemId
-    );
-
-    if (itemData) {
-      console.log('Matched Item:', itemData);
-      this.Uomname=itemData.uomname
-      this.hsncode=itemData.hsncode
-    }
-  });
-}
-                    }
                 }, 500);
+                console.log('mobile option:', this.cusMobileOptions);
                 console.log('res', res);
                 this.messageService.add({
                     severity: 'success',
@@ -1038,10 +1019,8 @@ export class SalesComponent {
     }
     patchPrintValues(apiData: any) {
         const patchData: any = {};
-        console.log('shadj',patchData,apiData)
         patchData.p_transactionid = apiData.transactionid;
         patchData.discountvalueper = apiData.discountvalueper;
-        patchData.hsncode=apiData.hsncode;
         patchData.sgst_9 = apiData.sgst_9;
         patchData.cgst_9 = apiData.cgst_9;
         patchData.tax_18 = apiData.tax_18;
@@ -1062,22 +1041,45 @@ export class SalesComponent {
             p_returntype: 'SALEUOM',
             p_returnvalue: value
         };
-      console.log('uomval',uomValue)
+        console.log('values', value, index);
+
         this.salesService.Getreturndropdowndetails(apibody).subscribe({
             next: (res) => {
+                
                 this.uomlist[index] = res.data;
                 const row = this.saleArray.at(index);
-                if (!this.uomlist[index].length) return;
-                let matchUom = this.uomlist[index].find((uom: any) => uom.fieldname === uomValue);
-                // ⭐ Auto-select FIRST UOM
-                console.log(matchUom)
-                row.patchValue({
-                    UOMId: matchUom.fieldid,
-                    UOMName:matchUom.fieldname
-                });
-               
-                // ⭐ Immediately calculate MRP + TOTAL + COST
-                this.calculateMRP(index);
+                const firstUom = this.uomlist[index][0];
+                const uomArray = res.data;
+                if (firstUom && firstUom > 0) {
+                    row.patchValue({
+                        UOMId: firstUom.fieldid,
+                        UomName:firstUom.fieldname
+                    });
+                }
+                if (uomArray && uomArray.length > 0) {
+                    console.log('uomindex', uomArray);
+                    let matchUom = this.uomlist[index].find((uom: any) => uom.fieldname === uomValue);
+                    console.log('match', matchUom);
+                    //   this.salesForm.controls['UomName'].setValue(matchUom.fieldname)
+                    if (uomValue) {
+                        row.patchValue({
+                            UOMId: matchUom.fieldid,
+                            UomName: matchUom.fieldname
+                        });
+                    }
+                    console.log("gshdxj",this.Uomid)
+                    // if (this.Uomid) {
+                    //     const select = uomArray.filter((u: any) => u.fieldid === this.Uomid);
+                    //     console.log('select', select);
+                    //      row.patchValue({
+                    //         UOMId: select.fieldid,
+                    //         UomName: select.fieldname
+                    //     });
+                    // }
+                    console.log('UOMNAME', this.salesForm.get('UomName')?.value);
+                    // ⭐ Immediately calculate MRP + TOTAL + COST
+                    this.calculateMRP(index);
+                }
             }
         });
     }
@@ -1129,26 +1131,20 @@ export class SalesComponent {
         });
     }
 
-UOMId(event: any, index: number) {
-    const row = this.saleArray.at(index);
+    UOMId(event: any, index: number) {
+        const row = this.saleArray.at(index);
 
-    const selectedUomId = event.value.UOMId;
-
-    // 🔹 find selected UOM from existing uomlist
-    console.log(this.uomlist[index],event)
-    const selectedUom = this.uomlist[index]?.find(
-        (uom: any) => uom.fieldid === selectedUomId
-    );
-
-    // 🔹 ONLY patch UOMName (keep your MRP call unchanged)
-    row.patchValue({
-        UOMName: selectedUom?.fieldname || ''
-    });
- console.log(row.value)
-    // ❌ DO NOT CHANGE THIS (as you requested)
-    this.OngetcalculatedMRP(event.value, index);
-}
-
+        // Get current row data
+        const rowData = {
+            ItemId: row.get('ItemId')?.value,
+            UOMId: event.value
+        };
+        this.Uomid = event.value.UOMId;
+        console.log(this.Uomid);
+        console.log('calculate mrp:', event.value);
+         this.OnUMO(rowData.ItemId, index, event.value.fieldname);
+        this.OngetcalculatedMRP(event.value, index);
+    }
     calculateMRP(index: number) {
         const row = this.saleArray.at(index);
 
@@ -1161,7 +1157,7 @@ UOMId(event: any, index: number) {
         let apibody = {
             ...this.getUserDetails,
             p_itemid: itemId,
-            p_qty: qty, 
+            p_qty: qty,
             p_uomid: uomid
         };
 
@@ -1227,8 +1223,11 @@ UOMId(event: any, index: number) {
      <!DOCTYPE html>
                     <html>
                     <head>
-                        <title>Invoice Print</title>
                         <style>
+                           @page {
+                        margin: 0;
+                        size: auto;
+                    }
                             /* Your print styles here */
                             body { font-family: Arial, sans-serif; }
                             /* Add more styles as needed */

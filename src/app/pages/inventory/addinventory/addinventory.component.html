@@ -254,8 +254,6 @@
         <div class="flex gap-4">
           
                   <button pButton type="button" label="Cancel"  class="p-button-secondary" (click)="onCancel()"></button>
-     
-           
             <button pButton type="submit" label="Submit" class="p-button-warning" [disabled]="addForm.invalid || !isChildUOMValid() || itemCodeExists|| barcodeExists"></button>
 
         </div>

@@ -387,9 +387,10 @@ allowOnlyNumbers(event: any) {
         p_mobileno: billDetails.mobileno,
         p_totalcost: (billDetails.totalcost).toFixed(2),
         p_totalsale: (billDetails.totalsale).toFixed(2),
-        p_disctype: billDetails.discounttype == 'Y' ? true : false,
+        p_disctype: billDetails.discounttype === 'Y' ? true : false,
         p_overalldiscount: billDetails.discount,
         p_roundoff: billDetails.roundoff,
+        p_similar:billDetails.similaritem==='Y'? true: false, 
         p_totalpayable: (billDetails.totalpayable).toFixed(2),
       });
     }
@@ -503,6 +504,7 @@ allowOnlyNumbers(event: any) {
   onReset() {
     this.replaceForm.reset();
     this.saleArray.clear();
+      this.replaceForm.get('p_similar')?.setValue(true);
      this.replaceForm.get('p_transactiondate')?.setValue(this.today);
   }
 
@@ -624,7 +626,7 @@ allowOnlyNumbers(event: any) {
       p_isactive: "Y",
       p_linktransactionid: 0,
       // p_replacesimilir: body.p_replacesimilir || "",
-       p_replacesimilir:body.p_disctype === true ?"Y" : "N",
+       p_replacesimilir:body.p_similar === true ?"Y" : "N",
       p_creditnoteno: body.p_creditnoteno || "",
       p_paymentmode: body.p_paymentmode || "Cash",
       p_paymentdue: Number(body.p_paymentdue) || 0,
@@ -654,6 +656,7 @@ allowOnlyNumbers(event: any) {
     this.stockInService.OninsertSalesDetails(apibody).subscribe({
       next: (res) => {
         console.log(res.data);
+        this.OnGetItem();
           this.OnGetBillNo()
         this.replaceForm.patchValue({
           p_billno:res.data[0].billno

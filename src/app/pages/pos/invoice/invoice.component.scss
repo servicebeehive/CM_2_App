@@ -14,13 +14,23 @@
     overflow-anchor: none;
     scroll-behavior: auto;
 }
- .p-datatable-thead > tr > th:nth-child(3),
-  .p-datatable-tbody > tr > td:nth-child(3) {
+ .p-datatable-thead > tr > th:nth-child(1),
+  .p-datatable-tbody > tr > td:nth-child(1) {
     min-width: 120px;
     max-width: 180px;
   }
- .p-datatable-thead > tr > th:nth-child(4),
+   .p-datatable-thead > tr > th:nth-child(3),
+  .p-datatable-tbody > tr > td:nth-child(3) {
+    min-width: 120px;
+    max-width: 150px;
+  }
+   .p-datatable-thead > tr > th:nth-child(4),
   .p-datatable-tbody > tr > td:nth-child(4) {
+    min-width: 120px;
+    max-width: 150px;
+  }
+ .p-datatable-thead > tr > th:nth-child(5),
+  .p-datatable-tbody > tr > td:nth-child(5) {
     min-width: 250px;
     max-width: 250px;
   }
