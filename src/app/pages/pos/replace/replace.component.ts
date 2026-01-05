@@ -387,9 +387,10 @@ allowOnlyNumbers(event: any) {
         p_mobileno: billDetails.mobileno,
         p_totalcost: (billDetails.totalcost).toFixed(2),
         p_totalsale: (billDetails.totalsale).toFixed(2),
-        p_disctype: billDetails.discounttype == 'Y' ? true : false,
+        p_disctype: billDetails.discounttype === 'Y' ? true : false,
         p_overalldiscount: billDetails.discount,
         p_roundoff: billDetails.roundoff,
+        p_similar:billDetails.similaritem==='Y'? true: false, 
         p_totalpayable: (billDetails.totalpayable).toFixed(2),
       });
     }

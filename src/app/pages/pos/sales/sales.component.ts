@@ -1239,9 +1239,12 @@ if (!row.contains('baseStock')) {
         popupWindow!.document.write(`
      <!DOCTYPE html>
                     <html>
-                    <head>
-                        <title>Invoice Print</title>
+                    <head
                         <style>
+                           @page {
+                        margin: 0;
+                        size: auto;
+                    }
                             /* Your print styles here */
                             body { font-family: Arial, sans-serif; }
                             /* Add more styles as needed */

@@ -90,7 +90,7 @@
     <tr>
       <td><p-tableCheckbox [value]="row"></p-tableCheckbox></td>
       <td>{{ row.billno}}</td>
-      <td>{{ row.replace_date | date: 'dd/MM/yyyy'}}</td>
+      <td>{{ row.replace_date}}</td>
       <td>{{ row.itemsku }}</td>
       <td>{{ row.itemname }}</td>
       <td>{{ row.current_stock }}</td>
@@ -135,7 +135,7 @@
  <h3 style="text-align: center; padding-bottom: 10px;">DEBIT NOTE</h3>
 
     <!-- ================= COMPANY & CUSTOMER INFO ================= -->
-  <table width="100%" cellspacing="0" cellpadding="0" style="margin-bottom:15px;">
+  <table width="100%" cellspacing="0" cellpadding="0" style="margin-bottom:15px; font-size:10px;">
     <tr>
       <td width="50%" style="vertical-align:top; padding: 6px">
         <strong>{{companyName}}</strong><br>
@@ -192,7 +192,7 @@
   </div> -->
 
   <!-- ================= ITEMS TABLE ================= -->
-  <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;font-size:14px;">
+  <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;font-size:10px;">
     <thead style="background:#f0f0f0;">
       <tr>
         <th>SNo.</th>
@@ -284,7 +284,7 @@
     </tbody>
   </table>
 
-    <div style="text-align:left; margin-top:10px; color:#666; font-size:12px;">
+    <div style="text-align:left; margin-top:10px; color:#666; font-size:10px;">
       <strong>Note:</strong> This is a computer generated debit note.
     </div>
   </div>

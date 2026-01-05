@@ -160,7 +160,7 @@
 <!-- ================================
      PRINT SECTION (INVOICE)
 ================================= -->
-<div id="invoicePrintSection" style="width: 900px; margin: auto; font-family: Arial">
+<div id="invoicePrintSection" style=" width: 900px; margin: auto; font-family: Arial">
     <h3 style="text-align: center">TAX INVOICE</h3>
 
     <!-- ================= HEADER SECTION ================= -->
@@ -347,7 +347,6 @@
     <!-- ================= GST SUMMARY ================= -->
     <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; font-size: 10px; margin-top: 10px">
         <tr style="font-weight: bold; text-align: center">
-            <td>HSN/SAC</td>
             <td>Taxable Value</td>
             <td>Rate</td>
             <td>CGST Amount</td>
@@ -357,7 +356,6 @@
         </tr>
 
         <tr style="text-align: center">
-            <td>{{hsncode}}</td>
             <td>₹{{ invoiceForm.get('amount_before_tax')?.value | number: '1.2-2' }}</td>
             <td>9%</td>
             <td>₹{{ invoiceForm.get('cgst_9')?.value | number: '1.2-2' }}</td>
