@@ -451,13 +451,12 @@ export class SalesComponent {
             p_roundoff: data.roundoff || 0,
             p_totalpayable: data.totalpayable || 0,
             p_paymentdue: data.amountpaid,
-            UomName: data.uomname,
             sgst_9: data.sgst_9 || 0,
             tax_18: data.tax_18 || 0,
             cgst_9: data.cgst_9 || 0,
             amount_before_tax: data.amount_before_tax || 0
         });
-        console.log('ghghh', this.salesForm.get('UomName')?.value);
+       
         this.saleArray.clear();
 
         // Add items to FormArray
@@ -470,6 +469,7 @@ export class SalesComponent {
                         ItemName: item.itemname || '',
                         UOMId: item.uomid || 0,
                         UOMName: item.uomname || '',
+                        UomName: item.uomname,
                         Quantity: item.quantity || 1,
                         itemcost: item.itemcost || 0,
                         MRP: item.mrp || 0,
@@ -1035,51 +1035,94 @@ export class SalesComponent {
     showSuccess(message: string) {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
     }
-    OnUMO(value: any, index: number, uomValue?: string) {
-        let apibody = {
+    // OnUMO(value: any, index: number, uomValue?: string) {
+    //     let apibody = {
+    //         ...this.getUserDetails,
+    //         p_returntype: 'SALEUOM',
+    //         p_returnvalue: value
+    //     };
+    //     console.log('values', value, index);
+
+    //     this.salesService.Getreturndropdowndetails(apibody).subscribe({
+    //         next: (res) => {
+                
+    //             this.uomlist[index] = res.data;
+    //             const row = this.saleArray.at(index);
+    //             const firstUom = this.uomlist[index][0];
+    //             const uomArray = res.data;
+    //             if (firstUom && firstUom > 0) {
+    //                 row.patchValue({
+    //                     UOMId: firstUom.fieldid,
+    //                     UomName:firstUom.fieldname
+    //                 });
+    //             }
+    //             if (uomArray && uomArray.length > 0) {
+    //                 console.log('uomindex', uomArray);
+    //                 let matchUom = this.uomlist[index].find((uom: any) => uom.fieldname === uomValue);
+    //                 console.log('match', matchUom);
+    //                 //   this.salesForm.controls['UomName'].setValue(matchUom.fieldname)
+    //                 if (uomValue) {
+    //                     row.patchValue({
+    //                         UOMId: matchUom.fieldid,
+    //                         UomName: matchUom.fieldname
+    //                     });
+    //                 }
+    //                 console.log("gshdxj",this.Uomid)
+    //                 // if (this.Uomid) {
+    //                 //     const select = uomArray.filter((u: any) => u.fieldid === this.Uomid);
+    //                 //     console.log('select', select);
+    //                 //      row.patchValue({
+    //                 //         UOMId: select.fieldid,
+    //                 //         UomName: select.fieldname
+    //                 //     });
+    //                 // }
+    //                 console.log('UOMNAME', this.salesForm.get('UomName')?.value);
+    //                 // ⭐ Immediately calculate MRP + TOTAL + COST
+    //                 this.calculateMRP(index);
+    //             }
+    //         }
+    //     });
+    // }
+OnUMO(value: any, index: number, uomValue?: string) {
+
+        const apibody = {
             ...this.getUserDetails,
             p_returntype: 'SALEUOM',
             p_returnvalue: value
         };
-        console.log('values', value, index);
 
         this.salesService.Getreturndropdowndetails(apibody).subscribe({
             next: (res) => {
+
+                if (!res?.data || res.data.length === 0) {
+                    return;
+                }
                 
-                this.uomlist[index] = res.data;
+                this.uomlist[index] = [...res.data];
+
                 const row = this.saleArray.at(index);
-                const firstUom = this.uomlist[index][0];
-                const uomArray = res.data;
-                if (firstUom && firstUom > 0) {
-                    row.patchValue({
-                        UOMId: firstUom.fieldid,
-                        UomName:firstUom.fieldname
-                    });
+
+                let selectedUom = null;
+
+                if (uomValue) {
+                    selectedUom = this.uomlist[index]
+                        .find((u: any) =>
+                            u.fieldid == uomValue || u.fieldname == uomValue
+                        );
                 }
-                if (uomArray && uomArray.length > 0) {
-                    console.log('uomindex', uomArray);
-                    let matchUom = this.uomlist[index].find((uom: any) => uom.fieldname === uomValue);
-                    console.log('match', matchUom);
-                    //   this.salesForm.controls['UomName'].setValue(matchUom.fieldname)
-                    if (uomValue) {
-                        row.patchValue({
-                            UOMId: matchUom.fieldid,
-                            UomName: matchUom.fieldname
-                        });
-                    }
-                    console.log("gshdxj",this.Uomid)
-                    // if (this.Uomid) {
-                    //     const select = uomArray.filter((u: any) => u.fieldid === this.Uomid);
-                    //     console.log('select', select);
-                    //      row.patchValue({
-                    //         UOMId: select.fieldid,
-                    //         UomName: select.fieldname
-                    //     });
-                    // }
-                    console.log('UOMNAME', this.salesForm.get('UomName')?.value);
-                    // ⭐ Immediately calculate MRP + TOTAL + COST
-                    this.calculateMRP(index);
+
+                if (!selectedUom && !row.get('UOMId')?.value) {
+                    selectedUom = this.uomlist[index][0];
                 }
+
+                if (!selectedUom) return;
+
+                row.patchValue({
+                    UOMId: selectedUom.fieldid,
+                    UomName: selectedUom.fieldname
+                });
+
+                this.calculateMRP(index);
             }
         });
     }
@@ -1131,19 +1174,41 @@ export class SalesComponent {
         });
     }
 
+    // UOMId(event: any, index: number) {
+    //     const row = this.saleArray.at(index);
+
+    //     // Get current row data
+    //     const rowData = {
+    //         ItemId: row.get('ItemId')?.value,
+    //         UOMId: event.value
+    //     };
+    //     this.Uomid = event.value.UOMId;
+    //     console.log(this.Uomid);
+    //     console.log('calculate mrp:', event.value);
+    //      this.OnUMO(rowData.ItemId, index, event.value.fieldname);
+    //     this.OngetcalculatedMRP(event.value, index);
+    // }
     UOMId(event: any, index: number) {
+
         const row = this.saleArray.at(index);
 
-        // Get current row data
-        const rowData = {
-            ItemId: row.get('ItemId')?.value,
-            UOMId: event.value
-        };
-        this.Uomid = event.value.UOMId;
-        console.log(this.Uomid);
-        console.log('calculate mrp:', event.value);
-         this.OnUMO(rowData.ItemId, index, event.value.fieldname);
-        this.OngetcalculatedMRP(event.value, index);
+        const selectedUom = this.uomlist[index]
+            ?.find((u: any) => u.fieldid === event.value);
+
+        if (!selectedUom) return;
+
+        row.patchValue({
+            UOMId: selectedUom.fieldid,
+            UomName: selectedUom.fieldname
+        });
+
+        this.OngetcalculatedMRP(
+            {
+                ItemId: row.get('ItemId')?.value,
+                UOMId: selectedUom.fieldid
+            },
+            index
+        );
     }
     calculateMRP(index: number) {
         const row = this.saleArray.at(index);
