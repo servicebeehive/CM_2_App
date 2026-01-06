@@ -10,7 +10,6 @@ import { InputTextModule } from 'primeng/inputtext';
 import { RippleModule } from 'primeng/ripple';
 import { SelectModule } from 'primeng/select';
 import { DropdownModule } from 'primeng/dropdown';
-import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { TableModule } from 'primeng/table';
 import { TextareaModule } from 'primeng/textarea';
 import { MessageModule } from 'primeng/message';
@@ -22,7 +21,6 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { CheckboxModule } from 'primeng/checkbox';
 import { AddinventoryComponent } from '@/pages/inventory/addinventory/addinventory.component';
-import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
 import { AuthService } from '@/core/services/auth.service';
 import JsBarcode from 'jsbarcode';
 
@@ -48,8 +46,7 @@ import JsBarcode from 'jsbarcode';
         DialogModule,
         ConfirmDialogModule,
         CheckboxModule,
-        AddinventoryComponent,
-        GlobalFilterComponent   
+        AddinventoryComponent
     ],
     templateUrl: './productlist.component.html',
     styleUrl: './productlist.component.scss',
@@ -57,7 +54,7 @@ import JsBarcode from 'jsbarcode';
 })
 export class ProductlistComponent {
     updateForm!: FormGroup;
-    
+
     visibleDialog = false;
     selectedRow: any = null;
     selection: boolean = true;
@@ -68,11 +65,11 @@ export class ProductlistComponent {
     filteredProducts: StockIn[] = [];
     globalFilter: string = '';
     showGlobalSearch: boolean = true;
-    uomOptions: any[] = [];  
+    uomOptions: any[] = [];
     showData: boolean = false; // New flag to control table visibility
-    
+
     categoryOptions = [];
-    printList: any[] = []
+    printList: any[] = [];
     itemOptions = [];
     barcodeDialog: boolean = false;
     selectedItems: any[] = [];
@@ -82,75 +79,69 @@ export class ProductlistComponent {
     constructor(
         private fb: FormBuilder,
         private inventoryService: InventoryService,
-        private authService: AuthService,
         private messageService: MessageService
     ) {}
-    
+
     ngOnInit(): void {
         this.updateForm = this.fb.group({
             category: [''],
             item: [''],
             p_stock: this.fb.array([])
         });
-        
+
         this.loadAllDropdowns();
     }
-    
+
     onGetStockIn() {
         this.products = this.inventoryService.productItem || [];
     }
-    
+
     onPageChange(event: any) {
         this.first = event.first;
         this.rowsPerPage = event.rows;
     }
-    
+
     getStockArray(): FormArray {
         return this.updateForm.get('p_stock') as FormArray;
     }
-    
+
     openEditDialog(rowData: any) {
         this.mode = 'itemedit';
         this.selectedRow = rowData || null;
         this.visibleDialog = true;
-        console.log("selectedrow", this.selectedRow);
+        console.log('selectedrow', this.selectedRow);
     }
-    
+
     createDropdownPayload(returnType: string) {
-        return { 
-            p_username: "admin",
+        return {
+            p_username: 'admin',
             p_returntype: returnType
         };
     }
-    
+
     loadAllDropdowns() {
         this.OnGetItem();
         this.OnGetCategory();
         this.OnGetUOM();
     }
-    
+
     onCategoryItem(event: any) {
         const categoryId = event.value;
         this.updateForm.get('item')?.setValue(null);
-        
         if (!categoryId) {
             this.OnGetItem();
             return;
         }
         this.categoryRelavantItem(categoryId);
     }
-    
+
     categoryRelavantItem(id: any) {
         this.itemOptions = [];
         const payload = {
-             
-            p_username: "admin",
-            p_returntype: "CATEGORY",
-            p_returnvalue: id.toString(),
-            
-             
+            p_username: 'admin',
+            p_returntype: 'CATEGORY',
+            p_returnvalue: id.toString()
         };
-        
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res: any) => {
                 if (!res.data || res.data.length === 0) {
@@ -166,57 +157,50 @@ export class ProductlistComponent {
             }
         });
     }
-    
+
     OnGetItem() {
-        const payload = this.createDropdownPayload("ITEMALL");
+        const payload = this.createDropdownPayload('ITEMALL');
         this.inventoryService.getdropdowndetails(payload).subscribe({
-            next: (res) => this.itemOptions = res.data || [],
+            next: (res) => (this.itemOptions = res.data || []),
             error: (err) => console.log(err)
         });
     }
-    
+
     OnGetCategory() {
-        const payload = this.createDropdownPayload("CATEGORY");
+        const payload = this.createDropdownPayload('CATEGORY');
         this.inventoryService.getdropdowndetails(payload).subscribe({
-            next: (res) => this.categoryOptions = res.data || [],
+            next: (res) => (this.categoryOptions = res.data || []),
             error: (err) => console.log(err)
         });
     }
-    
-    
+
     Onreturndropdowndetails() {
         const category = this.updateForm.controls['category'].value;
         const item = this.updateForm.controls['item'].value;
-        
-       if(category===null && item=== null){
-        this.filteredProducts=[];
-        this.products=[];
-       }
-
+        if (category === null && item === null) {
+            this.filteredProducts = [];
+            this.products = [];
+        }
         if (!category && !item) {
             let message = 'Please select both Category and Item before filtering.';
             this.errorSuccess(message);
             return;
         }
-        
         const payload = {
-             
             p_categoryid: category || null,
             p_itemid: item || null,
             p_username: 'admin',
-            p_type: '',
-                
-                  
+            p_type: ''
         };
-        
+
         this.showData = false;
-        
+
         this.inventoryService.getupdatedata(payload).subscribe({
             next: (res: any) => {
-                console.log("API RESULT:", res.data);
+                console.log('API RESULT:', res.data);
                 this.products = res?.data || [];
                 this.filteredProducts = [...this.products];
-                this.showData = true; 
+                this.showData = true;
                 if (this.products.length === 0) {
                     let message = 'No Data Available for this Category and Item';
                     this.showSuccess(message);
@@ -229,101 +213,74 @@ export class ProductlistComponent {
             }
         });
     }
-    
-    
+
     OnGetUOM() {
-        const payload = this.createDropdownPayload("UOM");
+        const payload = this.createDropdownPayload('UOM');
         this.inventoryService.getdropdowndetails(payload).subscribe({
-            next: (res) => this.uomOptions = res.data || [],
+            next: (res) => (this.uomOptions = res.data || []),
             error: (err) => console.log(err)
         });
     }
-    
+
     onSave(updatedData: any) {
-    
-        console.log('updated before:',updatedData);
-       this.Onreturndropdowndetails() ;
-        // const mappedData = {
-        //     selection: true,
-        //     code: updatedData.itemCode.label || updatedData.itemCode,
-        //     name: updatedData.itemName,
-        //     category: updatedData.p_categoryid,
-        //     curStock: updatedData.p_currentstock,
-        //     purchasePrice: updatedData.purchasePrice,
-        //     quantity: updatedData.qty,
-        //     total: (updatedData.purchasePrice || 0) * (updatedData.qty || 0),
-        //     uom: updatedData.parentUOM,
-        //     mrp: updatedData.mrp,
-        //     discount: updatedData.discount,
-        //     minStock: updatedData.minStock,
-        //     warPeriod: updatedData.warPeriod,
-        //     location: updatedData.p_location,
-        //     gstitem: updatedData.p_gstitem,
-        //     activeitem:updatedData.p_isactive
-        // };
-        // const index = this.filteredProducts.findIndex((p) => p.code === this.selectedRow.code);
-        // if (index !== -1) {
-        //     this.filteredProducts[index] = { ...this.filteredProducts[index], ...mappedData };
-        // }
-        console.log('updated after:',updatedData )
+        console.log('updated before:', updatedData);
+        this.Onreturndropdowndetails();
+        console.log('updated after:', updatedData);
     }
-    
+
     closeDialog() {
         this.visibleDialog = false;
-    }  
-    
+    }
+
     reset() {
         this.updateForm.reset();
         this.filteredProducts = [];
         this.products = [];
-        this.showData = false; 
+        this.showData = false;
         this.OnGetItem();
     }
-    
+
     showSuccess(message: string) {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
     }
-    
+
     errorSuccess(message: string) {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: message });
     }
-    
+
     allowOnlyNumbers(event: any) {
         const charCode = event.which ? event.which : event.keyCode;
         if (charCode < 48 || charCode > 57) {
             event.preventDefault();
         }
     }
-    
+
     openBarcodeDialog() {
-        console.log("Selected Rows:", this.selectedItems);
-        
         if (!this.selectedItems || this.selectedItems.length === 0) {
-            alert("Please select at least one item.");
+            alert('Please select at least one item.');
             return;
         }
-        
-        this.printList = this.selectedItems.map(item => ({
+        this.printList = this.selectedItems.map((item) => ({
             itemcombine: item.itemcombine,
             barcode: item.itembarcode
         }));
-        
-        console.log("Final Print List:", this.printList);
-        
         this.currentPage = 1;
         this.barcodeDialog = true;
     }
-    
+
     generateBarcode(code: string) {
-        const canvas = document.createElement("canvas");
-        JsBarcode(canvas, code, { format: "CODE128", width: 3, height: 50 });
-        return canvas.toDataURL("image/png");
+        const canvas = document.createElement('canvas');
+        if (!code) {
+            return;
+        }
+        JsBarcode(canvas, code, { format: 'CODE128', width: 3, height: 50 });
+        return canvas.toDataURL('image/png');
     }
-    
+
     printBarcodes() {
-        const printContents = document.getElementById("print-barcode-area")?.innerHTML;
+        const printContents = document.getElementById('print-barcode-area')?.innerHTML;
         const popup = window.open('', '_blank', 'width=800,height=600');
-        
+
         popup!.document.open();
         popup!.document.write(`
       <html>
@@ -341,37 +298,37 @@ export class ProductlistComponent {
       </html>
     `);
     }
-    
+
     get totalPages() {
         return Math.ceil(this.printList.length / this.itemsPerPage);
     }
-    
+
     get paginatedItems() {
         const start = (this.currentPage - 1) * this.itemsPerPage;
         return this.printList.slice(start, start + this.itemsPerPage);
     }
-    
+
     nextPage() {
         if (this.currentPage < this.totalPages) {
             this.currentPage++;
         }
     }
-    
+
     prevPage() {
         if (this.currentPage > 1) {
             this.currentPage--;
         }
     }
-    
+
     goToPage(page: number) {
         this.currentPage = page;
     }
-    
+
     printSingleBarcode(row: any) {
         const barcodeImage = this.generateBarcode(row.itembarcode);
-        
+
         const popup = window.open('', '_blank', 'width=400,height=600');
-        
+
         popup!.document.open();
         popup!.document.write(`
     <html>

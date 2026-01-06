@@ -1,70 +1,43 @@
-import { Component } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { SelectModule } from 'primeng/select';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ChartModule } from 'primeng/chart';
 import { debounceTime, Subscription } from 'rxjs';
 import { LayoutService } from '@/layout/service/layout.service';
-interface Week {
-    label: string;
-    value: number;
-    data: number[][];
-}
+import { DashboardService } from '@/core/services/dashboard.service';
 
 @Component({
     standalone: true,
     selector: 'app-sales-by-category-widget',
     imports: [ChartModule],
-    template: ` <div class="card h-full">
-        <div class="flex items-start justify-between mb-12">
-            <span
-                class="text-surface-900 dark:text-surface-0 text-xl font-semibold"
-                >Sale Trend</span
-            >
-            <!-- <p-select
-                [options]="month"
-                [(ngModel)]="selectedMonth"
-                class="w-40"
-                optionLabel="label"
-                (onChange)="onWeekChange()"
-            ></p-select> -->
+    template: `
+        <div class="card h-full">
+            <div class="flex items-start justify-between mb-4">
+                <span class="text-surface-900 dark:text-surface-0 text-xl font-semibold">
+                    Sale Trend
+                </span>
+            </div>
+
+            <p-chart
+                type="bar"
+                height="300"
+                [data]="barData"
+                [options]="barOptions">
+            </p-chart>
         </div>
-        <p-chart
-            type="bar"
-            height="300"
-            [data]="barData"
-            [options]="barOptions"
-        ></p-chart>
-    </div>`,
+    `,
 })
-export class SalesByCategoryWidget {
-     month: Week[] = [
-        {
-            label: 'Last Month',
-            value: 0,
-            data: [
-                [65, 59, 80, 81, 56, 55, 40],
-                [28, 48, 40, 19, 86, 27, 90],
-            ],
-        },
-        {
-            label: 'This Month',
-            value: 1,
-            data: [
-                [35, 19, 40, 61, 16, 55, 30],
-                [48, 78, 10, 29, 76, 77, 10],
-            ],
-        },
-    ];
-
-    selectedMonth: Week = this.month[0];
-
+export class SalesByCategoryWidget implements OnInit, OnDestroy {
     barData: any;
-
     barOptions: any;
+    months: string[] = [];
+    revenues: number[] = [];
+    profits: number[] = [];
 
-    subscription: Subscription;
+    subscription!: Subscription;
 
-    constructor(private layoutService: LayoutService) {
+    constructor(
+        private layoutService: LayoutService,
+        private dashboardService: DashboardService
+    ) {
         this.subscription = this.layoutService.configUpdate$
             .pipe(debounceTime(50))
             .subscribe(() => {
@@ -72,72 +45,99 @@ export class SalesByCategoryWidget {
             });
     }
 
-    ngOnInit() {
-        this.initChart();
-        this.selectedMonth = this.month[0];
+    ngOnInit(): void {
+        this.getGraphData();
     }
 
-    initChart() {
+    ngOnDestroy(): void {
+        this.subscription?.unsubscribe();
+    }
+
+    // 🔹 API CALL
+    getGraphData(): void {
+        const apiBody = {
+            p_reporttype: 'GRAPH',
+            p_warehouse: '',
+            p_period: '',
+            p_category: null,
+            p_item: null,
+        };
+
+        this.dashboardService.GettopBarCard(apiBody).subscribe({
+            next: (res: any) => {
+                const data = res?.data ?? [];
+
+                // 🔹 Transform API response
+                this.months = data.map((item: any) =>
+                    new Date(item.month + '-01').toLocaleString('en', { month: 'short' })
+                );
+
+                this.revenues = data.map((item: any) => item.revenue ?? 0);
+                this.profits = data.map((item: any) => item.profit ?? 0);
+
+                this.initChart();
+            },
+            error: (err) => {
+                console.error('Graph API error', err);
+            },
+        });
+    }
+
+    // 🔹 CHART CONFIG
+    initChart(): void {
         const documentStyle = getComputedStyle(document.documentElement);
         const textColor = documentStyle.getPropertyValue('--text-color');
-        const textColorSecondary = documentStyle.getPropertyValue(
-            '--text-color-secondary',
-        );
-        const surfaceBorder =
-            documentStyle.getPropertyValue('--surface-border');
+        const textColorSecondary = documentStyle.getPropertyValue('--text-color-secondary');
+        const surfaceBorder = documentStyle.getPropertyValue('--surface-border');
 
         this.barData = {
-            labels: ['JAN','FEB','MAR','JUN','JULY','AUG','SEP','OCT','NOV','DEC','JAN'],
+            labels: this.months,
             datasets: [
                 {
                     label: 'Revenue',
-                    backgroundColor:
-                        documentStyle.getPropertyValue('--p-primary-500'),
-                    barThickness: 12,
-                    borderRadius: 12,
-                    data: this.selectedMonth?.data[0],
+                    backgroundColor: documentStyle.getPropertyValue('--p-primary-500'),
+                    borderRadius: 10,
+                    barThickness: 14,
+                    data: this.revenues,
                 },
                 {
                     label: 'Profit',
-                    backgroundColor:
-                        documentStyle.getPropertyValue('--p-primary-200'),
-                    barThickness: 12,
-                    borderRadius: 12,
-                    data: this.selectedMonth?.data[1],
+                    backgroundColor: documentStyle.getPropertyValue('--p-primary-200'),
+                    borderRadius: 10,
+                    barThickness: 14,
+                    data: this.profits,
                 },
             ],
         };
 
         this.barOptions = {
-            animation: {
-                duration: 0,
-            },
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
                 legend: {
+                    position: 'bottom',
                     labels: {
                         color: textColor,
                         usePointStyle: true,
                         font: {
-                            weight: 700,
+                            weight: 'bold',
                         },
-                        padding: 28,
                     },
-                    position: 'bottom',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: (context: any) =>
+                            `${context.dataset.label}: ₹${context.raw}`,
+                    },
                 },
             },
             scales: {
                 x: {
                     ticks: {
                         color: textColorSecondary,
-                        font: {
-                            weight: 500,
-                        },
                     },
                     grid: {
                         display: false,
-                        drawBorder: false,
                     },
                 },
                 y: {
@@ -146,18 +146,9 @@ export class SalesByCategoryWidget {
                     },
                     grid: {
                         color: surfaceBorder,
-                        drawBorder: false,
                     },
                 },
             },
         };
-    }
-
-    onWeekChange() {
-        let newBarData = { ...this.barData };
-        newBarData.datasets[0].data = this.selectedMonth.data[0];
-        newBarData.datasets[1].data = this.selectedMonth.data[1];
-        this.barData = newBarData;
-        this.initChart();
     }
 }

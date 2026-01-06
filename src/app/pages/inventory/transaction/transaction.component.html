@@ -115,9 +115,9 @@
                         <td>{{ row.vendorinvoicedate | date:'dd/MM/yyyy' }}</td>
                         <td>{{ row.supplier }}</td>
                         <td>{{ row.item_count }}</td>
-                        <td>{{ row.total_amount }}</td>
-                        <td>{{ row.amountpaid }}</td>
-                        <td>{{ row.total_due}}</td>
+                        <td>{{ row.total_amount | number: '1.2-2'}}</td>
+                        <td>{{ row.amountpaid | number: '1.2-2'}}</td>
+                        <td>{{ row.total_due | number: '1.2-2'}}</td>
                          <td style="width: 140px; min-width: 160px; max-width: 160px">
                             <div class="grid items-center gap-2">
                                 <input
@@ -130,7 +130,7 @@
                                     (input)="validateReceivedAmount(row)"
                                     placeholder="Amount"
                                 />
-                                <small class="text-red-500" *ngIf="row.amountError"> This cannot be greater than {{ row.total_due }} </small>
+                                <small class="text-red-500" *ngIf="row.amountError"> This cannot be greater than {{ row.total_due | number: '1.2-2'}} </small>
                             </div>
                         </td>
                         <td>{{ row.status }}</td>

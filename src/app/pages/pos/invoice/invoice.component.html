@@ -95,9 +95,10 @@
             <p-table [value]="filteredProducts" dataKey="code" [tableStyle]="{ 'min-width': '50rem' }" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 20, 50]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines mt-6 invoice">
                 <ng-template #header>
                     <tr class="bg-yellow-400">
+                        <th>Transaction Type</th>
                         <th>Invoice No</th>
                         <th>Invoice Date</th>
-                        <th>Transaction Type</th>
+                        <th>Return Invoice No</th>
                         <th>Customer</th>
                         <th>Total Amount</th>
                         <th>Paid Amount</th>
@@ -110,13 +111,14 @@
 
                 <ng-template pTemplate="body" let-row let-i="rowIndex">
                     <tr>
+                         <td>{{ row.transactiontype }}</td>
                         <td>{{ row.invoice_no }}</td>
                         <td>{{ row.invoice_date | date: 'dd/MM/yyyy' }}</td>
-                        <td>{{ row.transactiontype }}</td>
+                        <td>{{ row.return_invoice_no}}</td>
                         <td>{{ row.customer }}</td>
-                        <td>{{ row.total_amount }}</td>
-                        <td>{{ row.paid_amount }}</td>
-                        <td>{{ row.due_amount }}</td>
+                        <td>{{ row.total_amount | number: '1.2-2' }}</td>
+                        <td>{{ row.paid_amount |number:'1.2-2'}}</td>
+                        <td>{{ row.due_amount |number:'1.2-2'}}</td>
                         <td style="width: 140px; min-width: 160px; max-width: 160px">
                             <div class="grid items-center gap-2">
                                 <input
@@ -158,17 +160,17 @@
 <!-- ================================
      PRINT SECTION (INVOICE)
 ================================= -->
-<div id="invoicePrintSection" style="width: 900px; margin: auto; font-family: Arial">
+<div id="invoicePrintSection" style=" width: 900px; margin: auto; font-family: Arial">
     <h3 style="text-align: center">TAX INVOICE</h3>
 
     <!-- ================= HEADER SECTION ================= -->
-    <table width="100%" border="1" cellspacing="0" cellpadding="0" style="border-collapse: collapse">
+    <table width="100%" border="1" cellspacing="0" cellpadding="0" style="border-collapse: collapse; font-size:10px">
         <tr>
             <!-- LEFT SIDE (COMPANY + BUYER INFO) -->
             <td width="60%" style="vertical-align: top; padding: 6px">
                 <strong>{{companyName}}</strong><br />
                 {{companyAddress}},<br />
-                {{companystate}}<br />
+                {{companycity}}<br />
                 GSTIN/UIN: {{companygstno}}<br />
                 State Name: {{companystate}}, Code: {{statecode}}<br />
                 E-Mail : {{companyemail }}
@@ -261,7 +263,7 @@
     </table>
 
     <!-- ================= ITEM TABLE ================= -->
-    <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; font-size: 14px; margin-top: 10px">
+    <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; font-size: 10px; margin-top: 10px">
         <thead>
             <tr style="text-align: center; font-weight: bold"></tr>
             <tr style="text-align: center; font-weight: bold">
@@ -277,7 +279,7 @@
         </thead>
 
         <tbody>
-            <tr *ngFor="let item of invoiceData; let i = index">
+            <tr *ngFor="let item of invoiceData; let i = index" style="text-align: center;">
                 <td>{{ i + 1 }}</td>
                 <td>{{ item.itemname }}</td>
                 <td>{{item.hsncode}}</td>
@@ -336,16 +338,15 @@
     </table>
 
     <!-- ================= AMOUNT IN WORDS ================= -->
-    <div style="padding: 10px; font-size: 14px">
+    <div style="padding: 10px; font-size: 10px">
         <strong>Amount Chargeable (in words):</strong>
         <!-- {{ amountInWords }} -->
         
     </div>
 
     <!-- ================= GST SUMMARY ================= -->
-    <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; font-size: 14px; margin-top: 10px">
+    <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; font-size: 10px; margin-top: 10px">
         <tr style="font-weight: bold; text-align: center">
-            <td>HSN/SAC</td>
             <td>Taxable Value</td>
             <td>Rate</td>
             <td>CGST Amount</td>
@@ -355,7 +356,6 @@
         </tr>
 
         <tr style="text-align: center">
-            <td></td>
             <td>₹{{ invoiceForm.get('amount_before_tax')?.value | number: '1.2-2' }}</td>
             <td>9%</td>
             <td>₹{{ invoiceForm.get('cgst_9')?.value | number: '1.2-2' }}</td>
@@ -370,23 +370,36 @@
     </table>
 
     <!-- ================= BANK DETAILS ================= -->
-    <div style="padding: 10px; font-size: 14px">
-        <strong>Tax Amount (in words):</strong>
-        <!-- {{ taxAmountInWords }} -->
-        - <br /><br />
-
-         <strong>Company's Bank Details</strong><br />
-        Bank Name : <b>{{bankname}}</b><br />
-        A/c No. : {{accountno}}<br />
-Branch & IFS Code : {{branchname}} & {{ifsc}}<br /><br />
-
-        Company's PAN : <b>{{pan}}</b> <br /><br />
-        <p style="text-align: right"><strong>Authorized Signatory</strong></p>
-        <strong>Declaration:</strong>
-        We declare that this invoice shows the actual price of the goods described and all particulars are true.
-        <div style="text-align:left; margin-top:10px; color:#666; font-size:12px;">
-      <strong>Note:</strong> This is a computer generated debit note.
-    </div>
-        
-    </div>
+    <div>
+    <table width="100%" cellspacing="0" cellpadding="0" style="border-collapse: collapse; font-size: 10px; margin-top: 5px; border: none;">
+        <tr>
+            <!-- LEFT COLUMN -->
+            <td width="70%" style="vertical-align: top; padding: 0; border: none;">
+                <div style="margin-bottom: 10px;">
+                    <strong>Tax Amount (in words):</strong> <!-- {{ taxAmountInWords }} --> -
+                </div>
+                
+                <div >
+                    <strong>Company's Bank Details</strong><br />
+                    Bank Name: <b>{{ bankname }}</b><br />
+                    A/c No.: {{ accountno }}<br />
+                    Branch: {{ branchname }}<br />
+                    IFSC: {{ ifsc }}<br />
+                    PAN: <b>{{ pan }}</b>
+                </div>
+            </td>
+            </tr>
+            <tr>
+            <!-- RIGHT COLUMN (Signature) -->
+            <td width="30%" style="padding: 0; border: none; text-align: right;">
+                <div style=" display: flex; flex-direction: column;justify-content: flex-end;">
+                    <strong>Authorized Signatory</strong><br />
+                </div>
+            </td>
+        </tr>
+    </table>
+     <div style="margin-top: 2px; font-size: 10px;">
+                    <strong>Declaration:</strong> This invoice shows the actual price of goods and all particulars are true.
+                </div>
+</div>
 </div>

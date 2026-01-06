@@ -1,299 +1,229 @@
 <div class="card p-6">
-
-  <!-- ================================
+    <!-- ================================
        SALES FORM SECTION
   ================================= -->
-  <form [formGroup]="replaceForm" (ngSubmit)="onSubmit()" class="space-y-8">
-
-    <!-- ================================
+    <form [formGroup]="replaceForm" (ngSubmit)="onSubmit()" class="space-y-8">
+        <!-- ================================
          HEADER + ACTION BUTTONS
     ================================= -->
-    <div class="flex justify-between items-center mb-6">
-      <span class="block text-surface-900 font-bold text-xl mb-6">Replace </span>
+        <div class="flex justify-between items-center mb-6">
+            <span class="block text-surface-900 font-bold text-xl mb-6">Replace </span>
 
-      <div class="flex gap-4">
- <!-- SUBMIT -->
-        <button
-          pButton
-          type="submit"
-          label="Submit"
-          class="p-button-warning"
-          [disabled]="isSubmitDisabled() || submitDisabledByBill">
-        </button>
+            <div class="flex gap-4">
+                <!-- SUBMIT -->
+                <button pButton type="submit" label="Submit" class="p-button-warning" [disabled]="isSubmitDisabled() || submitDisabledByBill || replaceForm.hasError('costNotGreater')"></button>
 
-        <!-- RESET -->
-        <button
-          pButton
-          type="button"
-          label="Reset"
-          class="p-button-secondary"
-          (click)="onReset()">
-        </button>
+                <!-- RESET -->
+                <button pButton type="button" label="Reset" class="p-button-secondary" (click)="onReset()"></button>
+            </div>
+        </div>
 
-       
-      </div>
-    </div>
-
-
-    <!-- ================================
+        <!-- ================================
          ITEM SELECT SECTION
     ================================= -->
-    <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
+        <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
+            <!-- ITEM DROPDOWN -->
+            <div class="flex flex-col">
+                <label>Item</label>
 
-      <!-- ITEM DROPDOWN -->
-      <div class="flex flex-col">
-        <label>Item</label>
+                <p-select
+                    #itemSel
+                    class="w-full"
+                    [options]="itemOptions"
+                    optionLabel="itemcombine"
+                    optionValue="itemid"
+                    formControlName="p_itemdata"
+                    [filter]="true"
+                    filterBy="itemcombine"
+                    placeholder="Select Item"
+                    [showClear]="true"
+                    (onChange)="OnItemChange($event)"
+                    [disabled]="submitDisabledByBill"
+                >
+                    <!-- Selected Template -->
+                    <ng-template #selectedItem let-item>
+                        <div class="flex items-center gap-2">
+                            <div>{{ item.itemcombine }}</div>
+                        </div>
+                    </ng-template>
 
-        <p-select
-          #itemSel
-          class="w-full"
-          [options]="itemOptions"
-          optionLabel="itemcombine"
-          optionValue="itemid"
-          formControlName="p_itemdata"
-          [filter]="true"
-          filterBy="itemcombine"
-          placeholder="Select Item"
-          [showClear]="true"
-          (onChange)="OnItemChange($event)"
-          [disabled]="submitDisabledByBill">
+                    <!-- Dropdown Template -->
+                    <ng-template #item let-details>
+                        <div class="flex items-center justify-between w-full">
+                            <div>{{ details.itemcombine }}</div>
 
-          <!-- Selected Template -->
-          <ng-template #selectedItem let-item>
-            <div class="flex items-center gap-2">
-              <div>{{ item.itemcombine }}</div>
+                            <span class="text-sm" [ngClass]="details.currentstock == 0 ? 'text-red-500' : 'text-green-600'"> Stock: {{ details.currentstock }} </span>
+                        </div>
+                    </ng-template>
+                </p-select>
             </div>
-          </ng-template>
+            <!-- GST CHECKBOX -->
 
-          <!-- Dropdown Template -->
-          <ng-template #item let-details>
-            <div class="flex items-center justify-between w-full">
-  <div>{{ details.itemcombine }}</div>
-
- <span
-  class="text-sm"
-  [ngClass]="details.currentstock == 0 
-    ? 'text-red-500' 
-    : 'text-green-600'"
->
-  Stock: {{ details.currentstock }}
-</span>
-</div>
-          </ng-template>
-
-        </p-select>
-      </div>
-  <!-- GST CHECKBOX -->
-      <div class="flex flex-col mt-8">
-        <div class="flex items-center gap-2">
-          <p-checkbox binary="true" variant="filled" formControlName="p_similar"></p-checkbox>
-          <label>Similar Items</label>
+            <div class="flex flex-col mt-8">
+                <div class="flex items-center gap-2">
+                    <p-checkbox binary="true" variant="filled" formControlName="p_similar"></p-checkbox>
+                    <label>Similar Items</label>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
 
-
-    <!-- ================================
+        <!-- ================================
          BILL DETAILS + CUSTOMER INFO
     ================================= -->
-    <div class="grid grid-cols-4 gap-x-8 w-full">
+        <div class="grid grid-cols-4 gap-x-8 w-full">
+            <!-- BILL NO -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Replace Invoice No</label>
 
-      <!-- BILL NO -->
-      <div class="flex flex-col">
-        <label class="font-medium mb-1">Replace Invoice No</label>
+                <p-dropdown
+                    [options]="replaceBillNoOptions"
+                    optionLabel="billno"
+                    optionValue="billno"
+                    placeholder=" Replace Invoice No"
+                    formControlName="p_billno"
+                    [filter]="true"
+                    filterPlaceholder="Search Invoice No"
+                    [showClear]="true"
+                    (onChange)="onReplaceBillDetails($event)"
+                >
+                </p-dropdown>
 
-        <p-dropdown
-          [options]="replaceBillNoOptions"
-          optionLabel="billno"
-          optionValue="billno"
-          placeholder=" Replace Invoice No"
-          formControlName="p_billno"
-          [filter]="true"
-          filterPlaceholder="Search Invoice No"
-          [showClear]="true"
-          (onChange)="onReplaceBillDetails($event)">
-        </p-dropdown>
+                <small class="text-red-500 mt-1" *ngIf="replaceForm.get('p_billno')?.touched">
+                    <span *ngIf="replaceForm.get('p_billno')?.errors?.['required']"> Bill No is required </span>
+                </small>
+            </div>
 
-        <small class="text-red-500 mt-1" *ngIf="replaceForm.get('p_billno')?.touched">
-          <span *ngIf="replaceForm.get('p_billno')?.errors?.['required']">
-             Bill No is required
-          </span>
-        </small>
-      </div>
+            <!-- TRANSACTION DATE -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Transaction Date</label>
+                <p-datepicker fluid formControlName="p_transactiondate" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="Transaction Date" [maxDate]="today"> </p-datepicker>
+            </div>
 
-      <!-- TRANSACTION DATE -->
-      <div class="flex flex-col">
-        <label class="font-medium mb-1">Transaction Date</label>
-        <p-datepicker
-          fluid
-          formControlName="p_transactiondate"
-          dateFormat="dd/mm/yy"
-          [showIcon]="true"
-          placeholder="Transaction Date"
-          [maxDate]="today">
-        </p-datepicker>
-      </div>
+            <!-- MOBILE -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Mobile No</label>
+                <input pInputText type="number" placeholder="Mobile No" maxlength="10" formControlName="p_mobileno" (keypress)="allowOnlyNumbers($event)" />
 
+                <small class="text-red-500 mt-1" *ngIf="replaceForm.get('p_mobileno')?.errors?.['pattern']"> Please enter a valid 10-digit mobile number </small>
+            </div>
 
-      <!-- CUSTOMER NAME -->
-      <div class="flex flex-col">
-        <label class="font-medium mb-1">Customer Name</label>
-        <input
-          pInputText
-          placeholder="Customer Name"
-          formControlName="p_customername" />
-      </div>
+            <!-- CUSTOMER NAME -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Customer Name</label>
+                <input pInputText placeholder="Customer Name" formControlName="p_customername" />
+            </div>
+        </div>
 
-      <!-- MOBILE -->
-      <div class="flex flex-col">
-        <label class="font-medium mb-1">Mobile No</label>
-        <input
-          pInputText
-          type="number"
-          placeholder="Mobile No"
-          maxlength="10"
-          formControlName="p_mobileno" 
-          (keypress)="allowOnlyNumbers($event)"/>
-
-        <small class="text-red-500 mt-1" *ngIf="replaceForm.get('p_mobileno')?.errors?.['pattern'] ">
-          Please enter a valid 10-digit mobile number
-        </small>
-      </div>
-
-    
-
-    </div>
-
-
-    <!-- ================================
+        <!-- ================================
          SALES TABLE (FormArray)
     ================================= -->
-    <div class="mt-6">
+        <div class="mt-6">
+            <p-table [value]="saleArray.controls" dataKey="ItemId" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 20, 50]" class="p-datatable-gridlines mt-6 replace-report">
+                <!-- HEADER -->
+                <ng-template pTemplate="header">
+                    <tr class="bg-yellow-400">
+                        <th>Item Code</th>
+                        <th>Item Name</th>
+                        <th>Current Stock</th>
+                        <th>UOM</th>
+                        <th>Qty</th>
+                        <th>MRP</th>
+                        <th>Total</th>
+                        <th>Warranty</th>
+                        <th>Location</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                </ng-template>
 
-      <p-table
-        [value]="saleArray.controls"
-        dataKey="ItemId"
-        [responsiveLayout]="'scroll'"
-        [paginator]="true"
-                        [rows]="10"
-         [rowsPerPageOptions]="[5, 10, 20, 50]"
-        class="p-datatable-gridlines mt-6 replace-report">
+                <!-- ROWS -->
+                <ng-template pTemplate="body" let-row let-i="rowIndex">
+                    <tr [formGroup]="row">
+                        <td>{{ row.get('itemsku')?.value }}</td>
+                        <td>{{ row.get('ItemName')?.value }}</td>
+                        <td>{{ row.get('curStock')?.value }}</td>
+                        <td>{{ row.get('uomname')?.value }}</td>
 
-        <!-- HEADER -->
-        <ng-template pTemplate="header">
-          <tr class="bg-yellow-400">
-            <th>Item Code</th>
-            <th>Item Name</th>
-            <th>Current Stock</th>
-            <th>UOM</th>
-            <th>Qty</th>
-            <th>MRP</th>
-            <th>Total</th>
-            <th>Warranty</th>
-            <th>Location</th>
-            <th class="text-center">Action</th>
-          </tr>
-        </ng-template>
+                        <!-- QUANTITY INPUT -->
+                        <td>
+                            <input
+                                pInputText
+                                type="number"
+                                formControlName="Quantity"
+                                min="1"
+                                step="1"
+                                class="w-[70px]"
+                                (keypress)="blockDecimal($event)"
+                                (input)="updateTotal(i)"
+                                [ngClass]="{ 'border-red-500': row.get('Quantity')?.errors?.['maxStock'] }"
+                            />
+                        </td>
 
-        <!-- ROWS -->
-        <ng-template pTemplate="body" let-row let-i="rowIndex">
-          <tr [formGroup]="row">
-            <td>{{ row.get('itemsku')?.value }}</td>
-            <td>{{ row.get('ItemName')?.value }}</td>
-            <td>{{ row.get('curStock')?.value }}</td>
-            <td>{{ row.get('uomname')?.value }}</td>
+                        <td>{{ row.get('MRP')?.value | number: '1.2-2' }}</td>
+                        <td>{{ row.get('totalPayable')?.value | number: '1.2-2' }}</td>
+                        <td>{{ row.get('warPeriod')?.value }}</td>
+                        <td>{{ row.get('location')?.value }}</td>
 
-            <!-- QUANTITY INPUT -->
-           <td>
-              <input
-                pInputText
-                type="number"
-                formControlName="Quantity"
-                min="1"
-                step="1"
-                class="w-[70px]"
-                (keypress)="blockDecimal($event)"
-                (input)="updateTotal(i)"
-                [ngClass]="{ 'border-red-500': row.get('Quantity')?.errors?.['maxStock'] }" />
-            </td>
+                        <!-- DELETE -->
+                        <td class="text-center">
+                            <i class="pi pi-trash text-red-500 cursor-pointer" (click)="removeItem(i)"> </i>
+                        </td>
+                    </tr>
+                </ng-template>
 
-            <td>{{ row.get('MRP')?.value }}</td>
-            <td>{{ row.get('totalPayable')?.value }}</td>
-            <td>{{ row.get('warPeriod')?.value }}</td>
-            <td>{{ row.get('location')?.value }}</td>
+                <!-- FOOTER TEXT -->
+                <ng-template pTemplate="paginatorleft">
+                    <div class="text-gray-600 ms-2">Total Items: {{ saleArray.length }}</div>
+                </ng-template>
+            </p-table>
+        </div>
 
-            <!-- DELETE -->
-            <td class="text-center">
-              <i
-                class="pi pi-trash text-red-500 cursor-pointer"
-                (click)="removeItem(i)">
-              </i>
-            </td>
-
-          </tr>
-        </ng-template>
-
-        <!-- FOOTER TEXT -->
-        <ng-template pTemplate="paginatorleft">
-          <div class="text-gray-600 ms-2">
-            Total Items: {{ saleArray.length }}
-          </div>
-        </ng-template>
-
-      </p-table>
-    </div>
-
-
-    <!-- ================================
+        <!-- ================================
          SUMMARY SECTION
     ================================= -->
-    <div class="grid grid-cols-6 gap-x-8 gap-y-4 m-3 mt-4">
+        <div class="grid grid-cols-6 gap-x-8 gap-y-4 m-3 mt-4">
+            <!-- Total Cost -->
+            <div class="flex flex-col">
+                <label>Total Cost</label>
+                <input pInputText readonly type="number" formControlName="p_totalcost" />
+            </div>
 
-      <!-- Total Cost -->
-      <div class="flex flex-col">
-        <label>Total Cost</label>
-        <input pInputText readonly type="number" formControlName="p_totalcost" />
-      </div>
+            <!-- MRP Total -->
+            <div class="flex flex-col">
+                <label>MRP Total</label>
+                <input pInputText readonly type="number" formControlName="p_totalsale" />
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2">
+                <!-- Discount type -->
+                <div class="flex flex-col">
+                    <label class="font-medium mb-2">Disc(%)</label>
+                    <p-checkbox class="w-5 h-5" binary="true" variant="filled" formControlName="p_disctype"></p-checkbox>
+                </div>
+                <!-- Discount -->
+                <div class="flex flex-col">
+                    <label class="font-medium">Discount</label>
+                    <input class="p-inputtext p-component font-small w-full" pInputText type="number" formControlName="p_overalldiscount" (input)="applyDiscount()" [placeholder]="discountplace" />
+                </div>
+            </div>
+            <!-- Round Off -->
+            <div class="flex flex-col">
+                <label>Round Off</label>
+                <input pInputText readonly type="number" formControlName="p_roundoff" />
+            </div>
 
-      <!-- MRP Total -->
-      <div class="flex flex-col">
-        <label>MRP Total</label>
-        <input pInputText readonly type="number" formControlName="p_totalsale" />
-      </div>
- <div class="grid grid-cols-1 md:grid-cols-2">
-      <!-- Discount type -->
-        <div class="flex flex-col">
-          <label class="font-medium mb-2">Disc(%)</label>
-          <p-checkbox class="w-5 h-5" binary="true" variant="filled" formControlName="p_disctype"></p-checkbox>
+            <!-- Total Sale -->
+            <div class="flex flex-col">
+                <label>Total Sale</label>
+                <input pInputText readonly type="number" formControlName="p_totalsale" />
+            </div>
+
+            <!-- Final Payable -->
+            <div class="flex flex-col">
+                <label>Final Payable</label>
+                <input pInputText readonly type="number" formControlName="p_totalpayable" />
+                <small class="text-red-500" *ngIf="replaceForm.hasError('costNotGreater')"> This Cost must be greater than Total Cost. </small>
+            </div>
         </div>
-      <!-- Discount -->
-      <div class="flex flex-col ">
-        <label class="font-medium">Discount</label>
-        <input class="p-inputtext p-component font-small w-full" pInputText type="number" formControlName="p_overalldiscount" (input)="applyDiscount()" [placeholder]="discountplace"/>
-      </div>
-</div>
-      <!-- Round Off -->
-      <div class="flex flex-col">
-        <label>Round Off</label>
-        <input pInputText readonly type="number" formControlName="p_roundoff" />
-      </div>
+    </form>
 
-      <!-- Total Sale -->
-      <div class="flex flex-col">
-        <label>Total Sale</label>
-        <input pInputText readonly type="number" formControlName="p_totalsale" />
-      </div>
-
-      <!-- Final Payable -->
-      <div class="flex flex-col">
-        <label>Final Payable</label>
-        <input pInputText readonly type="number" formControlName="p_totalpayable" />
-      </div>
-
-    </div>
-
-  </form>
-
-  <p-confirmDialog></p-confirmDialog>
-
+    <p-confirmDialog></p-confirmDialog>
 </div>
