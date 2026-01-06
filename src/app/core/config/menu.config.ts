@@ -133,6 +133,36 @@ export const ADMIN_MENU_MODEL: MenuItem[] = [
                         label: 'User Management',
                         icon: 'pi pi-fw pi-users',
                         routerLink: ['/layout/settings/user-management']
+                    },
+                    {
+                        label: 'Category Master',
+                        icon: 'pi pi-fw pi-file',
+                        routerLink: ['/layout/settings/category-formate']
+                    },
+                    {
+                        label: 'Customer Master',
+                        icon: 'pi pi-fw pi-file',
+                        routerLink: ['/layout/settings/customer-form']
+                    },
+                    {
+                        label: 'Tax Master',
+                        icon: 'pi pi-fw pi-file',
+                        routerLink: ['/layout/settings/tax-form']
+                    },
+                    {
+                        label: 'Supplier Master',
+                        icon: 'pi pi-fw pi-file',
+                        routerLink: ['/layout/settings/supplier-master']
+                    },
+                    {
+                        label: 'UOM Master',
+                        icon: 'pi pi-fw pi-file',
+                        routerLink: ['/layout/settings/uom-master']
+                    },
+                    {
+                        label: 'Configuration',
+                        icon: 'pi pi-fw pi-file',
+                        routerLink: ['/layout/settings/configuration']
                     }
                 ]
             }
