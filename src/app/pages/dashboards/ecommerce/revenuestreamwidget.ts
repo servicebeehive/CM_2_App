@@ -14,11 +14,8 @@ import { LayoutService } from '@/layout/service/layout.service';
 })
 export class RevenueStreamWidget {
     chartData: any;
-
     chartOptions: any;
-
     subscription!: Subscription;
-
     constructor(public layoutService: LayoutService) {
         this.subscription = this.layoutService.configUpdate$.pipe(debounceTime(50)).subscribe(() => {
             this.initChart();

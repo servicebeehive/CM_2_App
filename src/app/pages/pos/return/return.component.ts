@@ -1,6 +1,6 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, inject, ViewChild, viewChild } from '@angular/core';
-import { AbstractControl, FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { ChipModule } from 'primeng/chip';
 import { EditorModule } from 'primeng/editor';
@@ -10,7 +10,6 @@ import { InputTextModule } from 'primeng/inputtext';
 import { RippleModule } from 'primeng/ripple';
 import { SelectModule } from 'primeng/select';
 import { DropdownModule } from 'primeng/dropdown';
-import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { TableModule } from 'primeng/table';
 import { TextareaModule } from 'primeng/textarea';
 import { MessageModule } from 'primeng/message';
@@ -22,9 +21,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { CheckboxModule } from 'primeng/checkbox';
 import { AddinventoryComponent } from '@/pages/inventory/addinventory/addinventory.component';
-import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
 import { AuthService } from '@/core/services/auth.service';
-import { select } from '@ngrx/store';
 
 @Component({
     selector: 'app-retrun',
@@ -47,7 +44,7 @@ import { select } from '@ngrx/store';
         DatePickerModule,
         DialogModule,
         ConfirmDialogModule,
-        CheckboxModule,
+        CheckboxModule
         // GlobalFilterComponent
     ],
     templateUrl: './return.component.html',
@@ -97,7 +94,6 @@ export class ReturnComponent {
     ngOnInit(): void {
         this.loadAllDropdowns();
         this.initializeForm();
-        // this.onGetStockIn();
     }
     initializeForm(): void {
         this.returnForm = this.fb.group({
@@ -137,7 +133,6 @@ export class ReturnComponent {
             } else {
                 this.discountplace = 'Enter %';
             }
-            //  this.returnForm.get('p_overalldiscount')?.setValue('', { emitEvent: false });
             this.applyDiscount();
         });
     }
@@ -231,7 +226,7 @@ export class ReturnComponent {
 
     mapSaleItems(apiItems: any[]) {
         this.saleArray.clear(); // Remove old rows if any
-         this.selectedProducts=[];
+        this.selectedProducts = [];
         apiItems.forEach((item, i) => {
             this.saleArray.push(
                 this.fb.group({
@@ -245,15 +240,13 @@ export class ReturnComponent {
                     itemcost: item.itemcost || 0,
                     MRP: (item.mrp || 0).toFixed(2),
                     totalPayable: ((item.quantity || 1) * (item.mrp || 0)).toFixed(2),
-                    // p_totalcost:item.
-                    // Additional fields used in UI
                     curStock: item.current_stock || 0,
                     warPeriod: item.warrenty,
                     location: '',
-                    itemsku: item.itemsku || '',
+                    itemsku: item.itemsku || ''
                 })
             );
-         this.updateTotal(i);
+            this.updateTotal(i);
         });
         this.calculateSummary();
         // If items were added, update totals for the last row and overall summary
@@ -278,13 +271,12 @@ export class ReturnComponent {
                     });
                 }
             }
-            
         });
     }
     onBillDetails(event: any) {
         this.clearAllSelected();
         this.showBillno = false;
-        this.isReturnInvoiceView=false;
+        this.isReturnInvoiceView = false;
         console.log(event.value);
         const billDetails = this.billNoOptions.find((billitem) => billitem.billno === event.value);
         console.log('bill', billDetails);
@@ -309,16 +301,16 @@ export class ReturnComponent {
 
     onReturnBillDetails(event: any) {
         this.showBillno = true;
-           this.isReturnInvoiceView = true;
+        this.isReturnInvoiceView = true;
         const returnBillDetails = this.returnBillNoOptions.find((returnbillitem) => returnbillitem.billno === event.value);
         console.log(returnBillDetails);
         if (returnBillDetails) {
             this.SaleDetails(returnBillDetails);
-             setTimeout(() => {
-            this.selectedProducts = [...this.saleArray.controls];
-             this.updateSelectedTotal(); // Update totals based on selection
-            this.updateSubmitButtonState(); // Update button state
-        }, 200); 
+            setTimeout(() => {
+                this.selectedProducts = [...this.saleArray.controls];
+                this.updateSelectedTotal(); // Update totals based on selection
+                this.updateSubmitButtonState(); // Update button state
+            }, 200);
             this.returnForm.patchValue({
                 p_transactionid: returnBillDetails.transactionid,
                 p_customername: returnBillDetails.customername,
@@ -335,18 +327,16 @@ export class ReturnComponent {
             });
 
             console.log('billno:', returnBillDetails.billno);
-
         }
     }
-  
 
     cleanRequestBody(body: any) {
-       console.log('rest1', body);
+        console.log('rest1', body);
         const formattedDate = this.datepipe.transform(body.p_transactiondate, 'dd/MM/yyyy');
-        const selectedItems=(body.p_sale || []).filter((item:any, index:number)=>{
-            const row=this.saleArray.at(index) as FormGroup;
-            return this.selectedProducts.includes(row) && Number(item.Quantity)>0;
-        })
+        const selectedItems = (body.p_sale || []).filter((item: any, index: number) => {
+            const row = this.saleArray.at(index) as FormGroup;
+            return this.selectedProducts.includes(row) && Number(item.Quantity) > 0;
+        });
         return {
             ...this.getUserDetails,
             p_transactiontype: 'RETURN',
@@ -364,8 +354,7 @@ export class ReturnComponent {
             p_status: body.p_status || 'Done',
             p_isactive: 'Y',
             p_linktransactionid: body.p_transactionid ?? 0,
-             p_discounttype: body.p_disctype === true ? 'Y' : 'N',
-            // p_replacesimilir: body.p_replacesimilir || "",
+            p_discounttype: body.p_disctype === true ? 'Y' : 'N',
             p_replacesimilir: body.p_disctype === true ? 'Y' : 'N',
             p_creditnoteno: body.p_creditnoteno || '',
             p_paymentmode: body.p_paymentmode || 'Cash',
@@ -385,21 +374,18 @@ export class ReturnComponent {
         };
     }
     OnSalesHeaderCreate(data: any) {
-        this.showBillno=true;
+        this.showBillno = true;
         const apibody = this.cleanRequestBody(this.returnForm.value);
-        //   delete (apibody as any).p_loginuser;
         this.stockInService.OninsertSalesDetails(apibody).subscribe({
             next: (res) => {
                 const billno = res.data[0].billno;
                 console.log('return:', billno);
                 this.returnForm.patchValue({
-                    returnBillNo: billno,
-                    // p_billno:res.data[0].invoiceno
+                    returnBillNo: billno
                 });
-                   this.OnGetBillNo();
-                this.OnGetReturnBillNo(); 
-               
-                
+                this.OnGetBillNo();
+                this.OnGetReturnBillNo();
+
                 this.messageService.add({
                     severity: 'success',
                     summary: 'Success',
@@ -430,7 +416,6 @@ export class ReturnComponent {
 
         const qty = Number(row.get('Quantity')?.value || 0);
         const originalQty = Number(row.get('originalQuantity')?.value || 0);
-        // const stock=Number(row.get('curStock')?.value || 0);
         const mrp = Number(row.get('MRP')?.value || 0);
         const total = +(mrp * qty).toFixed(2);
         console.log('original quantity', originalQty);
@@ -450,12 +435,6 @@ export class ReturnComponent {
                 (row.get('Quantity')?.setErrors({ MaxQuantity: true }), this.showValidationMessage(`Cannot return more than ${originalQty} units (original sale quantity)`, 'warn'));
                 return;
             }
-
-            // if (stock > 0 && qty > stock) {
-            //     // This is a warning, not necessarily an error for returns
-            //     row.get('Quantity')?.setErrors({ stockWarning: true });
-            //     this.showValidationMessage(`Note: Only ${stock} units currently in stock`, 'info');
-            // }
         } else {
             row.get('Quantity')?.setErrors(null);
         }
@@ -496,26 +475,29 @@ export class ReturnComponent {
         );
         this.returnForm.patchValue({ finalPayable: roundedAmount }, { emitEvent: false });
     }
-   updateSelectedTotal() {
-    let totalCost = 0;
-    let totalMRP = 0;
+    updateSelectedTotal() {
+        let totalCost = 0;
+        let totalMRP = 0;
 
-    this.selectedProducts.forEach((item: FormGroup) => {
-        const qty = Number(item.get('Quantity')?.value) || 0;
-        const mrp = Number(item.get('MRP')?.value) || 0;
-        const cost = Number(item.get('itemcost')?.value) || 0;
-        
-        totalMRP += qty * mrp;
-        totalCost += qty * cost;
-    });
+        this.selectedProducts.forEach((item: FormGroup) => {
+            const qty = Number(item.get('Quantity')?.value) || 0;
+            const mrp = Number(item.get('MRP')?.value) || 0;
+            const cost = Number(item.get('itemcost')?.value) || 0;
 
-    this.returnForm.patchValue({
-        p_totalcost: totalCost.toFixed(2),
-        p_totalsale: totalMRP.toFixed(2)
-    }, { emitEvent: false });
+            totalMRP += qty * mrp;
+            totalCost += qty * cost;
+        });
 
-    this.applyDiscount();
-}
+        this.returnForm.patchValue(
+            {
+                p_totalcost: totalCost.toFixed(2),
+                p_totalsale: totalMRP.toFixed(2)
+            },
+            { emitEvent: false }
+        );
+
+        this.applyDiscount();
+    }
     onSelectionChange() {
         console.log('Selected rows:', this.selectedProducts);
     }
@@ -629,7 +611,7 @@ export class ReturnComponent {
                     errorMessage = 'Please fill all required fields correctly.';
                 }
             }
-          
+
             this.messageService.add({
                 severity: 'error',
                 summary: 'Validation Failed',
@@ -661,8 +643,8 @@ export class ReturnComponent {
         this.pagedProducts = [];
         this.first = 0;
         this.showBillno = false;
-        this.isReturnInvoiceView=false;
-        this.selectedProducts=[];
+        this.isReturnInvoiceView = false;
+        this.selectedProducts = [];
         this.returnForm.patchValue(
             {
                 mrpTotal: '',
@@ -697,10 +679,6 @@ export class ReturnComponent {
             next: (res) => {
                 const billdata: any = res.data;
                 this.returnBillNoOptions = billdata.filter((item: { billno: null }) => item.billno != null);
-                // console.log('gfcgh:',this.returnBillNoOptions,data)
-                // this.returnForm.patchValue({
-                //     returnBillNo: data
-                // });
             },
             error: (err) => console.log(err)
         });
