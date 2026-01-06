@@ -26,10 +26,8 @@ import { DashboardService } from '@/core/services/dashboard.service';
     `,
 })
 export class SalesByCategoryWidget implements OnInit, OnDestroy {
-
     barData: any;
     barOptions: any;
-
     months: string[] = [];
     revenues: number[] = [];
     profits: number[] = [];
