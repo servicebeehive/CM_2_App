@@ -1,14 +1,6 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, ViewChild, inject } from '@angular/core';
-import {
-  AbstractControl,
-  FormArray,
-  FormBuilder,
-  FormGroup,
-  FormsModule,
-  ReactiveFormsModule,
-  Validators
-} from '@angular/forms';
+import { AbstractControl, FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 
 import { ButtonModule } from 'primeng/button';
 import { ChipModule } from 'primeng/chip';
@@ -36,620 +28,643 @@ import { AuthService } from '@/core/services/auth.service';
 // import { NgxPrintModule } from 'ngx-print';
 
 @Component({
-  selector: 'app-replace',
-  imports: [
-    CommonModule,
-    EditorModule,
-    ReactiveFormsModule,
-    TextareaModule,
-    TableModule,
-    InputTextModule,
-    FormsModule,
-    FileUploadModule,
-    ButtonModule,
-    SelectModule,
-    DropdownModule,
-    RippleModule,
-    ChipModule,
-    FluidModule,
-    MessageModule,
-    DatePickerModule,
-    DialogModule,
-    ConfirmDialogModule,
-    CheckboxModule,
-    // NgxPrintModule
-    // AddinventoryComponent,
-    // GlobalFilterComponent
-  ],
-  templateUrl: './replace.component.html',
-  styleUrl: './replace.component.scss',
-  providers: [ConfirmationService, DatePipe]
+    selector: 'app-replace',
+    imports: [
+        CommonModule,
+        EditorModule,
+        ReactiveFormsModule,
+        TextareaModule,
+        TableModule,
+        InputTextModule,
+        FormsModule,
+        FileUploadModule,
+        ButtonModule,
+        SelectModule,
+        DropdownModule,
+        RippleModule,
+        ChipModule,
+        FluidModule,
+        MessageModule,
+        DatePickerModule,
+        DialogModule,
+        ConfirmDialogModule,
+        CheckboxModule
+        // NgxPrintModule
+        // AddinventoryComponent,
+        // GlobalFilterComponent
+    ],
+    templateUrl: './replace.component.html',
+    styleUrl: './replace.component.scss',
+    providers: [ConfirmationService, DatePipe]
 })
 export class ReplaceComponent {
+    // -----------------------------
+    //  Component state / Variables
+    // -----------------------------
 
-  // -----------------------------
-  //  Component state / Variables
-  // -----------------------------
+    public transactionid: any;
+    replaceForm!: FormGroup;
+    visibleDialog = false;
+    selectedRow: any = null;
+    pagedProducts: StockIn[] = [];
+    first: number = 0;
+    rowsPerPage: number = 5;
+    products: StockIn[] = [];
+    filteredProducts: StockIn[] = [];
+    filteredCustomerName: any[] = [];
+    filteredMobile: any[] = [];
+    globalFilter: string = '';
+    childUomStatus: boolean = false;
+    showGlobalSearch: boolean = true;
+    today: Date = new Date();
+    submitDisabledByBill: boolean = false;
+    discountplace: string = 'Enter Amount';
+    public authService = inject(AuthService);
+    public getUserDetails = {};
+    searchValue: string = '';
+    itemOptions: any[] = [];
+    transactionIdOptions = [];
+    public itemOptionslist: [] = [];
+    @ViewChild(AddinventoryComponent) addInventoryComp!: AddinventoryComponent;
 
-  public transactionid: any;
-  replaceForm!: FormGroup;
-  visibleDialog = false;
-  selectedRow: any = null;
-  pagedProducts: StockIn[] = [];
-  first: number = 0;
-  rowsPerPage: number = 5;
-  products: StockIn[] = [];
-  filteredProducts: StockIn[] = [];
-  filteredCustomerName: any[] = [];
-  filteredMobile: any[] = [];
-  globalFilter: string = '';
-  childUomStatus: boolean = false;
-  showGlobalSearch: boolean = true;
-  today: Date = new Date();
-  submitDisabledByBill:boolean=false;
-  discountplace:string='Enter Amount';
-  public authService = inject(AuthService);
-  public getUserDetails = {};
-  searchValue: string = '';
-  itemOptions: any[] = [];
-  transactionIdOptions = [];
-  public itemOptionslist: [] = [];
-  @ViewChild(AddinventoryComponent) addInventoryComp!: AddinventoryComponent;
+    // Dropdowns / lists
+    replaceBillNoOptions: any[] = [];
 
-  // Dropdowns / lists
-  replaceBillNoOptions: any[] = [];
+    // -----------------------------
+    //  Constructor + Lifecycle
+    // -----------------------------
+    constructor(
+        private fb: FormBuilder,
+        private stockInService: InventoryService,
+        private confirmationService: ConfirmationService,
+        private salesService: InventoryService,
+        private messageService: MessageService,
+        public datepipe: DatePipe
+    ) {}
 
-  // -----------------------------
-  //  Constructor + Lifecycle
-  // -----------------------------
-  constructor(
-    private fb: FormBuilder,
-    private stockInService: InventoryService,
-    private confirmationService: ConfirmationService,
-    private salesService: InventoryService,
-    private messageService: MessageService,
-    public datepipe: DatePipe
-  ) { }
+    ngOnInit(): void {
+        this.OnGetDropdown();
+        this.loadAllDropdowns();
 
-  ngOnInit(): void {
-    this.OnGetDropdown();
-    this.loadAllDropdowns();
-
-    // Initialize form
-    this.replaceForm = this.fb.group({
-      p_itemdata: [null],
-      p_transactiontype: [''],
-      p_itemid: [null],
-      p_billno: [null],
-      p_transactionid: [0],
-      p_transactiondate: [this.today,[Validators.required]],
-      p_customername: [''],
-      p_mobileno: ['',[Validators.pattern(/^[6-9]\d{9}$/)]],
-      p_totalcost: [0],
-      p_totalsale: [0],
-      p_disctype:[false],
-      p_overalldiscount: [''],
-      p_roundoff: [''],
-      p_totalpayable: [0],
-      p_currencyid: [0],
-      p_status: [''],
-      p_isactive: [''],
-      p_loginuser: [''],
-      p_linktransactionid: [0],
-      p_replacesimilir: [''],
-      p_creditnoteno: [''],
-      p_paymentmode: [''],
-      p_paymentdue: [0],
-      p_similar:[true],
-      // FormArray for sale rows
-      p_sale: this.fb.array([])
-    });
-    this.replaceForm.get('p_billno')?.valueChanges.subscribe(value=>{
-      if(value){
-        this.disableItemSearchSubmit();
-      }
-      else{
-        this.enableItemSearchAndSubmit();
-      }
-    });
-    this.replaceForm.get('p_disctype')?.valueChanges.subscribe(value=>{
-      if(!value){
-   this.discountplace="Enter Amount";
-}
-else{
-  this.discountplace="Enter %";
-}
- this.replaceForm.get('p_overalldiscount')?.setValue('', { emitEvent: false });
- this.applyDiscount();
-    });
-
-  }
-
-  // -----------------------------
-  //  FormArray Getters / Helpers
-  // -----------------------------
-// similarDiscount(){
-//     const discounttype=this.replaceForm.get('p_disctype');
-//     const similar=this.replaceForm.get('p_similar')?.valueChanges.subscribe(value=>{
-//         if(value){
-//             discounttype=true;
-//         }
-//     })
-// }
-  get saleArray(): FormArray {
-    return this.replaceForm.get('p_sale') as FormArray;
-  }
-
-  // Return FormArray rows as FormGroup[] for template binding (fixes typing issue)
-  get saleRows(): FormGroup[] {
-    return this.saleArray.controls as FormGroup[];
-  }
-disableItemSearchSubmit(){
-  this.replaceForm.get('itemSearch')?.disable();
-  this.submitDisabledByBill=true;
-}
-enableItemSearchAndSubmit() {
-  this.replaceForm.get('itemSearch')?.enable();
-  this.submitDisabledByBill = false;
-}
-get isPrintDisabled(): boolean {
-  const billNo = this.replaceForm.get('p_billno')?.value;
- const hasItem = this.saleArray.length > 0;
-
-  // Disable print if BOTH are empty
-  return !(billNo || hasItem);
-}
-
-  // -----------------------------
-  //  Row Creation / Mapping
-  // -----------------------------
-
-  // Sales Array => Create a FormGroup for a sale item
-  createSaleItem(data?: any): FormGroup {
-    return this.fb.group({
-      TransactiondetailId: this.replaceForm.controls['p_transactionid'].value || 0,
-      ItemId: [data?.itemid || 0],
-      ItemName: [data?.itemname || ''],
-      UOMId: [data?.uomid || 0],
-      uomname: [data?.uomname || ''],
-      Quantity: [1],                        // default qty = 1
-      itemcost: [data?.pruchaseprice || 0],
-      MRP: [data?.saleprice || 0],
-      totalPayable: [data ? data.saleprice : 0],
-
-      // Extra fields shown in table
-      curStock: [data?.currentstock || 0],
-      warPeriod: [data?.warrentyperiod || 0],
-      location: [data?.location || ''],
-      itemsku: [data?.itemsku || '']
-    });
-  }
-
-  // Map API sale items (array) into the FormArray
-  mapSaleItems(apiItems: any[]) {
-    this.saleArray.clear(); // Remove old rows if any
-
-    apiItems.forEach(item => {
-      this.saleArray.push(
-        this.fb.group({
-          TransactiondetailId: item.transactiondetailid || 0,
-          ItemId: item.itemsku || 0,    // use itemsku when itemid not present
-          ItemName: item.itemname || '',
-          UOMId: item.uomid || 0,
-          uomname:item.uomname,
-          Quantity: item.quantity || 1,
-          itemcost: item.itemcost || 0,
-          MRP: (item.mrp || 0).toFixed(2),
-          totalPayable: ((item.quantity || 1) * (item.mrp || 0)).toFixed(2),
-          // p_totalcost:item.
-          // Additional fields used in UI
-          curStock: item.current_stock || 0,
-          warPeriod: item.warrenty,
-          location: "",
-          itemsku: item.itemsku || ''
-        })
-      );
-    });
-
-    // If items were added, update totals for the last row and overall summary
-    const index = this.saleArray.length - 1;
-    this.updateTotal(index);
-    this.calculateSummary();
-  }
-allowOnlyNumbers(event: any) {
-  const input = event.target as HTMLInputElement;
-
-  // Block if length is already 10
-  if (input.value.length >= 10) {
-    event.preventDefault();
-    return;
-  }
-
-  const char = String.fromCharCode(event.which);
-
-  // Block if not a number (0-9)
-  if (!/^[0-9]$/.test(char)) {
-    event.preventDefault();
-  }
-}
-
-  // -----------------------------
-  //  Dropdown / Data Loading
-  // -----------------------------
-
-  // Generic payload creator
-  createDropdownPayload(returnType: string) {
-    return {
-      p_returntype: returnType,
-      ...this.getUserDetails,
-    };
-  }
-
-  // Load items used in dropdowns
-  OnGetItem() {
-    const payload = this.createDropdownPayload("ITEM");
-    this.stockInService.getdropdowndetails(payload).subscribe({
-      next: (res) => this.itemOptions = res.data,
-      error: (err) => console.log(err)
-    });
-  }
-
-  // Load initial dropdowns (items, bill no)
-  loadAllDropdowns() {
-    this.OnGetItem();
-    this.OnGetBillNo();
-  }
-
-  // Load dropdown via older endpoint (Getreturndropdowndetails)
-  OnGetDropdown() {
-    const payload = {
-      ...this.getUserDetails,
-      "p_returntype": "ITEM",
-    };
-    this.salesService.Getreturndropdowndetails(payload).subscribe({
-      next: (res) => {
-        console.log('result:', res);
-        this.itemOptionslist = res.data;
-      },
-      error: (err) => console.log(err)
-    });
-  }
-
-  // Load Bill No dropdown
-  OnGetBillNo() {
-    const payload = this.createDropdownPayload("REPLACE");
-    this.salesService.getdropdowndetails(payload).subscribe({
-      next: (res) => {
-        const billdata: any = res.data;
-        this.replaceBillNoOptions = billdata.filter((item: { billno: null; }) => item.billno != null);
-      },
-      error: (err) => console.log(err)
-    });
-  }
-
-  // -----------------------------
-  //  Event Handlers (Item / Bill)
-  // -----------------------------
-
-  // Called when an item is selected from the item dropdown
-  OnItemChange(event: any) {
-    const latetData = this.itemOptions.find(item => item.itemid == event.value);
-    console.log(latetData);
-    if (latetData) {
-      // Push new row and update totals
-      this.saleArray.push(this.createSaleItem(latetData));
-      const index = this.saleArray.length - 1;
-      this.updateTotal(index);
-    }
-  }
-
-  // Called when bill dropdown value changes
- onReplaceBillDetails(event: any) {
-    const billDetails = this.replaceBillNoOptions.find(billitem => billitem.billno === event.value); 
-    if (billDetails) {
-      this.SaleDetails(billDetails);
-
-      this.replaceForm.patchValue({
-        p_transactionid: billDetails.transactionid,
-        p_customername:billDetails.customername,
-        p_transactiondate: billDetails.transactiondate ? new Date(billDetails.transactiondate) : null,
-        p_mobileno: billDetails.mobileno,
-        p_totalcost: (billDetails.totalcost).toFixed(2),
-        p_totalsale: (billDetails.totalsale).toFixed(2),
-        p_disctype: billDetails.discounttype == 'Y' ? true : false,
-        p_overalldiscount: billDetails.discount,
-        p_roundoff: billDetails.roundoff,
-        p_totalpayable: (billDetails.totalpayable).toFixed(2),
-      });
-    }
-  }
-
-  // Helper for item search from UI
-  onItemSearch(event: any) {
-    this.searchValue = event.filter || '';
-  }
-
-  // SaleDetails → fetch sale detail and map items
-  SaleDetails(data: any) {
-    const apibody = {
-      ...this.getUserDetails,
-      "p_returntype": "SALEDETAIL",
-      "p_returnvalue": data.transactionid,
-    };
-
-    this.stockInService.Getreturndropdowndetails(apibody).subscribe({
-      next: (res) => {
-        this.mapSaleItems(res.data);
-      }
-    });
-  }
-
-  // -----------------------------
-  //  Row operations (remove / block decimals)
-  // -----------------------------
-
-  // Remove a row from FormArray and update totals
-  removeItem(i: number) {
-    this.saleArray.removeAt(i);
-
-    // If no items left → reset summary
-    if (this.saleArray.length === 0) {
-      this.calculateSummary();
-      return;
+        // Initialize form
+        this.replaceForm = this.fb.group(
+            {
+                p_itemdata: [null],
+                p_transactiontype: [''],
+                p_itemid: [null],
+                p_billno: [null],
+                p_transactionid: [0],
+                p_transactiondate: [this.today, [Validators.required]],
+                p_customername: [''],
+                p_mobileno: ['', [Validators.pattern(/^[6-9]\d{9}$/)]],
+                p_totalcost: [0],
+                p_totalsale: [0],
+                p_disctype: [false],
+                p_overalldiscount: [''],
+                p_roundoff: [''],
+                p_totalpayable: [0],
+                p_currencyid: [0],
+                p_status: [''],
+                p_isactive: [''],
+                p_loginuser: [''],
+                p_linktransactionid: [0],
+                p_replacesimilir: [''],
+                p_creditnoteno: [''],
+                p_paymentmode: [''],
+                p_paymentdue: [0],
+                p_similar: [true],
+                // FormArray for sale rows
+                p_sale: this.fb.array([])
+            },
+            {
+                validators: [this.costGreaterThanSaleValidator()]
+            }
+        );
+        this.replaceForm.get('p_billno')?.valueChanges.subscribe((value) => {
+            if (value) {
+                this.disableItemSearchSubmit();
+            } else {
+                this.enableItemSearchAndSubmit();
+            }
+        });
+        this.replaceForm.get('p_disctype')?.valueChanges.subscribe((value) => {
+            if (!value) {
+                this.discountplace = 'Enter Amount';
+            } else {
+                this.discountplace = 'Enter %';
+            }
+            this.replaceForm.get('p_overalldiscount')?.setValue('', { emitEvent: false });
+            this.applyDiscount();
+        });
     }
 
-    // Otherwise update totals based on last valid row
-    const index = this.saleArray.length - 1;
-    this.updateTotal(index);
-  }
-
-  // Prevent decimal input in quantity field (keyboard)
-  blockDecimal(event: KeyboardEvent) {
-    if (event.key === '.' || event.key === ',' || event.key === 'e' || event.key === 'E') {
-      event.preventDefault();  // block decimal
-    }
-  }
-
-  // -----------------------------
-  //  Validation / Submit helpers
-  // -----------------------------
-
-  // Returns true when submit should be disabled
-  isSubmitDisabled(): boolean {
-    // 1) No items → disable
-    if (this.saleArray.length === 0) return true;
-
-    // 2) Stock errors set by updateTotal
-    for (let row of this.saleArray.controls) {
-      if (row.get('Quantity')?.errors?.['maxStock']) return true;
+    // -----------------------------
+    //  FormArray Getters / Helpers
+    // -----------------------------
+    // similarDiscount(){
+    //     const discounttype=this.replaceForm.get('p_disctype');
+    //     const similar=this.replaceForm.get('p_similar')?.valueChanges.subscribe(value=>{
+    //         if(value){
+    //             discounttype=true;
+    //         }
+    //     })
+    // }
+    get saleArray(): FormArray {
+        return this.replaceForm.get('p_sale') as FormArray;
     }
 
-    // 3) Required header fields missing
-    // if (!this.replaceForm.get('p_customername')?.value) return true;
-    // if (!this.replaceForm.get('p_mobileno')?.value) return true;
-    if (!this.replaceForm.get('p_transactiondate')?.value) return true;
+    // Return FormArray rows as FormGroup[] for template binding (fixes typing issue)
+    get saleRows(): FormGroup[] {
+        return this.saleArray.controls as FormGroup[];
+    }
+    costGreaterThanSaleValidator(): ValidatorFn {
+        return (form: AbstractControl): ValidationErrors | null => {
+            const totalCost = Number(form.get('p_totalcost')?.value || 0);
+            const finalPayable = Number(form.get('p_totalpayable')?.value || 0);
+            // ❗ Condition: final payable must be >= total cost
+            if (finalPayable < totalCost) {
+                return { costNotGreater: true };
+            }
 
-    // 4) Per-row validation: qty cannot be 0 and cannot exceed stock
-    for (let row of this.saleArray.controls) {
-      const qty = Number(row.get('Quantity')?.value || 0);
-      const stock = Number(row.get('curStock')?.value || 0);
-      if (qty === 0) return true;
-      if (qty > stock) return true;
+            return null;
+        };
+    }
+    disableItemSearchSubmit() {
+        this.replaceForm.get('itemSearch')?.disable();
+        this.submitDisabledByBill = true;
+    }
+    enableItemSearchAndSubmit() {
+        this.replaceForm.get('itemSearch')?.enable();
+        this.submitDisabledByBill = false;
+    }
+    get isPrintDisabled(): boolean {
+        const billNo = this.replaceForm.get('p_billno')?.value;
+        const hasItem = this.saleArray.length > 0;
+
+        // Disable print if BOTH are empty
+        return !(billNo || hasItem);
     }
 
-    // All checks passed → enable submit
-    return false;
-  }
+    // -----------------------------
+    //  Row Creation / Mapping
+    // -----------------------------
 
-  // -----------------------------
-  //  Form Actions (submit / reset)
-  // -----------------------------
-
-  // Submit handler with confirmation and validation
-  onSubmit() {
-    if (this.isSubmitDisabled()) {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Validation Failed',
-        detail: 'Please correct all errors before submitting.',
-        life: 2500
-      });
-      return;
+    // Sales Array => Create a FormGroup for a sale item
+    createSaleItem(data?: any): FormGroup {
+        return this.fb.group({
+            TransactiondetailId: this.replaceForm.controls['p_transactionid'].value || 0,
+            ItemId: [data?.itemid || 0],
+            ItemName: [data?.itemname || ''],
+            UOMId: [data?.uomid || 0],
+            uomname: [data?.uomname || ''],
+            Quantity: [1], // default qty = 1
+            itemcost: [data?.pruchaseprice || 0],
+            MRP: [data?.saleprice || 0],
+            totalPayable: [data ? data.saleprice : 0],
+            // Extra fields shown in table
+            curStock: [data?.currentstock || 0],
+            warPeriod: [data?.warrentyperiod || 0],
+            location: [data?.location || ''],
+            itemsku: [data?.itemsku || '']
+        });
     }
 
-    this.confirmationService.confirm({
-      message: 'Are you sure you want to submit?',
-      header: 'Confirm',
-      acceptLabel: 'Yes',
-      rejectLabel: 'Cancel',
-      accept: () => {
-        this.OnSalesHeaderCreate(this.replaceForm.value);
-      }
-    });
-  }
+    // Map API sale items (array) into the FormArray
+    mapSaleItems(apiItems: any[]) {
+        this.saleArray.clear(); // Remove old rows if any
+        let hasSimilar = false;
+        apiItems.forEach((item) => {
+            const isSimilar = item.similaritem === 'Y';
+            if (isSimilar) {
+                hasSimilar = true;
+            }
+            this.saleArray.push(
+                this.fb.group({
+                    TransactiondetailId: item.transactiondetailid || 0,
+                    ItemId: item.itemsku || 0, // use itemsku when itemid not present
+                    ItemName: item.itemname || '',
+                    UOMId: item.uomid || 0,
+                    uomname: item.uomname,
+                    Quantity: item.quantity || 1,
+                    itemcost: item.itemcost || 0,
+                    MRP: (item.mrp || 0).toFixed(2),
+                    p_similar: isSimilar,
+                    totalPayable: ((item.quantity || 1) * (item.mrp || 0)).toFixed(2),
+                    curStock: item.current_stock || 0,
+                    warPeriod: item.warrenty,
+                    location: '',
+                    itemsku: item.itemsku || ''
+                })
+            );
+        });
+        this.replaceForm.get('p_similar')?.setValue(hasSimilar);
+        // If items were added, update totals for the last row and overall summary
+        const index = this.saleArray.length - 1;
+        this.updateTotal(index);
+        this.calculateSummary();
+    }
+    allowOnlyNumbers(event: any) {
+        const input = event.target as HTMLInputElement;
 
-  // Reset form and clear sale array
-  onReset() {
-    this.replaceForm.reset();
-    this.saleArray.clear();
-     this.replaceForm.get('p_transactiondate')?.setValue(this.today);
-  }
+        // Block if length is already 10
+        if (input.value.length >= 10) {
+            event.preventDefault();
+            return;
+        }
 
-  // -----------------------------
-  //  Calculations (row & summary)
-  // -----------------------------
+        const char = String.fromCharCode(event.which);
 
-  // Recalculate totals for entire sale
-  calculateSummary() {
-    let totalCost = 0;
-    let totalMRP = 0;
-    let totalSale = 0;
-
-    this.saleArray.controls.forEach((row: AbstractControl) => {
-      const qty = Number(row.get('Quantity')?.value || 0);
-      const cost = Number(row.get('itemcost')?.value || 0);
-      const mrp = Number(row.get('MRP')?.value || 0);
-
-      totalCost += qty * cost;
-      totalMRP += qty * mrp;
-      totalSale += qty * mrp;
-    });
-
-    // Assign summary values
-    this.replaceForm.patchValue({
-      p_totalcost: (totalCost).toFixed(2),
-      p_totalsale: (totalMRP).toFixed(2),
-      p_roundoff: 0,
-      p_totalpayable: (totalMRP).toFixed(2)
-    });
-
-    // Apply discount/rounding adjustments
-    this.applyDiscount();
-  }
-
-  // Update a specific row total, ensure stock constraints
-  updateTotal(i: number) {
-    const row = this.saleArray.at(i);
-
-    const qty = Number(row.get('Quantity')?.value || 0);
-    const stock = Number(row.get('curStock')?.value || 0);
-    const mrp = Number(row.get('MRP')?.value || 0);
-
-    // If quantity > stock → set error + show warning
-    if (qty > stock) {
-      row.get('Quantity')?.setErrors({ maxStock: true });
-
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Stock Limit Exceeded',
-        detail: `Only ${stock} units available.`,
-        life: 2000
-      });
-
-      return;
-    } else {
-      // Clear error if valid
-      row.get('Quantity')?.setErrors(null);
+        // Block if not a number (0-9)
+        if (!/^[0-9]$/.test(char)) {
+            event.preventDefault();
+        }
     }
 
-    // Update row total and recalc summary
-    row.patchValue({
-      totalPayable: qty * mrp
-    });
+    // -----------------------------
+    //  Dropdown / Data Loading
+    // -----------------------------
 
-    this.calculateSummary();
-  }
-
-  // Apply overall discount & round off
-  applyDiscount() {
-    const totalSale = Number(this.replaceForm.get('p_totalsale')?.value || 0) ;
-    const discountValue = Number(this.replaceForm.get('p_overalldiscount')?.value || 0);
-    const isPresent = this.replaceForm.get('p_disctype')?.value;
-   let discountAmount=0;
-
-    if(isPresent){
-      discountAmount=(totalSale*discountValue)/100;
-    }else{
-      discountAmount=discountValue;
+    // Generic payload creator
+    createDropdownPayload(returnType: string) {
+        return {
+            p_returntype: returnType,
+            ...this.getUserDetails
+        };
     }
-    let finalPayable = totalSale - discountAmount;
 
-    // Round off to 2 decimals difference and then round to integer for payable
-    const roundOff = +(finalPayable - Math.floor(finalPayable)).toFixed(2);
+    // Load items used in dropdowns
+    OnGetItem() {
+        const payload = this.createDropdownPayload('ITEM');
+        this.stockInService.getdropdowndetails(payload).subscribe({
+            next: (res) => (this.itemOptions = res.data),
+            error: (err) => console.log(err)
+        });
+    }
 
-    this.replaceForm.patchValue({
-      p_roundoff: roundOff,
-      p_totalpayable: Math.round(finalPayable)
-    });
-  }
+    // Load initial dropdowns (items, bill no)
+    loadAllDropdowns() {
+        this.OnGetItem();
+        this.OnGetBillNo();
+    }
 
-  // -----------------------------
-  //  API Body Cleaning & Submit
-  // -----------------------------
+    // Load dropdown via older endpoint (Getreturndropdowndetails)
+    OnGetDropdown() {
+        const payload = {
+            ...this.getUserDetails,
+            p_returntype: 'ITEM'
+        };
+        this.salesService.Getreturndropdowndetails(payload).subscribe({
+            next: (res) => {
+                console.log('result:', res);
+                this.itemOptionslist = res.data;
+            },
+            error: (err) => console.log(err)
+        });
+    }
 
-  // Prepare a clean request body matching the API expectations
-  cleanRequestBody(body: any) {
-    const formattedDate = this.datepipe.transform(
-      body.p_transactiondate,
-      'dd/MM/yyyy'
-    );
-    return {
-      ...this.getUserDetails,
-      p_transactiontype: "REPLACE",
-      p_transactionid: body.p_transactionid ?? 0,
-      p_transactiondate: formattedDate || "",
-      p_customername: body.p_customername || "",
-      p_mobileno: body.p_mobileno || "",
-      p_totalcost: Number(body.p_totalcost) || 0,
-      p_totalsale: Number(body.p_totalsale) || 0,
-      p_overalldiscount: Number(body.p_overalldiscount) || 0,
-      p_roundoff: body.p_roundoff ? body.p_roundoff.toString() : "0.00",
-      p_totalpayable: Number(body.p_totalpayable) || 0,
-      p_currencyid: Number(body.p_currencyid) || 0,
-      p_gsttran: body.p_gsttran === true ? "Y" :
-        body.p_gsttran === false ? "N" : "N",
-      p_status: body.p_status || "Done",
-      p_isactive: "Y",
-      p_linktransactionid: 0,
-      // p_replacesimilir: body.p_replacesimilir || "",
-       p_replacesimilir:body.p_disctype === true ?"Y" : "N",
-      p_creditnoteno: body.p_creditnoteno || "",
-      p_paymentmode: body.p_paymentmode || "Cash",
-      p_paymentdue: Number(body.p_paymentdue) || 0,
-      p_sale: (body.p_sale || []).map((x: any) => ({
-        TransactiondetailId: x.TransactiondetailId || 0,
-        ItemId: x.ItemId,
-        ItemName: x.ItemName,
-        UOMId: x.UOMId,
-        Quantity: x.Quantity,
-        itemcost: x.itemcost,
-        MRP: x.MRP,
-         warrenty:x.warPeriod,
-        totalPayable: x.totalPayable,
-        currentstock:x.curStock,
-      }))
-    };
-  }
+    // Load Bill No dropdown
+    OnGetBillNo() {
+        const payload = this.createDropdownPayload('REPLACE');
+        this.salesService.getdropdowndetails(payload).subscribe({
+            next: (res) => {
+                const billdata: any = res.data;
+                this.replaceBillNoOptions = billdata.filter((item: { billno: null }) => item.billno != null);
+            },
+            error: (err) => console.log(err)
+        });
+    }
 
-  // -----------------------------
-  //  API Submit + Notifications
-  // -----------------------------
+    // -----------------------------
+    //  Event Handlers (Item / Bill)
+    // -----------------------------
 
-  // Send header (and sale) to API, show toast notifications on result
-  OnSalesHeaderCreate(data: any) {
-    const apibody = this.cleanRequestBody(this.replaceForm.value);
-  //delete (apibody as any).p_loginuser;
-    this.stockInService.OninsertSalesDetails(apibody).subscribe({
-      next: (res) => {
-        console.log(res.data);
-          this.OnGetBillNo()
+    // Called when an item is selected from the item dropdown
+    OnItemChange(event: any) {
+        const latetData = this.itemOptions.find((item) => item.itemid == event.value);
+        console.log(latetData);
+        if (!latetData) return;
+        const alreadyExists = this.saleArray.controls.some((row) => row.get('ItemId')?.value === latetData.itemid);
+        if (alreadyExists) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Duplicate Item',
+                detail: `${latetData.itemname} is already added.`,
+                life: 2000
+            });
+
+            this.replaceForm.get('p_itemdata')?.setValue(null, { emitEvent: false });
+            return;
+        }
+        // Push new row and update totals
+        this.saleArray.push(this.createSaleItem(latetData));
+        const index = this.saleArray.length - 1;
+        this.updateTotal(index);
+        setTimeout(() => {
+            this.replaceForm.get('p_itemdata')?.setValue(null, { emitEvent: false });
+        });
+    }
+
+    // Called when bill dropdown value changes
+    onReplaceBillDetails(event: any) {
+        const billDetails = this.replaceBillNoOptions.find((billitem) => billitem.billno === event.value);
+        if (billDetails) {
+            this.SaleDetails(billDetails);
+            console.log(billDetails);
+            this.replaceForm.patchValue({
+                p_transactionid: billDetails.transactionid,
+                p_customername: billDetails.customername,
+                p_transactiondate: billDetails.transactiondate ? new Date(billDetails.transactiondate) : null,
+                p_mobileno: billDetails.mobileno,
+                p_totalcost: billDetails.totalcost.toFixed(2),
+                p_totalsale: billDetails.totalsale.toFixed(2),
+                p_disctype: billDetails.discounttype === 'Y' ? true : false,
+                p_overalldiscount: billDetails.discount,
+                p_roundoff: billDetails.roundoff,
+                p_totalpayable: billDetails.totalpayable.toFixed(2)
+            });
+        }
+    }
+
+    // Helper for item search from UI
+    onItemSearch(event: any) {
+        this.searchValue = event.filter || '';
+    }
+
+    // SaleDetails → fetch sale detail and map items
+    SaleDetails(data: any) {
+        const apibody = {
+            ...this.getUserDetails,
+            p_returntype: 'SALEDETAIL',
+            p_returnvalue: data.transactionid
+        };
+
+        this.stockInService.Getreturndropdowndetails(apibody).subscribe({
+            next: (res) => {
+                this.mapSaleItems(res.data);
+            }
+        });
+    }
+
+    // -----------------------------
+    //  Row operations (remove / block decimals)
+    // -----------------------------
+
+    // Remove a row from FormArray and update totals
+    removeItem(i: number) {
+        this.saleArray.removeAt(i);
+
+        // If no items left → reset summary
+        if (this.saleArray.length === 0) {
+            this.calculateSummary();
+            return;
+        }
+
+        // Otherwise update totals based on last valid row
+        const index = this.saleArray.length - 1;
+        this.updateTotal(index);
+    }
+
+    // Prevent decimal input in quantity field (keyboard)
+    blockDecimal(event: KeyboardEvent) {
+        if (event.key === '.' || event.key === ',' || event.key === 'e' || event.key === 'E') {
+            event.preventDefault(); // block decimal
+        }
+    }
+
+    // -----------------------------
+    //  Validation / Submit helpers
+    // -----------------------------
+
+    // Returns true when submit should be disabled
+    isSubmitDisabled(): boolean {
+        // 1) No items → disable
+        if (this.saleArray.length === 0) return true;
+
+        // 2) Stock errors set by updateTotal
+        for (let row of this.saleArray.controls) {
+            if (row.get('Quantity')?.errors?.['maxStock']) return true;
+        }
+
+        // 3) Required header fields missing
+        // if (!this.replaceForm.get('p_customername')?.value) return true;
+        // if (!this.replaceForm.get('p_mobileno')?.value) return true;
+        if (!this.replaceForm.get('p_transactiondate')?.value) return true;
+
+        // 4) Per-row validation: qty cannot be 0 and cannot exceed stock
+        for (let row of this.saleArray.controls) {
+            const qty = Number(row.get('Quantity')?.value || 0);
+            const stock = Number(row.get('curStock')?.value || 0);
+            if (qty === 0) return true;
+            if (qty > stock) return true;
+        }
+
+        // All checks passed → enable submit
+        return false;
+    }
+
+    // -----------------------------
+    //  Form Actions (submit / reset)
+    // -----------------------------
+
+    // Submit handler with confirmation and validation
+    onSubmit() {
+        if (this.isSubmitDisabled()) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Validation Failed',
+                detail: 'Please correct all errors before submitting.',
+                life: 2500
+            });
+            return;
+        }
+
+        this.confirmationService.confirm({
+            message: 'Are you sure you want to submit?',
+            header: 'Confirm',
+            acceptLabel: 'Yes',
+            rejectLabel: 'Cancel',
+            accept: () => {
+                this.OnSalesHeaderCreate(this.replaceForm.value);
+            }
+        });
+    }
+
+    // Reset form and clear sale array
+    onReset() {
+        this.replaceForm.reset();
+        this.saleArray.clear();
+        this.replaceForm.get('p_similar')?.setValue(true);
+        this.replaceForm.get('p_transactiondate')?.setValue(this.today);
+    }
+
+    // -----------------------------
+    //  Calculations (row & summary)
+    // -----------------------------
+
+    // Recalculate totals for entire sale
+    calculateSummary() {
+        let totalCost = 0;
+        let totalMRP = 0;
+        let totalSale = 0;
+
+        this.saleArray.controls.forEach((row: AbstractControl) => {
+            const qty = Number(row.get('Quantity')?.value || 0);
+            const cost = Number(row.get('itemcost')?.value || 0);
+            const mrp = Number(row.get('MRP')?.value || 0);
+            totalCost += qty * cost;
+            totalMRP += qty * mrp;
+            totalSale += qty * mrp;
+        });
+
+        // Assign summary values
         this.replaceForm.patchValue({
-          p_billno:res.data[0].billno
-        })
+            p_totalcost: totalCost.toFixed(2),
+            p_totalsale: totalMRP.toFixed(2),
+            p_roundoff: 0,
+            p_totalpayable: totalMRP.toFixed(2)
+        });
+
+        // Apply discount/rounding adjustments
+        this.applyDiscount();
+    }
+
+    // Update a specific row total, ensure stock constraints
+    updateTotal(i: number) {
+        const row = this.saleArray.at(i);
+        const qty = Number(row.get('Quantity')?.value || 0);
+        const stock = Number(row.get('curStock')?.value || 0);
+        const mrp = Number(row.get('MRP')?.value || 0);
+
+        // If quantity > stock → set error + show warning
+        if (qty > stock) {
+            row.get('Quantity')?.setErrors({ maxStock: true });
+
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Stock Limit Exceeded',
+                detail: `Only ${stock} units available.`,
+                life: 2000
+            });
+            return;
+        } else {
+            // Clear error if valid
+            row.get('Quantity')?.setErrors(null);
+        }
+        // Update row total and recalc summary
+        row.patchValue({
+            totalPayable: qty * mrp
+        });
+        this.calculateSummary();
+    }
+
+    // Apply overall discount & round off
+    applyDiscount() {
+        const totalSale = Number(this.replaceForm.get('p_totalsale')?.value || 0);
+        const discountValue = Number(this.replaceForm.get('p_overalldiscount')?.value || 0);
+        const isPresent = this.replaceForm.get('p_disctype')?.value;
+        let discountAmount = 0;
+
+        if (isPresent) {
+            discountAmount = (totalSale * discountValue) / 100;
+        } else {
+            discountAmount = discountValue;
+        }
+        let finalPayable = totalSale - discountAmount;
+
+        // Round off to 2 decimals difference and then round to integer for payable
+        const roundOff = +(finalPayable - Math.floor(finalPayable)).toFixed(2);
+
+        this.replaceForm.patchValue({
+            p_roundoff: roundOff,
+            p_totalpayable: Math.round(finalPayable)
+        });
+    }
+
+    // -----------------------------
+    //  API Body Cleaning & Submit
+    // -----------------------------
+
+    // Prepare a clean request body matching the API expectations
+    cleanRequestBody(body: any) {
+        const formattedDate = this.datepipe.transform(body.p_transactiondate, 'dd/MM/yyyy');
+        return {
+            ...this.getUserDetails,
+            p_transactiontype: 'REPLACE',
+            p_transactionid: body.p_transactionid ?? 0,
+            p_transactiondate: formattedDate || '',
+            p_customername: body.p_customername || '',
+            p_mobileno: body.p_mobileno || '',
+            p_totalcost: Number(body.p_totalcost) || 0,
+            p_totalsale: Number(body.p_totalsale) || 0,
+            p_overalldiscount: Number(body.p_overalldiscount) || 0,
+            p_discounttype: body.p_disctype === true ? 'Y' : 'N',
+            p_roundoff: body.p_roundoff ? body.p_roundoff.toString() : '0.00',
+            p_totalpayable: Number(body.p_totalpayable) || 0,
+            p_currencyid: Number(body.p_currencyid) || 0,
+            p_gsttran: body.p_gsttran === true ? 'Y' : body.p_gsttran === false ? 'N' : 'N',
+            p_status: body.p_status || 'Done',
+            p_isactive: 'Y',
+            p_linktransactionid: 0,
+            // p_replacesimilir: body.p_replacesimilir || "",
+            p_replacesimilir: body.p_similar === true ? 'Y' : 'N',
+            p_creditnoteno: body.p_creditnoteno || '',
+            p_paymentmode: body.p_paymentmode || 'Cash',
+            p_paymentdue: Number(body.p_paymentdue) || 0,
+            p_sale: (body.p_sale || []).map((x: any) => ({
+                TransactiondetailId: x.TransactiondetailId || 0,
+                ItemId: x.ItemId,
+                ItemName: x.ItemName,
+                UOMId: x.UOMId,
+                Quantity: x.Quantity,
+                itemcost: x.itemcost,
+                MRP: x.MRP,
+                warrenty: x.warPeriod,
+                totalPayable: x.totalPayable,
+                currentstock: x.curStock
+            }))
+        };
+    }
+
+    // -----------------------------
+    //  API Submit + Notifications
+    // -----------------------------
+
+    // Send header (and sale) to API, show toast notifications on result
+    OnSalesHeaderCreate(data: any) {
+        const apibody = this.cleanRequestBody(this.replaceForm.value);
+        //delete (apibody as any).p_loginuser;
+        this.stockInService.OninsertSalesDetails(apibody).subscribe({
+            next: (res) => {
+                console.log(res.data);
+                this.OnGetItem();
+                this.OnGetBillNo();
+                this.replaceForm.patchValue({
+                    p_billno: res.data[0].billno
+                });
                 this.messageService.add({
-          severity: 'success',
-          summary: 'Success',
-          detail: 'Replace done successfully!',
-          life: 3000
+                    severity: 'success',
+                    summary: 'Success',
+                    detail: 'Replace done successfully!',
+                    life: 3000
+                });
+            },
+            error: (err) => {
+                console.error(err);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'Failed to save replace. Please try again.',
+                    life: 3000
+                });
+            }
         });
-      },
-      error: (err) => {
-        console.error(err);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to save replace. Please try again.',
-          life: 3000
-        });
-      }
-    });
-  }
+    }
 
-  // -----------------------------
-  //  Utility / Misc
-  // -----------------------------
+    // -----------------------------
+    //  Utility / Misc
+    // -----------------------------
 
-  showSuccess(message: string) {
-    this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
-  }
+    showSuccess(message: string) {
+        this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
+    }
 }

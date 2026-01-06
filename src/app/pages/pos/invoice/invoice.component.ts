@@ -23,7 +23,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { CheckboxModule } from 'primeng/checkbox';
 import { Paginator } from 'primeng/paginator';
-import { Router, RouterLink } from "@angular/router";
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '@/core/services/auth.service';
 import { ShareService } from '@/core/services/shared.service';
 interface Product {
@@ -49,250 +49,244 @@ interface Image {
 @Component({
     selector: 'app-invoice',
     imports: [
-    CommonModule,
-    EditorModule,
-    ReactiveFormsModule,
-    TextareaModule,
-    TableModule,
-    InputTextModule,
-    FormsModule,
-    FileUploadModule,
-    ButtonModule,
-    SelectModule,
-    DropdownModule,
-    ToggleSwitchModule,
-    RippleModule,
-    ChipModule,
-    FluidModule,
-    MessageModule,
-    DatePickerModule,
-    DialogModule,
-    AutoCompleteModule,
-    ConfirmDialogModule,
-    CheckboxModule,
-],
+        CommonModule,
+        EditorModule,
+        ReactiveFormsModule,
+        TextareaModule,
+        TableModule,
+        InputTextModule,
+        FormsModule,
+        FileUploadModule,
+        ButtonModule,
+        SelectModule,
+        DropdownModule,
+        ToggleSwitchModule,
+        RippleModule,
+        ChipModule,
+        FluidModule,
+        MessageModule,
+        DatePickerModule,
+        DialogModule,
+        AutoCompleteModule,
+        ConfirmDialogModule,
+        CheckboxModule
+    ],
     templateUrl: './invoice.component.html',
     styleUrl: './invoice.component.scss',
-    providers:[ConfirmationService,DatePipe]
+    providers: [ConfirmationService, DatePipe]
 })
 export class InvoiceComponent {
     invoiceForm!: FormGroup;
-   
-     pagedProducts:any[]=[];
-     first:number=0;
-      today: Date = new Date();
-     rowsPerPage:number=5;
-    submitDisable:boolean=true;
-     companyName:string='';
-    companyAddress:string='';
-    companycity:string='';
-    companystate:string='';
-    statecode:string='';
-    companyemail:string='';
-    companygstno:string='';
-    bankname:string='';
-    accountno:string='';
-    branchname:string='';
-    ifsc:string='';
-    pan:string='';
-        // ✅ Move dropdown options into variables
-        cusMobileOptions = [];
-        cusNameOptions = [];
-        profileOptions:any={};
-        statusOptions:any[]= [];
-        products: any[] = [];
-        filteredProducts: any[] = [];
-        invoiceData:any[]=[];
-        invoiceSummary:any={};
-        constructor(
-            private fb: FormBuilder,
-            private inventoryService: InventoryService,
-            private authService: AuthService,
-            private messageService: MessageService,
-            public datepipe:DatePipe,
-            private router:Router,
-            private sharedService: ShareService,
-            private confirmationService:ConfirmationService
-        ) {}
- 
+
+    pagedProducts: any[] = [];
+    first: number = 0;
+    today: Date = new Date();
+    rowsPerPage: number = 5;
+    submitDisable: boolean = true;
+    companyName: string = '';
+    companyAddress: string = '';
+    companycity: string = '';
+    companystate: string = '';
+    statecode: string = '';
+    companyemail: string = '';
+    companygstno: string = '';
+    bankname: string = '';
+    accountno: string = '';
+    branchname: string = '';
+    ifsc: string = '';
+    pan: string = '';
+    hsncode: string = '';
+    // ✅ Move dropdown options into variables
+    cusMobileOptions = [];
+    cusNameOptions = [];
+    profileOptions: any = {};
+    statusOptions: any[] = [];
+    products: any[] = [];
+    filteredProducts: any[] = [];
+    invoiceData: any[] = [];
+    invoiceSummary: any = {};
+    constructor(
+        private fb: FormBuilder,
+        private inventoryService: InventoryService,
+        private authService: AuthService,
+        private messageService: MessageService,
+        public datepipe: DatePipe,
+        private router: Router,
+        private sharedService: ShareService,
+        private confirmationService: ConfirmationService
+    ) {}
+
     ngOnInit(): void {
         this.invoiceForm = this.fb.group(
             {
                 p_mobile: [''],
-               p_cusname:[''],
-                fromDate: [this.today,Validators.required],
-                toDate:[this.today,Validators.required],
-                status:[''],
+                p_cusname: [''],
+                fromDate: [this.today, Validators.required],
+                toDate: [this.today, Validators.required],
+                status: [''],
 
                 //PRINT SECTION VARIABLE
                 p_billno: [''],
-            p_transactiondate: [''],
-            p_transactionid: [''],
-            p_customername: [''],
-            p_customeraddress: [''],
-            p_mobileno: [''],
-            p_customergstin: [''],
-            p_customerstate: [''],
-            p_totalsale: [''],
-            p_totalpayable: [''],
-            p_disctype: [''],
-            p_overalldiscount: [''],
-            discountvalueper: [''],
-            p_roundoff: [''],
-            amount_before_tax: [''],
-            cgst_9: [''],
-            sgst_9: [''],
-            tax_18: [''],
-            p_totalqty: [''],
-            totalDueAmount:[''],
-            p_checked:[false],
-            p_stock:this.fb.array([])
-            },{validators:this.dateRangeValidator}
+                p_transactiondate: [''],
+                p_transactionid: [''],
+                p_customername: [''],
+                p_customeraddress: [''],
+                p_mobileno: [''],
+                p_customergstin: [''],
+                p_customerstate: [''],
+                p_totalsale: [''],
+                p_totalpayable: [''],
+                p_disctype: [''],
+                p_overalldiscount: [''],
+                discountvalueper: [''],
+                p_roundoff: [''],
+                amount_before_tax: [''],
+                cgst_9: [''],
+                sgst_9: [''],
+                tax_18: [''],
+                p_totalqty: [''],
+                totalDueAmount: [''],
+                p_checked: [false],
+                p_stock: this.fb.array([])
+            },
+            { validators: this.dateRangeValidator }
         );
-         this.loadAllDropdowns();
+        this.loadAllDropdowns();
         this.onGetStockIn();
         const savedState = this.sharedService.getInvoiceState();
-        if(savedState){
+        if (savedState) {
             this.invoiceForm.patchValue(savedState.filters);
-            this.products=savedState.data;
+            this.products = savedState.data;
             this.filteredProducts = [...savedState.data];
             console.log('Restored state from navigation');
         }
-       
     }
     blockMinus(event: KeyboardEvent) {
-    console.log(event);
-    if (event.key === '-' || event.key === 'Minus' || event.key ==='e' || event.key === 'E') {
-      event.preventDefault();
+        console.log(event);
+        if (event.key === '-' || event.key === 'Minus' || event.key === 'e' || event.key === 'E') {
+            event.preventDefault();
+        }
     }
-  }
-dateRangeValidator(form:FormGroup){
-    const fromDate = form.get('fromDate')?.value;
-    const toDate=form.get('toDate')?.value;
-  if(!fromDate || !toDate)
-    return null;
- const from=new Date(fromDate);
- const to=new Date(toDate);
-  return to >= from ? null :{ dateRangeInvalid:true }; 
- }
+    dateRangeValidator(form: FormGroup) {
+        const fromDate = form.get('fromDate')?.value;
+        const toDate = form.get('toDate')?.value;
+        if (!fromDate || !toDate) return null;
+        const from = new Date(fromDate);
+        const to = new Date(toDate);
+        return to >= from ? null : { dateRangeInvalid: true };
+    }
 
+    validateReceivedAmount(row: any) {
+        const due = parseFloat(row.due_amount) || 0;
+        const received = parseFloat(row.received_amount) || 0;
 
-validateReceivedAmount(row:any){
-     const due = parseFloat(row.due_amount) || 0;
-      const received = parseFloat(row.received_amount) || 0;
-        
         if (received > due) {
             row.amountError = true;
-            this.submitDisable=true;
+            this.submitDisable = true;
         } else {
             row.amountError = false;
-            this.submitDisable=false;
+            this.submitDisable = false;
         }
-}
+    }
 
-   getStockArray(): FormArray {
+    getStockArray(): FormArray {
         return this.invoiceForm.get('p_stock') as FormArray;
     }
     onGetStockIn() {
-      this.products=this.inventoryService.productItem || [];
+        this.products = this.inventoryService.productItem || [];
     }
 
-    updateReceivedAmount(index:number,value:number):void{
-        if(this.products[index]){
-            this.products[index].received_amount=value;
-            // this.validateReceivedAmount(this.products[index]);      
+    updateReceivedAmount(index: number, value: number): void {
+        if (this.products[index]) {
+            this.products[index].received_amount = value;
         }
     }
-    
-     display(){
+
+    display() {
         const p_mobile = this.invoiceForm.controls['p_mobile'].value;
         const p_cusname = this.invoiceForm.controls['p_cusname'].value;
         const startDate = this.invoiceForm.controls['fromDate'].value;
         const endDate = this.invoiceForm.controls['toDate'].value;
         const status = this.invoiceForm.controls['status'].value;
-        if((startDate && endDate) || (p_cusname || p_mobile || status) ){
-            const payload={
-                p_startdate: this.datepipe.transform(startDate,'yyyy/MM/dd'),
-                p_enddate: this.datepipe.transform(endDate,'yyyy/MM/dd'),
+        if ((startDate && endDate) || p_cusname || p_mobile || status) {
+            const payload = {
+                p_startdate: this.datepipe.transform(startDate, 'yyyy/MM/dd'),
+                p_enddate: this.datepipe.transform(endDate, 'yyyy/MM/dd'),
                 p_mobile: p_mobile || null,
                 p_customer: p_cusname || null,
                 p_status: status || null,
-                p_username:'admin',            
+                p_username: 'admin'
             };
             this.inventoryService.getinvoicedetail(payload).subscribe({
-                next :(res:any) =>{
-                    console.log('API RESEULT:',res.data);
-                    this.products=res?.data || [];
+                next: (res: any) => {
+                    console.log('API RESEULT:', res.data);
+                    this.products = res?.data || [];
                     this.filteredProducts = [...this.products];
                     this.totalDueAmount();
                     this.initialzeFormArray();
-                     this.saveCurrentState();
-                    if(this.products.length===0){
+                    this.saveCurrentState();
+                    if (this.products.length === 0) {
                         let message = 'No Data Available for this Category and Item';
                         this.showSuccess(message);
                     }
                 },
-                error:(err)=>{
+                error: (err) => {
                     console.log(err);
                 }
             });
-        } else{
-            let message='Please select date';
-             this.errorSuccess(message);
+        } else {
+            let message = 'Please select date';
+            this.errorSuccess(message);
         }
-     }
-totalDueAmount():void{
-  if(!this.products || this.products.length ===0){
-    this.invoiceForm.get('totalDueAmount')?.setValue('0');
-    return;
-  }
-  const totalSaleDue=this.products.reduce((total,product)=>{
-    const isSaleTransaction = product.transactiontype && product.transactiontype.toUpperCase()==='SALE';
-    if(isSaleTransaction){
-        const dueAmount = Number(product.due_amount) || 0;
-        return total +dueAmount;
     }
-    return total;
-  },0);
-  this.invoiceForm.get('totalDueAmount')?.setValue(totalSaleDue);
-}
-   private initialzeFormArray():void{
-     const stockArray = this.getStockArray();
-    
-    // Clear existing controls
-    while (stockArray.length !== 0) {
-        stockArray.removeAt(0);
+    totalDueAmount(): void {
+        if (!this.products || this.products.length === 0) {
+            this.invoiceForm.get('totalDueAmount')?.setValue('0');
+            return;
+        }
+        const totalSaleDue = this.products.reduce((total, product) => {
+            const isSaleTransaction = product.transactiontype && product.transactiontype.toUpperCase() === 'SALE';
+            if (isSaleTransaction) {
+                const dueAmount = Number(product.due_amount) || 0;
+                return total + dueAmount;
+            }
+            return total;
+        }, 0);
+        const roundedTotal = Number(totalSaleDue.toFixed(2));
+
+        this.invoiceForm.get('totalDueAmount')?.setValue(roundedTotal);
     }
-    
-    // Add controls for each product
-    this.products.forEach((product) => {
-        stockArray.push(this.fb.control(product.received_amount || 0));
-    });
-}
- saveCurrentState() {
-    const currentFilters = this.invoiceForm.value;
-    this.sharedService.setInvoiceState(currentFilters, this.products);
-  }
-onDueAmountFilter(event:any){
-    const isChecked = this.invoiceForm.controls['p_checked'].value;
-    if(isChecked){
-        this.filteredProducts=this.products.filter((item:any)=>{
-            const dueAmount=Number(item.due_amount)||0;
-            return dueAmount>0;
+    private initialzeFormArray(): void {
+        const stockArray = this.getStockArray();
+
+        // Clear existing controls
+        while (stockArray.length !== 0) {
+            stockArray.removeAt(0);
+        }
+
+        // Add controls for each product
+        this.products.forEach((product) => {
+            stockArray.push(this.fb.control(product.received_amount || 0));
         });
     }
-    else{
-        this.filteredProducts=[...this.products];
+    saveCurrentState() {
+        const currentFilters = this.invoiceForm.value;
+        this.sharedService.setInvoiceState(currentFilters, this.products);
     }
-}
+    onDueAmountFilter(event: any) {
+        const isChecked = this.invoiceForm.controls['p_checked'].value;
+        if (isChecked) {
+            this.filteredProducts = this.products.filter((item: any) => {
+                const dueAmount = Number(item.due_amount) || 0;
+                return dueAmount > 0;
+            });
+        } else {
+            this.filteredProducts = [...this.products];
+        }
+    }
     onPageChange(event: any) {
         this.first = event.first;
         this.rowsPerPage = event.rows;
-        this.updatePagedProducts();
-    }
-
-    updatePagedProducts() {
-        // this.pagedProducts = this.products.slice(this.first, this.first + this.rowsPerPage);
     }
 
     get grandTotal(): number {
@@ -305,13 +299,13 @@ onDueAmountFilter(event:any){
             toDate: new Date()
         });
         this.filteredProducts = [];
-         this.products = [];
-         this.invoiceData=[];
+        this.products = [];
+        this.invoiceData = [];
     }
     createDropdownPayload(returnType: string) {
         return {
             p_username: 'admin',
-            p_returntype: returnType,
+            p_returntype: returnType
         };
     }
     OnGetCusName() {
@@ -336,26 +330,26 @@ onDueAmountFilter(event:any){
         });
     }
 
-     OnGetProfile() {
+    OnGetProfile() {
         const payload = this.createDropdownPayload('PROFILE');
         this.inventoryService.getdropdowndetails(payload).subscribe({
             next: (res) => {
-            if(res.data && res.data.length>0){
-                this.profileOptions=res.data;
-                const profile=res.data[0];
-                this.companyName=profile.companyname,
-                this.companyAddress=profile.companyaddress,
-                this.companystate=profile.state_name,
-                this.companycity=profile.city_name,
-                this.companyemail=profile.companyemail,
-                this.companygstno=profile.companygstno,
-                this.statecode=profile.statecode,
-                this.bankname=profile.bankname,
-                this.accountno=profile.accountno,
-                this.branchname=profile.branch,
-                this.ifsc=profile.ifsc,
-                this.pan=profile.pan
-            }
+                if (res.data && res.data.length > 0) {
+                    this.profileOptions = res.data;
+                    const profile = res.data[0];
+                    ((this.companyName = profile.companyname),
+                        (this.companyAddress = profile.companyaddress),
+                        (this.companystate = profile.state_name),
+                        (this.companycity = profile.city_name),
+                        (this.companyemail = profile.companyemail),
+                        (this.companygstno = profile.companygstno),
+                        (this.statecode = profile.statecode),
+                        (this.bankname = profile.bankname),
+                        (this.accountno = profile.accountno),
+                        (this.branchname = profile.branch),
+                        (this.ifsc = profile.ifsc),
+                        (this.pan = profile.pan));
+                }
             },
             error: (err) => console.log(err)
         });
@@ -364,66 +358,63 @@ onDueAmountFilter(event:any){
     loadAllDropdowns() {
         this.OnGetStatus();
         this.OnGetCusName();
-        this.OnGetCusMobile(); 
-        this.OnGetProfile(); 
+        this.OnGetCusMobile();
+        this.OnGetProfile();
     }
 
+    openInvoice(row: any) {
+        if (!row || !row.invoice_no) return;
+        const payload = {
+            p_username: 'admin',
+            p_returntype: 'SALEPRINT',
+            p_returnvalue: row.invoice_no
+        };
+        this.saveCurrentState();
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res: any) => {
+                if (res.data && res.data.length > 0) {
+                    const invoiceSummary = res.data[0];
+                    console.log('data data:', invoiceSummary);
 
-    openInvoice(row:any){
-      if(!row || !row.invoice_no) return;
-      const payload = {
-        p_username:'admin',
-        p_returntype:'SALEPRINT',
-        p_returnvalue:row.invoice_no,
-      };
-
-      this.saveCurrentState();
-      this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-        next:(res:any)=>{
-           if(res.data && res.data.length>0){
-            const invoiceSummary = res.data[0];
-            console.log('data data:',invoiceSummary);
-            
-            this.router.navigate(['/layout/pos/sales'],{
-                state:{
-                    mode:'edit',
-                    saleData:invoiceSummary,
-                    itemsData:res.data,
-                    returnUrl: '/layout/pos/invoice'
+                    this.router.navigate(['/layout/pos/sales'], {
+                        state: {
+                            mode: 'edit',
+                            saleData: invoiceSummary,
+                            itemsData: res.data,
+                            returnUrl: '/layout/pos/invoice'
+                        }
+                    });
+                } else {
+                    this.messageService.add({
+                        severity: 'warn',
+                        summary: 'No Data',
+                        detail: 'Invoice data not found'
+                    });
                 }
-            });
-        }
-            else{
-              this.messageService.add({
-                 severity: 'warn',
-          summary: 'No Data',
-          detail: 'Invoice data not found'
-              });
+            },
+            error: () => {
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'Failed to load invoice'
+                });
             }
-        },
-        error:() =>{
-            this.messageService.add({
-                 severity: 'error',
-        summary: 'Error',
-        detail: 'Failed to load invoice'
-            });
-        }
-      });
+        });
     }
 
-getReceivedAmountControl(index: number): AbstractControl | null {
-    const stockArray = this.getStockArray();
-    return stockArray.at(index)?.get('received_amount') || null;
-}
+    getReceivedAmountControl(index: number): AbstractControl | null {
+        const stockArray = this.getStockArray();
+        return stockArray.at(index)?.get('received_amount') || null;
+    }
 
-    onChangeROPdown(){
-    const payloadItems = [];
-        
+    onChangeROPdown() {
+        const payloadItems = [];
+
         // Process only rows with received amount > 0
         for (let i = 0; i < this.products.length; i++) {
             const row = this.products[i];
             const receivedAmount = parseFloat(row.received_amount) || 0;
-            
+
             if (receivedAmount > 0) {
                 // Validate amount before adding
                 if (receivedAmount > parseFloat(row.due_amount)) {
@@ -434,7 +425,7 @@ getReceivedAmountControl(index: number): AbstractControl | null {
                     });
                     return;
                 }
-                
+
                 payloadItems.push({
                     adjtype: row.invoice_no,
                     // Add other required fields
@@ -445,7 +436,7 @@ getReceivedAmountControl(index: number): AbstractControl | null {
                 });
             }
         }
-        
+
         if (payloadItems.length === 0) {
             this.messageService.add({
                 severity: 'warn',
@@ -454,18 +445,17 @@ getReceivedAmountControl(index: number): AbstractControl | null {
             });
             return;
         }
-        
+
         const payload = {
             p_stock: payloadItems,
             p_updatetype: 'DUE',
             p_username: 'admin' // Add username if required
         };
-        
         // Call API
         this.inventoryService.updatestockadjustment(payload).subscribe({
             next: (res: any) => {
-                this.showSuccess(res?.message || 'Amounts saved successfully');
-                
+                this.showSuccess('Transaction has been saved successfully');
+
                 // Refresh the data
                 this.display();
             },
@@ -479,17 +469,17 @@ getReceivedAmountControl(index: number): AbstractControl | null {
             }
         });
     }
-    submit(){
-       this.confirmationService.confirm({
-        message:'Are you sure you want to make change?',
-        header: 'Confirm',
-        acceptLabel:'Yes',
-        rejectLabel:'Cancel',
-        accept:()=>{
-          this.onChangeROPdown();
-        },
-        reject:()=>{}
-       });
+    submit() {
+        this.confirmationService.confirm({
+            message: 'Are you sure you want to make change?',
+            header: 'Confirm',
+            acceptLabel: 'Yes',
+            rejectLabel: 'Cancel',
+            accept: () => {
+                this.onChangeROPdown();
+            },
+            reject: () => {}
+        });
     }
 
     showSuccess(message: string) {
@@ -498,55 +488,49 @@ getReceivedAmountControl(index: number): AbstractControl | null {
     errorSuccess(message: string) {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: message });
     }
-    canPrint(row:any):boolean{
-        if(!row || !row.transactiontype)
-            return false;
-        return row.transactiontype.toUpperCase() ==='SALE';
-        
+    canPrint(row: any): boolean {
+        if (!row || !row.transactiontype) return false;
+        return row.transactiontype.toUpperCase() === 'SALE';
     }
-   printInvoice(row: any) {
-    
-    // Create payload FIRST
-    const payload = {
-        "p_username": 'admin',
-        "p_returntype": 'SALEPRINT',
-        "p_returnvalue": row.invoice_no
-    };
-    
-    console.log('Payload:', payload); // Debug: Check if payload is correct
-    
-    // Make API call
-    this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-        next: (res) => {
-            console.log('API Result:', res.data);
-            if(Array.isArray(res.data) && res.data.length>0){
-                this.invoiceData=res.data;
+    printInvoice(row: any) {
+        // Create payload FIRST
+        const payload = {
+            p_username: 'admin',
+            p_returntype: 'SALEPRINT',
+            p_returnvalue: row.invoice_no
+        };
+        // Make API call
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res) => {
+                console.log('API Result:', res.data);
+                if (Array.isArray(res.data) && res.data.length > 0) {
+                    this.invoiceData = res.data;
+                    this.hsncode = res.data[0].hsncode;
+                }
 
+                this.populateInvoiceForm(res.data[0]);
+                setTimeout(() => {
+                    this.openPrintWindow();
+                }, 100);
+            },
+            error: (err) => {
+                console.error('API Error:', err);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'Failed to load invoice data'
+                });
             }
-            
-            this.populateInvoiceForm(res.data[0]);
-            setTimeout(()=>{
-                this.openPrintWindow();
-            },100); 
-        },
-        error: (err) => {
-            console.error('API Error:', err);
-            this.messageService.add({
-                severity: 'error',
-                summary: 'Error',
-                detail: 'Failed to load invoice data'
-            });
-        } 
-    });
-}
+        });
+    }
 
- private populateInvoiceForm(data:any){
-    if(!data) return;
-            this.invoiceForm.patchValue({
-                p_billno:data.billno || '',
-                 p_transactiondate: data.transactiondate || '',
+    private populateInvoiceForm(data: any) {
+        if (!data) return;
+        this.invoiceForm.patchValue({
+            p_billno: data.billno || '',
+            p_transactiondate: data.transactiondate || '',
             p_transactionid: data.transactionid || '',
-            p_customername: data.customername ||'',
+            p_customername: data.customername || '',
             p_mobileno: data.mobileno || '',
             p_totalsale: data.totalsale || 0,
             p_totalpayable: data.totalpayable || 0,
@@ -559,26 +543,28 @@ getReceivedAmountControl(index: number): AbstractControl | null {
             sgst_9: data.sgst_9 || 0,
             tax_18: data.tax_18 || 0,
             p_totalqty: data.quantity || 0
-            });
-            
+        });
+    }
+    private openPrintWindow() {
+        // Now open print window AFTER getting data
+        const printContents = document.getElementById('invoicePrintSection')?.innerHTML;
+        if (!printContents) {
+            console.error('Invoice print section not found');
+            return;
         }
-        private openPrintWindow(){
-             // Now open print window AFTER getting data
-            const printContents = document.getElementById('invoicePrintSection')?.innerHTML;
-            if (!printContents) {
-                console.error('Invoice print section not found');
-                return;
-            }
 
-            const popupWindow = window.open('', '_blank', 'width=900,height=1500');
-            if (popupWindow) {
-                popupWindow.document.open();
-                popupWindow.document.write(`
+        const popupWindow = window.open('', '_blank', 'width=900,height=1500');
+        if (popupWindow) {
+            popupWindow.document.open();
+            popupWindow.document.write(`
                     <!DOCTYPE html>
                     <html>
                     <head>
-                        <title>Invoice Print</title>
                         <style>
+                          @page {
+                        margin: 0;
+                        size: auto;
+                    }
                             /* Your print styles here */
                             body { font-family: Arial, sans-serif; }
                             /* Add more styles as needed */
@@ -597,9 +583,7 @@ getReceivedAmountControl(index: number): AbstractControl | null {
                     </body>
                     </html>
                 `);
-                popupWindow.document.close();
-            }
+            popupWindow.document.close();
         }
+    }
 }
-
-

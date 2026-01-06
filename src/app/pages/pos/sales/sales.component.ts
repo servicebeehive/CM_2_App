@@ -1,7 +1,6 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, ElementRef, HostListener, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, HostListener, QueryList, ViewChild, ViewChildren, inject } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
-
 import { ButtonModule } from 'primeng/button';
 import { ChipModule } from 'primeng/chip';
 import { EditorModule } from 'primeng/editor';
@@ -10,8 +9,7 @@ import { FluidModule } from 'primeng/fluid';
 import { InputTextModule } from 'primeng/inputtext';
 import { RippleModule } from 'primeng/ripple';
 import { SelectModule } from 'primeng/select';
-import { DropdownModule } from 'primeng/dropdown';
-import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { Dropdown, DropdownModule } from 'primeng/dropdown';
 import { TableModule } from 'primeng/table';
 import { TextareaModule } from 'primeng/textarea';
 import { MessageModule } from 'primeng/message';
@@ -23,7 +21,6 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { CheckboxModule } from 'primeng/checkbox';
 import { AddinventoryComponent } from '@/pages/inventory/addinventory/addinventory.component';
-import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
 import { AuthService } from '@/core/services/auth.service';
 import { OrderService } from '@/core/services/order.service';
 import { ShareService } from '@/core/services/shared.service';
@@ -52,9 +49,6 @@ import { Router } from '@angular/router';
         DialogModule,
         ConfirmDialogModule,
         CheckboxModule
-        // NgxPrintModule
-        // AddinventoryComponent,
-        // GlobalFilterComponent
     ],
     templateUrl: './sales.component.html',
     styleUrl: './sales.component.scss',
@@ -63,71 +57,93 @@ import { Router } from '@angular/router';
 export class SalesComponent {
     isBarcodeScan = false;
     isAutoSelect = false; // works for barcode + click
-    
-
 
     // -----------------------------
     //  Component state / Variables
     // -----------------------------
     @ViewChild('barcodeInput') barcodeInput!: ElementRef<HTMLInputElement>;
+    @ViewChildren('uomDropdown') uomDropdown!: QueryList<Dropdown>;
+    ngAfterViewInit() {
+        setTimeout(() => {
+            this.focusBarcode();
+        });
+    }
+    focusBarcode() {
+        if (this.barcodeInput?.nativeElement) {
+            this.barcodeInput.nativeElement.focus();
+        }
+    }
+    onBarcodeScan(event: Event) {
+        this.isBarcodeScan = true;
+        const input = event.target as HTMLInputElement;
+        const barcode = input?.value?.trim();
+        if (!barcode) return;
 
-ngAfterViewInit() {
-  if (this.barcodeInput?.nativeElement) {
-    this.barcodeInput.nativeElement.focus();
-  }
-}
+        const matchedItem = this.itemOptions.find((item) => item.itembarcode === barcode || item.itemsku === barcode || item.itemid == barcode);
 
-onBarcodeScan(event: Event) {
-this.isBarcodeScan=true
-  const input = event.target as HTMLInputElement;
-  const barcode = input?.value?.trim();
-  if (!barcode) return;
+        if (!matchedItem) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Item Not Found',
+                detail: `No item found for ${barcode}`,
+                life: 2000
+            });
+            this.clearBarcodeInput();
+            return;
+        }
 
-  const matchedItem = this.itemOptions.find(
-    (item) =>
-      item.itembarcode === barcode ||
-      item.itemsku === barcode ||
-      item.itemid == barcode
-  );
+        // 🔹 mark barcode flow
+        this.isAutoSelect = true;
+        this.salesForm.get('p_itemdata')?.setValue(matchedItem.itemid);
+        this.OnItemChange({ value: matchedItem.itemid });
+        this.clearBarcodeInput();
+        this.isBarcodeScan = false; // 🔑 reset after scan
+    }
 
-  if (!matchedItem) {
-    this.messageService.add({
-      severity: 'error',
-      summary: 'Item Not Found',
-      detail: `No item found for ${barcode}`,
-      life: 2000
-    });
-    this.clearBarcodeInput();
-    return;
-  }
+    focusLastRowUOM() {
+        setTimeout(() => {
+            const dropdowns = this.uomDropdown.toArray();
+            const lastDropdown = dropdowns[dropdowns.length - 1];
+            if (lastDropdown) {
+                lastDropdown.focus();
+            }
+        });
+    }
+    simulateScan(barcode: string) {
+        this.onBarcodeScan({
+            target: { value: barcode }
+        } as unknown as Event);
+    }
 
-  // 🔹 mark barcode flow
-this.isAutoSelect = true;
-this.salesForm.get('p_itemdata')?.setValue(matchedItem.itemid);
-this.OnItemChange({ value: matchedItem.itemid });
-  this.clearBarcodeInput();
- this.isBarcodeScan = false; // 🔑 reset after scan
-}
+    clearBarcodeInput() {
+        if (this.barcodeInput?.nativeElement) {
+            this.barcodeInput.nativeElement.value = '';
+            this.barcodeInput.nativeElement.focus();
+        }
+    }
 
+    keepBarcodeFocus(event: MouseEvent) {
+        const target = event.target as HTMLElement;
 
-simulateScan(barcode: string) {
-  this.onBarcodeScan({
-    target: { value: barcode }
-  } as unknown as Event);
-}
+        // If user clicked on an input or textarea → DO NOTHING
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+            return;
+        }
 
+        // Otherwise keep barcode focused
+        this.barcodeInput?.nativeElement?.focus();
+    }
 
-clearBarcodeInput() {
-  if (this.barcodeInput?.nativeElement) {
-    this.barcodeInput.nativeElement.value = '';
-    this.barcodeInput.nativeElement.focus();
-  }
-}
+    @HostListener('window:keydown', ['$event'])
+    handleKeyboardSubmit(event: KeyboardEvent) {
+        // Ctrl + Enter
+        if (event.ctrlKey && event.key === 'Enter') {
+            event.preventDefault();
+            this.onSubmit();
+        }
+    }
 
-keepBarcodeFocus() {
-  this.barcodeInput?.nativeElement?.focus();
-}
-    @ViewChild('itemSel') itemSel!:any;
+    @ViewChild('itemSel') itemSel!: any;
     public transactionid: any;
     salesForm!: FormGroup;
     visibleDialog = false;
@@ -144,33 +160,34 @@ keepBarcodeFocus() {
     public getUserDetails = {};
     itemOptions: any[] = [];
     cusMobileOptions: any[] = [];
-    profileOptions:any={};
+    profileOptions: any = {};
     public itemOptionslist: [] = [];
     public uomlist: any[] = [];
+    Uomid: string = '';
     mobilePlaceholder: string = 'Mobile No';
     backshow: boolean = false;
     isLoadingBills: boolean = false;
-    billValue:any=null;
-    companyName:string='';
-    companyAddress:string='';
-    companycity:string='';
-    companystate:string='';
-    statecode:string='';
-    companyemail:string='';
-    companygstno:string='';
-    bankname:string='';
-    accountno:string='';
-    branchname:string='';
-    ifsc:string='';
-    pan:string='';
+    billValue: any = null;
+    companyName: string = '';
+    companyAddress: string = '';
+    companycity: string = '';
+    companystate: string = '';
+    statecode: string = '';
+    companyemail: string = '';
+    companygstno: string = '';
+    bankname: string = '';
+    accountno: string = '';
+    branchname: string = '';
+    ifsc: string = '';
+    pan: string = '';
     @ViewChild(AddinventoryComponent) addInventoryComp!: AddinventoryComponent;
 
     // Dropdowns / lists
     billNoOptions: any[] = [];
-    transactionMode:any[]=[
-        {label:'Cash',value:'Cash'},
-        {label:'UPI',value:'UPI'},
-        {label:'Card',value:'Card'}
+    transactionMode: any[] = [
+        { label: 'Cash', value: 'Cash' },
+        { label: 'UPI', value: 'UPI' },
+        { label: 'Card', value: 'Card' }
     ];
     // -----------------------------
     //  Constructor + Lifecycle
@@ -200,12 +217,13 @@ keepBarcodeFocus() {
                 p_billno: [null],
                 p_transactionid: [0],
                 p_transactiondate: [this.today, [Validators.required]],
-                p_customername: ['', Validators.required],
+                p_customername: ['', [Validators.required, Validators.maxLength(100)]],
                 p_mobileno: ['', [Validators.required, Validators.pattern(/^[6-9]\d{9}$/)]],
                 searchMobileNo: [''],
-                p_paymode:['Cash'],
+                p_paymode: ['Cash'],
                 p_totalcost: [0],
                 p_totalsale: [0],
+                p_deliveryboy: ['', Validators.maxLength(100)],
                 p_disctype: [false],
                 p_overalldiscount: [''],
                 p_roundoff: [''],
@@ -221,6 +239,7 @@ keepBarcodeFocus() {
                 p_replacesimilir: [''],
                 p_creditnoteno: [''],
                 p_paymentmode: [''],
+                UomName: [''],
                 sgst_9: [''],
                 tax_18: [''],
                 cgst_9: [''],
@@ -246,7 +265,6 @@ keepBarcodeFocus() {
             } else {
                 this.discountplace = 'Enter %';
             }
-            //  this.salesForm.get('p_overalldiscount')?.setValue('', { emitEvent: false });
             this.applyDiscount();
         });
         const navigation = history.state;
@@ -310,6 +328,7 @@ keepBarcodeFocus() {
             ItemId: [data?.itemid || 0],
             ItemName: [data?.itemname || ''],
             UOMId: [data?.uomid || 0],
+            UomName: [data?.uomname || ''],
             Quantity: [1],
             itemcost: [data?.pruchaseprice || 0],
             MRP: [data?.saleprice || 0],
@@ -318,7 +337,7 @@ keepBarcodeFocus() {
             warPeriod: [data?.warrentyperiod || 0],
             location: [data?.location || ''],
             itemsku: [data?.itemsku || ''],
-
+            hsncode: [data?.hsncode],
             apiCost: [0] // ⭐ IMPORTANT ⭐
         });
     }
@@ -334,6 +353,7 @@ keepBarcodeFocus() {
                     ItemId: item.itemid || 0, // use itemsku when itemid not present
                     ItemName: item.itemname || '',
                     UOMId: item.uomname || 0,
+                    UomName: [item.uomname || ''],
                     Quantity: item.quantity || 1,
                     itemcost: item.itemcost || 0,
                     MRP: (item.mrp || 0).toFixed(2),
@@ -341,10 +361,13 @@ keepBarcodeFocus() {
                     curStock: item.current_stock || 0,
                     warPeriod: item.warrenty || 0,
                     location: '',
+                    hsncode: item.hsncode,
                     itemsku: item.itemsku || ''
                 })
             );
-            this.OnUMO(item.itemid || item.itemsku, index);
+            console.log('uomvalue', this.saleArray.at(index).get('UOMId')?.value);
+            const uomValue = this.saleArray.at(index).get('UOMId')?.value;
+            this.OnUMO(item.itemid || item.itemsku, index, uomValue);
         });
 
         // If items were added, update totals for the last row and overall summary
@@ -403,6 +426,7 @@ keepBarcodeFocus() {
         this.salesForm.patchValue({
             p_customername: data.customername || '',
             p_mobileno: data.mobileno || '',
+            p_deliveryboy: data.deliveryboy,
             p_gsttran: data.gstin || '',
             p_billno: data.billno || '',
             p_transactionid: data.transactionid || 0,
@@ -415,11 +439,13 @@ keepBarcodeFocus() {
             discountvalueper: data.discountvalueper || 0,
             p_roundoff: data.roundoff || 0,
             p_totalpayable: data.totalpayable || 0,
+            p_paymentdue: data.amountpaid,
             sgst_9: data.sgst_9 || 0,
             tax_18: data.tax_18 || 0,
             cgst_9: data.cgst_9 || 0,
             amount_before_tax: data.amount_before_tax || 0
         });
+
         this.saleArray.clear();
 
         // Add items to FormArray
@@ -432,6 +458,7 @@ keepBarcodeFocus() {
                         ItemName: item.itemname || '',
                         UOMId: item.uomid || 0,
                         UOMName: item.uomname || '',
+                        UomName: item.uomname,
                         Quantity: item.quantity || 1,
                         itemcost: item.itemcost || 0,
                         MRP: item.mrp || 0,
@@ -439,6 +466,7 @@ keepBarcodeFocus() {
                         curStock: item.current_stock || 0,
                         warPeriod: item.warrenty || 0,
                         location: '',
+                        hsncode: item.hsncode,
                         itemsku: item.itemsku || '',
                         apiCost: (item.quantity || 1) * (item.itemcost || 0)
                     })
@@ -458,7 +486,7 @@ keepBarcodeFocus() {
     // Generic payload creator
     createDropdownPayload(returnType: string) {
         return {
-            p_returntype: returnType,
+            p_returntype: returnType
         };
     }
 
@@ -477,26 +505,26 @@ keepBarcodeFocus() {
             error: (err) => console.log(err)
         });
     }
-     OnGetProfile() {
+    OnGetProfile() {
         const payload = this.createDropdownPayload('PROFILE');
         this.stockInService.getdropdowndetails(payload).subscribe({
             next: (res) => {
-            if(res.data && res.data.length>0){
-                this.profileOptions=res.data;
-                const profile=res.data[0];
-                this.companyName=profile.companyname,
-                this.companyAddress=profile.companyaddress,
-                this.companystate=profile.state_name,
-                this.companycity=profile.city_name,
-                this.companyemail=profile.companyemail,
-                this.companygstno=profile.companygstno,
-                this.statecode=profile.statecode,
-                this.bankname=profile.bankname,
-                this.accountno=profile.accountno,
-                this.branchname=profile.branch,
-                this.ifsc=profile.ifsc,
-                this.pan=profile.pan
-            }
+                if (res.data && res.data.length > 0) {
+                    this.profileOptions = res.data;
+                    const profile = res.data[0];
+                    ((this.companyName = profile.companyname),
+                        (this.companyAddress = profile.companyaddress),
+                        (this.companystate = profile.state_name),
+                        (this.companycity = profile.city_name),
+                        (this.companyemail = profile.companyemail),
+                        (this.companygstno = profile.companygstno),
+                        (this.statecode = profile.statecode),
+                        (this.bankname = profile.bankname),
+                        (this.accountno = profile.accountno),
+                        (this.branchname = profile.branch),
+                        (this.ifsc = profile.ifsc),
+                        (this.pan = profile.pan));
+                }
             },
             error: (err) => console.log(err)
         });
@@ -527,18 +555,16 @@ keepBarcodeFocus() {
 
     // Load Bill No dropdown
     OnGetBillNo() {
-        //   const loginusername = this.authService.isLogIntType().username;
-        //   console.log('gdsfsd:',loginusername)
-       const payload={
-         ...this.getUserDetails,
+        const loginusername = this.authService.isLogIntType().username;
+        const payload = {
             p_returntype: 'NEWTRANSACTIONID',
-            // p_username:loginusername
-       }
+            p_username: loginusername
+        };
         this.salesService.getdropdowndetails(payload).subscribe({
             next: (res) => {
                 const billdata: any = res.data;
                 this.billNoOptions = billdata.filter((item: { billno: null }) => item.billno != null);
-                this.billValue=this.billNoOptions;
+                this.billValue = this.billNoOptions;
             },
             error: (err) => console.log(err)
         });
@@ -550,49 +576,46 @@ keepBarcodeFocus() {
 
     // Called when an item is selected from the item dropdown
     OnItemChange(event: any) {
-  const latetData = this.itemOptions.find(
-    (item) => item.itemid == event.value
-  );
-  if (!latetData) return;
+        const latetData = this.itemOptions.find((item) => item.itemid == event.value);
+        if (!latetData) return;
 
-  // Prevent duplicate item
-  const alreadyExists = this.saleArray.controls.some(
-    (row) => row.get('ItemId')?.value === latetData.itemid
-  );
+        // Prevent duplicate item
+        const alreadyExists = this.saleArray.controls.some((row) => row.get('ItemId')?.value === latetData.itemid);
 
-  if (alreadyExists) {
-    this.messageService.add({
-      severity: 'warn',
-      summary: 'Duplicate Item',
-      detail: `${latetData.itemname} is already added.`,
-      life: 2000
-    });
+        if (alreadyExists) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Duplicate Item',
+                detail: `${latetData.itemname} is already added.`,
+                life: 2000
+            });
 
-    // Clear dropdown on duplicate
-    this.salesForm.get('p_itemdata')?.setValue(null, { emitEvent: false });
-    this.isAutoSelect = false;
-    return;
-  }
+            // Clear dropdown on duplicate
+            this.salesForm.get('p_itemdata')?.setValue(null, { emitEvent: false });
+            this.isAutoSelect = false;
+            return;
+        }
 
-  // Add new row
-  this.saleArray.push(this.createSaleItem(latetData));
-  const index = this.saleArray.length - 1;
+        // Add new row
+        this.saleArray.push(this.createSaleItem(latetData));
+        this.focusLastRowUOM();
+        const index = this.saleArray.length - 1;
 
-  // Load UOM list
-  this.OnUMO(event.value, index);
+        // Load UOM list
+        this.OnUMO(event.value, index);
 
-  // Calculate MRP
-  this.calculateMRP(index);
+        // Calculate MRP
+        this.calculateMRP(index);
 
-  // 🔑 KEY CHANGE HERE
-  // Clear only when NOT auto-select (barcode / programmatic)
-  if (!this.isAutoSelect) {
-    this.salesForm.get('p_itemdata')?.setValue(null, { emitEvent: false });
-  }
+        // 🔑 KEY CHANGE HERE
+        // Clear only when NOT auto-select (barcode / programmatic)
+        if (!this.isAutoSelect) {
+            this.salesForm.get('p_itemdata')?.setValue(null, { emitEvent: false });
+        }
 
-  this.isAutoSelect = false; // reset after use
-  this.calculateSummary();
-}
+        this.isAutoSelect = false; // reset after use
+        this.calculateSummary();
+    }
 
     costGreaterThanSaleValidator(): ValidatorFn {
         return (form: AbstractControl): ValidationErrors | null => {
@@ -633,10 +656,11 @@ keepBarcodeFocus() {
                 p_transactiondate: billDetails.transactiondate ? new Date(billDetails.transactiondate) : null,
                 p_mobileno: billDetails.mobileno,
                 status: billDetails.status,
-                p_paymode:billDetails.paymode,
+                p_paymode: billDetails.paymode,
                 p_totalcost: billDetails.totalcost.toFixed(2),
                 p_totalsale: billDetails.totalsale.toFixed(2),
                 p_disctype: billDetails.discounttype == 'Y' ? true : false,
+                p_deliveryboy: billDetails.deliveryboy,
                 p_overalldiscount: billDetails.discount,
                 discountvalueper: billDetails.discountvalueper,
                 p_roundoff: billDetails.roundoff,
@@ -758,9 +782,9 @@ keepBarcodeFocus() {
 
     // Submit handler with confirmation and validation
     onSubmit() {
-         if (this.isBarcodeScan) {
-    return;
-  }
+        if (this.isBarcodeScan) {
+            return;
+        }
         if (this.isSubmitDisabled()) {
             this.messageService.add({
                 severity: 'error',
@@ -787,12 +811,12 @@ keepBarcodeFocus() {
     // Reset form and clear sale array
     onReset() {
         this.salesForm.reset({
-            p_gsttran: true,
+            p_gsttran: true
         });
         this.backshow = false;
         this.saleArray.clear();
         this.salesForm.get('p_transactiondate')?.setValue(this.today);
-         this.salesForm.get('p_paymode')?.setValue('Cash');
+        this.salesForm.get('p_paymode')?.setValue('Cash');
     }
 
     // -----------------------------
@@ -899,10 +923,9 @@ keepBarcodeFocus() {
             p_status: body.p_status || 'Done',
             p_isactive: 'Y',
             p_linktransactionid: 0,
-            // p_replacesimilir: body.p_replacesimilir || "",
+            p_creditnoteno: body.p_deliveryboy || '',
             p_replacesimilir: body.p_disctype === true ? 'Y' : 'N',
             p_discounttype: body.p_disctype === true ? 'Y' : 'N',
-            p_creditnoteno: body.p_creditnoteno || '',
             p_paymentmode: body.p_paymode,
             p_paymentdue: Number(body.p_paymentdue) || 0,
             p_sale: (body.p_sale || []).map((x: any) => ({
@@ -914,6 +937,7 @@ keepBarcodeFocus() {
                 itemcost: x.itemcost,
                 warrenty: x.warPeriod,
                 MRP: x.MRP,
+                hsncode: x.hsncode,
                 totalPayable: x.totalPayable,
                 currentstock: x.curStock
             }))
@@ -926,30 +950,30 @@ keepBarcodeFocus() {
 
     // Send header (and sale) to API, show toast notifications on result
     OnSalesHeaderCreate(data: any) {
-  
         const apibody = this.cleanRequestBody(this.salesForm.value);
 
         this.stockInService.OninsertSalesDetails(apibody).subscribe({
             next: (res) => {
-                const responseData=res.data[0];
                 const billno = res.data[0]?.billno;
-               this.OnGetBillNo();
+                this.OnGetBillNo();
                 this.OnGetItem();
+                this.OnGetCusMobile();
                 this.salesForm.controls['p_billno'].setValue(billno);
                 if (res.data && res.data.length > 0) {
                     this.salesForm.patchValue({
                         status: 'Done'
                     });
-                    
                 }
-                setTimeout(()=>{
-                    if(this.billValue){
-                        const currentBill=this.billValue.find((bill:any)=>bill.billno===billno);
-                        if(currentBill){
+                console.log('uom', this.salesForm.get('p_sale')?.value);
+                setTimeout(() => {
+                    if (this.billValue) {
+                        const currentBill = this.billValue.find((bill: any) => bill.billno === billno);
+                        if (currentBill) {
                             this.patchPrintValues(currentBill);
                         }
                     }
-                },500);
+                }, 500);
+                console.log('mobile option:', this.cusMobileOptions);
                 console.log('res', res);
                 this.messageService.add({
                     severity: 'success',
@@ -983,17 +1007,17 @@ keepBarcodeFocus() {
             }
         });
     }
-patchPrintValues(apiData:any){
-    const patchData:any={};
-    patchData.p_transactionid=apiData.transactionid;
-    patchData.discountvalueper = apiData.discountvalueper;
-    patchData.sgst_9=apiData.sgst_9;
-    patchData.cgst_9=apiData.cgst_9;
-     patchData.tax_18=apiData.tax_18;
-      patchData.amount_before_tax=apiData.amount_before_tax;
-    this.salesForm.patchValue(patchData);
-    this.salesForm.updateValueAndValidity();
-}
+    patchPrintValues(apiData: any) {
+        const patchData: any = {};
+        patchData.p_transactionid = apiData.transactionid;
+        patchData.discountvalueper = apiData.discountvalueper;
+        patchData.sgst_9 = apiData.sgst_9;
+        patchData.cgst_9 = apiData.cgst_9;
+        patchData.tax_18 = apiData.tax_18;
+        patchData.amount_before_tax = apiData.amount_before_tax;
+        this.salesForm.patchValue(patchData);
+        this.salesForm.updateValueAndValidity();
+    }
     // -----------------------------
     //  Utility / Misc
     // -----------------------------
@@ -1001,8 +1025,9 @@ patchPrintValues(apiData:any){
     showSuccess(message: string) {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
     }
-    OnUMO(value: any, index: number) {
-        let apibody = {
+
+    OnUMO(value: any, index: number, uomValue?: string) {
+        const apibody = {
             ...this.getUserDetails,
             p_returntype: 'SALEUOM',
             p_returnvalue: value
@@ -1010,88 +1035,102 @@ patchPrintValues(apiData:any){
 
         this.salesService.Getreturndropdowndetails(apibody).subscribe({
             next: (res) => {
-                this.uomlist[index] = res.data;
+                if (!res?.data || res.data.length === 0) {
+                    return;
+                }
+
+                this.uomlist[index] = [...res.data];
 
                 const row = this.saleArray.at(index);
 
-                // ⭐ Auto-select FIRST UOM
-                if (this.uomlist[index] && this.uomlist[index].length > 0) {
-                    const firstUom = this.uomlist[index][0];
+                let selectedUom = null;
 
-                    row.patchValue({
-                        UOMId: firstUom.fieldid
-                    });
-
-                    // ⭐ Immediately calculate MRP + TOTAL + COST
-                    this.calculateMRP(index);
+                if (uomValue) {
+                    selectedUom = this.uomlist[index].find((u: any) => u.fieldid == uomValue || u.fieldname == uomValue);
                 }
+
+                if (!selectedUom && !row.get('UOMId')?.value) {
+                    selectedUom = this.uomlist[index][0];
+                }
+
+                if (!selectedUom) return;
+
+                row.patchValue({
+                    UOMId: selectedUom.fieldid,
+                    UomName: selectedUom.fieldname
+                });
+
+                this.calculateMRP(index);
             }
         });
     }
 
- OngetcalculatedMRP(data: any, index: number) {
+    OngetcalculatedMRP(data: any, index: number) {
+        const row = this.saleArray.at(index);
 
-  const row = this.saleArray.at(index);
+        const qty = Number(row.get('Quantity')?.value || 1);
 
-  const qty = Number(row.get('Quantity')?.value || 1);
+        let apibody = {
+            ...this.getUserDetails,
+            p_itemid: data.ItemId,
+            p_qty: qty,
+            p_uomid: data.UOMId
+        };
 
-  let apibody = {
-    ...this.getUserDetails,
-    p_itemid: data.ItemId,
-    p_qty: qty,
-    p_uomid: data.UOMId
-  };
+        delete (apibody as any).p_loginuser;
 
-  delete (apibody as any).p_loginuser;
+        this.orderService.getcalculatedMRP(apibody).subscribe({
+            next: (res: any) => {
+                const mrp = Number(res.data.totalmrp || 0);
+                const cost = Number(res.data.totalcost || 0);
+                const conversion = Number(res.data.conversion || 1);
 
-  this.orderService.getcalculatedMRP(apibody).subscribe({
-    next: (res: any) => {
-        
-      const mrp = Number(res.data.totalmrp || 0);
-      const cost = Number(res.data.totalcost || 0);
-      const conversion = Number(res.data.conversion || 1);
+                // 🔹 Base stock (store once)
+                const row = this.saleArray.at(index) as FormGroup;
 
-      // 🔹 Base stock (store once)
-   const row = this.saleArray.at(index) as FormGroup;
+                if (!row.contains('baseStock')) {
+                    row.addControl('baseStock', new FormControl(Number(row.get('curStock')?.value || 0)));
+                }
 
-if (!row.contains('baseStock')) {
-  row.addControl(
-    'baseStock',
-    new FormControl(Number(row.get('curStock')?.value || 0))
-  );
-}
+                const baseStock = Number(row.get('baseStock')?.value || 0);
 
-      const baseStock = Number(row.get('baseStock')?.value || 0);
+                // 🔹 Converted stock based on UOM
+                const convertedStock = baseStock * conversion;
 
-      // 🔹 Converted stock based on UOM
-      const convertedStock = baseStock * conversion;
+                // 🔹 Patch values
+                row.patchValue({
+                    MRP: mrp,
+                    itemcost: cost,
+                    totalPayable: qty * mrp,
+                    apiCost: qty * cost,
+                    curStock: convertedStock
+                });
 
-      // 🔹 Patch values
-      row.patchValue({
-        MRP: mrp,
-        itemcost: cost,
-        totalPayable: qty * mrp,
-        apiCost: qty * cost,
-        curStock: convertedStock
-      });
-
-      this.updateTotalCostSummary();
-      this.calculateSummary();
+                this.updateTotalCostSummary();
+                this.calculateSummary();
+            }
+        });
     }
-  });
-}
-
 
     UOMId(event: any, index: number) {
         const row = this.saleArray.at(index);
 
-        // Get current row data
-        const rowData = {
-            ItemId: row.get('ItemId')?.value,
-            UOMId: event.value
-        };
-        console.log('calculate mrp:', event.value);
-        this.OngetcalculatedMRP(event.value, index);
+        const selectedUom = this.uomlist[index]?.find((u: any) => u.fieldid === event.value);
+
+        if (!selectedUom) return;
+
+        row.patchValue({
+            UOMId: selectedUom.fieldid,
+            UomName: selectedUom.fieldname
+        });
+
+        this.OngetcalculatedMRP(
+            {
+                ItemId: row.get('ItemId')?.value,
+                UOMId: selectedUom.fieldid
+            },
+            index
+        );
     }
     calculateMRP(index: number) {
         const row = this.saleArray.at(index);
@@ -1099,7 +1138,7 @@ if (!row.contains('baseStock')) {
         const qty = Number(row.get('Quantity')?.value || 1);
         const uomid = row.get('UOMId')?.value;
         const itemId = row.get('ItemId')?.value;
-       
+
         if (!uomid || qty <= 0) return;
 
         let apibody = {
@@ -1171,8 +1210,11 @@ if (!row.contains('baseStock')) {
      <!DOCTYPE html>
                     <html>
                     <head>
-                        <title>Invoice Print</title>
                         <style>
+                           @page {
+                        margin: 0;
+                        size: auto;
+                    }
                             /* Your print styles here */
                             body { font-family: Arial, sans-serif; }
                             /* Add more styles as needed */

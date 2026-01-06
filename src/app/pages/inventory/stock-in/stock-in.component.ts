@@ -23,8 +23,7 @@ import { InventoryService } from '@/core/services/inventory.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { CheckboxModule } from 'primeng/checkbox';
-import { Paginator } from 'primeng/paginator';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { AuthService } from '@/core/services/auth.service';
 import { DrowdownDetails } from '@/core/models/inventory.model';
 import { MessageService } from 'primeng/api';
@@ -131,12 +130,11 @@ export class StockInComponent {
         this.productForm = this.fb.group({
             p_tranpurchaseid: [null],
             p_invoiceno: ['', [Validators.maxLength(50),Validators.required]],
-            p_vendorid: [null,Validators.required],
-            p_invoicedate: [null,Validators.required],
+            p_vendorid: [null,[Validators.required]],
+            p_invoicedate: [null,[Validators.required,Validators.maxLength(50)]],
             p_remarks: ['', [Validators.maxLength(500)]],
             grandTotal: [0],
-            p_amountpaid :[''],
-           p_deliveryboy:[''],
+            p_amountpaid :[0,Validators.maxLength(8)],
         },{validators:[this.paidAmountLessThanGrandTotal()]});
 
         const navigation = history.state;
@@ -202,9 +200,8 @@ export class StockInComponent {
             p_invoicedate: data.invoicedate ? new Date(data.invoicedate) : new Date(),
             p_remarks: data.remark || '',
             p_vendorid: data.vendorid || null,
-           p_amountpaid:data.total_paid,
-           p_deliveryboy:data.deliveryboy,
-           grandTotal:data.total_cost
+           p_amountpaid:(data.total_paid).toFixed(2),
+           grandTotal:(data.total_cost).toFixed(2)
         });
         if (itemsData && itemsData.length > 0) {
             console.log('Processing itemsData:', itemsData);
@@ -317,7 +314,7 @@ export class StockInComponent {
         return this.itemOptionslist.reduce((sum, item: any) => {
             const quantity = item.quantity || 0;
             const costPrice = item.costprice || 0;
-            return sum + quantity * costPrice;
+            return (sum + quantity * costPrice);
         }, 0);
     }
     onSubmit() {
@@ -365,7 +362,6 @@ export class StockInComponent {
         });
         this.backshow=false;
         this.productForm.get('p_amountpaid')?.enable();
-        // this.transationid='null';
         this.products = [];
         this.itemOptionslist = [];
         this.first = 0;
@@ -378,8 +374,6 @@ export class StockInComponent {
     }
 
     //GetdropdwonDetails Function
-    // itemOptions: any[] = [];          // For ITEM dropdown
-    // categoryOptions: any[] = [];      // For CATEGORY dropdown
     uomOptions: any[] = []; // For UOM dropdown
     vendorOptions: any[] = []; // For VENDOR dropdown
     purchaseIdOptions: any[] = []; // For PURCHASE ID dropdown
@@ -390,7 +384,6 @@ export class StockInComponent {
             p_username: 'admin',
             p_returntype: 'ITEM'
         };
-
         this.stockInService.getdropdowndetails(payload).subscribe({
             next: (res) => {
                 console.log(res);
@@ -410,9 +403,9 @@ export class StockInComponent {
             p_invoiceno: data.p_invoiceno,
             p_invoicedate: this.datePipe.transform(data.p_invoicedate, 'dd/MM/yyyy'),
             p_remarks: data.p_remarks,
-            p_deliveryboy:data.p_deliveryboy,
-            p_amountpaid :data.p_amountpaid ,
-            p_active: 'Y'
+            p_amountpaid :(data.p_amountpaid).toFixed(2) ,
+            p_active: 'Y',
+            p_deliveryboy:''
         };
 
         this.stockInService.OnPurchesHeaderCreate(payload).subscribe({
@@ -422,8 +415,6 @@ export class StockInComponent {
                 this.transactionIdOptions = res.data;
 
                 const id = Number(res.data[0].tranpurchaseid);
-
-                // check if ID already exists in array
                 const exists = this.purchaseIdOptions.some((item) => item.purchaseid === id);
 
                 if (!exists) {
@@ -467,9 +458,8 @@ export class StockInComponent {
             p_invoiceno: selectedPurchaseData.invoicenumber,
             p_remarks: selectedPurchaseData.remark,
             p_invoicedate: selectedPurchaseData.invoicedate ? new Date(selectedPurchaseData.invoicedate) : null,
-            grandTotal: this.grandTotal,
-             p_amountpaid:selectedPurchaseData.total_paid,
-            p_deliveryboy:selectedPurchaseData.deliveryboy
+            grandTotal: (this.grandTotal).toFixed(2),
+             p_amountpaid:(selectedPurchaseData.total_paid).toFixed(2),
         });
         if (this.productForm.value) {
             this.addItemEnabled = true;
@@ -485,9 +475,8 @@ export class StockInComponent {
             p_invoiceno: selectedPurchaseData1.invoicenumber,
             p_remarks: selectedPurchaseData1.remark,
             p_invoicedate: selectedPurchaseData1.invoicedate ? new Date(selectedPurchaseData1.invoicedate) : null,
-            grandTotal: this.grandTotal,
-            p_amountpaid:selectedPurchaseData1.total_paid,
-            p_deliveryboy:selectedPurchaseData1.deliveryboy
+            grandTotal: (this.grandTotal).toFixed(2),
+            p_amountpaid:(selectedPurchaseData1.total_paid).toFixed(2),
         });
         if (this.productForm.value) {
             this.addItemEnabled = true;
@@ -559,7 +548,7 @@ export class StockInComponent {
                 this.itemOptionslist = res.data;
                 console.log('result:', res.data);
                 this.productForm.patchValue({
-                    grandTotal: this.grandTotal
+                    grandTotal: (this.grandTotal).toFixed(2)
                 });
             },
             error: (err) => console.log(err)
