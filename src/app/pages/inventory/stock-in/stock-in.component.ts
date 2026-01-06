@@ -23,8 +23,7 @@ import { InventoryService } from '@/core/services/inventory.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { CheckboxModule } from 'primeng/checkbox';
-import { Paginator } from 'primeng/paginator';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { AuthService } from '@/core/services/auth.service';
 import { DrowdownDetails } from '@/core/models/inventory.model';
 import { MessageService } from 'primeng/api';
@@ -363,7 +362,6 @@ export class StockInComponent {
         });
         this.backshow=false;
         this.productForm.get('p_amountpaid')?.enable();
-        // this.transationid='null';
         this.products = [];
         this.itemOptionslist = [];
         this.first = 0;
@@ -376,8 +374,6 @@ export class StockInComponent {
     }
 
     //GetdropdwonDetails Function
-    // itemOptions: any[] = [];          // For ITEM dropdown
-    // categoryOptions: any[] = [];      // For CATEGORY dropdown
     uomOptions: any[] = []; // For UOM dropdown
     vendorOptions: any[] = []; // For VENDOR dropdown
     purchaseIdOptions: any[] = []; // For PURCHASE ID dropdown
@@ -388,7 +384,6 @@ export class StockInComponent {
             p_username: 'admin',
             p_returntype: 'ITEM'
         };
-
         this.stockInService.getdropdowndetails(payload).subscribe({
             next: (res) => {
                 console.log(res);
@@ -420,8 +415,6 @@ export class StockInComponent {
                 this.transactionIdOptions = res.data;
 
                 const id = Number(res.data[0].tranpurchaseid);
-
-                // check if ID already exists in array
                 const exists = this.purchaseIdOptions.some((item) => item.purchaseid === id);
 
                 if (!exists) {

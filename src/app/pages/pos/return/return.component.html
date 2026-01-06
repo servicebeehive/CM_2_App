@@ -12,13 +12,6 @@
 
             <!-- 🏷 Product Info Section -->
             <div>
-                <!-- ✅ Changed to a 2-column grid for half-width fields -->
-                <!-- <div class="flex mb-3">
-                    <input type="text" pInputText placeholder="Search..." class="w-full p-inputtext" formControlName="globalFilter" (input)="applyGlobalFilter()" />
-                </div> -->
-                <!-- <div *ngIf="showGlobalSearch" class="mb-5">
-                        <app-global-filter  [(value)]="globalFilter" placeholder="Search Items..." (valueChange)="applyGlobalFilter()"></app-global-filter>
-                     </div> -->
                 <!-- Return Bill no -->
                 <div class="grid grid-cols-4 gap-x-8 gap-y-4 mb-2 w-full">
                     <div class="flex flex-col mb-1">
@@ -39,6 +32,7 @@
                             <span *ngIf="returnForm.get('returnBillNo')?.errors?.['required']">Return Bill No is required</span>
                         </small>
                     </div>
+                    
                     <!-- Bill no -->
                     <div class="flex flex-col mb-1">
                         <label class="font-medium">Invoice No</label>
@@ -59,20 +53,21 @@
                         </small>
                     </div>
 
-                    <!-- Customer Name -->
-                    <div class="flex flex-col mb-1">
-                        <label class="font-medium mb-1">Customer Name</label>
-                        <input pInputText formControlName="p_customername" placeholder="Customer Name" />
-                    </div>
-
                     <!-- Mobile No. -->
                     <div class="flex flex-col ">
                         <label class="font-medium mb-1">Mobile No.</label>
-                        <input pInputText type="number" formControlName="p_mobileno" placeholder="Mobile No." />
+                        <input pInputText type="number" formControlName="p_mobileno" placeholder="Mobile No." readonly />
                         <small class="text-red-500 ms-3 mt-1" *ngIf="returnForm.get('mobile')?.errors?.['pattern']">
                             <span *ngIf="returnForm.get('mobile')?.errors?.['pattern']">Please enter a valid 10-digit mobile number</span>
                         </small>
                     </div>
+
+                     <!-- Customer Name -->
+                    <div class="flex flex-col mb-1">
+                        <label class="font-medium mb-1">Customer Name</label>
+                        <input pInputText formControlName="p_customername" placeholder="Customer Name" readonly />
+                    </div>
+
                 </div>
                 @if(showBillno){
                   <div class="flex gap-2 items-center mt-4">

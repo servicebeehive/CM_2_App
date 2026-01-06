@@ -61,22 +61,22 @@ export class ItemReportComponent {
     first: number = 0;
     rowsPerPage: number = 5;
     globalFilter: string = '';
-    showData: boolean = false; 
-    
+    showData: boolean = false;
+
     categoryOptions = [];
     itemOptions = [];
     products: StockIn[] = [];
     filteredProducts: any[] = [];
-    columns:any[]=[];
-    
+    columns: any[] = [];
+
     reportTypeOptions: any[] = [
         { label: 'Item List', value: 'ITEMLIST' },
         { label: 'Out of Stock', value: 'OUTSTOCK' },
         { label: 'Low Stock', value: 'LOWSTOCK' },
-        { label: 'Most Saleable', value: 'MOSTSALEABLE'},
-        { label: 'Non-Active Item', value: 'NONACTIVE' },
+        { label: 'Most Saleable', value: 'MOSTSALEABLE' },
+        { label: 'Non-Active Item', value: 'NONACTIVE' }
     ];
-    
+
     constructor(
         private fb: FormBuilder,
         private inventoryService: InventoryService,
@@ -84,17 +84,17 @@ export class ItemReportComponent {
         private messageService: MessageService,
         private datePipe: DatePipe
     ) {}
-    
+
     ngOnInit(): void {
         this.reportForm = this.fb.group({
-            item: [{value: '', disabled: true}],
+            item: [{ value: '', disabled: true }],
             reportType: ['', Validators.required],
-            category: [{value: '', disabled: true}],
+            category: [{ value: '', disabled: true }]
         });
         this.setTableColumns();
         this.loadAllDropdowns();
-        
-        this.reportForm.get('reportType')?.valueChanges.subscribe(selected => {
+
+        this.reportForm.get('reportType')?.valueChanges.subscribe((selected) => {
             if (selected) {
                 this.reportForm.get('category')?.enable();
                 this.reportForm.get('item')?.enable();
@@ -105,38 +105,28 @@ export class ItemReportComponent {
             }
         });
     }
-    
+
     Onreturndropdowndetails() {
         const category = this.reportForm.controls['category'].value;
         const item = this.reportForm.controls['item'].value;
         const reportType = this.reportForm.controls['reportType'].value;
-        
-        console.log('Filters:', { category, item, reportType });
-        
         if (!reportType) {
             this.errorSuccess('Please select a Report Type.');
             return;
         }
-        
         const payload = {
-             
             p_categoryid: category || null,
             p_itemid: item || null,
             p_username: 'admin',
-            p_type: reportType || 'ITEMLIST',
-                
-                  
+            p_type: reportType || 'ITEMLIST'
         };
-        
-        this.showData = false; 
-        
+        this.showData = false;
         this.inventoryService.getupdatedata(payload).subscribe({
             next: (res: any) => {
                 console.log('API RESULT:', res.data);
                 this.products = res?.data || [];
                 this.filteredProducts = [...this.products];
-                this.showData = true; 
-                
+                this.showData = true;
                 if (this.products.length === 0) {
                     this.showSuccess('No Data Available for the selected filters.');
                 }
@@ -148,42 +138,34 @@ export class ItemReportComponent {
             }
         });
     }
-  
-   
-    
+
     onReportChange(event: any) {
         const reportType = event.value;
         if (!reportType) {
             this.products = [];
             this.filteredProducts = [];
-            this.showData = false; 
+            this.showData = false;
             return;
         }
     }
-    
+
     onCategoryItem(event: any) {
         const categoryId = event.value;
         this.reportForm.get('item')?.setValue(null);
-        
         if (!categoryId) {
             this.OnGetItem();
             return;
         }
-        
         this.categoryRelavantItem(categoryId);
     }
-    
+
     categoryRelavantItem(id: any) {
         this.itemOptions = [];
         const payload = {
-             
-            p_username: "admin",
-            p_returntype: "CATEGORY",
-            p_returnvalue: id.toString(),
-            
-             
+            p_username: 'admin',
+            p_returntype: 'CATEGORY',
+            p_returnvalue: id.toString()
         };
-        
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res: any) => {
                 if (!res.data || res.data.length === 0) {
@@ -198,28 +180,27 @@ export class ItemReportComponent {
             }
         });
     }
-    
+
     onPageChange(event: any) {
         this.first = event.first;
         this.rowsPerPage = event.rows;
     }
-    
+
     reset() {
         this.reportForm.reset();
         this.filteredProducts = [];
         this.products = [];
-        this.showData = false; 
+        this.showData = false;
         this.OnGetItem();
     }
-    
+
     createDropdownPayload(returnType: string) {
         return {
-             
             p_username: 'admin',
-            p_returntype: returnType,
+            p_returntype: returnType
         };
     }
-    
+
     OnGetItem() {
         const payload = this.createDropdownPayload('ITEMALL');
         this.inventoryService.getdropdowndetails(payload).subscribe({
@@ -227,7 +208,7 @@ export class ItemReportComponent {
             error: (err) => console.log(err)
         });
     }
-    
+
     OnGetCategory() {
         const payload = this.createDropdownPayload('CATEGORY');
         this.inventoryService.getdropdowndetails(payload).subscribe({
@@ -235,85 +216,85 @@ export class ItemReportComponent {
             error: (err) => console.log(err)
         });
     }
-    
+
     loadAllDropdowns() {
         this.OnGetCategory();
         this.OnGetItem();
     }
-   private setTableColumns(): void {
-    const formatDate = (dateValue: any): string => {
-        if (!dateValue) return '';
-        try {
-            const date = new Date(dateValue);
-            if (!isNaN(date.getTime())) {
-                return this.datePipe.transform(date, 'dd/MM/yyyy') || '';
-            }
-        } catch {}
-        return String(dateValue);
-    };
-    
-    this.columns = [
-        { fields: 'itemsku', header: 'Item Code' },
-        { fields: 'itemname', header: 'Item Name' },
-        { fields: 'categoryname', header: 'Category' },
-        { fields: 'currentstock', header: 'Stock' },
-        { fields: 'uomname', header: 'UOM' },
-        { fields: 'costprice', header: 'Cost Price' },
-        { fields: 'saleprice', header: 'MRP' },
-        { fields: 'gstitem', header: 'GST Item' },
-        { fields: 'isactive', header: 'Active' },
-        { fields: 'warrentyperiod', header: 'Warranty (in Mon)' },
-        { fields: 'location', header: 'Location' },
-        { fields: 'updatedby', header: 'Last Upd By' },
-        { fields: 'updatedon', header: 'Last Upd On', formatter: formatDate }
-    ];
-}
 
-    downloadExcel(){
-       if(!this.filteredProducts || this.filteredProducts.length===0){
-        this.errorSuccess('No data available to download.');
-        return;
-       }
-       const csvContent= this.generateCSV();
+    private setTableColumns(): void {
+        const formatDate = (dateValue: any): string => {
+            if (!dateValue) return '';
+            try {
+                const date = new Date(dateValue);
+                if (!isNaN(date.getTime())) {
+                    return this.datePipe.transform(date, 'dd/MM/yyyy') || '';
+                }
+            } catch {}
+            return String(dateValue);
+        };
+
+        this.columns = [
+            { fields: 'itemsku', header: 'Item Code' },
+            { fields: 'itemname', header: 'Item Name' },
+            { fields: 'categoryname', header: 'Category' },
+            { fields: 'currentstock', header: 'Stock' },
+            { fields: 'uomname', header: 'UOM' },
+            { fields: 'costprice', header: 'Cost Price' },
+            { fields: 'saleprice', header: 'MRP' },
+            { fields: 'gstitem', header: 'GST Item' },
+            { fields: 'isactive', header: 'Active' },
+            { fields: 'warrentyperiod', header: 'Warranty (in Mon)' },
+            { fields: 'location', header: 'Location' },
+            { fields: 'updatedby', header: 'Last Upd By' },
+            { fields: 'updatedon', header: 'Last Upd On', formatter: formatDate }
+        ];
+    }
+
+    downloadExcel() {
+        if (!this.filteredProducts || this.filteredProducts.length === 0) {
+            this.errorSuccess('No data available to download.');
+            return;
+        }
+        const csvContent = this.generateCSV();
         this.downloadFile(csvContent, 'text/csv;charset=utf-8;', '.csv');
-        
+
         this.showSuccess('Excel file downloaded successfully!');
     }
-     
-    private generateCSV():string{
-         const headers = this.columns.map(col => this.escapeCSV(col.header));
-    const headerRow = headers.join(',');
-    
-    // Create data rows
-    const dataRows = this.filteredProducts.map(item => {
-        const row = this.columns.map(col => {
-            const value = item[col.fields];
-            const formattedValue = col.formatter ? col.formatter(value) : value;
-            return this.escapeCSV(formattedValue);
+
+    private generateCSV(): string {
+        const headers = this.columns.map((col) => this.escapeCSV(col.header));
+        const headerRow = headers.join(',');
+
+        // Create data rows
+        const dataRows = this.filteredProducts.map((item) => {
+            const row = this.columns.map((col) => {
+                const value = item[col.fields];
+                const formattedValue = col.formatter ? col.formatter(value) : value;
+                return this.escapeCSV(formattedValue);
+            });
+            return row.join(',');
         });
-        return row.join(',');
-    });
-    
-    // Combine header and data rows
-    return [headerRow, ...dataRows].join('\n');
+        // Combine header and data rows
+        return [headerRow, ...dataRows].join('\n');
     }
-    private escapeCSV(value:any):string{
-        if(value===null || value === undefined || value===''){
+    private escapeCSV(value: any): string {
+        if (value === null || value === undefined || value === '') {
             return '';
         }
         const stringValue = String(value);
-        const escapedValue = stringValue.replace(/"/g,'""');
-        if(/[,"\n\r]/.test(escapedValue)){
+        const escapedValue = stringValue.replace(/"/g, '""');
+        if (/[,"\n\r]/.test(escapedValue)) {
             return `"${escapedValue}"`;
         }
         return escapedValue;
     }
-    private downloadFile(data:string,mimeType:string,extension:string){
-        const blob=new Blob([data],{type:mimeType});
-        const url= window.URL.createObjectURL(blob);
-        const link=document.createElement('a');
-        link.href=url;
-        link.download=this.generateFileName() + extension;
+    private downloadFile(data: string, mimeType: string, extension: string) {
+        const blob = new Blob([data], { type: mimeType });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = this.generateFileName() + extension;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -324,42 +305,42 @@ export class ItemReportComponent {
         const category = this.reportForm.get('category')?.value;
         const item = this.reportForm.get('item')?.value;
         const currentDate = this.datePipe.transform(new Date(), 'yyyy-MM-dd_HH-mm');
-        
+
         let fileName = `${reportType}_Report_${currentDate}`;
-        
+
         if (category) {
             fileName += `_Category_${category}`;
         }
-        
+
         if (item) {
             fileName += `_Item_${item}`;
         }
-        
+
         return fileName;
     }
-    onDownloadClick(){
-    if(this.reportForm.invalid){
-        this.errorSuccess('Please fill all required fields before downloading.');
-        return;
-    }
-    
-    if(!this.filteredProducts || this.filteredProducts.length === 0){
-        if(!this.showData){
-            this.errorSuccess('Please click "Display" first to load data before downloading.');
+    onDownloadClick() {
+        if (this.reportForm.invalid) {
+            this.errorSuccess('Please fill all required fields before downloading.');
             return;
-        } else {
-            this.errorSuccess('No data available to download.');
-            return; 
         }
+
+        if (!this.filteredProducts || this.filteredProducts.length === 0) {
+            if (!this.showData) {
+                this.errorSuccess('Please click "Display" first to load data before downloading.');
+                return;
+            } else {
+                this.errorSuccess('No data available to download.');
+                return;
+            }
+        }
+
+        this.downloadExcel();
     }
-    
-    this.downloadExcel(); 
-}
 
     showSuccess(message: string) {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
     }
-    
+
     errorSuccess(message: string) {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: message });
     }

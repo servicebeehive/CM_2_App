@@ -29,18 +29,7 @@
                         <!-- Item -->
                         <div class="flex flex-col">
                             <label class="font-medium mb-1">Item</label>
-                            <p-dropdown
-                                [options]="itemOptions"
-                                optionLabel="itemcombine"
-                                optionValue="itemid"
-                                [filter]="true"
-                                filterPlaceholder="Search Item"
-                                formControlName="item"
-                                placeholder="Item"
-                                [showClear]="true"
-                                
-                            >
-                            </p-dropdown>
+                            <p-dropdown [options]="itemOptions" optionLabel="itemcombine" optionValue="itemid" [filter]="true" filterPlaceholder="Search Item" formControlName="item" placeholder="Item" [showClear]="true"> </p-dropdown>
                         </div>
 
                         <div class="flex flex-col">
@@ -54,7 +43,7 @@
                     </div>
                     <!-- RIGHT SIDE (Reset + Save) -->
                     <div class="flex gap-4 w-[200px]">
-                        <button pButton type="submit" label="Submit" [disabled]="updateForm.invalid&&filteredProducts.length>0" class="p-button-warning w-full"></button>
+                        <button pButton type="submit" label="Submit" [disabled]="updateForm.invalid && filteredProducts.length > 0" class="p-button-warning w-full"></button>
                         <button pButton type="button" label="Reset" class="p-button-secondary w-full" (click)="reset()"></button>
                     </div>
                 </div>
@@ -89,7 +78,7 @@
                                 <td>{{ row.uomname }}</td>
                                 <td>{{ row.totalstock }}</td>
                                 <td>{{ row.batch_available }}</td>
-                                <td>{{ row.batchdate | date:'dd-MM-yyyy'}}</td>
+                                <td>{{ row.batchdate | date: 'dd-MM-yyyy' }}</td>
                                 <td>{{ row.costprice }}</td>
                                 <td>
                                     <div class="grid items-center gap-2"><input class="w-[100px]" type="number" pInputText [min]="1" placeholder="{{ row.saleprice }}" [formControl]="row.mrpControl" (keydown)="blockMinus($event)" /></div>
@@ -101,13 +90,8 @@
                                 <!-- Adj Type -->
                                 <td>
                                     <div class="grid items-center gap-2">
-                                        <p-dropdown class="w-[120px]" [options]="adjustment" optionLabel="label" optionValue="value" [filter]="true" type="number" appendTo="body" [formControl]="row.adjustmentControl" placeholder="{{ row.adjtype }}"> </p-dropdown>
-
-                                        <!-- 
-                                        <span class="text-red-500" 
-                                              *ngIf="row.adjtype.touched && row.quantityControl.hasError('greaterThanStock')">
-                                           Adj type cannot be greater than current stock ({{ row.curStock }}).
-                                        </span> -->
+                                        <p-dropdown class="w-[120px]" [options]="adjustment" optionLabel="label" optionValue="value" [filter]="true" type="number" appendTo="body" [formControl]="row.adjustmentControl" placeholder="{{ row.adjtype }}">
+                                        </p-dropdown>
                                     </div>
                                 </td>
 
@@ -115,19 +99,8 @@
                                 <td>
                                     <div class="grid items-center gap-2">
                                         <input pInputText type="number" class="w-[70px]" [min]="1" [formControl]="row.quantityControl" placeholder="{{ row.quantity }}" (keydown)="blockMinus($event)" />
-
-                                        <!-- <small class="text-red-500" *ngIf="row.quantityControl.touched && row.quantityControl.errors?.['required']"> Quantity is required. </small> -->
-
-                                        <!-- ERROR: Quantity must be greater than 0 -->
                                         <small class="text-red-500" *ngIf="row.quantityControl.touched && row.quantityControl.errors?.['min']"> Quantity must be greater than 0. </small>
-
-                                        <!-- ERROR: Quantity exceeds batch -->
                                         <small class="text-red-500" *ngIf="row.quantityControl.touched && row.quantityControl.errors?.['greaterThanBatch']"> Quantity cannot be greater than batch available ({{ row.batch_available }}). </small>
-
-                                        <!--  <span class="text-red-500" 
-                                              *ngIf="row.quantityControl.touched && row.quantityControl.hasError('greaterThanStock')">
-                                            Quantity cannot be greater than current stock ({{ row.curStock }}).
-                                        </span> -->
                                     </div>
                                 </td>
                             </tr>
@@ -142,5 +115,4 @@
         </form>
     </div>
 </div>
-
 <p-confirmDialog></p-confirmDialog>

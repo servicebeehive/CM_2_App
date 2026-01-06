@@ -1,7 +1,6 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, ElementRef, HostListener, QueryList, ViewChild, ViewChildren, inject } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
-
 import { ButtonModule } from 'primeng/button';
 import { ChipModule } from 'primeng/chip';
 import { EditorModule } from 'primeng/editor';
@@ -11,7 +10,6 @@ import { InputTextModule } from 'primeng/inputtext';
 import { RippleModule } from 'primeng/ripple';
 import { SelectModule } from 'primeng/select';
 import { Dropdown, DropdownModule } from 'primeng/dropdown';
-import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { TableModule } from 'primeng/table';
 import { TextareaModule } from 'primeng/textarea';
 import { MessageModule } from 'primeng/message';
@@ -23,7 +21,6 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { CheckboxModule } from 'primeng/checkbox';
 import { AddinventoryComponent } from '@/pages/inventory/addinventory/addinventory.component';
-import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
 import { AuthService } from '@/core/services/auth.service';
 import { OrderService } from '@/core/services/order.service';
 import { ShareService } from '@/core/services/shared.service';
@@ -52,9 +49,6 @@ import { Router } from '@angular/router';
         DialogModule,
         ConfirmDialogModule,
         CheckboxModule
-        // NgxPrintModule
-        // AddinventoryComponent,
-        // GlobalFilterComponent
     ],
     templateUrl: './sales.component.html',
     styleUrl: './sales.component.scss',
@@ -127,10 +121,6 @@ export class SalesComponent {
             this.barcodeInput.nativeElement.focus();
         }
     }
-    // @HostListener('window:click')
-    // keepBarcodeFocus() {
-    //   this.barcodeInput?.nativeElement?.focus();
-    // }
 
     keepBarcodeFocus(event: MouseEvent) {
         const target = event.target as HTMLElement;
@@ -250,7 +240,6 @@ export class SalesComponent {
                 p_creditnoteno: [''],
                 p_paymentmode: [''],
                 UomName: [''],
-                HsnCode: [''],
                 sgst_9: [''],
                 tax_18: [''],
                 cgst_9: [''],
@@ -276,7 +265,6 @@ export class SalesComponent {
             } else {
                 this.discountplace = 'Enter %';
             }
-            //  this.salesForm.get('p_overalldiscount')?.setValue('', { emitEvent: false });
             this.applyDiscount();
         });
         const navigation = history.state;
@@ -349,7 +337,7 @@ export class SalesComponent {
             warPeriod: [data?.warrentyperiod || 0],
             location: [data?.location || ''],
             itemsku: [data?.itemsku || ''],
-
+            hsncode: [data?.hsncode],
             apiCost: [0] // ⭐ IMPORTANT ⭐
         });
     }
@@ -373,6 +361,7 @@ export class SalesComponent {
                     curStock: item.current_stock || 0,
                     warPeriod: item.warrenty || 0,
                     location: '',
+                    hsncode: item.hsncode,
                     itemsku: item.itemsku || ''
                 })
             );
@@ -456,7 +445,7 @@ export class SalesComponent {
             cgst_9: data.cgst_9 || 0,
             amount_before_tax: data.amount_before_tax || 0
         });
-       
+
         this.saleArray.clear();
 
         // Add items to FormArray
@@ -477,6 +466,7 @@ export class SalesComponent {
                         curStock: item.current_stock || 0,
                         warPeriod: item.warrenty || 0,
                         location: '',
+                        hsncode: item.hsncode,
                         itemsku: item.itemsku || '',
                         apiCost: (item.quantity || 1) * (item.itemcost || 0)
                     })
@@ -934,7 +924,6 @@ export class SalesComponent {
             p_isactive: 'Y',
             p_linktransactionid: 0,
             p_creditnoteno: body.p_deliveryboy || '',
-            // p_replacesimilir: body.p_replacesimilir || "",
             p_replacesimilir: body.p_disctype === true ? 'Y' : 'N',
             p_discounttype: body.p_disctype === true ? 'Y' : 'N',
             p_paymentmode: body.p_paymode,
@@ -948,6 +937,7 @@ export class SalesComponent {
                 itemcost: x.itemcost,
                 warrenty: x.warPeriod,
                 MRP: x.MRP,
+                hsncode: x.hsncode,
                 totalPayable: x.totalPayable,
                 currentstock: x.curStock
             }))
@@ -974,7 +964,7 @@ export class SalesComponent {
                         status: 'Done'
                     });
                 }
-                console.log('uom',this.salesForm.get('p_sale')?.value);
+                console.log('uom', this.salesForm.get('p_sale')?.value);
                 setTimeout(() => {
                     if (this.billValue) {
                         const currentBill = this.billValue.find((bill: any) => bill.billno === billno);
@@ -1035,56 +1025,8 @@ export class SalesComponent {
     showSuccess(message: string) {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
     }
-    // OnUMO(value: any, index: number, uomValue?: string) {
-    //     let apibody = {
-    //         ...this.getUserDetails,
-    //         p_returntype: 'SALEUOM',
-    //         p_returnvalue: value
-    //     };
-    //     console.log('values', value, index);
 
-    //     this.salesService.Getreturndropdowndetails(apibody).subscribe({
-    //         next: (res) => {
-                
-    //             this.uomlist[index] = res.data;
-    //             const row = this.saleArray.at(index);
-    //             const firstUom = this.uomlist[index][0];
-    //             const uomArray = res.data;
-    //             if (firstUom && firstUom > 0) {
-    //                 row.patchValue({
-    //                     UOMId: firstUom.fieldid,
-    //                     UomName:firstUom.fieldname
-    //                 });
-    //             }
-    //             if (uomArray && uomArray.length > 0) {
-    //                 console.log('uomindex', uomArray);
-    //                 let matchUom = this.uomlist[index].find((uom: any) => uom.fieldname === uomValue);
-    //                 console.log('match', matchUom);
-    //                 //   this.salesForm.controls['UomName'].setValue(matchUom.fieldname)
-    //                 if (uomValue) {
-    //                     row.patchValue({
-    //                         UOMId: matchUom.fieldid,
-    //                         UomName: matchUom.fieldname
-    //                     });
-    //                 }
-    //                 console.log("gshdxj",this.Uomid)
-    //                 // if (this.Uomid) {
-    //                 //     const select = uomArray.filter((u: any) => u.fieldid === this.Uomid);
-    //                 //     console.log('select', select);
-    //                 //      row.patchValue({
-    //                 //         UOMId: select.fieldid,
-    //                 //         UomName: select.fieldname
-    //                 //     });
-    //                 // }
-    //                 console.log('UOMNAME', this.salesForm.get('UomName')?.value);
-    //                 // ⭐ Immediately calculate MRP + TOTAL + COST
-    //                 this.calculateMRP(index);
-    //             }
-    //         }
-    //     });
-    // }
-OnUMO(value: any, index: number, uomValue?: string) {
-
+    OnUMO(value: any, index: number, uomValue?: string) {
         const apibody = {
             ...this.getUserDetails,
             p_returntype: 'SALEUOM',
@@ -1093,11 +1035,10 @@ OnUMO(value: any, index: number, uomValue?: string) {
 
         this.salesService.Getreturndropdowndetails(apibody).subscribe({
             next: (res) => {
-
                 if (!res?.data || res.data.length === 0) {
                     return;
                 }
-                
+
                 this.uomlist[index] = [...res.data];
 
                 const row = this.saleArray.at(index);
@@ -1105,10 +1046,7 @@ OnUMO(value: any, index: number, uomValue?: string) {
                 let selectedUom = null;
 
                 if (uomValue) {
-                    selectedUom = this.uomlist[index]
-                        .find((u: any) =>
-                            u.fieldid == uomValue || u.fieldname == uomValue
-                        );
+                    selectedUom = this.uomlist[index].find((u: any) => u.fieldid == uomValue || u.fieldname == uomValue);
                 }
 
                 if (!selectedUom && !row.get('UOMId')?.value) {
@@ -1174,26 +1112,10 @@ OnUMO(value: any, index: number, uomValue?: string) {
         });
     }
 
-    // UOMId(event: any, index: number) {
-    //     const row = this.saleArray.at(index);
-
-    //     // Get current row data
-    //     const rowData = {
-    //         ItemId: row.get('ItemId')?.value,
-    //         UOMId: event.value
-    //     };
-    //     this.Uomid = event.value.UOMId;
-    //     console.log(this.Uomid);
-    //     console.log('calculate mrp:', event.value);
-    //      this.OnUMO(rowData.ItemId, index, event.value.fieldname);
-    //     this.OngetcalculatedMRP(event.value, index);
-    // }
     UOMId(event: any, index: number) {
-
         const row = this.saleArray.at(index);
 
-        const selectedUom = this.uomlist[index]
-            ?.find((u: any) => u.fieldid === event.value);
+        const selectedUom = this.uomlist[index]?.find((u: any) => u.fieldid === event.value);
 
         if (!selectedUom) return;
 
