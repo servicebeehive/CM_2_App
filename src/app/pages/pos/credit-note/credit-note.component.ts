@@ -165,15 +165,20 @@ export class CreditNoteComponent {
         }, 0);
     }
 
-    reset() {
-        this.CreditForm.reset();
-        this.saleArray.clear();
-        this.replacecednlist = [];
-        this.replacecednlist = this.stroeitemlist;
-        // let datalist:[]=[]
-        // this.onSelectionChange(datalist)
-        this.selectedItems = [];
+ reset() {
+    this.CreditForm.reset();
+    this.saleArray.clear();
+    this.replacecednlist = [...this.stroeitemlist];
+    if (this.selectedItems && this.selectedItems.length > 0) {
+        const selectedIds = this.selectedItems
+            .map(item => item.transactiondetailid || item.id)
+            .filter(id => id != null);
+        this.replacecednlist = this.replacecednlist.filter(item => 
+            !selectedIds.includes(item.transactiondetailid || item.itemid)
+        );
     }
+    this.selectedItems = [];
+}
     createDropdownPayload(returnType: string) {
         return {
             p_returntype: returnType
@@ -231,7 +236,6 @@ export class CreditNoteComponent {
         delete (apibody as any).p_loginuser;
         this.prouctsaleservice.getdropdowndetails(apibody).subscribe({
             next: (res) => {
-                console.log('ondnn', res.data);
                 const creditstore: any = res.data;
                 this.debittnotList = creditstore;
             }
@@ -247,8 +251,6 @@ export class CreditNoteComponent {
             rejectButtonStyleClass: 'p-button-secondary',
             accept: () => {
                 this.selectedItems = [...this.saleArray.value];
-                console.log('seleected:', this.selectedItems);
-
                 this.accpatHeaderCreate(this.saleArray.value, type);
             }
         });
@@ -288,7 +290,6 @@ export class CreditNoteComponent {
             next: (res) => {
                 if (res.data[0].billno != null) {
                     this.OnDNN();
-                    console.log('seleectedsdjds:', this.CreditForm.value.p_sale);
                     this.RetunCredit({ value: res.data[0].billno });
                     this.CreditForm.patchValue({
                         p_debitNote: res.data[0].billno
