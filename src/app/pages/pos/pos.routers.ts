@@ -5,6 +5,7 @@ import { ReplaceComponent } from "./replace/replace.component";
 import { CreditNoteComponent } from "./credit-note/credit-note.component";
 import { InvoiceComponent } from "./invoice/invoice.component";
 
+
 export default[
 {path: 'sales', component:SalesComponent},
 {path:'return', component:ReturnComponent},

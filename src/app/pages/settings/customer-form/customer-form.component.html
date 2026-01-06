@@ -1,0 +1,234 @@
+<div class="card p-6">
+  <div class="flex justify-between items-center mb-6">
+    <span class="block text-surface-900 font-bold text-xl mb-6">Customer Master</span>
+
+    <div class="flex gap-4">
+      <button
+        pButton
+        *ngIf="loggedInUserRole==='Admin'"
+        type="button"
+        label="Add User"
+        icon="pi pi-plus"
+        class="p-button-warning"
+        (click)="openUserDialog()"
+      ></button>
+    </div>
+  </div>
+
+<!-- 🔍 Compact Global Search Section -->
+   <div  class="mb-3 w-full" *ngIf="showGlobalSearch">
+                        <app-global-filter  [(value)]="globalFilter" placeholder="Search Items..." (valueChange)="applyGlobalFilter()"></app-global-filter>
+                     </div>
+
+
+  <!-- 📋 User Table -->
+  <p-table
+    [value]="filteredUser"
+    dataKey="id"
+    [paginator]="true"
+    [rows]="5"
+    [rowsPerPageOptions]="[5, 10, 20]"
+    [responsiveLayout]="'scroll'"
+    class="p-datatable-gridlines mt-6"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th>State</th>
+        <th>City</th>
+        <th>Name</th>
+        <th>Mobile</th>
+        <th>Active</th>
+        <th class="text-center">Action</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-user>
+      <tr>
+        <td>{{ user.usertypename }}</td>
+        <td>{{ user.username }}</td>
+        <td>{{ user.fullname}}</td>
+        <td>{{ user.phone }}</td>
+        <td>{{ user.email }}</td>
+        <td>{{ user.isactive }}</td>
+        <td class="text-center">
+          <i
+            class="pi pi-pencil cursor-pointer text-blue-500"
+            (click)="openEditDialog(user)"
+          ></i>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="paginatorleft">
+      <div class="text-gray-600 ms-2">
+        Total Users: {{ filteredUser?.length || 0 }}
+      </div>
+    </ng-template>
+  </p-table>
+
+  <!-- ✳️ Add/Edit User Dialog -->
+  <p-dialog
+    header="{{ editMode ? 'Edit User' : 'Add User' }}"
+    [(visible)]="visibleDialog"
+    [modal]="true"
+    [style]="{ width: '60vw' }"
+    [draggable]="false"
+    [resizable]="false"
+  >
+    <form [formGroup]="userForm" (ngSubmit)="onSubmit()" class="space-y-6">
+      <div class="grid grid-cols-2 gap-x-6 gap-y-4">
+        <!-- Customer Name -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Name <span class="text-red-500">*</span></label>
+          <input pInputText formControlName="customername" placeholder="Customer Name" />
+          <small class="text-red-500 mt-1" *ngIf="userForm.get('customername')?.touched && userForm.get('customername')?.invalid">
+            Customer Name is required
+          </small>
+        </div>
+
+        <!-- Customer Address -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Address <span class="text-red-500">*</span></label>
+          <input pInputText formControlName="customeraddress" placeholder="Customer Address" />
+          <small class="text-red-500 mt-1" *ngIf="userForm.get('customeraddress')?.touched && userForm.get('customeraddress')?.invalid">
+            Customer Address is required
+          </small>
+        </div>
+
+        <!-- Customer Country -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Country <span class="text-red-500">*</span></label>
+          <p-dropdown
+            [options]="userRoleOptions"
+            optionLabel="fieldname"
+            optionValue="fieldid"
+            formControlName="customercountry"
+            placeholder="Select Country"
+          ></p-dropdown>
+          <small class="text-red-500 mt-1" *ngIf="userForm.get('customercountry')?.touched && userForm.get('customercountry')?.invalid">
+            Country is required
+          </small>
+        </div>
+
+         <!-- Customer State -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">State <span class="text-red-500">*</span></label>
+          <p-dropdown
+            [options]="userRoleOptions"
+            optionLabel="fieldname"
+            optionValue="fieldid"
+            formControlName="customerstate"
+            placeholder="Select State"
+          ></p-dropdown>
+          <small class="text-red-500 mt-1" *ngIf="userForm.get('customerstate')?.touched && userForm.get('customerstate')?.invalid">
+            State is required
+          </small>
+        </div>
+
+         <!-- Customer City -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">City <span class="text-red-500">*</span></label>
+          <p-dropdown
+            [options]="userRoleOptions"
+            optionLabel="fieldname"
+            optionValue="fieldid"
+            formControlName="customercity"
+            placeholder="Select City"
+          ></p-dropdown>
+          <small class="text-red-500 mt-1" *ngIf="userForm.get('customercity')?.touched && userForm.get('customercity')?.invalid">
+            City is required
+          </small>
+        </div>
+
+        <!-- Customer Pincode -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Pincode <span class="text-red-500">*</span></label>
+          <input pInputText formControlName="customerpincode" placeholder="Pincode" />
+          <small class="text-red-500 mt-1" *ngIf="userForm.get('customerpincode')?.touched && userForm.get('customerpincode')?.invalid">
+            Pincode is required
+          </small>
+        </div>
+
+
+        <!-- Mobile -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Mobile <span class="text-red-500">*</span></label>
+          <input
+            pInputText
+            type="text"
+            formControlName="customerphone"
+            maxlength="10"
+            placeholder="Mobile"
+            (keypress)="allowOnlyDigits($event)"
+          />
+          <small class="text-red-500 mt-1" *ngIf="userForm.get('customerphone')?.touched && userForm.get('customerphone')?.invalid">
+            Enter a valid 10-digit mobile number
+          </small>
+        </div>
+
+        <!-- Email -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Email <span class="text-red-500">*</span></label>
+          <input pInputText type="email" formControlName="customeremail" placeholder="Email" />
+          <small class="text-red-500 mt-1" *ngIf="userForm.get('customeremail')?.touched && userForm.get('customeremail')?.invalid">
+            Enter a valid email address
+          </small>
+        </div>
+
+         <!-- Customer GST -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">GST No <span class="text-red-500">*</span></label>
+          <input pInputText formControlName="customergst" placeholder="GST No" />
+          <small class="text-red-500 mt-1" *ngIf="userForm.get('customergst')?.touched && userForm.get('customergst')?.invalid">
+            GST No is required
+          </small>
+        </div>
+
+ <!-- Customer Contact Name -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Contact Name <span class="text-red-500">*</span></label>
+          <input pInputText formControlName="customercontactname" placeholder="Customer Contact Name" />
+          <small class="text-red-500 mt-1" *ngIf="userForm.get('customercontactname')?.touched && userForm.get('customercontactname')?.invalid">
+            Customer Name is required
+          </small>
+        </div>
+
+         <!--Contact Mobile -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Contact Mobile <span class="text-red-500">*</span></label>
+          <input
+            pInputText
+            type="text"
+            formControlName="customercontactphone"
+            maxlength="10"
+            placeholder="Contact Mobile"
+            (keypress)="allowOnlyDigits($event)"
+          />
+          <small class="text-red-500 mt-1" *ngIf="userForm.get('customercontactphone')?.touched && userForm.get('customercontactphone')?.invalid">
+            Enter a valid 10-digit mobile number
+          </small>
+        </div>
+
+        <!--Contact Email -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Contact Email <span class="text-red-500">*</span></label>
+          <input pInputText type="email" formControlName="customercontactemail" placeholder="Contact Email" />
+          <small class="text-red-500 mt-1" *ngIf="userForm.get('customercontactemail')?.touched && userForm.get('customercontactemail')?.invalid">
+            Enter a valid email address
+          </small>
+        </div>
+
+        <!-- Active -->
+        <div class="flex gap-3 mt-9">
+          <p-checkbox formControlName="checked" [binary]="true"></p-checkbox>
+          <label class="font-medium">Active</label>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-4 mt-6">
+        <button pButton type="button" label="Cancel" class="p-button-secondary" (click)="closeDialog()"></button>
+        <button pButton type="submit" label="Submit" class="p-button-warning" [disabled]="userForm.invalid"></button>
+      </div>
+    </form>
+  </p-dialog>
+
+  <p-confirmDialog></p-confirmDialog>
+</div>

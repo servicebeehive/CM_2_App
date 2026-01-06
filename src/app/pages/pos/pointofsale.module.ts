@@ -20,8 +20,6 @@ import { TableModule } from "primeng/table";
 import { TextareaModule } from "primeng/textarea";
 import { ToggleSwitchModule } from "primeng/toggleswitch";
 
-
-
 @NgModule({
     declarations:[],
     imports:[CommonModule,

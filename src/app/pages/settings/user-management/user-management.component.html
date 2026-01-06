@@ -169,7 +169,7 @@
             type="text"
             formControlName="p_phone"
             maxlength="10"
-            placeholder="mobile"
+            placeholder="Mobile"
             (keypress)="allowOnlyDigits($event)"
           />
           <small class="text-red-500 mt-1" *ngIf="userForm.get('p_phone')?.touched && userForm.get('p_phone')?.invalid">

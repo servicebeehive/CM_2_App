@@ -123,7 +123,7 @@ clearBarcodeInput() {
     this.barcodeInput.nativeElement.focus();
   }
 }
-@HostListener('window:click')
+
 keepBarcodeFocus() {
   this.barcodeInput?.nativeElement?.focus();
 }
