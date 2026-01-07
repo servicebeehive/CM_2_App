@@ -50,7 +50,8 @@
 
                 <!-- TABLE -->
                 <div class="mt-6">
-                    <p-table [value]="filteredProducts" dataKey="code" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 20, 50]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines mt-6">
+                    <p-table [value]="filteredProducts" dataKey="code" [paginator]="true" [rows]="10" 
+[rowsPerPageOptions]="[10, 20, 50]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines mt-6">
                         <!-- HEADER -->
                         <ng-template pTemplate="header">
                             <tr class="bg-yellow-400">

@@ -80,10 +80,11 @@
                         [value]="saleArray.controls"
                         dataKey="ItemId"
                         selectionMode="multiple"
+                        [totalRecords]="saleArray.controls.length" 
                         [(selection)]="selectedProducts"
                         [paginator]="true"
                         [rows]="10"
-                        [rowsPerPageOptions]="[5, 10, 20, 50]"
+                        [rowsPerPageOptions]="[ 10, 20, 50]"
                         [responsiveLayout]="'scroll'"
                         class="p-datatable-gridlines mt-6"
                     >
@@ -137,7 +138,7 @@
                             </tr>
                         </ng-template>
                         <ng-template pTemplate="paginatorleft">
-                            <div class="text-gray-600 ms-2">Total Items:{{ saleArray.length || 0 }}</div>
+                            <div class="text-gray-600 ms-2">Total Items:{{ saleArray.controls.length || 0 }}</div>
                         </ng-template>
                     </p-table>
                 </div>
