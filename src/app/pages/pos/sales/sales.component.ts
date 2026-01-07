@@ -151,7 +151,7 @@ export class SalesComponent {
     mode: 'add' | 'edit' = 'add';
     pagedProducts: StockIn[] = [];
     first: number = 0;
-    rowsPerPage: number = 5;
+    rowsPerPage: number = 10;
     products: StockIn[] = [];
     today: Date = new Date();
     submitDisabledByBill: boolean = false;
@@ -392,7 +392,7 @@ export class SalesComponent {
             event.preventDefault();
         }
     }
-
+ 
     // -----------------------------
     //  Dropdown / Data Loading
     // -----------------------------

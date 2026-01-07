@@ -21,7 +21,7 @@ type Payment = {
                 Monthly Payments
             </div>
 
-            <p-table [value]="payments" [rows]="5" dataKey="id">
+            <p-table [value]="payments" [rows]="10" dataKey="id">
                 <ng-template #header>
                     <tr>
                         <th>Name</th>

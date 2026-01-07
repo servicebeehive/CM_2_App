@@ -179,8 +179,8 @@
         <div class="mt-4 md:mt-6">
             <input #barcodeInput type="text" class="absolute opacity-0 pointer-events-none" placeholder="Type barcode / SKU and press Enter" (keydown.enter)="onBarcodeScan($event)" />
 
-            <div class="overflow-x-auto">
-                <p-table [value]="saleArray.controls" dataKey="ItemId" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="5" [rowsPerPageOptions]="[5, 10, 20, 50]" class="p-datatable-gridlines sale-report">
+            <div>
+                <p-table [value]="saleArray.controls" dataKey="ItemId" [totalRecords]="saleArray.controls.length" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" appendTo="body" class="p-datatable-gridlines sale-report">
                     <!-- HEADER -->
                     <ng-template pTemplate="header">
                         <tr class="bg-yellow-400">
@@ -249,8 +249,8 @@
                     </ng-template>
 
                     <!-- FOOTER TEXT -->
-                    <ng-template pTemplate="paginatorleft" tabindex="-1">
-                        <div class="text-gray-600 ms-2 text-xs md:text-sm">Total Items: {{ saleArray.length }}</div>
+                    <ng-template pTemplate="paginatorleft"  appendTo="body">
+                        <div class="text-gray-600 ms-2 text-xs md:text-sm">Total Items: {{ saleArray.controls.length }}</div>
                     </ng-template>
                 </p-table>
             </div>

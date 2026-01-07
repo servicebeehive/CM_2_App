@@ -33,4 +33,11 @@
     right: auto !important;
     box-shadow: none !important;
   }
+
 }
+/* Force paginator rows-per-page dropdown to behave like appendTo="body" */
+.p-paginator .p-dropdown-panel {
+  position: fixed !important;
+  z-index: 10000 !important;
+}
+
