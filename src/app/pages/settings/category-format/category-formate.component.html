@@ -1,13 +1,16 @@
 <div class="card p-6">
   <div class="flex justify-between items-center mb-6">
-    <span class="block text-surface-900 font-bold text-xl mb-6">Category Master</span>
-
+    <span class="block text-surface-900 font-bold text-xl mb-6">{{pageTitle}}</span>
+    
     <div class="flex gap-4">
+     <form [formGroup]="masterForm">
+       <p-dropdown [options]="masterOption" optionLabel="label" optionValue="value" formControlName="master" placeholder="Setect Master"></p-dropdown>
+       </form>
       <button
         pButton
         *ngIf="loggedInUserRole==='Admin'"
         type="button"
-        label="Add User"
+        label="{{addButtonLabel}}"
         icon="pi pi-plus"
         class="p-button-warning"
         (click)="openUserDialog()"
@@ -23,7 +26,7 @@
 
   <!-- 📋 User Table -->
   <p-table
-    [value]="filteredUser"
+    [value]="filterMaster"
     dataKey="id"
     [paginator]="true"
     [rows]="5"
@@ -33,51 +36,48 @@
   >
     <ng-template pTemplate="header">
       <tr>
-        <th>Name</th>
-        <th>Description</th>
-        <th>Active</th>
+        @for (col of tableColumns; track $index){
+       <th>{{col.header}}</th>
+        }
         <th>Action</th>
-      </tr>
+      </tr>  
     </ng-template>
-    <ng-template pTemplate="body" let-user>
+    <ng-template pTemplate="body" let-row>
       <tr>
-        <td>{{ user.usertypename }}</td>
-        <td>{{ user.username }}</td>
-        <td>{{ user.fullname}}</td>
-        <td>{{ user.phone }}</td>
-        <td>{{ user.email }}</td>
-        <td>{{ user.isactive }}</td>
+      @for(col of tableColumns; track $index){
+       <td>{{row[col.field]}}</td>
+      }
         <td class="text-center">
           <i
             class="pi pi-pencil cursor-pointer text-blue-500"
-            (click)="openEditDialog(user)"
+            (click)="openEditDialog(row)"
           ></i>
         </td>
       </tr>
     </ng-template>
     <ng-template pTemplate="paginatorleft">
       <div class="text-gray-600 ms-2">
-        Total Users: {{ filteredUser?.length || 0 }}
+        Total Users: {{ filterMaster?.length || 0 }}
       </div>
     </ng-template>
   </p-table>
 
   <!-- ✳️ Add/Edit User Dialog -->
   <p-dialog
-    header="{{ editMode ? 'Edit User' : 'Add User' }}"
+    header="{{ editMode ? 'Edit User' : dialogTitle }}"
     [(visible)]="visibleDialog"
     [modal]="true"
     [style]="{ width: '60vw' }"
-    [draggable]="false"
-    [resizable]="false"
   >
-    <form [formGroup]="userForm" (ngSubmit)="onSubmit()" class="space-y-6">
+    <form [formGroup]="masterForm" (ngSubmit)="onSubmit()" class="space-y-6">
+
+   @if(selectedMaster === 'categorymaster'){
       <div class="grid grid-cols-2 gap-x-6 gap-y-4">
         <!-- Category Name -->
         <div class="flex flex-col">
           <label class="font-medium mb-1">Name <span class="text-red-500">*</span></label>
           <input pInputText formControlName="p_categoryname" placeholder="Name" />
-          <small class="text-red-500 mt-1" *ngIf="userForm.get('p_categoryname')?.touched && userForm.get('p_categoryname')?.invalid">
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('p_categoryname')?.touched && masterForm.get('p_categoryname')?.invalid">
             Name is required
           </small>
         </div>
@@ -86,21 +86,514 @@
         <div class="flex flex-col">
           <label class="font-medium mb-1">Category Desc <span class="text-red-500">*</span></label>
           <input pInputText formControlName="p_categorydesc" placeholder="Category Desc" />
-          <small class="text-red-500 mt-1" *ngIf="userForm.get('p_categorydesc')?.touched && userForm.get('p_categorydesc')?.invalid">
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('p_categorydesc')?.touched && masterForm.get('p_categorydesc')?.invalid">
             Category Desc is required
           </small>
         </div>
+         <!-- Active -->
+        <div class="flex gap-3">
+          <p-checkbox formControlName="checked" [binary]="true"></p-checkbox>
+          <label class="font-medium">Active</label>
+        </div>
+      </div>
+    }
 
-        <!-- Active -->
+    @if(selectedMaster === 'customermaster'){
+       <div class="grid grid-cols-2 gap-x-6 gap-y-4">
+        <!-- Customer Name -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Name <span class="text-red-500">*</span></label>
+          <input pInputText formControlName="customername" placeholder="Customer Name" />
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('customername')?.touched && masterForm.get('customername')?.invalid">
+            Customer Name is required
+          </small>
+        </div>
+
+        <!-- Customer Address -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Address <span class="text-red-500">*</span></label>
+          <input pInputText formControlName="customeraddress" placeholder="Customer Address" />
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('customeraddress')?.touched && masterForm.get('customeraddress')?.invalid">
+            Customer Address is required
+          </small>
+        </div>
+
+        <!-- Customer Country -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Country <span class="text-red-500">*</span></label>
+          <p-dropdown
+            [options]="userRoleOptions"
+            optionLabel="fieldname"
+            optionValue="fieldid"
+            formControlName="customercountry"
+            placeholder="Select Country"
+          ></p-dropdown>
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('customercountry')?.touched && masterForm.get('customercountry')?.invalid">
+            Country is required
+          </small>
+        </div>
+
+         <!-- Customer State -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">State <span class="text-red-500">*</span></label>
+          <p-dropdown
+            [options]="userRoleOptions"
+            optionLabel="fieldname"
+            optionValue="fieldid"
+            formControlName="customerstate"
+            placeholder="Select State"
+          ></p-dropdown>
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('customerstate')?.touched && masterForm.get('customerstate')?.invalid">
+            State is required
+          </small>
+        </div>
+
+         <!-- Customer City -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">City <span class="text-red-500">*</span></label>
+          <p-dropdown
+            [options]="userRoleOptions"
+            optionLabel="fieldname"
+            optionValue="fieldid"
+            formControlName="customercity"
+            placeholder="Select City"
+          ></p-dropdown>
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('customercity')?.touched && masterForm.get('customercity')?.invalid">
+            City is required
+          </small>
+        </div>
+
+        <!-- Customer Pincode -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Pincode <span class="text-red-500">*</span></label>
+          <input pInputText formControlName="customerpincode" placeholder="Pincode" />
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('customerpincode')?.touched && masterForm.get('customerpincode')?.invalid">
+            Pincode is required
+          </small>
+        </div>
+
+
+        <!-- Mobile -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Mobile <span class="text-red-500">*</span></label>
+          <input
+            pInputText
+            type="text"
+            formControlName="customerphone"
+            maxlength="10"
+            placeholder="Mobile"
+            (keypress)="allowOnlyDigits($event)"
+          />
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('customerphone')?.touched && masterForm.get('customerphone')?.invalid">
+            Enter a valid 10-digit mobile number
+          </small>
+        </div>
+
+        <!-- Email -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Email <span class="text-red-500">*</span></label>
+          <input pInputText type="email" formControlName="customeremail" placeholder="Email" />
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('customeremail')?.touched && masterForm.get('customeremail')?.invalid">
+            Enter a valid email address
+          </small>
+        </div>
+
+         <!-- Customer GST -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">GST No <span class="text-red-500">*</span></label>
+          <input pInputText formControlName="customergstno" placeholder="GST No" />
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('customergstno')?.touched && masterForm.get('customergstno')?.invalid">
+            GST No is required
+          </small>
+        </div>
+
+ <!-- Customer Contact Name -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Contact Name <span class="text-red-500">*</span></label>
+          <input pInputText formControlName="customercontactname" placeholder="Customer Contact Name" />
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('customercontactname')?.touched && masterForm.get('customercontactname')?.invalid">
+            Customer Name is required
+          </small>
+        </div>
+
+         <!--Contact Mobile -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Contact Mobile <span class="text-red-500">*</span></label>
+          <input
+            pInputText
+            type="text"
+            formControlName="customercontactphone"
+            maxlength="10"
+            placeholder="Contact Mobile"
+            (keypress)="allowOnlyDigits($event)"
+          />
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('customercontactphone')?.touched && masterForm.get('customercontactphone')?.invalid">
+            Enter a valid 10-digit mobile number
+          </small>
+        </div>
+
+        <!--Contact Email -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Contact Email <span class="text-red-500">*</span></label>
+          <input pInputText type="email" formControlName="customercontactemail" placeholder="Contact Email" />
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('customercontactemail')?.touched && masterForm.get('customercontactemail')?.invalid">
+            Enter a valid email address
+          </small>
+        </div>
+         <!-- Active -->
+        <div class="flex gap-3">
+          <p-checkbox formControlName="checked" [binary]="true"></p-checkbox>
+          <label class="font-medium">Active</label>
+        </div>
+        </div>
+    }
+
+    @if(selectedMaster==='advance'){
+     <div class="grid grid-cols-2 gap-x-6 gap-y-4">
+                <!-- Rule Name -->
+                <div class="flex flex-col">
+                    <label class="font-medium mb-1">Rule Name </label>
+                    <input pInputText formControlName="rulename" placeholder="Rule Name" />
+                    <!-- <small class="text-red-500 mt-1" *ngIf="masterForm.get('p_uname')?.touched && masterForm.get('p_uname')?.invalid"> User Name is required </small> -->
+                </div>
+
+                <!-- Rule Description -->
+                <div class="flex flex-col">
+                    <label class="font-medium mb-1">Rule Description </label>
+                    <p-dropdown [options]="userRoleOptions" optionLabel="fieldname" optionValue="fieldid" formControlName="ruledesc" placeholder="Select Description"></p-dropdown>
+                    <!-- <small class="text-red-500 mt-1" *ngIf="masterForm.get('p_utypeid')?.touched && masterForm.get('p_utypeid')?.invalid"> User Role is required </small> -->
+                </div>
+
+                <!-- Rule Value -->
+                <div class="flex flex-col relative">
+                    <label class="font-medium mb-1">Rule Value <span class="text-red-500">*</span></label>
+                    <div>
+                        <input pInputText formControlName="rulevalue" placeholder="Rule Value" class="w-full pr-10" />
+                      </div>
+                    <small class="text-red-500 mt-1" *ngIf="masterForm.get('rulevalue')?.touched && masterForm.get('rulevalue')?.invalid"> Password must contain uppercase, lowercase, number, and special character </small>
+                </div>
+                 <!-- Active -->
+        <div class="flex gap-3  mt-9">
+          <p-checkbox formControlName="checked" [binary]="true"></p-checkbox>
+          <label class="font-medium">Active</label>
+        </div>
+            </div>
+    }
+
+    @if(selectedMaster==='suppliermaster'){
+       <div class="grid grid-cols-2 gap-x-6 gap-y-4">
+        <!-- Supplier Name -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Name <span class="text-red-500">*</span></label>
+          <input pInputText formControlName="suppliername" placeholder="Supplier Name" />
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('suppliername')?.touched && masterForm.get('suppliername')?.invalid">
+            Supplier Name is required
+          </small>
+        </div>
+
+        <!-- Supplier Address -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Address <span class="text-red-500">*</span></label>
+          <input pInputText formControlName="supplieraddress" placeholder="Supplier Address" />
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('supplieraddress')?.touched && masterForm.get('supplieraddress')?.invalid">
+            Supplier Address is required
+          </small>
+        </div>
+
+        <!-- Supplier Country -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Country <span class="text-red-500">*</span></label>
+          <p-dropdown
+            [options]="userRoleOptions"
+            optionLabel="fieldname"
+            optionValue="fieldid"
+            formControlName="suppliercountry"
+            placeholder="Select Country"
+          ></p-dropdown>
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('suppliercountry')?.touched && masterForm.get('suppliercountry')?.invalid">
+            Country is required
+          </small>
+        </div>
+
+         <!-- Supplier State -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">State <span class="text-red-500">*</span></label>
+          <p-dropdown
+            [options]="userRoleOptions"
+            optionLabel="fieldname"
+            optionValue="fieldid"
+            formControlName="supplierstate"
+            placeholder="Select State"
+          ></p-dropdown>
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('supplierstate')?.touched && masterForm.get('supplierstate')?.invalid">
+            State is required
+          </small>
+        </div>
+
+         <!-- Supplier City -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">City <span class="text-red-500">*</span></label>
+          <p-dropdown
+            [options]="userRoleOptions"
+            optionLabel="fieldname"
+            optionValue="fieldid"
+            formControlName="suppliercity"
+            placeholder="Select City"
+          ></p-dropdown>
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('suppliercity')?.touched && masterForm.get('suppliercity')?.invalid">
+            City is required
+          </small>
+        </div>
+
+        <!-- Supplier Pincode -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Pincode <span class="text-red-500">*</span></label>
+          <input pInputText formControlName="supplierpincode" placeholder="Pincode" />
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('supplierpincode')?.touched && masterForm.get('supplierpincode')?.invalid">
+            Pincode is required
+          </small>
+        </div>
+
+
+        <!-- Mobile -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Mobile <span class="text-red-500">*</span></label>
+          <input
+            pInputText
+            type="text"
+            formControlName="supplierphone"
+            maxlength="10"
+            placeholder="Mobile"
+            (keypress)="allowOnlyDigits($event)"
+          />
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('supplierphone')?.touched && masterForm.get('supplierphone')?.invalid">
+            Enter a valid 10-digit mobile number
+          </small>
+        </div>
+
+        <!-- Email -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Email <span class="text-red-500">*</span></label>
+          <input pInputText type="email" formControlName="supplieremail" placeholder="Email" />
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('supplieremail')?.touched && masterForm.get('supplieremail')?.invalid">
+            Enter a valid email address
+          </small>
+        </div>
+
+         <!-- Supplier GST -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">GST No <span class="text-red-500">*</span></label>
+          <input pInputText formControlName="suppliergst" placeholder="GST No" />
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('suppliergst')?.touched && masterForm.get('suppliergst')?.invalid">
+            GST No is required
+          </small>
+        </div>
+
+ <!-- Supplier Contact Name -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Contact Name <span class="text-red-500">*</span></label>
+          <input pInputText formControlName="suppliercontactname" placeholder="Supplier Contact Name" />
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('suppliercontactname')?.touched && masterForm.get('suppliercontactname')?.invalid">
+            Supplier Name is required
+          </small>
+        </div>
+
+         <!--Contact Mobile -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Contact Mobile <span class="text-red-500">*</span></label>
+          <input
+            pInputText
+            type="text"
+            formControlName="suppliercontactphone"
+            maxlength="10"
+            placeholder="Contact Mobile"
+            (keypress)="allowOnlyDigits($event)"
+          />
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('suppliercontactphone')?.touched && masterForm.get('suppliercontactphone')?.invalid">
+            Enter a valid 10-digit mobile number
+          </small>
+        </div>
+
+        <!--Contact Email -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Contact Email <span class="text-red-500">*</span></label>
+          <input pInputText type="email" formControlName="suppliercontactemail" placeholder="Contact Email" />
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('suppliercontactemail')?.touched && masterForm.get('suppliercontactemail')?.invalid">
+            Enter a valid email address
+          </small>
+        </div>
+         <!-- Active -->
+        <div class="flex gap-3">
+          <p-checkbox formControlName="checked" [binary]="true"></p-checkbox>
+          <label class="font-medium">Active</label>
+        </div>
+      </div>
+    }
+
+    @if(selectedMaster==='taxmaster'){
+       <div class="grid grid-cols-2 gap-x-6 gap-y-4">
+        <!-- Tax Name -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Tax Name <span class="text-red-500">*</span></label>
+          <input pInputText formControlName="taxname" placeholder="Tax Name" />
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('taxname')?.touched && masterForm.get('taxname')?.invalid">
+            Tax Name is required
+          </small>
+        </div>
+
+        <!--  Tax Type -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Tax Type <span class="text-red-500">*</span></label>
+          <p-dropdown
+            [options]="userRoleOptions"
+            optionLabel="fieldname"
+            optionValue="fieldid"
+            formControlName="taxtype"
+            placeholder="Select Type"
+          ></p-dropdown>
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('taxtype')?.touched && masterForm.get('taxtype')?.invalid">
+            Tax Type is required
+          </small>
+        </div>
+
+<!-- Tax Description -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Tax Description <span class="text-red-500">*</span></label>
+          <input pInputText formControlName="taxdesc" placeholder="Tax Description" />
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('taxdesc')?.touched && masterForm.get('taxdesc')?.invalid">
+            Tax Description is required
+          </small>
+        </div>
+
+
+        <!-- Tax Percentage -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Percentage <span class="text-red-500">*</span></label>
+          <input
+            pInputText
+            type="text"
+            formControlName="taxpercentage"
+            maxlength="10"
+            placeholder="Percentage"
+          />
+        </div>
+         <!-- Active -->
+        <div class="flex gap-3">
+          <p-checkbox formControlName="checked" [binary]="true"></p-checkbox>
+          <label class="font-medium">Active</label>
+        </div>
+      </div>
+    }
+
+    @if(selectedMaster === 'uommaster'){
+       <div class="grid grid-cols-2 gap-x-6 gap-y-4">
+        <!-- UOM Name -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Name <span class="text-red-500">*</span></label>
+          <input pInputText formControlName="uomname" placeholder="Name" />
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('uomname')?.touched && masterForm.get('uomname')?.invalid">
+            Name is required
+          </small>
+        </div>
+
+        <!-- UOM Name -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Parent UOM Name <span class="text-red-500">*</span></label>
+          <input pInputText formControlName="chiduomname" placeholder="Parent UOM Name" />
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('chiduomname')?.touched && masterForm.get('chiduomname')?.invalid">
+            Parent UOM Name is required
+          </small>
+        </div>
+
+<!-- UOM Description -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">UOM Desc <span class="text-red-500">*</span></label>
+          <input pInputText formControlName="uomdesc" placeholder="UOM Desc" />
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('uomdesc')?.touched && masterForm.get('uomdesc')?.invalid">
+            UOM Desc is required
+          </small>
+        </div>
+         <!-- Active -->
         <div class="flex gap-3 mt-9">
           <p-checkbox formControlName="checked" [binary]="true"></p-checkbox>
           <label class="font-medium">Active</label>
         </div>
       </div>
+    }
+    @if(selectedMaster === 'usermaster'){
+         <div class="grid grid-cols-2 gap-x-6 gap-y-4">
+                <!-- User Name -->
+                <div class="flex flex-col">
+                    <label class="font-medium mb-1">User Name <span class="text-red-500">*</span></label>
+                    <input pInputText formControlName="p_uname" placeholder="User Name" />
+                    <small class="text-red-500 mt-1" *ngIf="masterForm.get('p_uname')?.touched && masterForm.get('p_uname')?.invalid"> User Name is required </small>
+                </div>
 
-      <div class="flex justify-end gap-4 mt-6">
+                <!-- User Role -->
+                <div class="flex flex-col">
+                    <label class="font-medium mb-1">User Role <span class="text-red-500">*</span></label>
+                    <p-dropdown [options]="userRoleOptions" optionLabel="fieldname" optionValue="fieldid" formControlName="p_utypeid" placeholder="Select Role"></p-dropdown>
+                    <small class="text-red-500 mt-1" *ngIf="masterForm.get('p_utypeid')?.touched && masterForm.get('p_utypeid')?.invalid"> User Role is required </small>
+                </div>
+
+                <!-- Password -->
+                <div class="flex flex-col relative">
+                    <label class="font-medium mb-1">Password <span class="text-red-500">*</span></label>
+                    <div class="relative">
+                        <input pInputText [type]="showPassword ? 'text' : 'password'" formControlName="p_pwd" placeholder="Password" class="w-full pr-10" />
+                        <i class="pi" [ngClass]="showPassword ? 'pi-eye-slash' : 'pi-eye'" (click)="showPassword = !showPassword" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer"></i>
+                    </div>
+                    <small class="text-red-500 mt-1" *ngIf="masterForm.get('p_pwd')?.touched && masterForm.get('p_pwd')?.invalid"> Password must contain uppercase, lowercase, number, and special character </small>
+                </div>
+
+                <!-- Confirm Password -->
+                <div class="flex flex-col relative">
+                    <label class="font-medium mb-1">Confirm Password <span class="text-red-500">*</span></label>
+                    <div class="relative">
+                        <input pInputText [type]="showConfirmPassword ? 'text' : 'password'" formControlName="conPassword" placeholder="Confirm Password" class="w-full pr-10" />
+                        <i
+                            class="pi"
+                            [ngClass]="showConfirmPassword ? 'pi-eye-slash' : 'pi-eye'"
+                            (click)="showConfirmPassword = !showConfirmPassword"
+                            style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer"
+                        ></i>
+                    </div>
+                    <small class="text-red-500 mt-1" *ngIf="masterForm.hasError('passwordMismatch')"> Passwords do not match </small>
+                </div>
+
+                <!-- User Full Name -->
+                <div class="flex flex-col">
+                    <label class="font-medium mb-1">Full Name <span class="text-red-500">*</span></label>
+                    <input pInputText formControlName="p_ufullname" placeholder="Full Name" />
+                    <small class="text-red-500 mt-1" *ngIf="masterForm.get('p_ufullname')?.touched && masterForm.get('p_ufullname')?.invalid"> User Full Name is required </small>
+                </div>
+
+                <!-- Mobile -->
+                <div class="flex flex-col">
+                    <label class="font-medium mb-1">Mobile <span class="text-red-500">*</span></label>
+                    <input pInputText type="text" formControlName="p_phone" maxlength="10" placeholder="mobile" (keypress)="allowOnlyDigits($event)" />
+                    <small class="text-red-500 mt-1" *ngIf="masterForm.get('p_phone')?.touched && masterForm.get('p_phone')?.invalid"> Enter a valid 10-digit mobile number </small>
+                </div>
+
+                <!-- Email -->
+                <div class="flex flex-col">
+                    <label class="font-medium mb-1">Email <span class="text-red-500">*</span></label>
+                    <input pInputText type="email" formControlName="p_email" placeholder="Email" />
+                    <small class="text-red-500 mt-1" *ngIf="masterForm.get('p_email')?.touched && masterForm.get('p_email')?.invalid"> Enter a valid email address </small>
+                </div>
+
+                <!-- Active -->
+                <div class="flex gap-3 mt-9">
+                    <p-checkbox formControlName="checked" [binary]="true"></p-checkbox>
+                    <label class="font-medium">Active</label>
+                </div>
+            </div>
+    }
+    
+       
+     <div class="flex justify-end gap-4 mt-6">
         <button pButton type="button" label="Cancel" class="p-button-secondary" (click)="closeDialog()"></button>
-        <button pButton type="submit" label="Submit" class="p-button-warning" [disabled]="userForm.invalid"></button>
+        <button pButton type="submit" label="Submit" class="p-button-warning" [disabled]="masterForm.invalid"></button>
       </div>
     </form>
   </p-dialog>

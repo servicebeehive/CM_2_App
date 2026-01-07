@@ -46,22 +46,36 @@ import { UserService } from '@/core/services/user.service';
   providers: [ConfirmationService],
 })
 export class CategoryFormateComponent {
-  userForm!: FormGroup;
+  masterForm!: FormGroup;
   visibleDialog = false;
   showPassword = false;
   showConfirmPassword = false;
   user:any[]=[];
-  filteredUser: any[] = [];
-
+  filterMaster: any[] = [];
+  userRoleOptions:any[]=[];
   editMode = false;
   selectedUser: any = null;
   globalFilter: string = '';
   showGlobalSearch:boolean=true;
 
-  userRoleOptions = [];
+  masterDetails:[] = [];
   loggedInUserName:string = '';
   loggedInUserRole:string=''; 
-
+  pageTitle = 'Category Master';
+  addButtonLabel='Add Category';
+  tableColumns:any[]=[];
+  selectedMaster !:string;
+  dialogTitle='';
+    masterOption=[
+    {label:'Configuration', value:'advance'},
+    {label:'Category Master', value:'categorymaster'},
+    {label:'Customer Master', value:'customermaster'},
+     {label:'Tax Master', value:'taxmaster'},
+    {label:'UOM Master', value:'uommaster'},
+    {label:'User Master',value:'usermaster'},
+    {label:'Supplier Master', value:'suppliermaster'}
+  ];
+ 
   constructor(
     private fb: FormBuilder,
     private confirmationService: ConfirmationService,
@@ -72,31 +86,227 @@ export class CategoryFormateComponent {
 
   ngOnInit() {
     this.initForm();
-    this.onGetUserRole();
-    this.filteredUser=[...this.user];
-    this.onGetUserList();
+    const defaultMaster='categorymaster';
+    this.updateTitleMaster(defaultMaster);
+    this.tableColumns=this.tableConfig[defaultMaster];
+    this.loadMasterData(defaultMaster);
+    this.filterMaster=[...this.masterDetails];
+    // this.onGetUserList();
     this.loggedInUserName=this.authService.isLogIntType().username;
     this.loggedInUserRole=this.authService.isLogIntType().usertypename;
   }
 
   initForm() {
-    this.userForm = this.fb.group(
-      {
+    this.masterForm = this.fb.group(
+      { master:['categorymaster'],
+        // Category
         p_categoryname: ['', Validators.required],
         p_categorydesc: ['', [Validators.required,Validators.maxLength(20)]],
+        // Customer
+        customername:[''],
+         customeraddress:[''],
+        customerphone:[''],
+        customercity:[''],
+        customerstate:[''],
+        customercountry:[''],
+         customerpincode:[''],
+customeremail:[''],
+customergstno:[''],
+customercontactname:[''],
+customercontactphone:[''],
+customercontactemail:[''],
+// Configuration
+rulename:[''],
+ruledesc:[''],
+rulevalue:[''],
+// UOM
+uomname:[''],
+uomdesc:[''],
+chiduomname:[''],
+// Tax
+taxname:[''],
+taxdesc:[''],
+taxtype:[''],
+taxpercentage:[''],
+// Supplier
+suppliername:[''],
+supplieraddress:[''],
+suppliercity:[''],
+supplierstate:[''],
+suppliercountry:[''],
+supplierpincode:[''],
+supplierphone:[''],
+supplieremail:[''],
+suppliergst:[''],
+suppliercontactname:[''],
+suppliercontactphone:[''],
+suppliercontactemail:[''],
+//User Type
+ p_utypeid: ['', Validators.required],
+                p_uname: ['', [Validators.required, Validators.maxLength(20)]],
+                p_ufullname: ['', [Validators.required, Validators.maxLength(50)]],
+                p_pwd: ['', [Validators.required, Validators.minLength(4), Validators.pattern('^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@$!%*?&#])[A-Za-z\\d@$!%*?&#]{4,}$')]],
+                conPassword: ['', Validators.required],
+                p_phone: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
+                p_email: ['', [Validators.required, Validators.email, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/), Validators.maxLength(50)]],
+
         checked: [true],
       }
     );
+    this.masterForm.get('master')?.valueChanges.subscribe(value=>{
+      this.updateTitleMaster(value);
+      this.loadMasterData(value);
+      this.tableColumns=this.tableConfig[value];
+    })
   }
+
+ allowOnlyDigits(event: KeyboardEvent) {
+    const char = event.key;
+    if (!/[0-9]/.test(char)) {
+      event.preventDefault();
+    }
+  }
+
+updateTitleMaster(master:string){
+switch(master){
+case 'advance':
+    this.pageTitle='Configuration';
+    this.addButtonLabel='Add Configuration';
+    break;
+
+
+  case 'categorymaster':
+    this.pageTitle='Category Master';
+    this.addButtonLabel='Add Category';
+    break;
+
+    case 'customermaster':
+     this.pageTitle='Customer Master';
+    this.addButtonLabel='Add Customer';
+    break;
+
+    case 'uommaster':
+     this.pageTitle='UOM Master';
+    this.addButtonLabel='Add UOM';
+    break;
+
+    case 'usermaster':
+     this.pageTitle='User Master';
+    this.addButtonLabel='Add User';
+    break;
+    
+    case 'taxmaster':
+     this.pageTitle='Tax Master';
+    this.addButtonLabel='Add Tax';
+    break;
+
+    case 'suppliermaster':
+     this.pageTitle='Supplier Master';
+    this.addButtonLabel='Add Supplier';
+    break;
+
+    default:
+      this.pageTitle='Master';
+      this.addButtonLabel='Add'
+}
+}
+
+masterPayloadMap:Record<string,string>={
+  advance:'ADVANCE',
+  categorymaster:'CATEGORYMASTER',
+  customermaster:'CUSTOMERMASTER',
+  taxmaster:'TAXMASTER',
+  uommaster:'UOMMASTER',
+  usermaster:'USERTYPE',
+  suppliermatser:'SUPPLIERMASTER'
+}
+
+ commonMasterColumns = [
+  { field: 'fieldname', header: 'Name' },
+  { field: 'fielddesc', header: 'Description' },
+  { field: 'isactive', header: 'Active' }
+];
+
+tableConfig: Record<string,any[]>={
+  advance:[
+    {field:'fieldname',header:'Name'},
+    {field:'fielddesc',header:'Description'},
+    {field:'fieldvalue',header:'Value'},
+    {field:'isactive',header:'Active'}
+  ],
+  categorymaster : this.commonMasterColumns,
+  customermaster: [
+  {field:'customername', header:'Name'},
+   {field:'customerphone', header:'Phone'},
+ {field:'customercity', header:'City'},
+ {field:'isactive', header:'Active'},
+  ],
+  suppliermaster:[
+     {field:'suppliername', header:'Name'},
+      {field:'supplierphone', header:'Phone'},
+       {field:'suppliercity', header:'City'},
+        {field:'isactive', header:'Active'},
+  ],
+  taxmaster:this.commonMasterColumns,
+  uommaster: this.commonMasterColumns,
+  usermaster: this.commonMasterColumns,
+}
   /** ✳️ Add User Dialog **/
   openUserDialog() {
+    this.selectedMaster=this.masterForm.get('master')?.value;
+    const  dialogTitleMap:Record<string,string>={
+      advance:'Add Advance',
+  categorymaster:'Add Category',
+  customermaster:'Add Customer',
+  taxmaster:'Add Tax',
+  uommaster:'Add UOM',
+  usermaster:'Add User',
+  suppliermatser:'Add Supplier'
+    }
+    this.dialogTitle=dialogTitleMap[this.selectedMaster];
+    // this.resetFormByMaster(this.selectedMaster);
     this.visibleDialog = true;
-    this.editMode = false;
-    this.userForm.reset({ checked: true });
-   this.userForm.get('p_categoryname')?.enable();
-  this.userForm.get('p_categorydesc')?.enable();
-  this.userForm.get('checked')?.enable();
+    
+  //   this.editMode = false;
+  //   this.masterForm.reset({ checked: true });
+  //  this.masterForm.get('p_categoryname')?.enable();
+  // this.masterForm.get('p_categorydesc')?.enable();
+  // this.masterForm.get('checked')?.enable();
   }
+
+ resetFormByMaster(master:string){
+  this.masterForm.reset({checked:true});
+switch(master){
+case 'advance':
+    
+    break;
+
+  case 'categorymaster':
+   
+    break;
+
+    case 'customermaster':
+     
+    break;
+
+    case 'uommaster':
+    
+    break;
+
+    case 'usermaster':
+    
+    break;
+    
+    case 'taxmaster':
+    
+    break;
+
+    case 'suppliermaster':
+    
+    break;
+
+}
+ }
 
   openEditDialog(user: any) {
     this.visibleDialog = true;
@@ -104,7 +314,7 @@ export class CategoryFormateComponent {
     this.selectedUser = user;
   
 console.log('user role', user.usertypename)
-    this.userForm.patchValue({  
+    this.masterForm.patchValue({  
     p_categorydesc: user.usertypeid,
     p_categoryname: user.username,
     checked:(user.isactive) === 'Y' 
@@ -114,35 +324,47 @@ console.log('user role', user.usertypename)
   closeDialog() {
     this.visibleDialog = false;
   }
- onGetUserList(){
-   const payload:any = {
-    "p_ufullname": "",
-    "p_categoryname":"admin",
-    "p_pwd": "",
-    "p_active": "",
-    "p_operationtype": "GETUSER",
-    "p_phone": "",
-    "p_categorydesc": "",
-    "p_email": "",
-    "p_oldpwd": "",
-   };
-   this.userService.OnUserHeaderCreate(payload).subscribe({
-    next:(res)=>{
-      console.log('res:',res);
-      this.user=res.data || [];
-      if(this.loggedInUserRole ==='Admin' || this.loggedInUserRole==='admin'){
-          this.filteredUser=[...this.user];
-      }
-      else{
-        this.filteredUser=this.user.filter(u=>u.username === this.loggedInUserName);
-      }
+//  onGetUserList(){
+//    const payload:any = {
+//     "p_ufullname": "",
+//     "p_categoryname":"admin",
+//     "p_pwd": "",
+//     "p_active": "",
+//     "p_operationtype": "GETUSER",
+//     "p_phone": "",
+//     "p_categorydesc": "",
+//     "p_email": "",
+//     "p_oldpwd": "",
+//    };
+//    this.userService.OnUserHeaderCreate(payload).subscribe({
+//     next:(res)=>{
+//       console.log('res:',res);
+//       this.user=res.data || [];
+//       if(this.loggedInUserRole ==='Admin' || this.loggedInUserRole==='admin'){
+//           this.filterMaster=[...this.user];
+//       }
+//       else{
+//         this.filterMaster=this.user.filter(u=>u.username === this.loggedInUserName);
+//       }
       
+//     },
+//     error:(err)=>{
+//       console.error(err);
+//     }
+//    });
+//  }
+ loadMasterData(masterKey:string){
+  const payloadType=this.masterPayloadMap[masterKey]
+const payload = this.createDropdownPayload(payloadType);
+    this.inventoryService.getdropdowndetails(payload).subscribe({
+      next: (res) => 
+       {  this.masterDetails = res.data || [],
+      console.log(this.masterDetails);
+      this.filterMaster=[...this.masterDetails]
     },
-    error:(err)=>{
-      console.error(err);
-    }
-   });
- }
+      error: (err) => console.log(err)
+    });
+}
  onUserCreation(data: any) {
  
   console.log('user role:',data.p_categorydesc);
@@ -163,7 +385,7 @@ console.log('user role', user.usertypename)
       console.log('Create/Update response:', res);
       // Close dialog
       this.visibleDialog = false;
-       this.onGetUserList();
+      //  this.onGetUserList();
     },
     error: (err) => {
       console.error('API error', err);
@@ -172,11 +394,11 @@ console.log('user role', user.usertypename)
 }
   /** ✅ Submit Form **/
   onSubmit() {
-    if (this.userForm.invalid) {
-      this.userForm.markAllAsTouched() ;
+    if (this.masterForm.invalid) {
+      this.masterForm.markAllAsTouched() ;
       return;
     }
-    this.onUserCreation(this.userForm.getRawValue());
+    this.onUserCreation(this.masterForm.getRawValue());
   }
 
   createDropdownPayload(returnType: string) {
@@ -185,14 +407,7 @@ console.log('user role', user.usertypename)
     p_returntype: returnType,
   };
 }
-onGetUserRole(){
-const payload = this.createDropdownPayload("USERTYPE");
-    this.inventoryService.getdropdowndetails(payload).subscribe({
-      next: (res) => 
-         this.userRoleOptions = res.data,
-      error: (err) => console.log(err)
-    });
-}
+
   /** 🔍 Global Filter **/
   applyGlobalFilter() {
     this.applyGlobalFilterManual();
@@ -200,10 +415,10 @@ const payload = this.createDropdownPayload("USERTYPE");
   applyGlobalFilterManual(){
     const value=this.globalFilter;
      if(!value){
-      this.filteredUser=[...this.user];
+      this.filterMaster=[...this.masterDetails];
       return;
      }
-     this.filteredUser=this.user.filter((user)=>Object.values(user).some((v)=>String(v).toLowerCase().includes(value)));
+     this.filterMaster=this.masterDetails.filter((user)=>Object.values(user).some((v)=>String(v).toLowerCase().includes(value)));
   }
 
   /** 🔁 Reset Filter **/
