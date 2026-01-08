@@ -3,9 +3,9 @@
     <span class="block text-surface-900 font-bold text-xl mb-6">{{pageTitle}}</span>
     
     <div class="flex gap-4">
-     <form [formGroup]="masterForm">
+     <!-- <form [formGroup]="masterForm">
        <p-dropdown [options]="masterOption" optionLabel="label" optionValue="value" formControlName="master" placeholder="Setect Master"></p-dropdown>
-       </form>
+       </form> -->
       <button
         pButton
         *ngIf="loggedInUserRole==='Admin'"
@@ -27,6 +27,7 @@
   <!-- 📋 User Table -->
   <p-table
     [value]="filterMaster"
+    [tableStyle]="{'table-layout': 'fixed' , 'width': '100%', 'overflow': 'hidden' , 'text-overflow': 'ellipsis' , 'white-space': 'nowrap'}"
     dataKey="id"
     [paginator]="true"
     [rows]="5"
@@ -37,19 +38,20 @@
     <ng-template pTemplate="header">
       <tr>
         @for (col of tableColumns; track $index){
-       <th>{{col.header}}</th>
+       <th [style.width]="col.width">{{col.header}}</th>
         }
-        <th>Action</th>
+        <th style="width:80px; text-align: center;">Action</th>
       </tr>  
     </ng-template>
     <ng-template pTemplate="body" let-row>
       <tr>
       @for(col of tableColumns; track $index){
-       <td>{{row[col.field]}}</td>
+       <td [style.width]="col.width">{{row[col.field]}}</td>
       }
-        <td class="text-center">
+        <td class="text-center" >
           <i
             class="pi pi-pencil cursor-pointer text-blue-500"
+            style="width:80px; text-align: center;"
             (click)="openEditDialog(row)"
           ></i>
         </td>
@@ -499,8 +501,8 @@
         <!-- UOM Name -->
         <div class="flex flex-col">
           <label class="font-medium mb-1">Parent UOM Name <span class="text-red-500">*</span></label>
-          <input pInputText formControlName="chiduomname" placeholder="Parent UOM Name" />
-          <small class="text-red-500 mt-1" *ngIf="masterForm.get('chiduomname')?.touched && masterForm.get('chiduomname')?.invalid">
+          <input pInputText formControlName="childuomname" placeholder="Parent UOM Name" />
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('childuomname')?.touched && masterForm.get('childuomname')?.invalid">
             Parent UOM Name is required
           </small>
         </div>
@@ -520,7 +522,7 @@
         </div>
       </div>
     }
-    @if(selectedMaster === 'usermaster'){
+    @if(selectedMaster === 'usertype'){
          <div class="grid grid-cols-2 gap-x-6 gap-y-4">
                 <!-- User Name -->
                 <div class="flex flex-col">

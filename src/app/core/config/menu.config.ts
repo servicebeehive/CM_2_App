@@ -130,39 +130,63 @@ export const ADMIN_MENU_MODEL: MenuItem[] = [
                 routerLink: ['/layout/settings/overview'],
                 items: [
                     {
-                        label: 'User Management',
+                        label: 'Bulk Upload',
                         icon: 'pi pi-fw pi-users',
-                        routerLink: ['/layout/settings/user-management']
+                        routerLink: ['/layout/settings/bulk-upload']
                     },
                     {
                         label: 'Category Master',
                         icon: 'pi pi-fw pi-file',
-                        routerLink: ['/layout/settings/category-formate']
+                        routerLink: ['/layout/settings/category-formate', 'categorymaster']
                     },
                     {
                         label: 'Customer Master',
                         icon: 'pi pi-fw pi-file',
-                        routerLink: ['/layout/settings/customer-form']
+                        routerLink: ['/layout/settings/category-formate', 'customermaster']
                     },
                     {
                         label: 'Tax Master',
                         icon: 'pi pi-fw pi-file',
-                        routerLink: ['/layout/settings/tax-form']
+                        routerLink: ['/layout/settings/category-formate', 'taxmaster']
                     },
                     {
                         label: 'Supplier Master',
                         icon: 'pi pi-fw pi-file',
-                        routerLink: ['/layout/settings/supplier-master']
+                        routerLink: ['/layout/settings/category-formate', 'suppliermaster']
                     },
                     {
                         label: 'UOM Master',
                         icon: 'pi pi-fw pi-file',
-                        routerLink: ['/layout/settings/uom-master']
+                        routerLink: ['/layout/settings/category-formate', 'uommaster']
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        label: 'SECURITY',
+        icon: 'pi pi-cog',
+        items: [
+            {
+                label: 'System Security',
+                icon: 'pi pi-fw pi-cog',
+                routerLink: ['/layout/security/overview'],
+                items: [
+                   
+                    {
+                        label: 'Access-Control',
+                        icon: 'pi pi-fw pi-file',
+                        routerLink: ['/layout/security/access-control'] 
+                    },  
+                    {
+                        label: 'User Management',
+                        icon: 'pi pi-fw pi-users',
+                        routerLink: ['/layout/security/user-management']
                     },
                     {
-                        label: 'Configuration',
+                        label: 'UserType',
                         icon: 'pi pi-fw pi-file',
-                        routerLink: ['/layout/settings/configuration']
+                        routerLink: ['/layout/settings/category-formate', 'usertype']
                     }
                 ]
             }
