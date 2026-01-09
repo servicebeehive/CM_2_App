@@ -14,7 +14,7 @@ import { RouterModule } from '@angular/router';
     >
         <div class="p-3">
             <a [routerLink]="['/']" class="app-logo">
-          <img src="/layout/images/logo.png" width="180" alt="Logo">
+          <img src="layout/images/logo.png" width="180" alt="Logo">
             </a>
             <button
                 class="layout-sidebar-anchor p-link z-2"

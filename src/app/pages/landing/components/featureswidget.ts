@@ -25,7 +25,7 @@ import { Component } from '@angular/core';
                         class="box p-6 w-full bg-surface-0 dark:bg-surface-900 border-surface-200 dark:border-surface-700 border rounded"
                     >
                         <img
-                            src="/demo/images/landing/icon-components.svg"
+                            src="demo/images/landing/icon-components.svg"
                             alt="components icon"
                             class="block mb-4"
                         />
@@ -48,7 +48,7 @@ import { Component } from '@angular/core';
                         class="box p-6 w-full bg-surface-0 dark:bg-surface-900 border-surface-200 dark:border-surface-700 border rounded"
                     >
                         <img
-                            src="/demo/images/landing/icon-community.svg"
+                            src="demo/images/landing/icon-community.svg"
                             alt="components icon"
                             class="block mb-4"
                         />
@@ -72,7 +72,7 @@ import { Component } from '@angular/core';
                         class="box p-6 w-full bg-surface-0 dark:bg-surface-900 border-surface-200 dark:border-surface-700 border rounded"
                     >
                         <img
-                            src="/demo/images/landing/icon-productivity.svg"
+                            src="demo/images/landing/icon-productivity.svg"
                             alt="components icon"
                             class="block mb-4"
                         />
@@ -95,7 +95,7 @@ import { Component } from '@angular/core';
                         class="box p-6 w-full bg-surface-0 dark:bg-surface-900 border-surface-200 dark:border-surface-700 border rounded"
                     >
                         <img
-                            src="/demo/images/landing/icon-accessibility.svg"
+                            src="demo/images/landing/icon-accessibility.svg"
                             alt="components icon"
                             class="block mb-4"
                         />
@@ -118,7 +118,7 @@ import { Component } from '@angular/core';
                         class="box p-6 w-full bg-surface-0 dark:bg-surface-900 border-surface-200 dark:border-surface-700 border rounded"
                     >
                         <img
-                            src="/demo/images/landing/icon-support.svg"
+                            src="demo/images/landing/icon-support.svg"
                             alt="components icon"
                             class="block mb-4"
                         />
@@ -142,7 +142,7 @@ import { Component } from '@angular/core';
                         class="box p-6 w-full bg-surface-0 dark:bg-surface-900 border-surface-200 dark:border-surface-700 border rounded"
                     >
                         <img
-                            src="/demo/images/landing/icon-mobile.svg"
+                            src="demo/images/landing/icon-mobile.svg"
                             alt="components icon"
                             class="block mb-4"
                         />
@@ -165,7 +165,7 @@ import { Component } from '@angular/core';
                         class="box p-6 w-full bg-surface-0 dark:bg-surface-900 border-surface-200 dark:border-surface-700 border rounded"
                     >
                         <img
-                            src="/demo/images/landing/icon-theme.svg"
+                            src="demo/images/landing/icon-theme.svg"
                             alt="components icon"
                             class="block mb-4"
                         />
@@ -189,7 +189,7 @@ import { Component } from '@angular/core';
                         class="box p-6 w-full bg-surface-0 dark:bg-surface-900 border-surface-200 dark:border-surface-700 border rounded"
                     >
                         <img
-                            src="/demo/images/landing/icon-ts.svg"
+                            src="demo/images/landing/icon-ts.svg"
                             alt="components icon"
                             class="block mb-4"
                         />

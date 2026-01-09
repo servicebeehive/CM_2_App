@@ -18,7 +18,7 @@ import { LayoutService } from '@/layout/service/layout.service';
         <div class="flex flex-col items-center">
                     <img
                         animateEnter="scalein"
-                        src="/demo/images/landing/{{
+                        src="demo/images/landing/{{
                             darkMode ? 'chat-dark' : 'chat-light'
                         }}.png"
                         alt="chat"
@@ -29,7 +29,7 @@ import { LayoutService } from '@/layout/service/layout.service';
                 <div class="flex flex-col items-center">
                     <img
                         animateEnter="scalein"
-                        src="/demo/images/landing/{{
+                        src="demo/images/landing/{{
                             darkMode ? 'mail-dark' : 'mail-light'
                         }}.png"
                         alt="chat"
