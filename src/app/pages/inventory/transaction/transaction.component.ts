@@ -205,15 +205,15 @@ export class TransactionComponent {
     }
 
     totalDueAmount(): void {
-        if (!this.products || this.products.length === 0) {
-            this.transactionForm.get('totalPayableAmount')?.setValue('0');
+        if (!this.products?.length) {
+            this.transactionForm.get('totalPayableAmount')?.setValue('0.00');
             return;
         }
-        const totalSaleDue = this.products.reduce((total, product) => {
-            const dueAmount = Number(product.total_due).toFixed(2) || 0;
-            return total + dueAmount;
-        }, 0);
-        this.transactionForm.get('totalPayableAmount')?.setValue(totalSaleDue);
+       const totalSaleDue = this.products.reduce(
+        (sum, p) => sum + (Number(p?.total_due) || 0),
+        0
+    );
+        this.transactionForm.get('totalPayableAmount')?.setValue(totalSaleDue.toFixed(2));
     }
 
     totalfinalpayable() {
