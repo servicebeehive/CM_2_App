@@ -2,6 +2,7 @@
 export const environment = {
   production: false,
    baseurl: "http://13.201.136.123:1608/api/v1",
+   //baseurl: "https://cm2.beehiveinfotech.com/api/v1",
 //   SubDomain:window.location.protocol+ '//'+window.location.host
 };
 
