@@ -294,6 +294,24 @@ export const STORE_OWNER_MENU_MODEL: MenuItem[] = [
             }
         ]
     },
+     {
+        label: 'INVENTORY',
+        icon: 'pi pi-chart-bar',
+        items: [
+            {
+                label: 'Inventory Management',
+                icon: 'pi pi-fw pi-database',
+                routerLink: ['/layout/inventory/overview'],
+                items: [
+                    {
+                        label: 'Transactions',
+                        icon: 'pi pi-fw pi-history',
+                        routerLink: ['/layout/inventory/transaction']
+                    }
+                ]
+            }
+        ]
+    },
     {
         label: 'POS',
         icon: 'pi pi-shopping-cart',
