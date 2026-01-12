@@ -73,7 +73,7 @@ import { InputIconModule } from 'primeng/inputicon';
                         >
 
                         <img
-                            src="/layout/images/avatar.png"
+                            src="layout/images/avatar.png"
                             class="w-12 h-12 mb-2"
                             alt="Avatar"
                         />

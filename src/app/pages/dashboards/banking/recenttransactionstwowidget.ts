@@ -30,7 +30,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
                     >
                         <img
                             alt="avatar"
-                            src="/demo/images/avatar/circle/avatar-f-1.png"
+                            src="demo/images/avatar/circle/avatar-f-1.png"
                             class="w-8 flex-shrink-0 mr-2"
                         />
                         <span
@@ -43,7 +43,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
                     >
                         <img
                             alt="avatar"
-                            src="/demo/images/avatar/circle/avatar-f-2.png"
+                            src="demo/images/avatar/circle/avatar-f-2.png"
                             class="w-8 flex-shrink-0 mr-2"
                         />
                         <span
@@ -58,7 +58,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
                     >
                         <img
                             alt="avatar"
-                            src="/demo/images/avatar/circle/avatar-m-1.png"
+                            src="demo/images/avatar/circle/avatar-m-1.png"
                             class="w-8 flex-shrink-0 mr-2"
                         />
                         <span
@@ -71,7 +71,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
                     >
                         <img
                             alt="avatar"
-                            src="/demo/images/avatar/circle/avatar-f-3.png"
+                            src="demo/images/avatar/circle/avatar-f-3.png"
                             class="w-8 flex-shrink-0 mr-2"
                         />
                         <span
@@ -86,7 +86,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
                     >
                         <img
                             alt="avatar"
-                            src="/demo/images/avatar/circle/avatar-m-2.png"
+                            src="demo/images/avatar/circle/avatar-m-2.png"
                             class="w-8 flex-shrink-0 mr-2"
                         />
                         <span
@@ -99,7 +99,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
                     >
                         <img
                             alt="avatar"
-                            src="/demo/images/avatar/circle/avatar-f-4.png"
+                            src="demo/images/avatar/circle/avatar-f-4.png"
                             class="w-8 flex-shrink-0 mr-2"
                         />
                         <span
