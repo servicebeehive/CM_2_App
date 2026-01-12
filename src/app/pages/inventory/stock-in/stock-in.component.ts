@@ -403,7 +403,7 @@ export class StockInComponent {
             p_invoiceno: data.p_invoiceno,
             p_invoicedate: this.datePipe.transform(data.p_invoicedate, 'dd/MM/yyyy'),
             p_remarks: data.p_remarks,
-            p_amountpaid :(data.p_amountpaid).toFixed(2) ,
+            p_amountpaid :(data.p_amountpaid || 0).toFixed(2) ,
             p_active: 'Y',
             p_deliveryboy:''
         };
