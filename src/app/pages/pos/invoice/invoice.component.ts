@@ -26,6 +26,7 @@ import { Paginator } from 'primeng/paginator';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '@/core/services/auth.service';
 import { ShareService } from '@/core/services/shared.service';
+import { Tooltip } from "primeng/tooltip";
 interface Product {
     name: string;
     price: string;
@@ -49,28 +50,29 @@ interface Image {
 @Component({
     selector: 'app-invoice',
     imports: [
-        CommonModule,
-        EditorModule,
-        ReactiveFormsModule,
-        TextareaModule,
-        TableModule,
-        InputTextModule,
-        FormsModule,
-        FileUploadModule,
-        ButtonModule,
-        SelectModule,
-        DropdownModule,
-        ToggleSwitchModule,
-        RippleModule,
-        ChipModule,
-        FluidModule,
-        MessageModule,
-        DatePickerModule,
-        DialogModule,
-        AutoCompleteModule,
-        ConfirmDialogModule,
-        CheckboxModule
-    ],
+    CommonModule,
+    EditorModule,
+    ReactiveFormsModule,
+    TextareaModule,
+    TableModule,
+    InputTextModule,
+    FormsModule,
+    FileUploadModule,
+    ButtonModule,
+    SelectModule,
+    DropdownModule,
+    ToggleSwitchModule,
+    RippleModule,
+    ChipModule,
+    FluidModule,
+    MessageModule,
+    DatePickerModule,
+    DialogModule,
+    AutoCompleteModule,
+    ConfirmDialogModule,
+    CheckboxModule,
+    Tooltip
+],
     templateUrl: './invoice.component.html',
     styleUrl: './invoice.component.scss',
     providers: [ConfirmationService, DatePipe]
@@ -96,6 +98,7 @@ export class InvoiceComponent {
     ifsc: string = '';
     pan: string = '';
     hsncode: string = '';
+    ledgerData = false;
     // ✅ Move dropdown options into variables
     cusMobileOptions = [];
     cusNameOptions = [];
@@ -104,6 +107,8 @@ export class InvoiceComponent {
     products: any[] = [];
     filteredProducts: any[] = [];
     invoiceData: any[] = [];
+    customerLedgerData: any[]=[];
+    columns:any[]=[];
     invoiceSummary: any = {};
     constructor(
         private fb: FormBuilder,
@@ -152,6 +157,7 @@ export class InvoiceComponent {
             { validators: this.dateRangeValidator }
         );
         this.loadAllDropdowns();
+        this.setTableColumns();
         this.onGetStockIn();
         const savedState = this.sharedService.getInvoiceState();
         if (savedState) {
@@ -239,6 +245,34 @@ export class InvoiceComponent {
             this.errorSuccess(message);
         }
     }
+    customerLedger(){
+         const p_mobile = this.invoiceForm.controls['p_mobile'].value;
+        if(p_mobile === null){
+           this.filteredProducts=[];
+           this.products=[];
+        }
+        if(!p_mobile){
+            let message = 'Please select the mobile no. before filtering';
+            this.errorSuccess(message);
+        }
+         if (p_mobile) {
+            const payload = {
+                p_returnvalue: p_mobile,
+                p_returntype:'CUSTOMERLEDGER',
+                p_username: 'admin'
+            };
+             this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+                next: (res: any) => {
+                    console.log('Ledger:', res.data);
+                     this.ledgerData=true;
+                     this.customerLedgerData=res.data;
+                },
+                error: (err) => {
+                    console.log(err);
+                }
+            });
+        }
+    }
     totalDueAmount(): void {
         if (!this.products || this.products.length === 0) {
             this.invoiceForm.get('totalDueAmount')?.setValue('0');
@@ -292,6 +326,76 @@ export class InvoiceComponent {
     get grandTotal(): number {
         return this.products.reduce((sum, p) => sum + (p.total || 0), 0);
     }
+
+   private generateFileName() : string{
+    const customerPhone = this.invoiceForm.get('p_mobile')?.value;
+    let fileName = `${customerPhone}_Ledger`;
+    return fileName;
+   }
+  
+   private setTableColumns():void{
+    this.columns=[
+        {fields:'customername',header:'Customer Name'},
+        {fields:'customerphone',header:'Mobile No'},
+         {fields:'billno',header:'Invoice No'},
+        {fields:'payment_date',header:'Payment Date'},   
+        {fields:'payment_mode',header:'Payment Mode'},
+        {fields:'totalpayable',header:'Invoice Amount'},
+        {fields:'paid_amount',header:'Paid Amount'},
+         {fields:'remarks',header:'Remarks'}
+    ]
+   }
+download(){
+    console.log('hgghs')
+     if(this.customerLedgerData?.length){
+                        this.downloadExcel();
+                     }
+                     else{
+                        this.errorSuccess('No data available to download');
+                     }
+}
+private downloadFile(data:string, mimeType:string, extension:string){
+    const blob = new Blob([data],{type:mimeType});
+    const url=window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href= url;
+    link.download = this.generateFileName() + extension;
+    document.body.appendChild(link);
+    link.click();
+    document.body.appendChild(link);
+    window.URL.revokeObjectURL(url);
+}
+
+downloadExcel(){
+   const csvContent = this.generateCSV();
+    console.log('ans',csvContent)
+   this.downloadFile(csvContent,'text/csv;charset=utf-8;','.csv');
+   this.showSuccess('Excel file downloaded successfully!');
+}
+private generateCSV() :string {
+const headers = this.columns.map((col)=> this.escapeCSV(col.header));
+const headerRow = headers.join(',');
+const dataRows = this.customerLedgerData.map((item)=>{
+    const row = this.columns.map((col)=>{
+        const value= item[col.fields];
+        const formattedValue=col.formatter ? col.formatter(value) : value;
+        return this.escapeCSV(formattedValue);
+    });
+    return row.join(',');
+});
+return [headerRow, ...dataRows].join('\n');
+}
+private escapeCSV(value:any): string {
+    if(value === null || value === undefined || value === ''){
+        return '';
+    }
+    const stringValue = String(value);
+    const escapedValue = stringValue.replace(/"/g,'""');
+    if(/[,"\n\r]/.test(escapedValue)){
+        return `"${escapedValue}"`;
+    }
+    return escapedValue;
+}
 
     reset() {
         this.invoiceForm.reset({
