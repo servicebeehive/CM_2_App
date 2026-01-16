@@ -183,7 +183,7 @@ export class AddinventoryComponent {
 
         if (!isNaN(purchasePrice) && !isNaN(qty) && qty > 0) {
             const cost = purchasePrice / qty;
-            this.addForm.get('costPerItem')?.setValue(cost.toFixed(2), { emitEvent: false });
+            this.addForm.get('costPerItem')?.setValue(cost.toFixed(5), { emitEvent: false });
         } else {
             this.addForm.get('costPerItem')?.setValue(this.addForm.get('costPerItem')?.value, { emitEvent: false });
         }
@@ -194,8 +194,9 @@ export class AddinventoryComponent {
     }
 
     enterEditItemMode(itemData: any) {
-        console.log('edit', itemData.value);
         this.addForm.patchValue({
+            itemid:itemData.itemid,
+            p_tranpurchaseid:itemData.purchaseid,
             itembarcode: itemData.itembarcode,
             itemCode: itemData.itemsku || itemData.itemid,
             itemName: itemData.itemname,
@@ -206,11 +207,11 @@ export class AddinventoryComponent {
             activeItem: itemData.isactive === 'Y',
             location: itemData.location,
             minStock: itemData.minimumstock,
-            purchasePrice: itemData.costprice * itemData.quantity,
+            purchasePrice: (itemData.costprice * itemData.quantity).toFixed(2),
             mrp: itemData.saleprice,
             parentUOM: itemData.uomid,
             qty: itemData.quantity,
-            costPerItem: itemData.costprice,
+            costPerItem: (itemData.costprice).toFixed(5),
             warPeriod: itemData.warrentyperiod
         });
 
@@ -227,7 +228,6 @@ export class AddinventoryComponent {
         this.uomTableDisabled = true;
     }
     enterItemUpdateMode(itemData: any) {
-        console.log('update data', itemData);
         this.addForm.patchValue({
             itembarcode: itemData.itembarcode,
             itemCode: itemData.itemsku || itemData.itemid,
@@ -243,7 +243,7 @@ export class AddinventoryComponent {
             mrp: itemData.saleprice,
             parentUOM: itemData.uomid,
             qty: itemData.quantity,
-            costPerItem: itemData.costprice,
+            costPerItem: (itemData.costprice).toFixed(5),
             warPeriod: itemData.warrentyperiod
         });
 
@@ -265,7 +265,6 @@ export class AddinventoryComponent {
     }
 
     enterAddItemMode(itemData: any) {
-        console.log(itemData);
         console.log('add item:', itemData);
         this.addForm.patchValue({
             itembarcode: itemData.itembarcode,
@@ -278,13 +277,13 @@ export class AddinventoryComponent {
             activeItem: itemData.isactive === 'Y',
             location: itemData.location,
             minStock: itemData.minimumstock,
-            purchasePrice: this.mode == 'add' ? 0 : itemData.pruchaseprice,
+            purchasePrice: this.mode == 'add' ? 0 : (itemData.pruchaseprice).toFixed(2),
             // purchasePrice:itemData.pruchaseprice,
             mrp: itemData.saleprice,
             parentUOM: itemData.uomid,
             qty: itemData.quantity,
             // costPerItem:itemData.pruchaseprice,
-            costPerItem: itemData.costprice,
+            costPerItem: (itemData.costprice).toFixed(5),
             warPeriod: itemData.warrentyperiod
         });
 
@@ -319,6 +318,7 @@ export class AddinventoryComponent {
     }
 
     ngOnChanges(changes: SimpleChanges): void {
+        if(!this.addForm) return;
         const hasEditDataChange = !!changes['editData'] && !!this.editData;
         const formReady = !!this.addForm;
         if (hasEditDataChange && formReady) {
@@ -472,12 +472,12 @@ export class AddinventoryComponent {
     }
 
     mapFormToPayload(form: any, childUOM: any[]) {
-        console.log(form);
+        console.log("shds",form);
         //   return
 
         return {
             p_operationtype: this.mode == 'itemedit' ? 'ITEM_UPD' : 'PUR_INSERT',
-            p_purchaseid: this.mode == 'itemedit' ? '0' : this.transationid.toString(),
+            p_purchaseid: this.mode == 'itemedit' ? '0' : this.transationid?.toString() ?? '0',
             p_itembarcode: form.itembarcode,
             p_itemsku: form.itemCode,
             p_itemname: form.itemName,
@@ -512,6 +512,7 @@ export class AddinventoryComponent {
             // User Session Info
             p_loginuser: this.shareservice.getUserData()?.username || 'admin'
         };
+
     }
 
     onSubmit() {
@@ -519,6 +520,7 @@ export class AddinventoryComponent {
         if (this.mode == 'itemedit') {
             this.inventoryService.Oninsertitemdetails(this.mapFormToPayload(this.addForm.getRawValue(), this.products)).subscribe({
                 next: (res) => {
+                   
                     const msg = res?.data?.[0]?.msg || 'Item saved successfully';
                     this.showSuccess(msg);
                     this.save.emit(this.addForm.getRawValue());
