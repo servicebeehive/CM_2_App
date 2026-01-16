@@ -31,7 +31,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 
                     <div class="flex justify-between items-start mt-4">
                         <div class="w-6/12">
-                            <span class="text-4xl font-bold" [ngClass]="card.value < 0 ? 'text-red-600' : 'text-surface-900 dark:text-surface-0'"> ₹{{ card.value }} </span>
+                            <span class="text-4xl font-bold" [ngClass]="card.value < 0 ? 'text-red-600' : 'text-surface-900 dark:text-surface-0'"> ₹{{ card.value | number }} </span>
                         </div>
                     </div>
                 </ng-template>
@@ -73,7 +73,6 @@ export class StatsWidget implements OnInit, OnChanges {
         this.OnttopBarService.GettopBarCard(apibody).subscribe({
             next: (res) => {
                 const data = res.data[0];
-
                 this.dashboardCards = [
                     {
                         label: 'Total Cost',
