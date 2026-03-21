@@ -5,7 +5,7 @@
 
         <!-- Buttons - Hidden on mobile, shown in header on desktop -->
         <div class="hidden md:flex gap-4">
-             <button pButton type="button" label="Ledger" class="p-button-warning" [disabled]="invoiceForm.invalid" (click)="customerLedger()"></button>
+            <button pButton type="button" label="Ledger" class="p-button-warning" [disabled]="invoiceForm.invalid" (click)="customerLedger()"></button>
             <button pButton type="button" label="Display" class="p-button-warning" [disabled]="invoiceForm.invalid" (click)="display()"></button>
             <button pButton type="submit" label="Submit" class="p-button-warning" (click)="submit()" [disabled]="submitDisable"></button>
             <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
@@ -16,7 +16,6 @@
         <!-- 🏷 Product Info Section -->
         <div class="space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-x-8 gap-y-4 w-full">
-
                 <!-- Transaction Date From-->
                 <div class="flex flex-col">
                     <label class="font-medium mb-1">From Date <span class="text-red-500">*</span></label>
@@ -36,25 +35,25 @@
                     </small>
                 </div>
 
-                <!-- Customer Name -->
+                <!-- Customer Name & Mobile -->
                 <div class="flex flex-col">
-                    <label class="font-medium mb-1">Customer Name</label>
+                    <label class="font-medium mb-1">Customer Name & Mobile</label>
                     <p-dropdown
-                        [options]="cusNameOptions"
-                        optionLabel="fieldname"
+                        [options]="cusMobNameOptions"
                         optionValue="fieldid"
+                        optionLabel="fieldvalue"
                         [filter]="true"
                         [showClear]="true"
-                        filterPlaceholder="Search Customer Name"
+                        filterPlaceholder="Search Customer Name & Mobile"
                         formControlName="p_cusname"
-                        placeholder="Customer Name"
+                        placeholder="Customer Name & Mobile"
                         class="w-full"
                     >
                     </p-dropdown>
                 </div>
 
-                  <!-- Customer Mobile -->
-                <div class="flex flex-col">
+                <!-- Customer Mobile -->
+                <!-- <div class="flex flex-col">
                     <label class="font-medium mb-1">Customer Mobile</label>
                     <p-dropdown
                         [options]="cusMobileOptions"
@@ -68,24 +67,23 @@
                         class="w-full"
                     >
                     </p-dropdown>
-                </div>
-                
-              <!-- Status -->
+                </div> -->
+
+                <!-- Status -->
                 <div class="flex flex-col">
                     <label class="font-medium mb-1">Status</label>
                     <p-dropdown [options]="statusOptions" optionLabel="fieldname" [showClear]="true" optionValue="fieldid" [filter]="true" filterPlaceholder="Select Status" formControlName="status" placeholder="Status" class="w-full"> </p-dropdown>
                 </div>
-                
+
                 <!-- Total Due Amount -->
                 <div class="flex flex-col">
                     <label class="font-medium mb-1">Total Due Amount</label>
                     <input pInputText placeholder="Total Due Amount" readonly class="grayout" formControlName="totalDueAmount" />
                 </div>
-               
-</div>
+            </div>
             <!-- Action Buttons - Visible only on mobile, below Customer Name and Status -->
             <div class="flex md:hidden justify-center gap-3 mt-4">
-                 <button pButton type="button" label="Ledger" class="p-button-warning flex-1" [disabled]="invoiceForm.invalid" (click)="customerLedger()"></button>
+                <button pButton type="button" label="Ledger" class="p-button-warning flex-1" [disabled]="invoiceForm.invalid" (click)="customerLedger()"></button>
                 <button pButton type="button" label="Display" class="p-button-warning flex-1" [disabled]="invoiceForm.invalid" (click)="display()"></button>
                 <button pButton type="submit" label="Submit" class="p-button-warning flex-1" (click)="submit()" [disabled]="submitDisable"></button>
                 <button pButton type="button" label="Reset" class="p-button-secondary flex-1" (click)="reset()"></button>
@@ -94,8 +92,7 @@
 
         <!-- Product Table with Pagination -->
         <div>
-            <p-table [value]="filteredProducts" dataKey="code" [tableStyle]="{ 'min-width': '50rem' }" [paginator]="true" [rows]="10" 
-[rowsPerPageOptions]="[10, 20, 50]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines mt-6 invoice">
+            <p-table [value]="filteredProducts" dataKey="code" [tableStyle]="{ 'min-width': '50rem' }" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines mt-6 invoice">
                 <ng-template #header>
                     <tr class="bg-yellow-400">
                         <th>Transaction Type</th>
@@ -107,6 +104,7 @@
                         <th>Paid Amount</th>
                         <th class="flex gap-2"><p-checkbox binary="true" formControlName="p_checked" class="border" (change)="onDueAmountFilter($event)"></p-checkbox>Due Amount</th>
                         <th style="width: 140px; min-width: 160px; max-width: 160px">Received Amount</th>
+                        <th>Mode</th>
                         <th>Status</th>
                         <th>Action</th>
                     </tr>
@@ -114,21 +112,21 @@
 
                 <ng-template pTemplate="body" let-row let-i="rowIndex">
                     <tr>
-                         <td>{{ row.transactiontype }}</td>
+                        <td>{{ row.transactiontype }}</td>
                         <td>{{ row.invoice_no }}</td>
                         <td>{{ row.invoice_date | date: 'dd/MM/yyyy' }}</td>
-                        <td>{{ row.return_invoice_no}}</td>
+                        <td>{{ row.return_invoice_no }}</td>
                         <td>{{ row.customer }}</td>
                         <td>{{ row.total_amount | number: '1.2-2' }}</td>
-                        <td>{{ row.paid_amount |number:'1.2-2'}}</td>
-                        <td>{{ row.due_amount |number:'1.2-2'}}</td>
+                        <td>{{ row.paid_amount | number: '1.2-2' }}</td>
+                        <td>{{ row.due_amount | number: '1.2-2' }}</td>
                         <td style="width: 140px; min-width: 160px; max-width: 160px">
                             <div class="grid items-center gap-2">
                                 <input
                                     type="number"
                                     class="w-full"
                                     pInputText
-                                    [disabled]="!canPrint(row) || row.status==='Cancel'" 
+                                    [disabled]="!canPrint(row) || row.status === 'Cancel'"
                                     [(ngModel)]="row.received_amount"
                                     (ngModelChange)="updateReceivedAmount(i, $event)"
                                     [ngModelOptions]="{ standalone: true }"
@@ -138,6 +136,22 @@
                                 />
                                 <small class="text-red-500" *ngIf="row.amountError"> This cannot be greater than {{ row.due_amount }} </small>
                             </div>
+                        </td>
+                        <td>
+                            <p-dropdown
+                                [options]="transactionMode"
+                                optionLabel="label"
+                                optionValue="value"
+                                placeholder="Mode"
+                                [(ngModel)]="row.p_paymode"
+                                [filter]="true"
+                                filterPlaceholder="Search Mode"
+                                [showClear]="true"
+                                class="w-full"
+                                [ngModelOptions]="{ standalone: true }"
+                                appendTo="body"
+                            >
+                            </p-dropdown>
                         </td>
                         <td>{{ row.status }}</td>
                         <td class="text-center w-[60px]">
@@ -154,39 +168,40 @@
                 </ng-template>
             </p-table>
         </div>
-    </form>
 
-    <p-dialog header="Customer Ledger" [(visible)]="ledgerData" [modal]="true"  [style]="{width: '80vw'}">
-        <p-table [value]="customerLedgerData" [responsiveLayout]="'scroll'" class="p-datatable-gridlines ledger">
-            <ng-template pTemplate="header">
-                <tr class="bg-yellow-400">
-                    <th>Customer Name</th>
-                    <th>Mobile No</th>
-                    <th>Invoice No</th>
-                    <th>Payment Date</th>   
-                    <th>Payment Mode</th>
-                     <th>Invoice Amount</th>
-                     <th>Paid Amount</th>
-                     <th>Remarks</th>
-                </tr>
-            </ng-template>
-            <ng-template pTemplate="body" let-row>
-                <tr>
-                  <td>{{ row.customername }}</td>
-                  <td>{{ row.customerphone }}</td>
-                  <td>{{ row.billno }}</td>
-                  <td>{{ row.payment_date | date:'dd/MM/yyyy'}}</td>
-                  <td>{{ row.payment_mode }}</td>
-                  <td>{{ row.totalpayable }}</td>
-                  <td>{{ row.paid_amount }}</td>
-                  <td>{{ row.remarks }}</td>
-                </tr>
-            </ng-template>
-        </p-table>
-        <div class="flex justify-content-center md:justify-content-end mt-5">
-        <button pButton type="button" label="Download" icon="pi pi-download" iconPos="right" class="p-button-warning" (click)="download()"></button>
-        </div>
-    </p-dialog>
+        <p-dialog header="Customer Ledger" [(visible)]="ledgerData" [modal]="true" [style]="{ width: '80vw' }">
+            <p-table [value]="customerLedgerData" [responsiveLayout]="'scroll'" class="p-datatable-gridlines ledger">
+                <ng-template pTemplate="header">
+                    <tr class="bg-yellow-400">
+                        <th>Customer Name</th>
+                        <th>Mobile No</th>
+                        <th>Invoice No</th>
+                        <th>Payment Date</th>
+                        <th>Payment Mode</th>
+                        <th>Invoice Amount</th>
+                        <th>Paid Amount</th>
+                        <th>Remarks</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-row>
+                    <tr>
+                        <td>{{ row.customername }}</td>
+                        <td>{{ row.customerphone }}</td>
+                        <td>{{ row.billno }}</td>
+                        <td>{{ row.payment_date | date: 'dd/MM/yyyy' }}</td>
+                        <td>{{ row.payment_mode }}</td>
+                        <td>{{ row.totalpayable }}</td>
+                        <td>{{ row.paid_amount }}</td>
+                        <td>{{ row.remarks }}</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+            <div class="flex justify-content-center md:justify-content-between mt-5">
+                <button pButton type="button" label="Download" icon="pi pi-download" iconPos="right" class="p-button-warning" (click)="download()"></button>
+                <input pInputText class="ml-auto" readonly [value]="dueAmount | number: '1.2-2'" placeholder="Due Amount" />
+            </div>
+        </p-dialog>
+    </form>
     <!-- Confirm Dialog -->
     <p-confirmDialog></p-confirmDialog>
 </div>
@@ -194,20 +209,21 @@
 <!-- ================================
      PRINT SECTION (INVOICE)
 ================================= -->
-<div id="invoicePrintSection" style=" width: 900px; margin: auto; font-family: Arial">
+<div id="invoicePrintSection" style="width: 900px; margin: auto; font-family: Arial">
     <h3 style="text-align: center">TAX INVOICE</h3>
 
     <!-- ================= HEADER SECTION ================= -->
-    <table width="100%" border="1" cellspacing="0" cellpadding="0" style="border-collapse: collapse; font-size:10px">
+    <table width="100%" border="1" cellspacing="0" cellpadding="0" style="border-collapse: collapse; font-size: 10px">
         <tr>
             <!-- LEFT SIDE (COMPANY + BUYER INFO) -->
             <td width="60%" style="vertical-align: top; padding: 6px">
-                <strong>{{companyName}}</strong><br />
-                {{companyAddress}},<br />
-                {{companycity}}<br />
-                GSTIN/UIN: {{companygstno}}<br />
-                State Name: {{companystate}}, Code: {{statecode}}<br />
-                E-Mail : {{companyemail }}
+                <strong>{{ companyName }}</strong
+                ><br />
+                {{ companyAddress }},<br />
+                {{ companycity }}<br />
+                GSTIN/UIN: {{ companygstno }}<br />
+                State Name: {{ companystate }}, Code: {{ statecode }}<br />
+                E-Mail : {{ companyemail }}
                 <br />
 
                 <hr style="margin: 5px 0" />
@@ -220,7 +236,7 @@
                 Mobile: {{ invoiceForm.get('p_mobileno')?.value || '' }}<br />
                 <br />
 
-                GSTIN/UIN : {{ invoiceForm.get('p_customergstin')?.value || '' }}<br />
+                GSTIN/UIN : {{ invoiceForm.get('p_customergstno')?.value || '' }}<br />
                 State Name : {{ invoiceForm.get('p_customerstate')?.value || '' }}
             </td>
 
@@ -244,7 +260,9 @@
 
                     <tr>
                         <td><strong>Mode of Payment</strong></td>
-                        <td><strong>{{invoiceForm.get('p_paymode')}}</strong></td>
+                        <td>
+                            <strong>{{ invoiceForm.get('p_paymode') }}</strong>
+                        </td>
                     </tr>
 
                     <tr>
@@ -279,7 +297,7 @@
 
                     <tr>
                         <td>Dispatched through</td>
-                        <td></td>
+                        <td>{{ invoiceForm.get('deliveryboy')?.value || '' }}</td>
                     </tr>
 
                     <tr>
@@ -313,10 +331,10 @@
         </thead>
 
         <tbody>
-            <tr *ngFor="let item of invoiceData; let i = index" style="text-align: center;">
+            <tr *ngFor="let item of invoiceData; let i = index" style="text-align: center">
                 <td>{{ i + 1 }}</td>
                 <td>{{ item.itemname }}</td>
-                <td>{{item.hsncode}}</td>
+                <td>{{ item.hsncode }}</td>
                 <td>{{ item.quantity }} {{ item.uomname }}</td>
                 <td>₹{{ item.mrp | number: '1.2-2' }}</td>
                 <td>{{ item.uomname }}</td>
@@ -375,7 +393,6 @@
     <div style="padding: 10px; font-size: 10px">
         <strong>Amount Chargeable (in words):</strong>
         <!-- {{ amountInWords }} -->
-        
     </div>
 
     <!-- ================= GST SUMMARY ================= -->
@@ -405,35 +422,34 @@
 
     <!-- ================= BANK DETAILS ================= -->
     <div>
-    <table width="100%" cellspacing="0" cellpadding="0" style="border-collapse: collapse; font-size: 10px; margin-top: 5px; border: none;">
-        <tr>
-            <!-- LEFT COLUMN -->
-            <td width="70%" style="vertical-align: top; padding: 0; border: none;">
-                <div style="margin-bottom: 10px;">
-                    <strong>Tax Amount (in words):</strong> <!-- {{ taxAmountInWords }} --> -
-                </div>
-                
-                <div >
-                    <strong>Company's Bank Details</strong><br />
-                    Bank Name: <b>{{ bankname }}</b><br />
-                    A/c No.: {{ accountno }}<br />
-                    Branch: {{ branchname }}<br />
-                    IFSC: {{ ifsc }}<br />
-                    PAN: <b>{{ pan }}</b>
-                </div>
-            </td>
+        <table width="100%" cellspacing="0" cellpadding="0" style="border-collapse: collapse; font-size: 10px; margin-top: 5px; border: none">
+            <tr>
+                <!-- LEFT COLUMN -->
+                <td width="70%" style="vertical-align: top; padding: 0; border: none">
+                    <div style="margin-bottom: 10px">
+                        <strong>Tax Amount (in words):</strong>
+                        <!-- {{ taxAmountInWords }} -->
+                        -
+                    </div>
+
+                    <div>
+                        <strong>Company's Bank Details</strong><br />
+                        Bank Name: <b>{{ bankname }}</b
+                        ><br />
+                        A/c No.: {{ accountno }}<br />
+                        Branch: {{ branchname }}<br />
+                        IFSC: {{ ifsc }}<br />
+                        PAN: <b>{{ pan }}</b>
+                    </div>
+                </td>
             </tr>
             <tr>
-            <!-- RIGHT COLUMN (Signature) -->
-            <td width="30%" style="padding: 0; border: none; text-align: right;">
-                <div style=" display: flex; flex-direction: column;justify-content: flex-end;">
-                    <strong>Authorized Signatory</strong><br />
-                </div>
-            </td>
-        </tr>
-    </table>
-     <div style="margin-top: 2px; font-size: 10px;">
-                    <strong>Declaration:</strong> This invoice shows the actual price of goods and all particulars are true.
-                </div>
-</div>
+                <!-- RIGHT COLUMN (Signature) -->
+                <td width="30%" style="padding: 0; border: none; text-align: right">
+                    <div style="display: flex; flex-direction: column; justify-content: flex-end"><strong>Authorized Signatory</strong><br /></div>
+                </td>
+            </tr>
+        </table>
+        <div style="margin-top: 2px; font-size: 10px"><strong>Declaration:</strong> This invoice shows the actual price of goods and all particulars are true.</div>
+    </div>
 </div>

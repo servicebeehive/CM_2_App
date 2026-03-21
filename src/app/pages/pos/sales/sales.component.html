@@ -55,16 +55,41 @@
                     <span *ngIf="salesForm.get('p_billno')?.errors?.['required']"> Bill No is required </span>
                 </small>
             </div>
-            <!-- GST CHECKBOX -->
-            <!-- SEARCH MOBILE NO -->
+
+            <!-- TRANSACTION DATE -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1 text-sm md:text-base">Transaction Date</label>
+                <p-datepicker fluid formControlName="p_transactiondate" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="Transaction Date" [maxDate]="today"> </p-datepicker>
+            </div>
+            
+              <!-- MODE OF TRANSACTION -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1 text-sm md:text-base">Transaction Mode</label>
+                <p-dropdown [options]="transactionMode" optionLabel="label" optionValue="value" placeholder="Transaction Mode" formControlName="p_paymode" [filter]="true" filterPlaceholder="Search Transaction Mode" [showClear]="true"> </p-dropdown>
+            </div>
+
+             <!-- Delivery Person -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1 text-sm md:text-base">Delivery Person</label>
+                 <p-dropdown #deliveryperson [options]="deliveryBoyOptions" optionLabel="fieldname" optionValue="fieldname" [filter]="true" filterPlaceholder="Search Delivery Person" formControlName="p_deliveryboy" placeholder="Select Delivery Person" appendTo="body" (onFilter)="onDeliveryFilter($event)">
+                    <ng-template pTemplate="emptyfilter">
+                        <div class="text-center">
+                            <div>No record found</div>
+                            <button pButton type="button" label="Add" icon="pi pi-plus" class="w-full" (click)="addDeliveryPerson()"></button>
+                        </div>
+                    </ng-template>
+                 </p-dropdown>
+            </div>
+
+           <!-- SEARCH MOBILE NO -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1 text-sm md:text-base">Search Mobile No</label>
 
                 <p-dropdown
                     [options]="cusMobileOptions"
                     class="w-full"
-                    optionLabel="customerphone"
                     optionValue="fieldid"
+                    optionLabel="fieldvalue"
                     [filter]="true"
                     [showClear]="true"
                     type="number"
@@ -74,7 +99,7 @@
                     placeholder="Search Customer Mobile"
                     (onFilter)="onMobileFilter($event)"
                     (onChange)="onMobileSelect($event)"
-                    (keypress)="allowOnlyNumbers($event)"
+                   
                 >
                 </p-dropdown>
             </div>
@@ -95,6 +120,15 @@
                 <input pInputText showclear="[true]" placeholder="Customer Name" formControlName="p_customername" class="text-sm md:text-base" />
                 <small class="text-red-500 ms-1 md:ms-3 mt-1 text-xs" *ngIf="salesForm.get('p_customername')?.touched">
                     <span *ngIf="salesForm.get('p_customername')?.errors?.['required']">Customer Name is required</span>
+                </small>
+            </div>
+
+             <!-- GST No. -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1 text-sm md:text-base">GST No</label>
+                <input pInputText formControlName="p_gstno" placeholder="GST No" />
+                <small class="text-red-500 md:ms-3 mt-1 text-xs" *ngIf="salesForm.get('p_gstno')?.touched && salesForm.get('p_gstno')?.invalid">
+                    <span *ngIf="salesForm.get('p_gstno')?.errors?.['invalidGst']"> Please enter valid gst number </span>
                 </small>
             </div>
 
@@ -133,28 +167,11 @@
                         </div>
                     </ng-template>
                 </p-select>
-            </div>
-
-            <!-- MODE OF TRANSACTION -->
-            <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">Transaction Mode</label>
-
-                <p-dropdown [options]="transactionMode" optionLabel="label" optionValue="value" placeholder="Transaction Mode" formControlName="p_paymode" [filter]="true" filterPlaceholder="Search Transaction Mode" [showClear]="true"> </p-dropdown>
-            </div>
-
-            <!-- TRANSACTION DATE -->
-            <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">Transaction Date</label>
-                <p-datepicker fluid formControlName="p_transactiondate" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="Transaction Date" [maxDate]="today"> </p-datepicker>
-            </div>
-            <!-- Delivery Person -->
-            <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">Delivery Person</label>
-                <input pInputText formControlName="p_deliveryboy" placeholder="Delivery Person" />
-            </div>
-
+            </div> 
+           
+            <!-- GST CHECKBOX -->
             <div class="flex items-center gap-2 md:gap-4 mt-0 md:mt-6">
-                <p-checkbox binary="true" variant="filled" formControlName="p_gsttran"></p-checkbox>
+                <p-checkbox readonly binary="true" variant="filled" formControlName="p_gsttran"></p-checkbox>
                 <label class="font-medium mb-1 text-sm md:text-base">GST Transaction</label>
             </div>
 
@@ -344,8 +361,8 @@
                 Mobile: {{ salesForm.get('p_mobileno')?.value }}<br />
                 <br />
 
-                GSTIN/UIN : {{ salesForm.get('p_customergstin')?.value || '-' }}<br />
-                State Name : {{ salesForm.get('p_customerstate')?.value || '-' }}
+                GSTIN/UIN : {{ salesForm.get('p_gstno')?.value || '-' }}<br />
+                State Name : {{customerstate}}
             </td>
 
             <!-- RIGHT SECTION (INVOICE DETAILS) -->
@@ -400,7 +417,7 @@
 
                     <tr>
                         <td>Dispatched through</td>
-                        <td>-</td>
+                        <td>{{ salesForm.get('p_deliveryboy')?.value }}</td>
                     </tr>
 
                     <tr>

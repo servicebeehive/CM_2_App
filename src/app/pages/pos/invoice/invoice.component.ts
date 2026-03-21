@@ -26,7 +26,7 @@ import { Paginator } from 'primeng/paginator';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '@/core/services/auth.service';
 import { ShareService } from '@/core/services/shared.service';
-import { Tooltip } from "primeng/tooltip";
+import { Tooltip } from 'primeng/tooltip';
 interface Product {
     name: string;
     price: string;
@@ -47,32 +47,38 @@ interface Image {
     objectURL: string;
 }
 
+interface Customer {
+    fieldid: number;
+    fieldname: string;
+    fieldvalue: string;
+    customergstno: string;
+}
 @Component({
     selector: 'app-invoice',
     imports: [
-    CommonModule,
-    EditorModule,
-    ReactiveFormsModule,
-    TextareaModule,
-    TableModule,
-    InputTextModule,
-    FormsModule,
-    FileUploadModule,
-    ButtonModule,
-    SelectModule,
-    DropdownModule,
-    ToggleSwitchModule,
-    RippleModule,
-    ChipModule,
-    FluidModule,
-    MessageModule,
-    DatePickerModule,
-    DialogModule,
-    AutoCompleteModule,
-    ConfirmDialogModule,
-    CheckboxModule,
-    Tooltip
-],
+        CommonModule,
+        EditorModule,
+        ReactiveFormsModule,
+        TextareaModule,
+        TableModule,
+        InputTextModule,
+        FormsModule,
+        FileUploadModule,
+        ButtonModule,
+        SelectModule,
+        DropdownModule,
+        ToggleSwitchModule,
+        RippleModule,
+        ChipModule,
+        FluidModule,
+        MessageModule,
+        DatePickerModule,
+        DialogModule,
+        AutoCompleteModule,
+        ConfirmDialogModule,
+        CheckboxModule,
+        Tooltip
+    ],
     templateUrl: './invoice.component.html',
     styleUrl: './invoice.component.scss',
     providers: [ConfirmationService, DatePipe]
@@ -101,14 +107,19 @@ export class InvoiceComponent {
     ledgerData = false;
     // ✅ Move dropdown options into variables
     cusMobileOptions = [];
-    cusNameOptions = [];
+    cusMobNameOptions: Customer[] = [];
     profileOptions: any = {};
     statusOptions: any[] = [];
     products: any[] = [];
     filteredProducts: any[] = [];
     invoiceData: any[] = [];
-    customerLedgerData: any[]=[];
-    columns:any[]=[];
+    customerLedgerData: any[] = [];
+    columns: any[] = [];
+    transactionMode: any[] = [
+        { label: 'Cash', value: 'Cash' },
+        { label: 'UPI', value: 'UPI' },
+        { label: 'Card', value: 'Card' }
+    ];
     invoiceSummary: any = {};
     constructor(
         private fb: FormBuilder,
@@ -124,12 +135,11 @@ export class InvoiceComponent {
     ngOnInit(): void {
         this.invoiceForm = this.fb.group(
             {
-                p_mobile: [''],
                 p_cusname: [''],
                 fromDate: [this.today, Validators.required],
                 toDate: [this.today, Validators.required],
                 status: [''],
-
+                due_amount: [''],
                 //PRINT SECTION VARIABLE
                 p_billno: [''],
                 p_transactiondate: [''],
@@ -137,8 +147,9 @@ export class InvoiceComponent {
                 p_customername: [''],
                 p_customeraddress: [''],
                 p_mobileno: [''],
-                p_customergstin: [''],
+                p_customergstno: [''],
                 p_customerstate: [''],
+                deliveryboy: [''],
                 p_totalsale: [''],
                 p_totalpayable: [''],
                 p_disctype: [''],
@@ -209,16 +220,16 @@ export class InvoiceComponent {
     }
 
     display() {
-        const p_mobile = this.invoiceForm.controls['p_mobile'].value;
+        // const p_mobile = this.invoiceForm.controls['p_mobile'].value;
         const p_cusname = this.invoiceForm.controls['p_cusname'].value;
         const startDate = this.invoiceForm.controls['fromDate'].value;
         const endDate = this.invoiceForm.controls['toDate'].value;
         const status = this.invoiceForm.controls['status'].value;
-        if ((startDate && endDate) || p_cusname || p_mobile || status) {
+        if ((startDate && endDate) || p_cusname || status) {
             const payload = {
                 p_startdate: this.datepipe.transform(startDate, 'yyyy/MM/dd'),
                 p_enddate: this.datepipe.transform(endDate, 'yyyy/MM/dd'),
-                p_mobile: p_mobile || null,
+                // p_mobile: p_mobile || null,
                 p_customer: p_cusname || null,
                 p_status: status || null,
                 p_username: 'admin'
@@ -231,6 +242,13 @@ export class InvoiceComponent {
                     this.totalDueAmount();
                     this.initialzeFormArray();
                     this.saveCurrentState();
+                    this.filteredProducts = [...this.products];
+
+                    this.filteredProducts.forEach((row) => {
+                        if (!row.p_paymode) {
+                            row.p_paymode = 'Cash';
+                        }
+                    });
                     if (this.products.length === 0) {
                         let message = 'No Data Available for this Category and Item';
                         this.showSuccess(message);
@@ -245,27 +263,33 @@ export class InvoiceComponent {
             this.errorSuccess(message);
         }
     }
-    customerLedger(){
-         const p_mobile = this.invoiceForm.controls['p_mobile'].value;
-        if(p_mobile === null){
-           this.filteredProducts=[];
-           this.products=[];
+    customerLedger() {
+        const selectedId = this.invoiceForm.controls['p_cusname'].value;
+        const selectedValue: any = this.cusMobNameOptions.find((item: any) => item.fieldid === selectedId);
+        const selectedCustomer = selectedValue?.fieldvalue;
+        const mobileMatch = selectedCustomer.match(/\d{10}/)?.[0];
+
+        if (mobileMatch === null) {
+            this.filteredProducts = [];
+            this.products = [];
         }
-        if(!p_mobile){
+        if (!mobileMatch) {
             let message = 'Please select the mobile no. before filtering';
             this.errorSuccess(message);
         }
-         if (p_mobile) {
+
+        if (mobileMatch) {
             const payload = {
-                p_returnvalue: p_mobile,
-                p_returntype:'CUSTOMERLEDGER',
+                p_returnvalue: mobileMatch,
+                p_returntype: 'CUSTOMERLEDGER',
                 p_username: 'admin'
             };
-             this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+
+            this.inventoryService.Getreturndropdowndetails(payload).subscribe({
                 next: (res: any) => {
                     console.log('Ledger:', res.data);
-                     this.ledgerData=true;
-                     this.customerLedgerData=res.data;
+                    this.ledgerData = true;
+                    this.customerLedgerData = res.data;
                 },
                 error: (err) => {
                     console.log(err);
@@ -273,6 +297,15 @@ export class InvoiceComponent {
             });
         }
     }
+    get dueAmount(): number {
+        if (!this.customerLedgerData || this.customerLedgerData.length === 0) return 0;
+        return this.customerLedgerData.reduce((sum, item: any) => {
+            const invoiceamount = item.totalpayable || 0;
+            const paidamount = item.paid_amount || 0;
+            return sum + (invoiceamount - paidamount);
+        }, 0);
+    }
+
     totalDueAmount(): void {
         if (!this.products || this.products.length === 0) {
             this.invoiceForm.get('totalDueAmount')?.setValue('0');
@@ -327,75 +360,74 @@ export class InvoiceComponent {
         return this.products.reduce((sum, p) => sum + (p.total || 0), 0);
     }
 
-   private generateFileName() : string{
-    const customerPhone = this.invoiceForm.get('p_mobile')?.value;
-    let fileName = `${customerPhone}_Ledger`;
-    return fileName;
-   }
-  
-   private setTableColumns():void{
-    this.columns=[
-        {fields:'customername',header:'Customer Name'},
-        {fields:'customerphone',header:'Mobile No'},
-         {fields:'billno',header:'Invoice No'},
-        {fields:'payment_date',header:'Payment Date'},   
-        {fields:'payment_mode',header:'Payment Mode'},
-        {fields:'totalpayable',header:'Invoice Amount'},
-        {fields:'paid_amount',header:'Paid Amount'},
-         {fields:'remarks',header:'Remarks'}
-    ]
-   }
-download(){
-    console.log('hgghs')
-     if(this.customerLedgerData?.length){
-                        this.downloadExcel();
-                     }
-                     else{
-                        this.errorSuccess('No data available to download');
-                     }
-}
-private downloadFile(data:string, mimeType:string, extension:string){
-    const blob = new Blob([data],{type:mimeType});
-    const url=window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href= url;
-    link.download = this.generateFileName() + extension;
-    document.body.appendChild(link);
-    link.click();
-    document.body.appendChild(link);
-    window.URL.revokeObjectURL(url);
-}
+    private generateFileName(): string {
+        const customer = this.invoiceForm.get('p_cusname')?.value;
+        const customerName = this.cusMobNameOptions.find((c) => c.fieldid === customer);
+        let fileName = `${customerName?.fieldname}_Ledger`;
+        return fileName;
+    }
 
-downloadExcel(){
-   const csvContent = this.generateCSV();
-    console.log('ans',csvContent)
-   this.downloadFile(csvContent,'text/csv;charset=utf-8;','.csv');
-   this.showSuccess('Excel file downloaded successfully!');
-}
-private generateCSV() :string {
-const headers = this.columns.map((col)=> this.escapeCSV(col.header));
-const headerRow = headers.join(',');
-const dataRows = this.customerLedgerData.map((item)=>{
-    const row = this.columns.map((col)=>{
-        const value= item[col.fields];
-        const formattedValue=col.formatter ? col.formatter(value) : value;
-        return this.escapeCSV(formattedValue);
-    });
-    return row.join(',');
-});
-return [headerRow, ...dataRows].join('\n');
-}
-private escapeCSV(value:any): string {
-    if(value === null || value === undefined || value === ''){
-        return '';
+    private setTableColumns(): void {
+        this.columns = [
+            { fields: 'customername', header: 'Customer Name' },
+            { fields: 'customerphone', header: 'Mobile No' },
+            { fields: 'billno', header: 'Invoice No' },
+            { fields: 'payment_date', header: 'Payment Date' },
+            { fields: 'payment_mode', header: 'Payment Mode' },
+            { fields: 'totalpayable', header: 'Invoice Amount' },
+            { fields: 'paid_amount', header: 'Paid Amount' },
+            { fields: 'remarks', header: 'Remarks' }
+        ];
     }
-    const stringValue = String(value);
-    const escapedValue = stringValue.replace(/"/g,'""');
-    if(/[,"\n\r]/.test(escapedValue)){
-        return `"${escapedValue}"`;
+    download() {
+        if (this.customerLedgerData?.length) {
+            this.downloadExcel();
+        } else {
+            this.errorSuccess('No data available to download');
+        }
     }
-    return escapedValue;
-}
+    private downloadFile(data: string, mimeType: string, extension: string) {
+        const blob = new Blob([data], { type: mimeType });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = this.generateFileName() + extension;
+        document.body.appendChild(link);
+        link.click();
+        document.body.appendChild(link);
+        window.URL.revokeObjectURL(url);
+    }
+
+    downloadExcel() {
+        const csvContent = this.generateCSV();
+        console.log('ans', csvContent);
+        this.downloadFile(csvContent, 'text/csv;charset=utf-8;', '.csv');
+        this.showSuccess('Excel file downloaded successfully!');
+    }
+    private generateCSV(): string {
+        const headers = this.columns.map((col) => this.escapeCSV(col.header));
+        const headerRow = headers.join(',');
+        const dataRows = this.customerLedgerData.map((item) => {
+            const row = this.columns.map((col) => {
+                const value = item[col.fields];
+                const formattedValue = col.formatter ? col.formatter(value) : value;
+                return this.escapeCSV(formattedValue);
+            });
+            return row.join(',');
+        });
+        return [headerRow, ...dataRows].join('\n');
+    }
+    private escapeCSV(value: any): string {
+        if (value === null || value === undefined || value === '') {
+            return '';
+        }
+        const stringValue = String(value);
+        const escapedValue = stringValue.replace(/"/g, '""');
+        if (/[,"\n\r]/.test(escapedValue)) {
+            return `"${escapedValue}"`;
+        }
+        return escapedValue;
+    }
 
     reset() {
         this.invoiceForm.reset({
@@ -415,7 +447,7 @@ private escapeCSV(value:any): string {
     OnGetCusName() {
         const payload = this.createDropdownPayload('CUSTOMER');
         this.inventoryService.getdropdowndetails(payload).subscribe({
-            next: (res) => (this.cusNameOptions = res.data),
+            next: (res) => (this.cusMobNameOptions = res.data),
             error: (err) => console.log(err)
         });
     }
@@ -518,7 +550,7 @@ private escapeCSV(value:any): string {
         for (let i = 0; i < this.products.length; i++) {
             const row = this.products[i];
             const receivedAmount = parseFloat(row.received_amount) || 0;
-
+            const modeoftrans = row.p_paymode;
             if (receivedAmount > 0) {
                 // Validate amount before adding
                 if (receivedAmount > parseFloat(row.due_amount)) {
@@ -536,7 +568,8 @@ private escapeCSV(value:any): string {
                     ItemId: 0,
                     batchId: 0,
                     Quantity: 0,
-                    mrpvalue: receivedAmount
+                    mrpvalue: receivedAmount,
+                    transmode: modeoftrans
                 });
             }
         }
@@ -636,6 +669,9 @@ private escapeCSV(value:any): string {
             p_transactionid: data.transactionid || '',
             p_customername: data.customername || '',
             p_mobileno: data.mobileno || '',
+            p_customergstno: data.customergstno,
+            p_customerstate: data.customerstate,
+            deliveryboy: data.deliveryboy,
             p_totalsale: data.totalsale || 0,
             p_totalpayable: data.totalpayable || 0,
             p_disctype: data.discounttype || 'N',

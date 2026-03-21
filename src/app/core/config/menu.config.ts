@@ -133,6 +133,16 @@ export const ADMIN_MENU_MODEL: MenuItem[] = [
                         label: 'User Management',
                         icon: 'pi pi-fw pi-users',
                         routerLink: ['/layout/settings/user-management']
+                    },
+                     {
+                        label: 'Customer Master',
+                        icon: 'pi pi-fw pi-file',
+                        routerLink: ['/layout/settings/category-formate', 'customermaster']
+                    },
+                    {
+                        label: 'Supplier Master',
+                        icon: 'pi pi-fw pi-file',
+                        routerLink: ['/layout/settings/category-formate', 'suppliermaster']
                     }
                 ]
             }

@@ -193,7 +193,6 @@ export class StockInComponent {
         window.removeEventListener('beforeunload', () => {});
     }
     populateStockForm(data: any, itemsData: any[]) {
-        console.log('data date:', data);
         this.transationid=data.purchaseid;
         this.productForm.patchValue({
             p_tranpurchaseid: data.purchaseid || 0,

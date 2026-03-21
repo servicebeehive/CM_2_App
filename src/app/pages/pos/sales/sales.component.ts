@@ -1,5 +1,5 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, ElementRef, HostListener, QueryList, ViewChild, ViewChildren, inject } from '@angular/core';
+import { Component, ElementRef, HostListener, QueryList, ViewChild, ViewChildren, inject} from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { ChipModule } from 'primeng/chip';
@@ -25,7 +25,15 @@ import { AuthService } from '@/core/services/auth.service';
 import { OrderService } from '@/core/services/order.service';
 import { ShareService } from '@/core/services/shared.service';
 import { Router } from '@angular/router';
+
 // import { NgxPrintModule } from 'ngx-print';
+export function gstNumberValidator(control: AbstractControl): ValidationErrors | null {
+    if (!control.value) return null;
+
+    const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+
+    return gstRegex.test(control.value.toUpperCase()) ? null : { invalidGst: true };
+}
 
 @Component({
     selector: 'app-sales',
@@ -63,6 +71,7 @@ export class SalesComponent {
     // -----------------------------
     @ViewChild('barcodeInput') barcodeInput!: ElementRef<HTMLInputElement>;
     @ViewChildren('uomDropdown') uomDropdown!: QueryList<Dropdown>;
+    @ViewChild('deliveryperson') deliveryperson!: Dropdown;
     ngAfterViewInit() {
         setTimeout(() => {
             this.focusBarcode();
@@ -163,11 +172,13 @@ export class SalesComponent {
     profileOptions: any = {};
     public itemOptionslist: [] = [];
     public uomlist: any[] = [];
+    filteredDeliveryText = '';
     Uomid: string = '';
     mobilePlaceholder: string = 'Mobile No';
     backshow: boolean = false;
     isLoadingBills: boolean = false;
     billValue: any = null;
+    customerstate:string='';
     companyName: string = '';
     companyAddress: string = '';
     companycity: string = '';
@@ -230,7 +241,8 @@ export class SalesComponent {
                 p_totalpayable: [0],
                 p_currencyid: [0],
                 p_paymentdue: [''],
-                p_gsttran: [true],
+                p_gstno: ['', [gstNumberValidator]],
+                p_gsttran: [false],
                 status: [''],
                 p_status: [''],
                 p_isactive: [''],
@@ -267,6 +279,23 @@ export class SalesComponent {
             }
             this.applyDiscount();
         });
+
+        this.salesForm.get('p_gstno')!.statusChanges.subscribe((status) => {
+            const gstCtrl = this.salesForm.get('p_gstno');
+            const gstTransCtrl = this.salesForm.get('p_gsttran');
+
+            const value = gstCtrl?.value;
+            if (!value) {
+                gstTransCtrl?.setValue(false, { emitEvent: false });
+                return;
+            }
+
+            if (status === 'VALID') {
+                gstTransCtrl?.setValue(true, { emitEvent: false });
+            } else {
+                gstTransCtrl?.setValue(false, { emitEvent: false });
+            }
+        });
         const navigation = history.state;
         console.log('Navigation state:', navigation);
 
@@ -278,6 +307,10 @@ export class SalesComponent {
         this.setupBackButtonListener();
     }
 
+    deliveryBoyOptions = [
+        { fieldid: 1, fieldname: 'Chittaranjan Dasgupta' },
+        { fieldid: 2, fieldname: 'Jaya Gupta' }
+    ];
     // -----------------------------
     //  FormArray Getters / Helpers
     // -----------------------------
@@ -392,7 +425,7 @@ export class SalesComponent {
             event.preventDefault();
         }
     }
- 
+
     // -----------------------------
     //  Dropdown / Data Loading
     // -----------------------------
@@ -403,7 +436,8 @@ export class SalesComponent {
         // Only update form control if typed value is 10 digits
         if (typedValue && /^[6-9]\d{9}$/.test(typedValue)) {
             this.salesForm.patchValue({
-                p_mobileno: typedValue
+                p_mobileno: typedValue,
+                p_customername: ''
             });
             this.mobilePlaceholder = 'Mobile No';
         } else {
@@ -412,22 +446,24 @@ export class SalesComponent {
     }
     onMobileSelect(event: any) {
         const mobileSelection = this.cusMobileOptions.find((mobileNo) => mobileNo.fieldid === event.value);
+        const mobileMatch = mobileSelection.fieldvalue.match(/\d{10}/);
         if (mobileSelection) {
             this.salesForm.patchValue({
-                p_mobileno: mobileSelection.customerphone,
-                p_customername: mobileSelection.fieldname
+                p_mobileno: mobileMatch ? mobileMatch[0] : '',
+                p_customername: mobileSelection.fieldname,
+                p_gstno: mobileSelection.customergstno
             });
         }
     }
 
     populateSaleForm(data: any, itemsData: any[]) {
-        console.log('Populating form with header:', data);
-        console.log('Populating form with items:', itemsData);
+        this.customerstate = data.customerstate;
         this.salesForm.patchValue({
             p_customername: data.customername || '',
             p_mobileno: data.mobileno || '',
             p_deliveryboy: data.deliveryboy,
             p_gsttran: data.gstin || '',
+            p_gstno: data.customergstno,
             p_billno: data.billno || '',
             p_transactionid: data.transactionid || 0,
             p_transactiondate: data.transactiondate ? new Date(data.transactiondate) : new Date(),
@@ -505,6 +541,13 @@ export class SalesComponent {
             error: (err) => console.log(err)
         });
     }
+    OnGetDelivery() {
+        const payload = this.createDropdownPayload('DELIVERY');
+        this.stockInService.getdropdowndetails(payload).subscribe({
+            next: (res) => (this.deliveryBoyOptions = res.data),
+            error: (err) => console.log(err)
+        });
+    }
     OnGetProfile() {
         const payload = this.createDropdownPayload('PROFILE');
         this.stockInService.getdropdowndetails(payload).subscribe({
@@ -535,9 +578,26 @@ export class SalesComponent {
         this.OnGetItem();
         this.OnGetBillNo();
         this.OnGetCusMobile();
+        this.OnGetDelivery();
         this.OnGetProfile();
     }
 
+    onDeliveryFilter(event: any) {
+        this.filteredDeliveryText = event.filter.trim();
+    }
+    addDeliveryPerson() {
+        if (!this.filteredDeliveryText) return;
+        const exists = this.deliveryBoyOptions.some((x) => x.fieldname.toLowerCase() === this.filteredDeliveryText.toLowerCase());
+        if (exists) return;
+        const newItem = {
+            fieldid: Date.now(),
+            fieldname: this.filteredDeliveryText
+        };
+        this.deliveryBoyOptions = [...this.deliveryBoyOptions, newItem];
+        this.salesForm.get('p_deliveryboy')?.setValue(newItem.fieldname);
+        this.deliveryperson.hide();
+        this.filteredDeliveryText = '';
+    }
     // Load dropdown via older endpoint (Getreturndropdowndetails)
     OnGetDropdown() {
         const payload = {
@@ -650,6 +710,7 @@ export class SalesComponent {
         const billDetails = this.billNoOptions.find((billitem) => billitem.billno === event.value);
         if (billDetails) {
             this.SaleDetails(billDetails);
+            this.customerstate = billDetails.customerstate
             this.salesForm.patchValue({
                 p_transactionid: billDetails.transactionid,
                 p_customername: billDetails.customername,
@@ -660,6 +721,7 @@ export class SalesComponent {
                 p_totalcost: billDetails.totalcost.toFixed(2),
                 p_totalsale: billDetails.totalsale.toFixed(2),
                 p_disctype: billDetails.discounttype == 'Y' ? true : false,
+                p_gstno: billDetails.customergstno,
                 p_deliveryboy: billDetails.deliveryboy,
                 p_overalldiscount: billDetails.discount,
                 discountvalueper: billDetails.discountvalueper,
@@ -919,6 +981,7 @@ export class SalesComponent {
             p_roundoff: body.p_roundoff ? body.p_roundoff.toString() : '0.00',
             p_totalpayable: Number(body.p_totalpayable) || 0,
             p_currencyid: Number(body.p_currencyid) || 0,
+            p_custgstno: body.p_gstno,
             p_gsttran: body.p_gsttran === true ? 'Y' : body.p_gsttran === false ? 'N' : 'N',
             p_status: body.p_status || 'Done',
             p_isactive: 'Y',
