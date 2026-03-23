@@ -64,7 +64,13 @@ export const appRoutes: Routes = [
                 path: 'settings',
                 loadChildren: () => import('@/pages/settings/settings.routers'),
                 canActivate: [AuthGuard]
+            },
+             {
+                path: 'security',
+                loadChildren: () => import('@/pages/security/security.routers'),
+                canActivate: [AuthGuard]
             }
+
 
             // {
             //     path: 'blocks',
