@@ -99,7 +99,15 @@ export class AddinventoryComponent {
     uomTableDisabled = false;
     resetDisabled = false;
     products: any[] = [];
-
+    itemtypeOptions: any[]=[
+        {fieldid:'consumable' , fieldname:'Consumable'},
+        {fieldid:'returnable' , fieldname:'Returnable'},
+        {fieldid:'rentable' , fieldname:'Rentable'}
+    ];
+    taxOptions:any[] = [
+        {fieldid:'5', fieldname:'5%' },
+        {fieldid:'10',fieldname:'10%'}
+    ];
     selectItemType = [
         { label: 'Select Existing Item', value: 1 },
         { label: 'Add New Item', value: 2 }
@@ -135,7 +143,9 @@ export class AddinventoryComponent {
                 discount: [''],
                 activeItem: [true],
                 gstItem: [true],
-                itemSearch: ['']
+                itemSearch: [''],
+                itemtype:[''],
+                p_tax:['']
             },
             { validators: this.mrpValidator }
         );

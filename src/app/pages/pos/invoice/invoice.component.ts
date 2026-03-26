@@ -98,7 +98,7 @@ export class InvoiceComponent {
     hsncode: string = '';
     // ✅ Move dropdown options into variables
     cusMobileOptions = [];
-    cusNameOptions = [];
+    cusMobNameOptions = [];
     profileOptions: any = {};
     statusOptions: any[] = [];
     products: any[] = [];
@@ -311,7 +311,7 @@ export class InvoiceComponent {
     OnGetCusName() {
         const payload = this.createDropdownPayload('CUSTOMER');
         this.inventoryService.getdropdowndetails(payload).subscribe({
-            next: (res) => (this.cusNameOptions = res.data),
+            next: (res) => (this.cusMobNameOptions = res.data),
             error: (err) => console.log(err)
         });
     }

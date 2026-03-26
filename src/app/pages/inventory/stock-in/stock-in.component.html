@@ -80,6 +80,27 @@
                     <input pInputText type="number" minlength="8" formControlName="p_amountpaid" placeholder="Paid Amount" />
                     <small class="text-red-500" *ngIf="productForm.hasError('amountNotGreater')"> Paid Amount cannot be greater than Final Payable. </small>
                 </div>
+
+                <div class="flex flex-col">
+                 <label class="font-medium mb-1 text-sm md:text-base">Indent No</label>
+
+                <p-dropdown
+                    [options]="indentNoOptions"
+                    optionLabel="billno"
+                    optionValue="billno"
+                    placeholder="Indent No."
+                    formControlName="p_indentno"
+                    [filter]="true"
+                    filterPlaceholder="Search Indent No."
+                    [showClear]="true"
+                   
+                >
+                </p-dropdown>
+
+                <small class="text-red-500 mt-1 text-xs" *ngIf="productForm.get('p_indentno')?.touched">
+                    <span *ngIf="productForm.get('p_indentno')?.errors?.['required']"> Indent No is required </span>
+                </small>
+                </div>
             </div>
 
             <!-- Add and Display Buttons -->

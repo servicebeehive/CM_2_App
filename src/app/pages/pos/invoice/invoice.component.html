@@ -35,20 +35,25 @@
                     </small>
                 </div>
 
-                <!-- Customer Name -->
+                <!-- Customer Name & Mobile -->
                 <div class="flex flex-col">
-                    <label class="font-medium mb-1">Customer Name</label>
+                    <label class="font-medium mb-1">Customer Name & Mobile</label>
                     <p-dropdown
-                        [options]="cusNameOptions"
-                        optionLabel="fieldname"
+                        [options]="cusMobNameOptions"
                         optionValue="fieldid"
                         [filter]="true"
                         [showClear]="true"
-                        filterPlaceholder="Search Customer Name"
+                        filterPlaceholder="Search Customer Name & Mobile"
                         formControlName="p_cusname"
-                        placeholder="Customer Name"
+                        placeholder="Customer Name & Mobile"
                         class="w-full"
                     >
+                    <ng-template let-item pTemplate="selectedItem">
+                    {{ item?.fieldname }} - {{ item?.customerphone }}
+                </ng-template>
+                     <ng-template let-item pTemplate="item">
+                    {{ item?.fieldname }} - {{ item?.customerphone }}
+                </ng-template>
                     </p-dropdown>
                 </div>
 

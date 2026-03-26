@@ -111,7 +111,7 @@ export class StockInComponent {
     categoryOptions = [];
 
     itemOptions = [];
-
+    indentNoOptions=[];
     products: StockIn[] = [];
     constructor(
         private fb: FormBuilder,
@@ -135,6 +135,7 @@ export class StockInComponent {
             p_remarks: ['', [Validators.maxLength(500)]],
             grandTotal: [0],
             p_amountpaid :[0,Validators.maxLength(8)],
+            p_indentno:[]
         },{validators:[this.paidAmountLessThanGrandTotal()]});
 
         const navigation = history.state;

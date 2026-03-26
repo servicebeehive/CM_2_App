@@ -1,5 +1,5 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, ElementRef, HostListener, QueryList, ViewChild, ViewChildren, inject } from '@angular/core';
+import { Component, ElementRef, HostListener, QueryList, ViewChild, ViewChildren, inject} from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { ChipModule } from 'primeng/chip';
@@ -25,10 +25,18 @@ import { AuthService } from '@/core/services/auth.service';
 import { OrderService } from '@/core/services/order.service';
 import { ShareService } from '@/core/services/shared.service';
 import { Router } from '@angular/router';
+
 // import { NgxPrintModule } from 'ngx-print';
+export function gstNumberValidator(control: AbstractControl): ValidationErrors | null {
+    if (!control.value) return null;
+
+    const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+
+    return gstRegex.test(control.value.toUpperCase()) ? null : { invalidGst: true };
+}
 
 @Component({
-    selector: 'app-sales',
+    selector: 'app-indent',
     imports: [
         CommonModule,
         EditorModule,
@@ -50,11 +58,11 @@ import { Router } from '@angular/router';
         ConfirmDialogModule,
         CheckboxModule
     ],
-    templateUrl: './sales.component.html',
-    styleUrl: './sales.component.scss',
+    templateUrl: './indent.component.html',
+    styleUrl: './indent.component.scss',
     providers: [ConfirmationService, DatePipe]
 })
-export class SalesComponent {
+export class IndentComponent {
     isBarcodeScan = false;
     isAutoSelect = false; // works for barcode + click
 
@@ -63,6 +71,7 @@ export class SalesComponent {
     // -----------------------------
     @ViewChild('barcodeInput') barcodeInput!: ElementRef<HTMLInputElement>;
     @ViewChildren('uomDropdown') uomDropdown!: QueryList<Dropdown>;
+    @ViewChild('deliveryperson') deliveryperson!: Dropdown;
     ngAfterViewInit() {
         setTimeout(() => {
             this.focusBarcode();
@@ -94,7 +103,7 @@ export class SalesComponent {
 
         // 🔹 mark barcode flow
         this.isAutoSelect = true;
-        this.salesForm.get('p_itemdata')?.setValue(matchedItem.itemid);
+        this.indentForm.get('p_itemdata')?.setValue(matchedItem.itemid);
         this.OnItemChange({ value: matchedItem.itemid });
         this.clearBarcodeInput();
         this.isBarcodeScan = false; // 🔑 reset after scan
@@ -145,7 +154,7 @@ export class SalesComponent {
 
     @ViewChild('itemSel') itemSel!: any;
     public transactionid: any;
-    salesForm!: FormGroup;
+    indentForm!: FormGroup;
     visibleDialog = false;
     selectedRow: any = null;
     mode: 'add' | 'edit' = 'add';
@@ -163,11 +172,13 @@ export class SalesComponent {
     profileOptions: any = {};
     public itemOptionslist: [] = [];
     public uomlist: any[] = [];
+    filteredDeliveryText = '';
     Uomid: string = '';
     mobilePlaceholder: string = 'Mobile No';
     backshow: boolean = false;
     isLoadingBills: boolean = false;
     billValue: any = null;
+    customerstate:string='';
     companyName: string = '';
     companyAddress: string = '';
     companycity: string = '';
@@ -183,11 +194,11 @@ export class SalesComponent {
     @ViewChild(AddinventoryComponent) addInventoryComp!: AddinventoryComponent;
 
     // Dropdowns / lists
-    billNoOptions: any[] = [];
-    transactionMode: any[] = [
-        { label: 'Cash', value: 'Cash' },
-        { label: 'UPI', value: 'UPI' },
-        { label: 'Card', value: 'Card' }
+    indentNoOptions: any[] = [];
+    vendorOptions: any[] = [
+        // { label: 'Cash', value: 'Cash' },
+        // { label: 'UPI', value: 'UPI' },
+        // { label: 'Card', value: 'Card' }
     ];
     // -----------------------------
     //  Constructor + Lifecycle
@@ -209,18 +220,18 @@ export class SalesComponent {
         this.loadAllDropdowns();
 
         // Initialize form
-        this.salesForm = this.fb.group(
+        this.indentForm = this.fb.group(
             {
                 p_itemdata: [null],
                 p_transactiontype: [''],
                 p_itemid: [null],
-                p_billno: [null],
+                p_indentno: [null],
                 p_transactionid: [0],
                 p_transactiondate: [this.today, [Validators.required]],
                 p_customername: ['', [Validators.required, Validators.maxLength(100)]],
                 p_mobileno: ['', [Validators.required, Validators.pattern(/^[6-9]\d{9}$/)]],
                 searchMobileNo: [''],
-                p_paymode: ['Cash'],
+                p_vendor: ['Cash'],
                 p_totalcost: [0],
                 p_totalsale: [0],
                 p_deliveryboy: ['', Validators.maxLength(100)],
@@ -230,7 +241,9 @@ export class SalesComponent {
                 p_totalpayable: [0],
                 p_currencyid: [0],
                 p_paymentdue: [''],
-                p_gsttran: [true],
+                chalanno:[''],
+                // p_gstno: ['', [gstNumberValidator]],
+                p_gsttran: [false],
                 status: [''],
                 p_status: [''],
                 p_isactive: [''],
@@ -252,14 +265,14 @@ export class SalesComponent {
                 validators: [this.costGreaterThanSaleValidator(), this.paidAmountLessThanFinalAmount()]
             }
         );
-        this.salesForm.get('p_billno')?.valueChanges.subscribe((value) => {
+        this.indentForm.get('p_indentno')?.valueChanges.subscribe((value) => {
             if (value) {
                 this.disableItemSearchSubmit();
             } else {
                 this.enableItemSearchAndSubmit();
             }
         });
-        this.salesForm.get('p_disctype')?.valueChanges.subscribe((value) => {
+        this.indentForm.get('p_disctype')?.valueChanges.subscribe((value) => {
             if (!value) {
                 this.discountplace = 'Enter Amount';
             } else {
@@ -267,6 +280,23 @@ export class SalesComponent {
             }
             this.applyDiscount();
         });
+
+        // this.indentForm.get('p_gstno')!.statusChanges.subscribe((status) => {
+        //     const gstCtrl = this.indentForm.get('p_gstno');
+        //     const gstTransCtrl = this.indentForm.get('p_gsttran');
+
+        //     const value = gstCtrl?.value;
+        //     if (!value) {
+        //         gstTransCtrl?.setValue(false, { emitEvent: false });
+        //         return;
+        //     }
+
+        //     if (status === 'VALID') {
+        //         gstTransCtrl?.setValue(true, { emitEvent: false });
+        //     } else {
+        //         gstTransCtrl?.setValue(false, { emitEvent: false });
+        //     }
+        // });
         const navigation = history.state;
         console.log('Navigation state:', navigation);
 
@@ -278,12 +308,16 @@ export class SalesComponent {
         this.setupBackButtonListener();
     }
 
+    deliveryBoyOptions = [
+        { fieldid: 1, fieldname: 'Chittaranjan Dasgupta' },
+        { fieldid: 2, fieldname: 'Jaya Gupta' }
+    ];
     // -----------------------------
     //  FormArray Getters / Helpers
     // -----------------------------
 
     get saleArray(): FormArray {
-        return this.salesForm.get('p_sale') as FormArray;
+        return this.indentForm.get('p_sale') as FormArray;
     }
 
     // Return FormArray rows as FormGroup[] for template binding (fixes typing issue)
@@ -291,15 +325,15 @@ export class SalesComponent {
         return this.saleArray.controls as FormGroup[];
     }
     disableItemSearchSubmit() {
-        this.salesForm.get('itemSearch')?.disable();
+        this.indentForm.get('itemSearch')?.disable();
         this.submitDisabledByBill = true;
     }
     enableItemSearchAndSubmit() {
-        this.salesForm.get('itemSearch')?.enable();
+        this.indentForm.get('itemSearch')?.enable();
         this.submitDisabledByBill = false;
     }
     get isPrintDisabled(): boolean {
-        const billNo = this.salesForm.get('p_billno')?.value;
+        const billNo = this.indentForm.get('p_indentno')?.value;
         const hasItem = this.saleArray.length > 0;
 
         // Disable print if BOTH are empty
@@ -324,7 +358,7 @@ export class SalesComponent {
     // Sales Array => Create a FormGroup for a sale item
     createSaleItem(data?: any): FormGroup {
         return this.fb.group({
-            TransactiondetailId: this.salesForm.controls['p_transactionid'].value || 0,
+            TransactiondetailId: this.indentForm.controls['p_transactionid'].value || 0,
             ItemId: [data?.itemid || 0],
             ItemName: [data?.itemname || ''],
             UOMId: [data?.uomid || 0],
@@ -392,7 +426,7 @@ export class SalesComponent {
             event.preventDefault();
         }
     }
- 
+
     // -----------------------------
     //  Dropdown / Data Loading
     // -----------------------------
@@ -402,7 +436,7 @@ export class SalesComponent {
 
         // Only update form control if typed value is 10 digits
         if (typedValue && /^[6-9]\d{9}$/.test(typedValue)) {
-            this.salesForm.patchValue({
+            this.indentForm.patchValue({
                 p_mobileno: typedValue,
                 p_customername: ''
             });
@@ -413,23 +447,36 @@ export class SalesComponent {
     }
     onMobileSelect(event: any) {
         const mobileSelection = this.cusMobileOptions.find((mobileNo) => mobileNo.fieldid === event.value);
+        const mobileMatch = mobileSelection.fieldvalue.match(/\d{10}/);
+        
         if (mobileSelection) {
-            this.salesForm.patchValue({
-                p_mobileno: mobileSelection.customerphone,
-                p_customername: mobileSelection.fieldname
+            this.indentForm.patchValue({
+                p_mobileno: mobileMatch ? mobileMatch[0] : '',
+                p_customername: mobileSelection.fieldname,
+                p_gstno: mobileSelection.customergstno
             });
+        }
+        if(mobileSelection.customergstno!== null){
+           this.indentForm.patchValue({
+            p_gsttran:true
+           });
+        }
+        else{
+             this.indentForm.patchValue({
+            p_gsttran:false
+           })
         }
     }
 
     populateSaleForm(data: any, itemsData: any[]) {
-        console.log('Populating form with header:', data);
-        console.log('Populating form with items:', itemsData);
-        this.salesForm.patchValue({
+        this.customerstate = data.customerstate;
+        this.indentForm.patchValue({
             p_customername: data.customername || '',
             p_mobileno: data.mobileno || '',
             p_deliveryboy: data.deliveryboy,
             p_gsttran: data.gstin || '',
-            p_billno: data.billno || '',
+            chalanno: data.challanno,
+            p_indentno: data.billno || '',
             p_transactionid: data.transactionid || 0,
             p_transactiondate: data.transactiondate ? new Date(data.transactiondate) : new Date(),
             status: data.status || '',
@@ -500,9 +547,16 @@ export class SalesComponent {
         });
     }
     OnGetCusMobile() {
-        const payload = this.createDropdownPayload('CUSTOMER');
+        const payload = this.createDropdownPayload('VENDOR');
         this.stockInService.getdropdowndetails(payload).subscribe({
-            next: (res) => (this.cusMobileOptions = res.data),
+            next: (res) => (this.vendorOptions = res.data),
+            error: (err) => console.log(err)
+        });
+    }
+    OnGetDelivery() {
+        const payload = this.createDropdownPayload('DELIVERY');
+        this.stockInService.getdropdowndetails(payload).subscribe({
+            next: (res) => (this.deliveryBoyOptions = res.data),
             error: (err) => console.log(err)
         });
     }
@@ -536,9 +590,26 @@ export class SalesComponent {
         this.OnGetItem();
         this.OnGetBillNo();
         this.OnGetCusMobile();
+        this.OnGetDelivery();
         this.OnGetProfile();
     }
 
+    onDeliveryFilter(event: any) {
+        this.filteredDeliveryText = event.filter.trim();
+    }
+    addDeliveryPerson() {
+        if (!this.filteredDeliveryText) return;
+        const exists = this.deliveryBoyOptions.some((x) => x.fieldname.toLowerCase() === this.filteredDeliveryText.toLowerCase());
+        if (exists) return;
+        const newItem = {
+            fieldid: Date.now(),
+            fieldname: this.filteredDeliveryText
+        };
+        this.deliveryBoyOptions = [...this.deliveryBoyOptions, newItem];
+        this.indentForm.get('p_deliveryboy')?.setValue(newItem.fieldname);
+        this.deliveryperson.hide();
+        this.filteredDeliveryText = '';
+    }
     // Load dropdown via older endpoint (Getreturndropdowndetails)
     OnGetDropdown() {
         const payload = {
@@ -564,8 +635,8 @@ export class SalesComponent {
         this.salesService.getdropdowndetails(payload).subscribe({
             next: (res) => {
                 const billdata: any = res.data;
-                this.billNoOptions = billdata.filter((item: { billno: null }) => item.billno != null);
-                this.billValue = this.billNoOptions;
+                this.indentNoOptions = billdata.filter((item: { billno: null }) => item.billno != null);
+                this.billValue = this.indentNoOptions;
             },
             error: (err) => console.log(err)
         });
@@ -592,7 +663,7 @@ export class SalesComponent {
             });
 
             // Clear dropdown on duplicate
-            this.salesForm.get('p_itemdata')?.setValue(null, { emitEvent: false });
+            this.indentForm.get('p_itemdata')?.setValue(null, { emitEvent: false });
             this.isAutoSelect = false;
             return;
         }
@@ -611,7 +682,7 @@ export class SalesComponent {
         // 🔑 KEY CHANGE HERE
         // Clear only when NOT auto-select (barcode / programmatic)
         if (!this.isAutoSelect) {
-            this.salesForm.get('p_itemdata')?.setValue(null, { emitEvent: false });
+            this.indentForm.get('p_itemdata')?.setValue(null, { emitEvent: false });
         }
 
         this.isAutoSelect = false; // reset after use
@@ -648,19 +719,21 @@ export class SalesComponent {
 
     // Called when bill dropdown value changes
     onBillDetails(event: any) {
-        const billDetails = this.billNoOptions.find((billitem) => billitem.billno === event.value);
+        const billDetails = this.indentNoOptions.find((billitem) => billitem.billno === event.value);
         if (billDetails) {
             this.SaleDetails(billDetails);
-            this.salesForm.patchValue({
+            this.customerstate = billDetails.customerstate
+            this.indentForm.patchValue({
                 p_transactionid: billDetails.transactionid,
                 p_customername: billDetails.customername,
                 p_transactiondate: billDetails.transactiondate ? new Date(billDetails.transactiondate) : null,
                 p_mobileno: billDetails.mobileno,
                 status: billDetails.status,
-                p_paymode: billDetails.paymode,
+                p_vendor: billDetails.paymode,
                 p_totalcost: billDetails.totalcost.toFixed(2),
                 p_totalsale: billDetails.totalsale.toFixed(2),
                 p_disctype: billDetails.discounttype == 'Y' ? true : false,
+                chalanno: billDetails.challanno,
                 p_deliveryboy: billDetails.deliveryboy,
                 p_overalldiscount: billDetails.discount,
                 discountvalueper: billDetails.discountvalueper,
@@ -686,14 +759,14 @@ export class SalesComponent {
         this.stockInService.Getreturndropdowndetails(apibody).subscribe({
             next: (res) => {
                 if (res.data && res.data.length > 0) {
-                    this.salesForm.patchValue({
+                    this.indentForm.patchValue({
                         status: res.data[0].status || ''
                     });
                 }
                 this.mapSaleItems(res.data);
 
                 if (res.data && res.data.length > 0 && res.data[0].discounttype) {
-                    this.salesForm.patchValue({
+                    this.indentForm.patchValue({
                         p_disctype: res.data[0].discounttype === 'Y'
                     });
                 }
@@ -761,9 +834,9 @@ export class SalesComponent {
         }
 
         // 3) Required header fields missing
-        // if (!this.salesForm.get('p_customername')?.value) return true;
-        // if (!this.salesForm.get('p_mobileno')?.value) return true;
-        if (!this.salesForm.get('p_transactiondate')?.value) return true;
+        // if (!this.indentForm.get('p_customername')?.value) return true;
+        // if (!this.indentForm.get('p_mobileno')?.value) return true;
+        if (!this.indentForm.get('p_transactiondate')?.value) return true;
 
         // 4) Per-row validation: qty cannot be 0 and cannot exceed stock
         for (let row of this.saleArray.controls) {
@@ -780,6 +853,10 @@ export class SalesComponent {
     // -----------------------------
     //  Form Actions (submit / reset)
     // -----------------------------
+
+customerDetail(){
+    this.route.navigate(['/layout/settings/category-formate', 'customermaster'])
+}
 
     // Submit handler with confirmation and validation
     onSubmit() {
@@ -804,20 +881,20 @@ export class SalesComponent {
             acceptButtonStyleClass: 'p-button-primary',
             rejectButtonStyleClass: 'p-button-secondary',
             accept: () => {
-                this.OnSalesHeaderCreate(this.salesForm.value);
+                this.OnSalesHeaderCreate(this.indentForm.value);
             }
         });
     }
 
     // Reset form and clear sale array
     onReset() {
-        this.salesForm.reset({
-            p_gsttran: true
+        this.indentForm.reset({
+            p_gsttran: false
         });
         this.backshow = false;
         this.saleArray.clear();
-        this.salesForm.get('p_transactiondate')?.setValue(this.today);
-        this.salesForm.get('p_paymode')?.setValue('Cash');
+        this.indentForm.get('p_transactiondate')?.setValue(this.today);
+        this.indentForm.get('p_vendor')?.setValue('Cash');
     }
 
     // -----------------------------
@@ -835,7 +912,7 @@ export class SalesComponent {
             totalMRP += qty * mrp;
         });
 
-        this.salesForm.patchValue({
+        this.indentForm.patchValue({
             p_totalsale: totalMRP.toFixed(2),
             p_roundoff: 0,
             p_totalpayable: totalMRP.toFixed(2)
@@ -870,7 +947,7 @@ export class SalesComponent {
         });
 
         this.calculateSummary();
-        this.salesForm.updateValueAndValidity();
+        this.indentForm.updateValueAndValidity();
     }
 
     back() {
@@ -878,9 +955,9 @@ export class SalesComponent {
     }
     // Apply overall discount & round off
     applyDiscount() {
-        const totalSale = Number(this.salesForm.get('p_totalsale')?.value || 0);
-        const discountValue = Number(this.salesForm.get('p_overalldiscount')?.value || 0);
-        const isPresent = this.salesForm.get('p_disctype')?.value;
+        const totalSale = Number(this.indentForm.get('p_totalsale')?.value || 0);
+        const discountValue = Number(this.indentForm.get('p_overalldiscount')?.value || 0);
+        const isPresent = this.indentForm.get('p_disctype')?.value;
         let discountAmount = 0;
 
         if (isPresent) {
@@ -893,11 +970,11 @@ export class SalesComponent {
         // Round off to 2 decimals difference and then round to integer for payable
         const roundOff = +(finalPayable - Math.floor(finalPayable)).toFixed(2);
 
-        this.salesForm.patchValue({
+        this.indentForm.patchValue({
             p_roundoff: roundOff,
             p_totalpayable: Math.round(finalPayable)
         });
-        this.salesForm.updateValueAndValidity();
+        this.indentForm.updateValueAndValidity();
     }
 
     // -----------------------------
@@ -920,6 +997,7 @@ export class SalesComponent {
             p_roundoff: body.p_roundoff ? body.p_roundoff.toString() : '0.00',
             p_totalpayable: Number(body.p_totalpayable) || 0,
             p_currencyid: Number(body.p_currencyid) || 0,
+            p_custgstno: body.chalanno,
             p_gsttran: body.p_gsttran === true ? 'Y' : body.p_gsttran === false ? 'N' : 'N',
             p_status: body.p_status || 'Done',
             p_isactive: 'Y',
@@ -927,7 +1005,7 @@ export class SalesComponent {
             p_creditnoteno: body.p_deliveryboy || '',
             p_replacesimilir: body.p_disctype === true ? 'Y' : 'N',
             p_discounttype: body.p_disctype === true ? 'Y' : 'N',
-            p_paymentmode: body.p_paymode,
+            p_paymentmode: body.p_vendor,
             p_paymentdue: Number(body.p_paymentdue) || 0,
             p_sale: (body.p_sale || []).map((x: any) => ({
                 TransactiondetailId: x.TransactiondetailId || 0,
@@ -951,7 +1029,7 @@ export class SalesComponent {
 
     // Send header (and sale) to API, show toast notifications on result
     OnSalesHeaderCreate(data: any) {
-        const apibody = this.cleanRequestBody(this.salesForm.value);
+        const apibody = this.cleanRequestBody(this.indentForm.value);
 
         this.stockInService.OninsertSalesDetails(apibody).subscribe({
             next: (res) => {
@@ -959,13 +1037,13 @@ export class SalesComponent {
                 this.OnGetBillNo();
                 this.OnGetItem();
                 this.OnGetCusMobile();
-                this.salesForm.controls['p_billno'].setValue(billno);
+                this.indentForm.controls['p_indentno'].setValue(billno);
                 if (res.data && res.data.length > 0) {
-                    this.salesForm.patchValue({
+                    this.indentForm.patchValue({
                         status: 'Done'
                     });
                 }
-                console.log('uom', this.salesForm.get('p_sale')?.value);
+                console.log('uom', this.indentForm.get('p_sale')?.value);
                 setTimeout(() => {
                     if (this.billValue) {
                         const currentBill = this.billValue.find((bill: any) => bill.billno === billno);
@@ -1016,8 +1094,8 @@ export class SalesComponent {
         patchData.cgst_9 = apiData.cgst_9;
         patchData.tax_18 = apiData.tax_18;
         patchData.amount_before_tax = apiData.amount_before_tax;
-        this.salesForm.patchValue(patchData);
-        this.salesForm.updateValueAndValidity();
+        this.indentForm.patchValue(patchData);
+        this.indentForm.updateValueAndValidity();
     }
     // -----------------------------
     //  Utility / Misc
@@ -1197,7 +1275,7 @@ export class SalesComponent {
             finalCost += qty * cost; // ⭐ UOM adjusted cost
         });
 
-        this.salesForm.patchValue({
+        this.indentForm.patchValue({
             p_totalcost: finalCost.toFixed(2)
         });
     }

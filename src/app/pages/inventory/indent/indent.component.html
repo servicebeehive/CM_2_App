@@ -2,12 +2,12 @@
     <!-- ================================
        SALES FORM SECTION
   ================================= -->
-    <form [formGroup]="salesForm" (ngSubmit)="onSubmit()" class="space-y-6 md:space-y-8">
+    <form [formGroup]="indentForm" (ngSubmit)="onSubmit()" class="space-y-6 md:space-y-8">
         <!-- ================================
          HEADER + ACTION BUTTONS
     ================================= -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4 md:mb-6">
-            <span class="block text-surface-900 font-bold text-lg md:text-xl mb-2 md:mb-6">Sales</span>
+            <span class="block text-surface-900 font-bold text-lg md:text-xl mb-2 md:mb-6">Indent</span>
 
             <div class="flex flex-wrap gap-2 md:gap-4 w-full md:w-auto">
                 <!-- SUBMIT -->
@@ -16,16 +16,13 @@
                     type="submit"
                     label="Submit"
                     class="p-button-warning w-full md:w-auto"
-                    [disabled]="salesForm.invalid || isSubmitDisabled() || submitDisabledByBill || salesForm.hasError('costNotGreater') || salesForm.hasError('amountNotGreater')"
+                    [disabled]="indentForm.invalid || isSubmitDisabled() || submitDisabledByBill || indentForm.hasError('costNotGreater') || indentForm.hasError('amountNotGreater')"
                 ></button>
                 <!-- PRINT -->
-                <button pButton type="button" ngxPrint printSectionId="invoicePrintSection" label="Print" (click)="printInvoice()" class="p-button-primary w-full md:w-auto" [disabled]="!this.salesForm.get('p_billno')?.value"></button>
+                <button pButton type="button" ngxPrint printSectionId="invoicePrintSection" label="Print" (click)="printInvoice()" class="p-button-primary w-full md:w-auto" [disabled]="!this.indentForm.get('p_indentno')?.value"></button>
 
                 <!-- RESET -->
                 <button pButton type="button" label="Reset" class="p-button-secondary w-full md:w-auto" (click)="onReset()"></button>
-                @if (backshow) {
-                    <button pButton type="button" label="Back" class="p-button-secondary w-full md:w-auto" (click)="back()"></button>
-                }
             </div>
         </div>
 
@@ -33,75 +30,61 @@
          ITEM SELECT SECTION
     ================================= -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 md:gap-x-8 gap-y-3 md:gap-y-4 w-full">
-            <!-- BILL NO -->
+            <!-- Indent NO -->
             <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">Invoice No</label>
+                <label class="font-medium mb-1 text-sm md:text-base">Indent No</label>
 
                 <p-dropdown
-                    [options]="billNoOptions"
+                    [options]="indentNoOptions"
                     optionLabel="billno"
                     optionValue="billno"
-                    placeholder="Invoice No."
-                    formControlName="p_billno"
+                    placeholder="Indent No."
+                    formControlName="p_indentno"
                     [filter]="true"
-                    filterPlaceholder="Search Bill No."
+                    filterPlaceholder="Search Indent No."
                     [showClear]="true"
                     (onChange)="onBillDetails($event)"
                     [loading]="isLoadingBills"
                 >
                 </p-dropdown>
 
-                <small class="text-red-500 mt-1 text-xs" *ngIf="salesForm.get('p_billno')?.touched">
-                    <span *ngIf="salesForm.get('p_billno')?.errors?.['required']"> Bill No is required </span>
+                <small class="text-red-500 mt-1 text-xs" *ngIf="indentForm.get('p_indentno')?.touched">
+                    <span *ngIf="indentForm.get('p_indentno')?.errors?.['required']"> Indent No is required </span>
                 </small>
             </div>
-           
-            <!-- SEARCH MOBILE NO -->
-            <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">Search Mobile No</label>
 
-                <p-dropdown
-                    [options]="cusMobileOptions"
-                    class="w-full"
-                    optionValue="fieldid"
-                    [filter]="true"
-                    [showClear]="true"
-                    type="number"
-                    maxlength="10"
-                    formControlName="searchMobileNo"
-                    filterPlaceholder="Search Customer Mobile"
-                    placeholder="Search Customer Mobile"
-                    (onFilter)="onMobileFilter($event)"
-                    (onChange)="onMobileSelect($event)"
-                    (keypress)="allowOnlyNumbers($event)"
+            <!-- INDENT DATE -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1 text-sm md:text-base">Indent Date</label>
+                <p-datepicker fluid formControlName="p_transactiondate" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="Date" [maxDate]="today"> </p-datepicker>
+            </div>
+
+              <!-- REQUESTED BY -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1 text-sm md:text-base">Requested By</label>
+                <p-dropdown #deliveryperson [options]="deliveryBoyOptions" optionLabel="fieldname" optionValue="fieldname" [filter]="true" filterPlaceholder="Search Requested Person" formControlName="p_requestedby" placeholder="Select Requested Person" appendTo="body" (onFilter)="onDeliveryFilter($event)">
+                    <ng-template pTemplate="emptyfilter">
+                        <div class="text-center">
+                            <div>No record found</div>
+                            <button pButton type="button" label="Add" icon="pi pi-plus" class="w-full" (click)="addDeliveryPerson()"></button>
+                        </div>
+                    </ng-template>
+                 </p-dropdown>
+            </div>
+
+             <!-- STATUS -->
+            <div class="flex items-center gap-2 md:gap-4 mt-0 md:mt-6">
+                <label class="text-xl">
+                    <b> Status &nbsp; &nbsp;</b>
+                    <span
+                        class="font-bold text-xl"
+                        [ngStyle]="{
+                            color: indentForm.get('status')?.value === 'Done' ? 'green' : indentForm.get('status')?.value === 'Partial Cancel' ? 'grey' : indentForm.get('status')?.value === 'Cancel' ? 'red' : 'black'
+                        }"
+                    >
+                        {{ indentForm.get('status')?.value }}
+                    </span></label
                 >
-                <ng-template let-item pTemplate="selectedItem">
-                    {{ item?.fieldname }} - {{ item?.customerphone }}
-                </ng-template>
-
-                <ng-template let-item pTemplate="item">
-                    {{ item?.fieldname }} - {{ item?.customerphone }}
-                </ng-template>
-                </p-dropdown>
-            </div>
-
-            <!-- MOBILE -->
-            <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">Mobile No <span class="text-red-500">*</span></label>
-                <input pInputText type="number" [placeholder]="mobilePlaceholder" maxlength="10" formControlName="p_mobileno" (keypress)="allowOnlyNumbers($event)" class="text-sm md:text-base" />
-                <small class="text-red-500 ms-1 md:ms-3 mt-1 text-xs" *ngIf="salesForm.get('p_mobileno')?.touched">
-                    <span *ngIf="salesForm.get('p_mobileno')?.errors?.['required']">Mobile No. is required</span>
-                </small>
-                <small class="text-red-500 mt-1 text-xs" *ngIf="salesForm.get('p_mobileno')?.errors?.['pattern']"> Please enter a valid 10-digit mobile number </small>
-            </div>
-
-            <!-- CUSTOMER NAME -->
-            <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">Customer Name <span class="text-red-500">*</span></label>
-                <input pInputText showclear="[true]" placeholder="Customer Name" formControlName="p_customername" class="text-sm md:text-base" />
-                <small class="text-red-500 ms-1 md:ms-3 mt-1 text-xs" *ngIf="salesForm.get('p_customername')?.touched">
-                    <span *ngIf="salesForm.get('p_customername')?.errors?.['required']">Customer Name is required</span>
-                </small>
             </div>
 
             <!-- ITEM DROPDOWN -->
@@ -139,46 +122,8 @@
                         </div>
                     </ng-template>
                 </p-select>
-            </div>
-
-            <!-- MODE OF TRANSACTION -->
-            <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">Transaction Mode</label>
-
-                <p-dropdown [options]="transactionMode" optionLabel="label" optionValue="value" placeholder="Transaction Mode" formControlName="p_paymode" [filter]="true" filterPlaceholder="Search Transaction Mode" [showClear]="true"> </p-dropdown>
-            </div>
-
-            <!-- TRANSACTION DATE -->
-            <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">Transaction Date</label>
-                <p-datepicker fluid formControlName="p_transactiondate" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="Transaction Date" [maxDate]="today"> </p-datepicker>
-            </div>
-            <!-- Delivery Person -->
-            <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">Delivery Person</label>
-                <input pInputText formControlName="p_deliveryboy" placeholder="Delivery Person" />
-            </div>
-
-             <!-- GST CHECKBOX -->
-            <div class="flex items-center gap-2 md:gap-4 mt-0 md:mt-6">
-                <p-checkbox binary="true" variant="filled" formControlName="p_gsttran"></p-checkbox>
-                <label class="font-medium mb-1 text-sm md:text-base">GST Transaction</label>
-            </div>
-
-            <!-- STATUS -->
-            <div class="flex items-center gap-2 md:gap-4 mt-0 md:mt-6">
-                <label class="text-xl">
-                    <b> Status &nbsp; &nbsp;</b>
-                    <span
-                        class="font-bold text-xl"
-                        [ngStyle]="{
-                            color: salesForm.get('status')?.value === 'Done' ? 'green' : salesForm.get('status')?.value === 'Partial Cancel' ? 'grey' : salesForm.get('status')?.value === 'Cancel' ? 'red' : 'black'
-                        }"
-                    >
-                        {{ salesForm.get('status')?.value }}
-                    </span></label
-                >
-            </div>
+            </div> 
+           
         </div>
 
         <!-- ================================
@@ -194,13 +139,11 @@
                         <tr class="bg-yellow-400">
                             <th>Item Code</th>
                             <th>Item Name</th>
-                            <th>Current Stock</th>
+                            <th>Cur Stock</th>
                             <th>UOM</th>
                             <th>Qty</th>
-                            <th>MRP</th>
+                            <th>Last Pur Cost</th>
                             <th>Total</th>
-                            <th>Warranty</th>
-                            <th>Location</th>
                             <th>Action</th>
                         </tr>
                     </ng-template>
@@ -243,11 +186,8 @@
                                     [ngClass]="{ 'border-red-500': row.get('Quantity')?.errors?.['maxStock'] }"
                                 />
                             </td>
-
-                            <td class="text-xs md:text-sm">{{ row.get('MRP')?.value | number: '1.2-2' }}</td>
+                           <td class="text-xs md:text-sm">{{ row.get('MRP')?.value | number: '1.2-2' }}</td>
                             <td class="text-xs md:text-sm">{{ row.get('totalPayable')?.value | number: '1.2-2' }}</td>
-                            <td class="text-xs md:text-sm">{{ row.get('warPeriod')?.value }}</td>
-                            <td class="text-xs md:text-sm">{{ row.get('location')?.value }}</td>
 
                             <!-- DELETE -->
                             <td class="text-center">
@@ -261,60 +201,6 @@
                         <div class="text-gray-600 ms-2 text-xs md:text-sm">Total Items: {{ saleArray.controls.length }}</div>
                     </ng-template>
                 </p-table>
-            </div>
-        </div>
-
-        <!-- ================================
-         SUMMARY SECTION
-    ================================= -->
-        <div class="grid grid-cols-7 gap-x-8 gap-y-4 m-3 mt-4">
-            <!-- Total Cost -->
-            <div class="flex flex-col">
-                <label>Cost Total</label>
-                <input pInputText readonly type="number" tabindex="-1" formControlName="p_totalcost" />
-            </div>
-
-            <!-- MRP Total -->
-            <div class="flex flex-col">
-                <label>MRP Total</label>
-                <input pInputText readonly type="number" tabindex="-1" formControlName="p_totalsale" />
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2">
-                <!-- Discount type -->
-                <div class="flex flex-col">
-                    <label class="font-medium mb-2">Disc(%)</label>
-                    <p-checkbox class="w-5 h-5" binary="true" variant="filled" formControlName="p_disctype"></p-checkbox>
-                </div>
-                <!-- Discount -->
-                <div class="flex flex-col">
-                    <label class="font-medium">Discount</label>
-                    <input class="p-inputtext p-component font-small w-full" pInputText type="number" formControlName="p_overalldiscount" (input)="applyDiscount()" [placeholder]="discountplace" />
-                </div>
-            </div>
-            <!-- Round Off -->
-            <div class="flex flex-col">
-                <label>Round Off</label>
-                <input type="number" pInputText readonly tabindex="-1" type="number" formControlName="p_roundoff" />
-            </div>
-
-            <!-- Total Sale -->
-            <div class="flex flex-col">
-                <label>Total Sale</label>
-                <input pInputText readonly type="number" tabindex="-1" formControlName="p_totalsale" />
-            </div>
-
-            <!-- Final Payable -->
-            <div class="flex flex-col">
-                <label>Final Payable</label>
-                <input pInputText readonly tabindex="-1" type="number" formControlName="p_totalpayable" />
-                <small class="text-red-500" *ngIf="salesForm.hasError('costNotGreater')"> This Cost must be greater than Total Cost. </small>
-            </div>
-
-            <!-- Paid Amount -->
-            <div class="flex flex-col">
-                <label>Paid Amount</label>
-                <input pInputText type="number" (keypress)="blockDecimal($event)" min="1" formControlName="p_paymentdue" placeholder="0" />
-                <small class="text-red-500" *ngIf="salesForm.hasError('amountNotGreater')"> Paid Amount cannot be greater than Final Payable. </small>
             </div>
         </div>
     </form>
@@ -346,14 +232,14 @@
 
                 <strong>Buyer (Bill to)</strong><br /><br />
 
-                <strong>{{ salesForm.get('p_customername')?.value }}</strong
+                <strong>{{ indentForm.get('p_customername')?.value }}</strong
                 ><br />
-                {{ salesForm.get('p_customeraddress')?.value }}<br />
-                Mobile: {{ salesForm.get('p_mobileno')?.value }}<br />
+                {{ indentForm.get('p_customeraddress')?.value }}<br />
+                Mobile: {{ indentForm.get('p_mobileno')?.value }}<br />
                 <br />
 
-                GSTIN/UIN : {{ salesForm.get('p_customergstin')?.value || '-' }}<br />
-                State Name : {{ salesForm.get('p_customerstate')?.value || '-' }}
+                GSTIN/UIN : {{ indentForm.get('p_gstno')?.value || '-' }}<br />
+                State Name : {{customerstate}}
             </td>
 
             <!-- RIGHT SECTION (INVOICE DETAILS) -->
@@ -361,12 +247,12 @@
                 <table width="100%" border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse">
                     <tr>
                         <td><strong>Invoice No.</strong></td>
-                        <td>{{ salesForm.get('p_billno')?.value }}</td>
+                        <td>{{ indentForm.get('p_indentno')?.value }}</td>
                     </tr>
 
                     <tr>
                         <td><strong>Dated</strong></td>
-                        <td>{{ salesForm.get('p_transactiondate')?.value | date: 'dd-MMM-yy' }}</td>
+                        <td>{{ indentForm.get('p_transactiondate')?.value | date: 'dd-MMM-yy' }}</td>
                     </tr>
 
                     <tr>
@@ -377,13 +263,13 @@
                     <tr>
                         <td><strong>Mode of Payment</strong></td>
                         <td>
-                            <strong>{{ salesForm.get('p_paymode')?.value }}</strong>
+                            <strong>{{ indentForm.get('p_vendor')?.value }}</strong>
                         </td>
                     </tr>
 
                     <tr>
                         <td>Reference No. & Date</td>
-                        <td>{{ salesForm.get('p_transactionid')?.value }} dt. {{ salesForm.get('p_transactiondate')?.value | date: 'dd-MMM-yy' }}</td>
+                        <td>{{ indentForm.get('p_transactionid')?.value }} dt. {{ indentForm.get('p_transactiondate')?.value | date: 'dd-MMM-yy' }}</td>
                     </tr>
 
                     <tr>
@@ -398,7 +284,7 @@
 
                     <tr>
                         <td>Dispatch Doc No.</td>
-                        <td>-</td>
+                        <td>{{indentForm.get('chalanno')?.value}}</td>
                     </tr>
 
                     <tr>
@@ -408,7 +294,7 @@
 
                     <tr>
                         <td>Dispatched through</td>
-                        <td>-</td>
+                        <td>{{ indentForm.get('p_deliveryboy')?.value }}</td>
                     </tr>
 
                     <tr>
@@ -455,18 +341,18 @@
             <!-- SUB TOTAL -->
             <tr>
                 <td colspan="7" style="text-align: right; font-weight: bold">Total</td>
-                <td>₹{{ salesForm.get('p_totalsale')?.value | number: '1.2-2' }}</td>
+                <td>₹{{ indentForm.get('p_totalsale')?.value | number: '1.2-2' }}</td>
             </tr>
             <tr>
-                <td colspan="7" style="text-align: right; font-weight: bold">Discount {{ salesForm.get('p_disctype')?.value ? salesForm.get('p_overalldiscount')?.value + '%' : '' }}</td>
+                <td colspan="7" style="text-align: right; font-weight: bold">Discount {{ indentForm.get('p_disctype')?.value ? indentForm.get('p_overalldiscount')?.value + '%' : '' }}</td>
 
-                <td>{{ !salesForm.get('p_disctype')?.value ? '₹' : '' }}{{ !salesForm.get('p_disctype')?.value ? salesForm.get('p_overalldiscount')?.value : '₹' + salesForm.get('discountvalueper')?.value }}</td>
+                <td>{{ !indentForm.get('p_disctype')?.value ? '₹' : '' }}{{ !indentForm.get('p_disctype')?.value ? indentForm.get('p_overalldiscount')?.value : '₹' + indentForm.get('discountvalueper')?.value }}</td>
             </tr>
 
             <!-- ROUND OFF -->
             <tr>
                 <td colspan="7" style="text-align: right"><b>ROUND OFF +/-</b></td>
-                <td>{{ salesForm.get('p_roundoff')?.value | number: '1.2-2' }}</td>
+                <td>{{ indentForm.get('p_roundoff')?.value | number: '1.2-2' }}</td>
             </tr>
         </tbody>
 
@@ -474,7 +360,7 @@
         <tfoot>
             <tr style="font-weight: bold">
                 <td colspan="7" align="right" style="text-align: right; font-weight: bold">Grand Total</td>
-                <td style="font-weight: bold">₹{{ salesForm.get('p_totalpayable')?.value | number: '1.2-2' }}</td>
+                <td style="font-weight: bold">₹{{ indentForm.get('p_totalpayable')?.value | number: '1.2-2' }}</td>
             </tr>
         </tfoot>
     </table>
@@ -498,12 +384,12 @@
         </tr>
 
         <tr style="text-align: center">
-            <td>₹{{ salesForm.get('amount_before_tax')?.value | number: '1.2-2' }}</td>
+            <td>₹{{ indentForm.get('amount_before_tax')?.value | number: '1.2-2' }}</td>
             <td>9%</td>
-            <td>₹{{ salesForm.get('cgst_9')?.value | number: '1.2-2' }}</td>
+            <td>₹{{ indentForm.get('cgst_9')?.value | number: '1.2-2' }}</td>
             <td>9%</td>
-            <td>₹{{ salesForm.get('sgst_9')?.value | number: '1.2-2' }}</td>
-            <td>₹{{ salesForm.get('tax_18')?.value | number: '1.2-2' }}</td>
+            <td>₹{{ indentForm.get('sgst_9')?.value | number: '1.2-2' }}</td>
+            <td>₹{{ indentForm.get('tax_18')?.value | number: '1.2-2' }}</td>
         </tr>
     </table>
 

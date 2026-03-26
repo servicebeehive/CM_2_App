@@ -8,7 +8,7 @@ import { InputText } from 'primeng/inputtext';
     imports: [FormsModule, InputText],
     template: `
         <div class="flex items-center gap-2 mb-4 w-full">
-            <i class="pi pi -search text-gray-600"></i>
+            <i class="pi pi-search text-gray-600"></i>
             <input type="text" pInputText [placeholder]="placeholder" [ngModel]="value" (input)="onInput($event)" class="w-full p-inputtext-sm" />
         </div>
     `,

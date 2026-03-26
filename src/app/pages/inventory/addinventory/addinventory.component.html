@@ -86,6 +86,23 @@
                 </small>
             </div>
 
+              <div class="flex flex-col">
+                <label class="font-medium mb-1">Item Type <span class="text-red-500">*</span></label>
+                <p-dropdown [options]="itemtypeOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search Item Type" formControlName="itemtype" placeholder="Item Type"> </p-dropdown>
+                <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('itemtype')?.touched">
+                    <span *ngIf="addForm.get('itemtype')?.errors?.['required']">Item Type is required</span>
+                </small>
+            </div>
+
+             <div class="flex flex-col">
+                <label class="font-medium mb-1">Tax <span class="text-red-500">*</span></label>
+                <p-dropdown [options]="taxOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search Tax" formControlName="p_tax" placeholder="Tax"> </p-dropdown>
+                <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('p_tax')?.touched">
+                    <span *ngIf="addForm.get('p_tax')?.errors?.['required']">Tax is required</span>
+                </small>
+            </div>
+
+
             <!-- Category -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Category <span class="text-red-500">*</span></label>
