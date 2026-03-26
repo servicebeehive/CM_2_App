@@ -7,7 +7,7 @@ import { InputGroupAddon } from 'primeng/inputgroupaddon';
 import { ButtonModule } from 'primeng/button';
 import { InputGroupModule } from 'primeng/inputgroup';
 import { RippleModule } from 'primeng/ripple';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { InventoryService } from '@/core/services/inventory.service';
@@ -17,6 +17,13 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { DropdownModule } from 'primeng/dropdown';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
+export function gstNumberValidator(control: AbstractControl): ValidationErrors | null {
+    if (!control.value) return null;
+
+    const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+
+    return gstRegex.test(control.value.toUpperCase()) ? null : { invalidGst: true };
+}
 @Component({
     selector: 'user-create',
     standalone: true,
@@ -158,7 +165,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
                         <div class="col-span-12 md:col-span-4">
                             <label for="companygstno" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> GST No <span class="text-red-500">*</span></label>
                             <input formControlName="companygstno" type="text" pInputText fluid placeholder="GST No." maxlength="15" />
-                            <small class="text-red-500 mt-1" *ngIf="profileForm.get('companygstno')?.touched && profileForm.get('companygstno')?.invalid"> Enter a valid gst number </small>
+                            <small class="text-red-500 mt-1" *ngIf="profileForm.get('companygstno')?.touched && profileForm.get('companygstno')?.errors?.['invalidGst']"> Enter a valid gst number </small>
                         </div>
 
                         <div class="col-span-12 md:col-span-4">
@@ -230,7 +237,7 @@ export class UserCreate {
     profileForm: FormGroup = this.fb.group({
         companyname: ['', [Validators.required, Validators.maxLength(100)]],
         companyemail: ['', [Validators.required, Validators.email, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/), Validators.maxLength(100)]],
-        companygstno: ['', [Validators.required, Validators.maxLength(30)]],
+        companygstno: ['', [Validators.required, gstNumberValidator]],
         companycontactperson: ['', Validators.maxLength(100)],
         companyaddress: ['', [Validators.required, Validators.maxLength(500)]],
         companycontactphone: ['', Validators.pattern(/^[0-9]{10}$/)],

@@ -26,6 +26,7 @@ import { Paginator } from 'primeng/paginator';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '@/core/services/auth.service';
 import { ShareService } from '@/core/services/shared.service';
+import { Tooltip } from 'primeng/tooltip';
 interface Product {
     name: string;
     price: string;
@@ -46,6 +47,12 @@ interface Image {
     objectURL: string;
 }
 
+interface Customer {
+    fieldid: number;
+    fieldname: string;
+    fieldvalue: string;
+    customergstno: string;
+}
 @Component({
     selector: 'app-invoice',
     imports: [
@@ -69,7 +76,8 @@ interface Image {
         DialogModule,
         AutoCompleteModule,
         ConfirmDialogModule,
-        CheckboxModule
+        CheckboxModule,
+        Tooltip
     ],
     templateUrl: './invoice.component.html',
     styleUrl: './invoice.component.scss',
@@ -96,14 +104,24 @@ export class InvoiceComponent {
     ifsc: string = '';
     pan: string = '';
     hsncode: string = '';
+    ledgerData = false;
     // ✅ Move dropdown options into variables
     cusMobileOptions = [];
-    cusMobNameOptions = [];
+    cusMobNameOptions: Customer[] = [];
     profileOptions: any = {};
     statusOptions: any[] = [];
     products: any[] = [];
     filteredProducts: any[] = [];
     invoiceData: any[] = [];
+    customerLedgerData: any[] = [];
+    columns: any[] = [];
+    displayColumns: any[]=[];
+    showData: boolean = false;
+    transactionMode: any[] = [
+        { label: 'Cash', value: 'Cash' },
+        { label: 'UPI', value: 'UPI' },
+        { label: 'Card', value: 'Card' }
+    ];
     invoiceSummary: any = {};
     constructor(
         private fb: FormBuilder,
@@ -119,12 +137,11 @@ export class InvoiceComponent {
     ngOnInit(): void {
         this.invoiceForm = this.fb.group(
             {
-                p_mobile: [''],
                 p_cusname: [''],
                 fromDate: [this.today, Validators.required],
                 toDate: [this.today, Validators.required],
                 status: [''],
-
+                due_amount: [''],
                 //PRINT SECTION VARIABLE
                 p_billno: [''],
                 p_transactiondate: [''],
@@ -132,8 +149,10 @@ export class InvoiceComponent {
                 p_customername: [''],
                 p_customeraddress: [''],
                 p_mobileno: [''],
-                p_customergstin: [''],
+                p_customergstno: [''],
                 p_customerstate: [''],
+                chalanno:[''],
+                deliveryboy: [''],
                 p_totalsale: [''],
                 p_totalpayable: [''],
                 p_disctype: [''],
@@ -152,6 +171,7 @@ export class InvoiceComponent {
             { validators: this.dateRangeValidator }
         );
         this.loadAllDropdowns();
+        this.setTableColumns();
         this.onGetStockIn();
         const savedState = this.sharedService.getInvoiceState();
         if (savedState) {
@@ -201,30 +221,38 @@ export class InvoiceComponent {
             this.products[index].received_amount = value;
         }
     }
-
     display() {
-        const p_mobile = this.invoiceForm.controls['p_mobile'].value;
+        // const p_mobile = this.invoiceForm.controls['p_mobile'].value;
         const p_cusname = this.invoiceForm.controls['p_cusname'].value;
         const startDate = this.invoiceForm.controls['fromDate'].value;
         const endDate = this.invoiceForm.controls['toDate'].value;
         const status = this.invoiceForm.controls['status'].value;
-        if ((startDate && endDate) || p_cusname || p_mobile || status) {
+        if ((startDate && endDate) || p_cusname || status) {
             const payload = {
                 p_startdate: this.datepipe.transform(startDate, 'yyyy/MM/dd'),
                 p_enddate: this.datepipe.transform(endDate, 'yyyy/MM/dd'),
-                p_mobile: p_mobile || null,
+                // p_mobile: p_mobile || null,
                 p_customer: p_cusname || null,
                 p_status: status || null,
                 p_username: 'admin'
             };
+            this.showData = false;
             this.inventoryService.getinvoicedetail(payload).subscribe({
                 next: (res: any) => {
                     console.log('API RESEULT:', res.data);
                     this.products = res?.data || [];
                     this.filteredProducts = [...this.products];
+                    this.showData = true;
                     this.totalDueAmount();
                     this.initialzeFormArray();
                     this.saveCurrentState();
+                    this.filteredProducts = [...this.products];
+
+                    this.filteredProducts.forEach((row) => {
+                        if (!row.p_paymode) {
+                            row.p_paymode = 'Cash';
+                        }
+                    });
                     if (this.products.length === 0) {
                         let message = 'No Data Available for this Category and Item';
                         this.showSuccess(message);
@@ -232,6 +260,7 @@ export class InvoiceComponent {
                 },
                 error: (err) => {
                     console.log(err);
+                    this.showData = false;
                 }
             });
         } else {
@@ -239,6 +268,49 @@ export class InvoiceComponent {
             this.errorSuccess(message);
         }
     }
+    customerLedger() {
+        const selectedId = this.invoiceForm.controls['p_cusname'].value;
+        const selectedValue: any = this.cusMobNameOptions.find((item: any) => item.fieldid === selectedId);
+        const selectedCustomer = selectedValue?.fieldvalue;
+        const mobileMatch = selectedCustomer?.match(/\d{10}/)?.[0];
+
+        if (mobileMatch === null) {
+            this.filteredProducts = [];
+            this.products = [];
+        }
+        if (!mobileMatch) {
+            let message = 'Please select the mobile no. before filtering';
+            this.errorSuccess(message);
+        }
+
+        if (mobileMatch) {
+            const payload = {
+                p_returnvalue: mobileMatch,
+                p_returntype: 'CUSTOMERLEDGER',
+                p_username: 'admin'
+            };
+
+            this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+                next: (res: any) => {
+                    console.log('Ledger:', res.data);
+                    this.ledgerData = true;
+                    this.customerLedgerData = res.data;
+                },
+                error: (err) => {
+                    console.log(err);
+                }
+            });
+        }
+    }
+    get dueAmount(): number {
+        if (!this.customerLedgerData || this.customerLedgerData.length === 0) return 0;
+        return this.customerLedgerData.reduce((sum, item: any) => {
+            const invoiceamount = item.totalpayable || 0;
+            const paidamount = item.paid_amount || 0;
+            return sum + (invoiceamount - paidamount);
+        }, 0);
+    }
+
     totalDueAmount(): void {
         if (!this.products || this.products.length === 0) {
             this.invoiceForm.get('totalDueAmount')?.setValue('0');
@@ -293,6 +365,114 @@ export class InvoiceComponent {
         return this.products.reduce((sum, p) => sum + (p.total || 0), 0);
     }
 
+    private generateFileName(type: 'ledger' | 'display'): string {
+
+    if (type === 'display') {
+        const fromdateRaw = this.invoiceForm.get('fromDate')?.value;
+        const todateRaw = this.invoiceForm.get('toDate')?.value;
+
+        let fromdate = this.datepipe.transform(fromdateRaw, 'dMMMyy');
+        let todate = this.datepipe.transform(todateRaw, 'dMMMyy');
+
+        return `Invoice_${fromdate}-${todate}`;
+    }
+
+    if (type === 'ledger') {
+        const customer = this.invoiceForm.get('p_cusname')?.value;
+        const customerName = this.cusMobNameOptions.find((c) => c.fieldid === customer);
+
+        return `${customerName?.fieldname || 'Customer'}_Ledger`;
+    }
+
+    return 'Download';
+}
+
+    private setTableColumns(): void {
+        this.columns = [
+            { fields: 'customername', header: 'Customer Name' },
+            { fields: 'customerphone', header: 'Mobile No' },
+            { fields: 'billno', header: 'Invoice No' },
+            { fields: 'payment_date', header: 'Payment Date' },
+            { fields: 'payment_mode', header: 'Payment Mode' },
+            { fields: 'totalpayable', header: 'Invoice Amount' },
+            { fields: 'paid_amount', header: 'Paid Amount' },
+            { fields: 'remarks', header: 'Remarks' }
+        ];
+    
+        this.displayColumns = [
+            { fields: 'transactiontype', header: 'Transaction Type' },
+            { fields: 'invoice_no', header: 'Invoice No' },
+            { fields: 'invoice_date', header: 'Invoice Date' },
+            { fields: 'return_invoice_no', header: 'Return Invoice No' },
+            { fields: 'customer', header: 'Customer Name' },
+            { fields: 'mobile', header: 'Mobile No' },
+            { fields: 'total_amount', header: 'Total Amount' },
+            { fields: 'paid_amount', header: 'Paid Amount' },
+            { fields: 'due_amount', header: 'Due Amount' },
+            { fields: 'status', header: 'Status' }, 
+        ];
+    }
+
+    download() {
+        if (this.customerLedgerData?.length) {
+            this.downloadExcel();
+        } else {
+            this.errorSuccess('No data available to download');
+        }
+    }
+    private downloadFile(data: string, mimeType: string, extension: string,type:'ledger' | 'display') {
+        const blob = new Blob([data], { type: mimeType });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = this.generateFileName(type) + extension;
+        document.body.appendChild(link);
+        link.click();
+        document.body.appendChild(link);
+        window.URL.revokeObjectURL(url);
+    }
+
+    downloadExcel() {
+        const csvContent = this.generateCSV();
+        this.downloadFile(csvContent, 'text/csv;charset=utf-8;', '.csv','ledger');
+        this.showSuccess('Excel file downloaded successfully!');
+    }
+
+ downloadDispalyExcel() {
+    if (!this.filteredProducts || this.filteredProducts.length === 0) {
+        this.errorSuccess('No data available to download.');
+        return;
+    }
+
+    const csvContent = this.generateDisplayCSV();
+    this.downloadFile(csvContent, 'text/csv;charset=utf-8;', '.csv', 'display');
+    this.showSuccess('Display Excel downloaded successfully!');
+}
+    private generateCSV(): string {
+        const headers = this.columns.map((col) => this.escapeCSV(col.header));
+        const headerRow = headers.join(',');
+        const dataRows = this.customerLedgerData.map((item) => {
+            const row = this.columns.map((col) => {
+                const value = item[col.fields];
+                const formattedValue = col.formatter ? col.formatter(value) : value;
+                return this.escapeCSV(formattedValue);
+            });
+            return row.join(',');
+        });
+        return [headerRow, ...dataRows].join('\n');
+    }
+    private escapeCSV(value: any): string {
+        if (value === null || value === undefined || value === '') {
+            return '';
+        }
+        const stringValue = String(value);
+        const escapedValue = stringValue.replace(/"/g, '""');
+        if (/[,"\n\r]/.test(escapedValue)) {
+            return `"${escapedValue}"`;
+        }
+        return escapedValue;
+    }
+
     reset() {
         this.invoiceForm.reset({
             fromDate: new Date(),
@@ -301,6 +481,7 @@ export class InvoiceComponent {
         this.filteredProducts = [];
         this.products = [];
         this.invoiceData = [];
+        this.showData = false;
     }
     createDropdownPayload(returnType: string) {
         return {
@@ -374,8 +555,6 @@ export class InvoiceComponent {
             next: (res: any) => {
                 if (res.data && res.data.length > 0) {
                     const invoiceSummary = res.data[0];
-                    console.log('data data:', invoiceSummary);
-
                     this.router.navigate(['/layout/pos/sales'], {
                         state: {
                             mode: 'edit',
@@ -414,7 +593,7 @@ export class InvoiceComponent {
         for (let i = 0; i < this.products.length; i++) {
             const row = this.products[i];
             const receivedAmount = parseFloat(row.received_amount) || 0;
-
+            const modeoftrans = row.p_paymode;
             if (receivedAmount > 0) {
                 // Validate amount before adding
                 if (receivedAmount > parseFloat(row.due_amount)) {
@@ -425,17 +604,17 @@ export class InvoiceComponent {
                     });
                     return;
                 }
-
                 payloadItems.push({
                     adjtype: row.invoice_no,
                     // Add other required fields
                     ItemId: 0,
                     batchId: 0,
                     Quantity: 0,
-                    mrpvalue: receivedAmount
+                    mrpvalue: receivedAmount,
+                    transmode: modeoftrans
                 });
             }
-        }
+       }
 
         if (payloadItems.length === 0) {
             this.messageService.add({
@@ -480,6 +659,39 @@ export class InvoiceComponent {
             },
             reject: () => {}
         });
+    }
+
+    private generateDisplayCSV(): string {
+      const headers = this.displayColumns.map((col)=> this.escapeCSV(col.header));
+      const headerRow = headers.join(',');
+
+      const dataRows = this.filteredProducts.map((item)=>{
+        const row = this.displayColumns.map((col)=>{
+            const value = item[col.fields];
+            const formattedValue = col.formatter ? col.formatter(value) : value;
+            return this.escapeCSV(formattedValue);
+        });
+        return row.join(',');
+      });
+      return [headerRow, ...dataRows].join('\n');
+    }
+
+    onDownloadClick(){
+        if(this.invoiceForm.invalid){
+            this.errorSuccess('Please fill all required fields before downloading.');
+            return;
+        }
+
+      if (!this.filteredProducts || this.filteredProducts.length === 0) {
+            if (!this.showData) {
+                this.errorSuccess('Please click "Display" first to load data before downloading.');
+                return;
+            } else {
+                this.errorSuccess('No data available to download.');
+                return;
+            }
+        } 
+        this.downloadDispalyExcel(); 
     }
 
     showSuccess(message: string) {
@@ -532,6 +744,10 @@ export class InvoiceComponent {
             p_transactionid: data.transactionid || '',
             p_customername: data.customername || '',
             p_mobileno: data.mobileno || '',
+            p_customergstno: data.customergstno,
+            p_customerstate: data.customerstate,
+            chalanno:data.challanno,
+            deliveryboy: data.deliveryboy,
             p_totalsale: data.totalsale || 0,
             p_totalpayable: data.totalpayable || 0,
             p_disctype: data.discounttype || 'N',

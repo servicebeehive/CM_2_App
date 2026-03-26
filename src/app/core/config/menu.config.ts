@@ -197,6 +197,26 @@ export const ADMIN_MENU_MODEL: MenuItem[] = [
                         label: 'UserType',
                         icon: 'pi pi-fw pi-file',
                         routerLink: ['/layout/settings/category-formate', 'usertype']
+                    },
+                     {
+                        label: 'Customer Master',
+                        icon: 'pi pi-fw pi-user',
+                        routerLink: ['/layout/settings/category-formate', 'customermaster']
+                    },
+                    {
+                        label: 'Supplier Master',
+                        icon: 'pi pi-fw pi-truck',
+                        routerLink: ['/layout/settings/category-formate', 'suppliermaster']
+                    },
+                      {
+                        label: 'My Approval',
+                        icon: 'pi pi-fw pi-check-circle',
+                        routerLink: ['/layout/settings/my-approval']
+                    },
+                      {
+                        label: 'Misc Charges',
+                        icon: 'pi pi-fw pi-wallet',
+                        routerLink: ['/layout/settings/misc-charges']
                     }
                 ]
             }
@@ -355,6 +375,24 @@ export const STORE_OWNER_MENU_MODEL: MenuItem[] = [
                 label: 'Dashboard',
                 icon: 'pi pi-fw pi-home',
                 routerLink: ['/layout/dashboard']
+            }
+        ]
+    },
+     {
+        label: 'INVENTORY',
+        icon: 'pi pi-chart-bar',
+        items: [
+            {
+                label: 'Inventory Management',
+                icon: 'pi pi-fw pi-database',
+                routerLink: ['/layout/inventory/overview'],
+                items: [
+                    {
+                        label: 'Transactions',
+                        icon: 'pi pi-fw pi-history',
+                        routerLink: ['/layout/inventory/transaction']
+                    }
+                ]
             }
         ]
     },

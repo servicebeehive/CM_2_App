@@ -10,6 +10,7 @@
             <span class="block text-surface-900 font-bold text-lg md:text-xl mb-2 md:mb-6">Sales</span>
 
             <div class="flex flex-wrap gap-2 md:gap-4 w-full md:w-auto">
+                <button pButton type="button" label="Customer Detail" (click)="customerDetail()" class="p-button-primary w-full md:w-auto"></button>
                 <!-- SUBMIT -->
                 <button
                     pButton
@@ -64,6 +65,7 @@
                     [options]="cusMobileOptions"
                     class="w-full"
                     optionValue="fieldid"
+                    optionLabel="fieldvalue"
                     [filter]="true"
                     [showClear]="true"
                     type="number"
@@ -73,7 +75,7 @@
                     placeholder="Search Customer Mobile"
                     (onFilter)="onMobileFilter($event)"
                     (onChange)="onMobileSelect($event)"
-                    (keypress)="allowOnlyNumbers($event)"
+                   
                 >
                 <ng-template let-item pTemplate="selectedItem">
                     {{ item?.fieldname }} - {{ item?.customerphone }}
@@ -102,6 +104,12 @@
                 <small class="text-red-500 ms-1 md:ms-3 mt-1 text-xs" *ngIf="salesForm.get('p_customername')?.touched">
                     <span *ngIf="salesForm.get('p_customername')?.errors?.['required']">Customer Name is required</span>
                 </small>
+            </div>
+
+             <!-- Chalan No. -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1 text-sm md:text-base">Chalan No</label>
+                <input pInputText formControlName="chalanno" placeholder="Chalan No" (keypress)="allowOnlyNumbers($event)">
             </div>
 
             <!-- ITEM DROPDOWN -->
@@ -161,7 +169,7 @@
 
              <!-- GST CHECKBOX -->
             <div class="flex items-center gap-2 md:gap-4 mt-0 md:mt-6">
-                <p-checkbox binary="true" variant="filled" formControlName="p_gsttran"></p-checkbox>
+                <p-checkbox readonly binary="true" variant="filled" formControlName="p_gsttran"></p-checkbox>
                 <label class="font-medium mb-1 text-sm md:text-base">GST Transaction</label>
             </div>
 
@@ -352,8 +360,8 @@
                 Mobile: {{ salesForm.get('p_mobileno')?.value }}<br />
                 <br />
 
-                GSTIN/UIN : {{ salesForm.get('p_customergstin')?.value || '-' }}<br />
-                State Name : {{ salesForm.get('p_customerstate')?.value || '-' }}
+                GSTIN/UIN : {{ salesForm.get('p_gstno')?.value || '-' }}<br />
+                State Name : {{customerstate}}
             </td>
 
             <!-- RIGHT SECTION (INVOICE DETAILS) -->
@@ -398,7 +406,7 @@
 
                     <tr>
                         <td>Dispatch Doc No.</td>
-                        <td>-</td>
+                        <td>{{salesForm.get('chalanno')?.value}}</td>
                     </tr>
 
                     <tr>
@@ -408,7 +416,7 @@
 
                     <tr>
                         <td>Dispatched through</td>
-                        <td>-</td>
+                        <td>{{ salesForm.get('p_deliveryboy')?.value }}</td>
                     </tr>
 
                     <tr>
