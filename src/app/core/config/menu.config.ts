@@ -89,6 +89,11 @@ export const ADMIN_MENU_MODEL: MenuItem[] = [
                         routerLink: ['/layout/pos/invoice']
                     },
                     {
+                        label: 'Customer Due',
+                        icon: 'pi pi-fw pi-exclamation-circle',
+                        routerLink: ['/layout/pos/customer-due']
+                    },
+                    {
                         label: 'Debit/Credit Link',
                         icon: 'pi pi-fw pi-credit-card',
                         routerLink: ['/layout/pos/credit-note']
@@ -136,13 +141,23 @@ export const ADMIN_MENU_MODEL: MenuItem[] = [
                     },
                      {
                         label: 'Customer Master',
-                        icon: 'pi pi-fw pi-file',
+                        icon: 'pi pi-fw pi-user',
                         routerLink: ['/layout/settings/category-formate', 'customermaster']
                     },
                     {
                         label: 'Supplier Master',
-                        icon: 'pi pi-fw pi-file',
+                        icon: 'pi pi-fw pi-truck',
                         routerLink: ['/layout/settings/category-formate', 'suppliermaster']
+                    },
+                      {
+                        label: 'My Approval',
+                        icon: 'pi pi-fw pi-check-circle',
+                        routerLink: ['/layout/settings/my-approval']
+                    },
+                      {
+                        label: 'Misc Charges',
+                        icon: 'pi pi-fw pi-wallet',
+                        routerLink: ['/layout/settings/misc-charges']
                     }
                 ]
             }

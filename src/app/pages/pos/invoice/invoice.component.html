@@ -7,6 +7,7 @@
         <div class="hidden md:flex gap-4">
             <button pButton type="button" label="Ledger" class="p-button-warning" [disabled]="invoiceForm.invalid" (click)="customerLedger()"></button>
             <button pButton type="button" label="Display" class="p-button-warning" [disabled]="invoiceForm.invalid" (click)="display()"></button>
+            <button pButton type="button" label="Download" icon="pi pi-download" iconPos="right" class="p-button-warning" (click)="onDownloadClick()"></button>
             <button pButton type="submit" label="Submit" class="p-button-warning" (click)="submit()" [disabled]="submitDisable"></button>
             <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
         </div>
@@ -92,18 +93,19 @@
 
         <!-- Product Table with Pagination -->
         <div>
-            <p-table [value]="filteredProducts" dataKey="code" [tableStyle]="{ 'min-width': '50rem' }" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines mt-6 invoice">
+            <p-table [value]="filteredProducts" dataKey="code" [tableStyle]="{ 'min-width': '45rem' }" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines mt-6 invoice">
                 <ng-template #header>
                     <tr class="bg-yellow-400">
-                        <th>Transaction Type</th>
+                        <th>Tran Type</th>
                         <th>Invoice No</th>
                         <th>Invoice Date</th>
-                        <th>Return Invoice No</th>
-                        <th>Customer</th>
-                        <th>Total Amount</th>
-                        <th>Paid Amount</th>
-                        <th class="flex gap-2"><p-checkbox binary="true" formControlName="p_checked" class="border" (change)="onDueAmountFilter($event)"></p-checkbox>Due Amount</th>
-                        <th style="width: 140px; min-width: 160px; max-width: 160px">Received Amount</th>
+                        <th>Return Inv No</th>
+                        <th>Customer Name</th>
+                        <th>Mobile No</th>
+                        <th>Total Amt</th>
+                        <th>Paid Amt</th>
+                        <th class="flex gap-2"><p-checkbox binary="true" formControlName="p_checked" class="border" (change)="onDueAmountFilter($event)"></p-checkbox>Due Amt</th>
+                        <th style="width: 120px;">Received Amt</th>
                         <th>Mode</th>
                         <th>Status</th>
                         <th>Action</th>
@@ -117,6 +119,7 @@
                         <td>{{ row.invoice_date | date: 'dd/MM/yyyy' }}</td>
                         <td>{{ row.return_invoice_no }}</td>
                         <td>{{ row.customer }}</td>
+                        <td>{{ row.customerphone }}</td>
                         <td>{{ row.total_amount | number: '1.2-2' }}</td>
                         <td>{{ row.paid_amount | number: '1.2-2' }}</td>
                         <td>{{ row.due_amount | number: '1.2-2' }}</td>
@@ -287,7 +290,7 @@
 
                     <tr>
                         <td>Dispatch Doc No.</td>
-                        <td></td>
+                        <td>{{invoiceForm.get('chalanno')?.value}}</td>
                     </tr>
 
                     <tr>

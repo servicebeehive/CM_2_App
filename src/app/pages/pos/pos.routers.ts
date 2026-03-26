@@ -1,15 +1,17 @@
-import { Routes } from "@angular/router";
-import { SalesComponent } from "./sales/sales.component";
-import { ReturnComponent } from "./return/return.component";
-import { ReplaceComponent } from "./replace/replace.component";
-import { CreditNoteComponent } from "./credit-note/credit-note.component";
-import { InvoiceComponent } from "./invoice/invoice.component";
+import { Routes } from '@angular/router';
+import { SalesComponent } from './sales/sales.component';
+import { ReturnComponent } from './return/return.component';
+import { ReplaceComponent } from './replace/replace.component';
+import { CreditNoteComponent } from './credit-note/credit-note.component';
+import { InvoiceComponent } from './invoice/invoice.component';
+import { CustomerDueComponent } from './customer-due/customer-due.component';
 
-export default[
-{path: 'sales', component:SalesComponent},
-{path:'return', component:ReturnComponent},
-{path:'replace', component:ReplaceComponent},
-{path:'credit-note', component:CreditNoteComponent},
-{path:'invoice',component:InvoiceComponent},
- { path: '**', redirectTo: '/notfound' }
+export default [
+    { path: 'sales', component: SalesComponent },
+    { path: 'return', component: ReturnComponent },
+    { path: 'replace', component: ReplaceComponent },
+    { path: 'credit-note', component: CreditNoteComponent },
+    { path: 'invoice', component: InvoiceComponent },
+    { path: 'customer-due', component: CustomerDueComponent },
+    { path: '**', redirectTo: '/notfound' }
 ] as Routes;

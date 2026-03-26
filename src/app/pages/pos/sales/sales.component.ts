@@ -241,7 +241,8 @@ export class SalesComponent {
                 p_totalpayable: [0],
                 p_currencyid: [0],
                 p_paymentdue: [''],
-                p_gstno: ['', [gstNumberValidator]],
+                chalanno:[''],
+                // p_gstno: ['', [gstNumberValidator]],
                 p_gsttran: [false],
                 status: [''],
                 p_status: [''],
@@ -280,22 +281,22 @@ export class SalesComponent {
             this.applyDiscount();
         });
 
-        this.salesForm.get('p_gstno')!.statusChanges.subscribe((status) => {
-            const gstCtrl = this.salesForm.get('p_gstno');
-            const gstTransCtrl = this.salesForm.get('p_gsttran');
+        // this.salesForm.get('p_gstno')!.statusChanges.subscribe((status) => {
+        //     const gstCtrl = this.salesForm.get('p_gstno');
+        //     const gstTransCtrl = this.salesForm.get('p_gsttran');
 
-            const value = gstCtrl?.value;
-            if (!value) {
-                gstTransCtrl?.setValue(false, { emitEvent: false });
-                return;
-            }
+        //     const value = gstCtrl?.value;
+        //     if (!value) {
+        //         gstTransCtrl?.setValue(false, { emitEvent: false });
+        //         return;
+        //     }
 
-            if (status === 'VALID') {
-                gstTransCtrl?.setValue(true, { emitEvent: false });
-            } else {
-                gstTransCtrl?.setValue(false, { emitEvent: false });
-            }
-        });
+        //     if (status === 'VALID') {
+        //         gstTransCtrl?.setValue(true, { emitEvent: false });
+        //     } else {
+        //         gstTransCtrl?.setValue(false, { emitEvent: false });
+        //     }
+        // });
         const navigation = history.state;
         console.log('Navigation state:', navigation);
 
@@ -447,12 +448,23 @@ export class SalesComponent {
     onMobileSelect(event: any) {
         const mobileSelection = this.cusMobileOptions.find((mobileNo) => mobileNo.fieldid === event.value);
         const mobileMatch = mobileSelection.fieldvalue.match(/\d{10}/);
+        
         if (mobileSelection) {
             this.salesForm.patchValue({
                 p_mobileno: mobileMatch ? mobileMatch[0] : '',
                 p_customername: mobileSelection.fieldname,
                 p_gstno: mobileSelection.customergstno
             });
+        }
+        if(mobileSelection.customergstno!== null){
+           this.salesForm.patchValue({
+            p_gsttran:true
+           });
+        }
+        else{
+             this.salesForm.patchValue({
+            p_gsttran:false
+           })
         }
     }
 
@@ -463,7 +475,7 @@ export class SalesComponent {
             p_mobileno: data.mobileno || '',
             p_deliveryboy: data.deliveryboy,
             p_gsttran: data.gstin || '',
-            p_gstno: data.customergstno,
+            chalanno: data.challanno,
             p_billno: data.billno || '',
             p_transactionid: data.transactionid || 0,
             p_transactiondate: data.transactiondate ? new Date(data.transactiondate) : new Date(),
@@ -721,7 +733,7 @@ export class SalesComponent {
                 p_totalcost: billDetails.totalcost.toFixed(2),
                 p_totalsale: billDetails.totalsale.toFixed(2),
                 p_disctype: billDetails.discounttype == 'Y' ? true : false,
-                p_gstno: billDetails.customergstno,
+                chalanno: billDetails.challanno,
                 p_deliveryboy: billDetails.deliveryboy,
                 p_overalldiscount: billDetails.discount,
                 discountvalueper: billDetails.discountvalueper,
@@ -842,6 +854,10 @@ export class SalesComponent {
     //  Form Actions (submit / reset)
     // -----------------------------
 
+customerDetail(){
+    this.route.navigate(['/layout/settings/category-formate', 'customermaster'])
+}
+
     // Submit handler with confirmation and validation
     onSubmit() {
         if (this.isBarcodeScan) {
@@ -873,7 +889,7 @@ export class SalesComponent {
     // Reset form and clear sale array
     onReset() {
         this.salesForm.reset({
-            p_gsttran: true
+            p_gsttran: false
         });
         this.backshow = false;
         this.saleArray.clear();
@@ -981,7 +997,7 @@ export class SalesComponent {
             p_roundoff: body.p_roundoff ? body.p_roundoff.toString() : '0.00',
             p_totalpayable: Number(body.p_totalpayable) || 0,
             p_currencyid: Number(body.p_currencyid) || 0,
-            p_custgstno: body.p_gstno,
+            p_custgstno: body.chalanno,
             p_gsttran: body.p_gsttran === true ? 'Y' : body.p_gsttran === false ? 'N' : 'N',
             p_status: body.p_status || 'Done',
             p_isactive: 'Y',

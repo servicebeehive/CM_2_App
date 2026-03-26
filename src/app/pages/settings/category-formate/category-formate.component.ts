@@ -15,7 +15,15 @@ import { AuthService } from '@/core/services/auth.service';
 import { InventoryService } from '@/core/services/inventory.service';
 import { UserService } from '@/core/services/user.service';
 import { ActivatedRoute } from '@angular/router';
+import { state } from '@angular/animations';
 
+export function gstNumberValidator(control: AbstractControl): ValidationErrors | null {
+    if (!control.value) return null;
+
+    const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+
+    return gstRegex.test(control.value.toUpperCase()) ? null : { invalidGst: true };
+}
 @Component({
     selector: 'app-category-formate',
     standalone: true,
@@ -32,11 +40,15 @@ export class CategoryFormateComponent {
     user: any[] = [];
     filterMaster: any[] = [];
     userRoleOptions: any[] = [];
+    countries: any[] = [];
+    states : any[]=[];
+    cities: any[]=[];
+    public getUserDetails = {};
     editMode = false;
     selectedUser: any = null;
     globalFilter: string = '';
     showGlobalSearch: boolean = true;
-
+     
     masterDetails: [] = [];
     loggedInUserName: string = '';
     loggedInUserRole: string = '';
@@ -45,16 +57,7 @@ export class CategoryFormateComponent {
     tableColumns: any[] = [];
     selectedMaster!: string;
     dialogTitle = '';
-    // masterOption = [
-    //     { label: 'Configuration', value: 'advance' },
-    //     { label: 'Category Master', value: 'categorymaster' },
-    //     { label: 'Customer Master', value: 'customermaster' },
-    //     { label: 'Tax Master', value: 'taxmaster' },
-    //     { label: 'UOM Master', value: 'uommaster' },
-    //     { label: 'User Master', value: 'usertype' },
-    //     { label: 'Supplier Master', value: 'suppliermaster' }
-    // ];
-
+  
     constructor(
         private fb: FormBuilder,
         private confirmationService: ConfirmationService,
@@ -78,6 +81,8 @@ export class CategoryFormateComponent {
         // this.onGetUserList();
         this.loggedInUserName = this.authService.isLogIntType().username;
         this.loggedInUserRole = this.authService.isLogIntType().usertypename;
+
+        this.onGetCountry();
     }
 
     initForm() {
@@ -101,34 +106,9 @@ export class CategoryFormateComponent {
 
     updateTitleMaster(master: string) {
         switch (master) {
-            case 'advance':
-                this.pageTitle = 'Configuration';
-                this.addButtonLabel = 'Add Configuration';
-                break;
-
-            case 'categorymaster':
-                this.pageTitle = 'Category Master';
-                this.addButtonLabel = 'Add Category';
-                break;
-
             case 'customermaster':
                 this.pageTitle = 'Customer Master';
                 this.addButtonLabel = 'Add Customer';
-                break;
-
-            case 'uommaster':
-                this.pageTitle = 'UOM Master';
-                this.addButtonLabel = 'Add UOM';
-                break;
-
-            case 'usertype':
-                this.pageTitle = 'User Type';
-                this.addButtonLabel = 'Add User';
-                break;
-
-            case 'taxmaster':
-                this.pageTitle = 'Tax Master';
-                this.addButtonLabel = 'Add Tax';
                 break;
 
             case 'suppliermaster':
@@ -136,51 +116,29 @@ export class CategoryFormateComponent {
                 this.addButtonLabel = 'Add Supplier';
                 break;
 
-            default:
-                this.pageTitle = 'Master';
-                this.addButtonLabel = 'Add';
         }
     }
 
     masterPayloadMap: Record<string, string> = {
-        advance: 'ADVANCE',
-        categorymaster: 'CATEGORYMASTER',
         customermaster: 'CUSTOMERMASTER',
-        taxmaster: 'TAXMASTER',
-        uommaster: 'UOMMASTER',
-        usertype: 'USERTYPE',
         suppliermaster: 'SUPPLIERMASTER'
     };
 
-    commonMasterColumns = [
-        { field: 'fieldname', header: 'Name', width:'300px' },
-        { field: 'fielddesc', header: 'Description'},
-        { field: 'isactive', header: 'Active', width:'80px' }
-    ];
-
     tableConfig: Record<string, any[]> = {
-        advance: [
-            { field: 'fieldname', header: 'Name',width:'300px' },
-            { field: 'fielddesc', header: 'Description',width:'500px' },
-            { field: 'fieldvalue', header: 'Value' },
-            { field: 'isactive', header: 'Active', width:'80px' }
-        ],
-        categorymaster: this.commonMasterColumns,
         customermaster: [
             { field: 'customername', header: 'Name',width:'300px' },
             { field: 'customerphone', header: 'Phone' },
-            { field: 'customercity', header: 'City' },
+            { field: '', header: 'Gst No'},
+            { field: 'cityforall', header: 'City' },
             { field: 'isactive', header: 'Active', width:'80px' }
         ],
         suppliermaster: [
             { field: 'suppliername', header: 'Name',width:'300px' },
             { field: 'supplierphone', header: 'Phone' },
-            { field: 'suppliercity', header: 'City' },
+            { field: '', header: 'Gst No'},
+            { field: 'cityforall', header: 'City' },
             { field: 'isactive', header: 'Active', width:'80px' }
         ],
-        taxmaster: this.commonMasterColumns,
-        uommaster: this.commonMasterColumns,
-        usertype: this.commonMasterColumns
     };
     /** ✳️ Add User Dialog **/
     openUserDialog() {
@@ -188,24 +146,13 @@ export class CategoryFormateComponent {
         this.selectedMaster = this.masterForm.get('master')?.value ?? 'categorymaster';
         this.addControlsByMaster(this.selectedMaster);
         const dialogTitleMap: Record<string, string> = {
-            advance: 'Add Advance',
-            categorymaster: 'Add Category',
             customermaster: 'Add Customer',
-            taxmaster: 'Add Tax',
-            uommaster: 'Add UOM',
-            usertype: 'Add User',
             suppliermaster: 'Add Supplier'
         };
         this.dialogTitle = dialogTitleMap[this.selectedMaster] ?? 'Add';
         console.log('master', this.selectedMaster, dialogTitleMap);
         // this.resetFormByMaster(this.selectedMaster);
         this.visibleDialog = true;
-
-        //   this.editMode = false;
-        //   this.masterForm.reset({ checked: true });
-        //  this.masterForm.get('p_categoryname')?.enable();
-        // this.masterForm.get('p_categorydesc')?.enable();
-        // this.masterForm.get('checked')?.enable();
     }
     addControlsByMaster(master: string) {
         Object.keys(this.masterForm.controls).forEach((key) => {
@@ -213,83 +160,43 @@ export class CategoryFormateComponent {
                 this.masterForm.removeControl(key);
             }
         });
-        if (master === 'categorymaster') {
-            this.masterForm.addControl('p_categoryname', this.fb.control('', Validators.required));
-            this.masterForm.addControl('p_categorydesc', this.fb.control('', Validators.required));
-        }
+  
         if (master === 'customermaster') {
             this.masterForm.addControl('customername', this.fb.control('', Validators.required));
             this.masterForm.addControl('customeraddress', this.fb.control('', Validators.required));
-            this.masterForm.addControl('customercountry', this.fb.control('', Validators.required));
-            this.masterForm.addControl('customerstate', this.fb.control('', Validators.required));
-            this.masterForm.addControl('customercity', this.fb.control('', Validators.required));
+            this.masterForm.addControl('countryforall', this.fb.control('', Validators.required));
+            this.masterForm.addControl('stateforall', this.fb.control('', Validators.required));
+            this.masterForm.addControl('cityforall', this.fb.control('', Validators.required));
             this.masterForm.addControl('customerpincode', this.fb.control('', Validators.required));
             this.masterForm.addControl('customerphone', this.fb.control('', Validators.required));
-            this.masterForm.addControl('customeremail', this.fb.control('', [Validators.required, Validators.email]));
-            this.masterForm.addControl('customergstno', this.fb.control('', Validators.required));
-            this.masterForm.addControl('customercontactname', this.fb.control('', Validators.required));
-            this.masterForm.addControl('customercontactphone', this.fb.control('', Validators.required));
-            this.masterForm.addControl('customercontactemail', this.fb.control('', [Validators.required, Validators.email]));
+            this.masterForm.addControl('customeremail', this.fb.control(''));
+            this.masterForm.addControl('customergstno', this.fb.control('',[gstNumberValidator]));
+            this.masterForm.addControl('customercontactname', this.fb.control(''));
+            this.masterForm.addControl('customercontactphone', this.fb.control(''));
+            this.masterForm.addControl('customercontactemail', this.fb.control('', [Validators.email]));
         }
-        if (master === 'advance') {
-            this.masterForm.addControl('rulename', this.fb.control('', Validators.required));
-            this.masterForm.addControl('ruledesc', this.fb.control('', Validators.required));
-            this.masterForm.addControl('rulevalue', this.fb.control('', Validators.required));
-        }
+        
         if (master === 'suppliermaster') {
             this.masterForm.addControl('suppliername', this.fb.control('', Validators.required));
             this.masterForm.addControl('supplieraddress', this.fb.control('', Validators.required));
-            this.masterForm.addControl('suppliercountry', this.fb.control('', Validators.required));
-            this.masterForm.addControl('supplierstate', this.fb.control('', Validators.required));
-            this.masterForm.addControl('suppliercity', this.fb.control('', Validators.required));
+            this.masterForm.addControl('countryforall', this.fb.control('', Validators.required));
+            this.masterForm.addControl('stateforall', this.fb.control('', Validators.required));
+            this.masterForm.addControl('cityforall', this.fb.control('', Validators.required));
             this.masterForm.addControl('supplierpincode', this.fb.control('', Validators.required));
             this.masterForm.addControl('supplierphone', this.fb.control('', Validators.required));
-            this.masterForm.addControl('supplieremail', this.fb.control('', [Validators.required, Validators.email]));
-            this.masterForm.addControl('suppliergstno', this.fb.control('', Validators.required));
-            this.masterForm.addControl('suppliercontactname', this.fb.control('', Validators.required));
-            this.masterForm.addControl('suppliercontactphone', this.fb.control('', Validators.required));
-            this.masterForm.addControl('suppliercontactemail', this.fb.control('', [Validators.required, Validators.email]));
+            this.masterForm.addControl('supplieremail', this.fb.control('', [Validators.email]));
+            this.masterForm.addControl('suppliergstno', this.fb.control('',[gstNumberValidator]));
+            this.masterForm.addControl('suppliercontactname', this.fb.control(''));
+            this.masterForm.addControl('suppliercontactphone', this.fb.control(''));
+            this.masterForm.addControl('suppliercontactemail', this.fb.control('', [Validators.email]));
         }
-        if (master === 'taxmaster') {
-            this.masterForm.addControl('taxname', this.fb.control('', Validators.required));
-            this.masterForm.addControl('taxdesc', this.fb.control('', Validators.required));
-            this.masterForm.addControl('taxtype', this.fb.control('', Validators.required));
-            this.masterForm.addControl('taxpercentage', this.fb.control('', Validators.required));
-        }
-        if (master === 'uommaster') {
-            this.masterForm.addControl('uomname', this.fb.control('', Validators.required));
-            this.masterForm.addControl('uomdesc', this.fb.control('', Validators.required));
-            this.masterForm.addControl('childuomname', this.fb.control('', Validators.required));
-        }
-        if(master==='usertype'){
-            this.masterForm.addControl('p_uname', this.fb.control('', Validators.required));
-            this.masterForm.addControl('p_utypeid', this.fb.control('', [Validators.required,Validators.maxLength(20)]));
-            this.masterForm.addControl('p_ufullname', this.fb.control('', Validators.required));
-            this.masterForm.addControl('p_pwd', this.fb.control('', Validators.required));
-            this.masterForm.addControl('conPassword', this.fb.control('', Validators.required));
-            this.masterForm.addControl('p_phone', this.fb.control('', Validators.required));
-            this.masterForm.addControl('p_email', this.fb.control('', Validators.required));
-        }
+        this.masterForm.updateValueAndValidity();
     }
     resetFormByMaster(master: string) {
         this.masterForm.reset({ checked: true });
         switch (master) {
-            case 'advance':
-                break;
-
-            case 'categorymaster':
-                break;
-
+           
             case 'customermaster':
-                break;
-
-            case 'uommaster':
-                break;
-
-            case 'usertype':
-                break;
-
-            case 'taxmaster':
                 break;
 
             case 'suppliermaster':
@@ -380,6 +287,106 @@ export class CategoryFormateComponent {
             }
         });
     }
+
+    onGetCountry(){
+      const payload = this.createDropdownPayload('COUNTRY');
+      this.inventoryService.getdropdowndetails(payload).subscribe({
+        next: (res) => {
+          this.countries = res.data || [];
+        },
+        error: (err) => console.log(err)
+      });
+    }
+
+    onGetState(countryId: string, stateName: string, statecode: string, cityName: string){
+      const payload = {
+         ...this.getUserDetails,
+         p_returntype:'STATE',
+         p_returnvalue: countryId
+      };
+      this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+        next:(res) =>{
+          this.states = res.data || [];
+          const state = this.states.filter((s)=>s.state_id === stateName);
+          const statename = state[0].state_id;
+          if(statename){
+            this.masterForm.patchValue({
+              stateforall: statename
+            });
+           this.onGetCity(statename, cityName);
+          }
+        },
+        error: (err) => console.log(err)
+      });
+    }
+
+    onGetCity(statename: string, cityName: string){
+     const payload = {
+      ...this.getUserDetails,
+      p_returntype: 'CITY',
+      p_returnvalue: statename
+     };
+     this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+      next: (res) => {
+        this.cities = res.data || [];
+         const city = this.cities.filter((c) => c.city_id === cityName);
+         const cityname = city[0].city_id;
+         if(city){
+          this.masterForm.patchValue({
+            cityforall:cityname
+          });
+         }
+      },
+      error:(err) => console.log(err)
+     });
+    }
+
+    onGetStateChange(data:any){
+      const stateId = data.value;
+      this.masterForm.patchValue({
+        cityforall:''
+      });
+      this.cities = [];
+
+      if(!stateId){
+        return;
+      }
+      
+      const payload = {
+        ...this.getUserDetails,
+        p_returntype: 'CITY',
+        p_returnvalue: stateId
+      };
+
+      this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+        next: (res) => {
+          if(res.data && res.data.length>0){
+            this.cities=res.data;
+            this.masterForm.patchValue({
+              cityforall : res.data[0].city_id
+            });
+          }
+        },
+        error:(err)=>console.log(err)
+      });
+    }
+
+    onCountryChange(event:any){
+      const countryId = event.value;
+      const payload = {
+        p_returntype : 'STATE',
+        p_returnvalue: countryId
+      };
+       this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res) => {
+                if (res.data && res.data.length > 0) {
+                    console.log('res:', res.data);
+                    this.states = res.data;
+                }
+            }
+        });
+    }
+
     /** ✅ Submit Form **/
     onSubmit() {
         if (this.masterForm.invalid) {

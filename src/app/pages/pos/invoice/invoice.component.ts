@@ -115,6 +115,8 @@ export class InvoiceComponent {
     invoiceData: any[] = [];
     customerLedgerData: any[] = [];
     columns: any[] = [];
+    displayColumns: any[]=[];
+    showData: boolean = false;
     transactionMode: any[] = [
         { label: 'Cash', value: 'Cash' },
         { label: 'UPI', value: 'UPI' },
@@ -149,6 +151,7 @@ export class InvoiceComponent {
                 p_mobileno: [''],
                 p_customergstno: [''],
                 p_customerstate: [''],
+                chalanno:[''],
                 deliveryboy: [''],
                 p_totalsale: [''],
                 p_totalpayable: [''],
@@ -218,7 +221,6 @@ export class InvoiceComponent {
             this.products[index].received_amount = value;
         }
     }
-
     display() {
         // const p_mobile = this.invoiceForm.controls['p_mobile'].value;
         const p_cusname = this.invoiceForm.controls['p_cusname'].value;
@@ -234,11 +236,13 @@ export class InvoiceComponent {
                 p_status: status || null,
                 p_username: 'admin'
             };
+            this.showData = false;
             this.inventoryService.getinvoicedetail(payload).subscribe({
                 next: (res: any) => {
                     console.log('API RESEULT:', res.data);
                     this.products = res?.data || [];
                     this.filteredProducts = [...this.products];
+                    this.showData = true;
                     this.totalDueAmount();
                     this.initialzeFormArray();
                     this.saveCurrentState();
@@ -256,6 +260,7 @@ export class InvoiceComponent {
                 },
                 error: (err) => {
                     console.log(err);
+                    this.showData = false;
                 }
             });
         } else {
@@ -267,7 +272,7 @@ export class InvoiceComponent {
         const selectedId = this.invoiceForm.controls['p_cusname'].value;
         const selectedValue: any = this.cusMobNameOptions.find((item: any) => item.fieldid === selectedId);
         const selectedCustomer = selectedValue?.fieldvalue;
-        const mobileMatch = selectedCustomer.match(/\d{10}/)?.[0];
+        const mobileMatch = selectedCustomer?.match(/\d{10}/)?.[0];
 
         if (mobileMatch === null) {
             this.filteredProducts = [];
@@ -360,12 +365,27 @@ export class InvoiceComponent {
         return this.products.reduce((sum, p) => sum + (p.total || 0), 0);
     }
 
-    private generateFileName(): string {
+    private generateFileName(type: 'ledger' | 'display'): string {
+
+    if (type === 'display') {
+        const fromdateRaw = this.invoiceForm.get('fromDate')?.value;
+        const todateRaw = this.invoiceForm.get('toDate')?.value;
+
+        let fromdate = this.datepipe.transform(fromdateRaw, 'dMMMyy');
+        let todate = this.datepipe.transform(todateRaw, 'dMMMyy');
+
+        return `Invoice_${fromdate}-${todate}`;
+    }
+
+    if (type === 'ledger') {
         const customer = this.invoiceForm.get('p_cusname')?.value;
         const customerName = this.cusMobNameOptions.find((c) => c.fieldid === customer);
-        let fileName = `${customerName?.fieldname}_Ledger`;
-        return fileName;
+
+        return `${customerName?.fieldname || 'Customer'}_Ledger`;
     }
+
+    return 'Download';
+}
 
     private setTableColumns(): void {
         this.columns = [
@@ -378,7 +398,21 @@ export class InvoiceComponent {
             { fields: 'paid_amount', header: 'Paid Amount' },
             { fields: 'remarks', header: 'Remarks' }
         ];
+    
+        this.displayColumns = [
+            { fields: 'transactiontype', header: 'Transaction Type' },
+            { fields: 'invoice_no', header: 'Invoice No' },
+            { fields: 'invoice_date', header: 'Invoice Date' },
+            { fields: 'return_invoice_no', header: 'Return Invoice No' },
+            { fields: 'customer', header: 'Customer Name' },
+            { fields: 'mobile', header: 'Mobile No' },
+            { fields: 'total_amount', header: 'Total Amount' },
+            { fields: 'paid_amount', header: 'Paid Amount' },
+            { fields: 'due_amount', header: 'Due Amount' },
+            { fields: 'status', header: 'Status' }, 
+        ];
     }
+
     download() {
         if (this.customerLedgerData?.length) {
             this.downloadExcel();
@@ -386,12 +420,12 @@ export class InvoiceComponent {
             this.errorSuccess('No data available to download');
         }
     }
-    private downloadFile(data: string, mimeType: string, extension: string) {
+    private downloadFile(data: string, mimeType: string, extension: string,type:'ledger' | 'display') {
         const blob = new Blob([data], { type: mimeType });
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = this.generateFileName() + extension;
+        link.download = this.generateFileName(type) + extension;
         document.body.appendChild(link);
         link.click();
         document.body.appendChild(link);
@@ -400,10 +434,20 @@ export class InvoiceComponent {
 
     downloadExcel() {
         const csvContent = this.generateCSV();
-        console.log('ans', csvContent);
-        this.downloadFile(csvContent, 'text/csv;charset=utf-8;', '.csv');
+        this.downloadFile(csvContent, 'text/csv;charset=utf-8;', '.csv','ledger');
         this.showSuccess('Excel file downloaded successfully!');
     }
+
+ downloadDispalyExcel() {
+    if (!this.filteredProducts || this.filteredProducts.length === 0) {
+        this.errorSuccess('No data available to download.');
+        return;
+    }
+
+    const csvContent = this.generateDisplayCSV();
+    this.downloadFile(csvContent, 'text/csv;charset=utf-8;', '.csv', 'display');
+    this.showSuccess('Display Excel downloaded successfully!');
+}
     private generateCSV(): string {
         const headers = this.columns.map((col) => this.escapeCSV(col.header));
         const headerRow = headers.join(',');
@@ -437,6 +481,7 @@ export class InvoiceComponent {
         this.filteredProducts = [];
         this.products = [];
         this.invoiceData = [];
+        this.showData = false;
     }
     createDropdownPayload(returnType: string) {
         return {
@@ -510,8 +555,6 @@ export class InvoiceComponent {
             next: (res: any) => {
                 if (res.data && res.data.length > 0) {
                     const invoiceSummary = res.data[0];
-                    console.log('data data:', invoiceSummary);
-
                     this.router.navigate(['/layout/pos/sales'], {
                         state: {
                             mode: 'edit',
@@ -561,7 +604,6 @@ export class InvoiceComponent {
                     });
                     return;
                 }
-
                 payloadItems.push({
                     adjtype: row.invoice_no,
                     // Add other required fields
@@ -572,7 +614,7 @@ export class InvoiceComponent {
                     transmode: modeoftrans
                 });
             }
-        }
+       }
 
         if (payloadItems.length === 0) {
             this.messageService.add({
@@ -617,6 +659,39 @@ export class InvoiceComponent {
             },
             reject: () => {}
         });
+    }
+
+    private generateDisplayCSV(): string {
+      const headers = this.displayColumns.map((col)=> this.escapeCSV(col.header));
+      const headerRow = headers.join(',');
+
+      const dataRows = this.filteredProducts.map((item)=>{
+        const row = this.displayColumns.map((col)=>{
+            const value = item[col.fields];
+            const formattedValue = col.formatter ? col.formatter(value) : value;
+            return this.escapeCSV(formattedValue);
+        });
+        return row.join(',');
+      });
+      return [headerRow, ...dataRows].join('\n');
+    }
+
+    onDownloadClick(){
+        if(this.invoiceForm.invalid){
+            this.errorSuccess('Please fill all required fields before downloading.');
+            return;
+        }
+
+      if (!this.filteredProducts || this.filteredProducts.length === 0) {
+            if (!this.showData) {
+                this.errorSuccess('Please click "Display" first to load data before downloading.');
+                return;
+            } else {
+                this.errorSuccess('No data available to download.');
+                return;
+            }
+        } 
+        this.downloadDispalyExcel(); 
     }
 
     showSuccess(message: string) {
@@ -671,6 +746,7 @@ export class InvoiceComponent {
             p_mobileno: data.mobileno || '',
             p_customergstno: data.customergstno,
             p_customerstate: data.customerstate,
+            chalanno:data.challanno,
             deliveryboy: data.deliveryboy,
             p_totalsale: data.totalsale || 0,
             p_totalpayable: data.totalpayable || 0,
