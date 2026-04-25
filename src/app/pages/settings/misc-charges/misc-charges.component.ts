@@ -62,15 +62,20 @@ export class MiscChargesComponent {
     rowsPerPage: number = 5;
     globalFilter: string = '';
     showData: boolean = false;
-   submitDisable: boolean = true;
+    submitDisable: boolean = true;
     headOptions = [
-      {fieldid : 'bankcharge' , fieldname:'Bank Charge'},
-       {fieldid : 'paytmcharge' , fieldname:'Paytm Charge'},
+        { fieldid: 'bankcharge', fieldname: 'Bank Charge' },
+        { fieldid: 'paytmcharge', fieldname: 'Paytm Charge' }
+    ];
+    requestOptions: any[] = [
+        { fieldid: 'Approved', fieldname: 'Approved' },
+        { fieldid: 'Pending', fieldname: 'Pending' },
+        { fieldid: 'Rejected', fieldname: 'Rejected' }
     ];
     products: any[] = [];
     filteredProducts: any[] = [];
     columns: any[] = [];
-    selectedRows: any[]=[];
+    selectedRows: any[] = [];
 
     constructor(
         private fb: FormBuilder,
@@ -82,14 +87,20 @@ export class MiscChargesComponent {
 
     ngOnInit(): void {
         this.customerForm = this.fb.group({
-           curdate: [new Date()],
-            p_head:[],
-            p_amount:[null,[Validators.required,Validators.min(1)]]
+            curdate: [new Date()],
+            p_head: [],
+            p_amount: [null, [Validators.required, Validators.min(1)]],
+            p_request: ['Pending']
         });
-        
 
         this.setTableColumns();
-        // this.loadAllDropdowns();
+        this.customerForm.get('p_request')?.valueChanges.subscribe(()=>{
+            if(this.products.length>0){
+                const request = this.customerForm.controls['p_request'].value;
+                
+            }
+        })
+        
     }
 
     blockMinus(event: KeyboardEvent) {
@@ -99,18 +110,16 @@ export class MiscChargesComponent {
         }
     }
 
-    submit(){
-
-    }
+    submit() {}
 
     Onreturndropdowndetails() {
         const fromdate = this.customerForm.controls['date'].value;
         const head = this.customerForm.controls['p_head'].value;
-    
+
         const payload = {
             p_startdate: this.datePipe.transform(fromdate, 'yyyy/MM/dd'),
-          p_customer: head || null,
-            p_username: 'admin',
+            p_customer: head || null,
+            p_username: 'admin'
         };
         this.showData = false;
         this.inventoryService.getinvoicedetail(payload).subscribe({
@@ -141,8 +150,8 @@ export class MiscChargesComponent {
         this.filteredProducts = [];
         this.products = [];
         this.showData = false;
-         this.customerForm.reset({
-            curdate: new Date(),
+        this.customerForm.reset({
+            curdate: new Date()
         });
     }
 
@@ -178,11 +187,11 @@ export class MiscChargesComponent {
         };
 
         this.columns = [
-            { fields: 'curdate', header: 'Date',formatter: formatDate },
+            { fields: 'curdate', header: 'Date', formatter: formatDate },
             { fields: 'head', header: 'Head' },
             { fields: 'categoryname', header: 'Amount' },
             { fields: 'currentstock', header: 'Status' },
-            { fields: 'uomname', header: 'Reason' },
+            { fields: 'uomname', header: 'Reason' }
         ];
     }
 

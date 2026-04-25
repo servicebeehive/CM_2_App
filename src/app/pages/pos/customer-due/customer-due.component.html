@@ -85,7 +85,7 @@
         [rows]="10"        
 [rowsPerPageOptions]="[10, 20, 50]"
         [responsiveLayout]="'scroll'"
-        class="p-datatable-gridlines mt-6 item-report"
+        class="p-datatable-gridlines mt-6 customer-due"
       >
         <ng-template pTemplate="header">
           <tr class="bg-yellow-400">
@@ -93,7 +93,9 @@
             <th>Mobile</th>
             <th>Due Amount</th>
             <th>Write Off</th>
-            <th>Select</th>
+            <th>Status</th>
+            <th>Reason</th>
+            <!-- <th>Select</th> -->
           </tr>
         </ng-template>
 
@@ -118,7 +120,9 @@
                                 <small class="text-red-500" *ngIf="row.amountError"> This cannot be greater than {{ row.due_amount }} </small>
                             </div>
                         </td>
-           <td><p-tableCheckbox [value]="row"></p-tableCheckbox></td>
+                        <td></td>
+                        <td></td>
+           <!-- <td><p-tableCheckbox [value]="row"></p-tableCheckbox></td> -->
           </tr>
         </ng-template>
 

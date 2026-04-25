@@ -71,10 +71,9 @@ export class MyApprovalComponent {
 
 
     typeOptions = [
-        { fieldid: 'all', fieldname: 'All' },
-        { fieldid: 'writeoffamount', fieldname: 'Write Off Amount' },
-        { fieldid: 'indentapproval', fieldname: 'Indent Approval' },
-        { fieldid: 'saleamount', fieldname: 'Sales Requisition Approval' }
+        { fieldid: 'bankcharge', fieldname: 'Bank Charge' },
+        { fieldid: 'paytmcharge', fieldname: 'Paytm Charge' },
+        { fieldid: 'writeoff', fieldname: 'Write Off' }
     ];
     requestOptions = [
         { fieldid: 'all', fieldname: 'All' },
@@ -110,7 +109,7 @@ export class MyApprovalComponent {
     ngOnInit(): void {
         this.customerForm = this.fb.group({
             p_type: [new Date()],
-            p_request: [],
+            p_request: ['pending'],
         });
         this.setTableColumns();
         // this.loadAllDropdowns();

@@ -135,6 +135,11 @@ export const ADMIN_MENU_MODEL: MenuItem[] = [
                 routerLink: ['/layout/settings/overview'],
                 items: [
                     {
+                        label: 'Access Control',
+                        icon: 'pi pi-fw pi-sliders-h',
+                        routerLink: ['/layout/settings/access-control']
+                    },
+                    {
                         label: 'User Management',
                         icon: 'pi pi-fw pi-users',
                         routerLink: ['/layout/settings/user-management']

@@ -1,18 +1,18 @@
 <div class="card p-6">
+    <form [formGroup]="customerForm" class="space-y-8">
     <!-- Header Row: Stock In + Buttons -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <span class="block text-surface-900 font-bold text-2xl">Miscellaneous Charges</span>
 
         <!-- Buttons - Hidden on mobile, shown in header on desktop -->
         <div class="hidden md:flex gap-4">
-            <button pButton type="submit" label="Submit" class="p-button-warning flex-1" (click)="submit()" [disabled]="customerForm.invalid"></button>
-            <button pButton type="button" label="Display" class="p-button-warning" (click)="Onreturndropdowndetails()"></button>
+            <p-dropdown [options]="requestOptions" optionValue="fieldid" optionLabel="fieldname" [filter]="true" [showClear]="true" filterPlaceholder="Search Request" formControlName="p_request" placeholder="Request"> </p-dropdown>
+            <!-- <button pButton type="button" label="Display" class="p-button-warning" (click)="Onreturndropdowndetails()"></button> -->
             <button pButton type="button" label="Download" icon="pi pi-download" iconPos="right" class="p-button-warning" (click)="onDownloadClick()"></button>
             <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
         </div>
     </div>
 
-    <form [formGroup]="customerForm" class="space-y-8">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-x-8 gap-y-4 w-full">
             <!-- Date From-->
             <div class="flex flex-col">
@@ -32,12 +32,15 @@
                 <small class="text-red-500" *ngIf="customerForm.controls['p_amount'].touched && customerForm.controls['p_amount'].errors?.['min']"> Amount must be greater than 0 </small>
                 <small class="text-red-500" *ngIf="customerForm.controls['p_amount'].touched && customerForm.controls['p_amount'].errors?.['required']"> Amount is required </small>
             </div>
+
+            <div class="flex flex-col">
+                <button pButton type="submit" label="Submit" class="p-button-warning flex-1 mt-6" (click)="submit()" [disabled]="customerForm.invalid"></button>
+            </div>
         </div>
 
         <!-- Action Buttons - Visible only on mobile, below form fields -->
         <div class="flex md:hidden justify-center gap-2 mt-6">
-            <button pButton type="submit" label="Submit" class="p-button-warning flex-1" (click)="submit()"></button>
-            <button pButton type="button" label="Display" class="p-button-warning flex-1" (click)="Onreturndropdowndetails()" [disabled]="customerForm.invalid"></button>
+            <!-- <button pButton type="button" label="Display" class="p-button-warning flex-1" (click)="Onreturndropdowndetails()" [disabled]="customerForm.invalid"></button> -->
             <button pButton type="button" label="Download" class="p-button-warning flex-1" (click)="onDownloadClick()"></button>
             <button pButton type="button" label="Reset" class="p-button-secondary flex-1" (click)="reset()"></button>
         </div>
@@ -49,12 +52,11 @@
                 dataKey="mobile"
                 [(selection)]="selectedRows"
                 selectionMode="multiple"
-                [tableStyle]="{ 'min-width': '50rem' }"
                 [paginator]="true"
                 [rows]="10"
                 [rowsPerPageOptions]="[10, 20, 50]"
                 [responsiveLayout]="'scroll'"
-                class="p-datatable-gridlines mt-6 item-report"
+                class="p-datatable-gridlines mt-6 misc-charge"
             >
                 <ng-template pTemplate="header">
                     <tr class="bg-yellow-400">

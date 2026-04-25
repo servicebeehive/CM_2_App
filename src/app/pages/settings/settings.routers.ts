@@ -5,8 +5,10 @@ import { NewPassword } from '../user-management/changepassword';
 import { CategoryFormateComponent } from './category-formate/category-formate.component';
 import { MyApprovalComponent } from './my-approval/my-approval.component';
 import { MiscChargesComponent } from './misc-charges/misc-charges.component';
+import { AccessControlComponent } from './access-control/access-control.component';
 
 export default [
+    { path: 'access-control', component: AccessControlComponent },
     { path: 'user-management', component: UserManagementComponent },
     { path: 'category-formate/:master', component: CategoryFormateComponent },
     { path: 'my-approval', component: MyApprovalComponent },
