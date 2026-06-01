@@ -168,7 +168,8 @@ export const ADMIN_MENU_MODEL: MenuItem[] = [
                     {
                         label: 'Tax Master',
                         icon: 'pi pi-fw pi-percentage',
-                        routerLink: ['/layout/settings/category-formate', 'taxmaster']
+                        routerLink: ['/layout/settings/category-formate', 'taxmaster'],
+                        routerLinkActiveOptions:{exact: false}
                     },
                     {
                         label: 'Supplier Master',
@@ -179,7 +180,8 @@ export const ADMIN_MENU_MODEL: MenuItem[] = [
                     {
                         label: 'UOM Master',
                         icon: 'pi pi-fw pi-briefcase',
-                        routerLink: ['/layout/settings/category-formate', 'uommaster']
+                        routerLink: ['/layout/settings/category-formate', 'uommaster'],
+                        routerLinkActiveOptions:{exact: false}
                     }
                 ]
             }

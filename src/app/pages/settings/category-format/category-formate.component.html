@@ -3,9 +3,6 @@
     <span class="block text-surface-900 font-bold text-xl mb-6">{{pageTitle}}</span>
     
     <div class="flex gap-4">
-     <!-- <form [formGroup]="masterForm">
-       <p-dropdown [options]="masterOption" optionLabel="label" optionValue="value" formControlName="master" placeholder="Setect Master"></p-dropdown>
-       </form> -->
       <button
         pButton
         *ngIf="loggedInUserRole==='Admin'"
@@ -48,13 +45,10 @@
       @for(col of tableColumns; track $index){
        <td [style.width]="col.width">{{row[col.field]}}</td>
       }
-        <td class="text-center" >
-          <i
-            class="pi pi-pencil cursor-pointer text-blue-500"
-            style="width:80px; text-align: center;"
-            (click)="openEditDialog(row)"
-          ></i>
-        </td>
+       <td class="text-center">
+                    <i class="pi pi-pencil cursor-pointer text-blue-500" (click)="openEditDialog(row)"></i>
+                    <i class="pi pi-trash ms-2 text-red-500 cursor-pointer text-sm md:text-base" (click)="removeItem(row)"> </i>
+                </td>
       </tr>
     </ng-template>
     <ng-template pTemplate="paginatorleft">

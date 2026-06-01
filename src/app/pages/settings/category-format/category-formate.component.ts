@@ -16,6 +16,13 @@ import { InventoryService } from '@/core/services/inventory.service';
 import { UserService } from '@/core/services/user.service';
 import { ActivatedRoute } from '@angular/router';
 
+export function gstNumberValidator(control: AbstractControl): ValidationErrors | null {
+    if (!control.value) return null;
+
+    const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+
+    return gstRegex.test(control.value.toUpperCase()) ? null : { invalidGst: true };
+}
 @Component({
     selector: 'app-category-formate',
     standalone: true,
@@ -49,15 +56,6 @@ export class CategoryFormateComponent {
     tableColumns: any[] = [];
     selectedMaster!: string;
     dialogTitle = '';
-    // masterOption = [
-    //     { label: 'Configuration', value: 'advance' },
-    //     { label: 'Category Master', value: 'categorymaster' },
-    //     { label: 'Customer Master', value: 'customermaster' },
-    //     { label: 'Tax Master', value: 'taxmaster' },
-    //     { label: 'UOM Master', value: 'uommaster' },
-    //     { label: 'User Master', value: 'usertype' },
-    //     { label: 'Supplier Master', value: 'suppliermaster' }
-    // ];
 
     constructor(
         private fb: FormBuilder,
@@ -660,31 +658,31 @@ onGetCityForEdit(stateId: any, cityName: string) {
         })
     }
 
-    onGetStateChange(data: any) {
-  const stateId = data.value;
-  this.masterForm.patchValue({ suppliercity: '', customercity: '' });
-  this.cities = [];
-  if (!stateId) return;
+//     onGetStateChange(data: any) {
+//   const stateId = data.value;
+//   this.masterForm.patchValue({ suppliercity: '', customercity: '' });
+//   this.cities = [];
+//   if (!stateId) return;
 
-  const stateCode = this.states.find(s => s.state_id === stateId);
-  if (stateCode) {
-    this.masterForm.patchValue({
-      customerstate: stateCode.state_id,
-      supplierstate: stateCode.state_id
-    });
-  }
+//   const stateCode = this.states.find(s => s.state_id === stateId);
+//   if (stateCode) {
+//     this.masterForm.patchValue({
+//       customerstate: stateCode.state_id,
+//       supplierstate: stateCode.state_id
+//     });
+//   }
 
-  const payload = { p_returntype: 'CITY', p_returnvalue: stateId };
-  this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-    next: (res) => {
-      if (res.data?.length > 0) {
-        this.cities = res.data;
-        this.masterForm.patchValue({ customercity: res.data[0].city_id });
-      }
-    },
-    error: (err) => console.log(err)
-  });
-}
+//   const payload = { p_returntype: 'CITY', p_returnvalue: stateId };
+//   this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+//     next: (res) => {
+//       if (res.data?.length > 0) {
+//         this.cities = res.data;
+//         this.masterForm.patchValue({ customercity: res.data[0].city_id });
+//       }
+//     },
+//     error: (err) => console.log(err)
+//   });
+// }
 
    onSubmit() {
   if (this.masterForm.invalid) {
