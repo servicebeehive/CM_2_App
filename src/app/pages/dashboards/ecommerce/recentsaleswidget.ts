@@ -35,7 +35,7 @@ interface ExportColumn {
             <div class="inline-flex items-center"></div>
         </div>
         <div class="min-h-[400px]">
-            <p-table #dt [rows]="10" [value]="products" [paginator]="true" responsiveLayout="scroll">
+            <p-table #dt [rows]="10" [value]="products" [paginator]="true" responsiveLayout="scroll" [scrollable]="true" scrollHeight="350px">
                 <ng-template #header>
                     <tr>
                         <th>Item</th>

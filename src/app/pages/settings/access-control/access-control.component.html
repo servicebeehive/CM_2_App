@@ -1,0 +1,45 @@
+<div class="card p-6">
+    <span class="block text-surface-900 font-bold text-xl mb-6">User Security</span>
+    <!-- Role -->
+    <div class="mb-4 flex items-center gap-3">
+        <label class="font-semibold">User Role</label>
+        <p-dropdown [options]="roleOptions" optionLabel="profilename" optionValue="profileid" [(ngModel)]="selectedRole" placeholder="Select Role" [filter]="true" filterPlaceholder="Search Role" (onChange)="onRoleChange()" styleClass="w-64"> </p-dropdown>
+    </div>
+
+    <div class="flex gap-8 mt-4">
+        <!-- LEFT BOX -->
+        <div class="border rounded-md p-4 w-1/2">
+            <h3 class="font-semibold mb-3">Available Permissions</h3>
+
+            <div *ngFor="let item of availablePermissions" class="flex items-center gap-2 mb-2">
+                <p-checkbox [(ngModel)]="item.selected" [binary]="true"></p-checkbox>
+                <span [pTooltip]="item.access_desc" tooltipPosition="top">{{ item.access_name }}</span>
+            </div>
+        </div>
+
+        <!-- BUTTONS -->
+        <div class="flex flex-col justify-center gap-3">
+            <button pButton label=">>" class="p-button-warning" (click)="moveAllToRight()"></button>
+            <button pButton label=">" class="p-button-warning" (click)="moveSelectedToRight()"></button>
+            <button pButton label="<" class="p-button-warning" (click)="moveSelectedToLeft()"></button>
+            <button pButton label="<<" class="p-button-warning" (click)="moveAllToLeft()"></button>
+        </div>
+
+        <!-- RIGHT BOX -->
+        <div class="border rounded-md p-4 w-1/2">
+            <h3 class="font-semibold mb-3">Restrict Permissions</h3>
+
+            <div *ngFor="let item of restrictPermissions" class="flex items-center gap-2 mb-2">
+                <p-checkbox [(ngModel)]="item.selected" [binary]="true"></p-checkbox>
+                <span [pTooltip]="item.access_desc" tooltipPosition="top">  {{ item.access_name }} </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="flex gap-4 mt-6">
+        <button pButton label="Submit" class="p-button-warning" (click)="submit()" [disabled]="!selectedRole"></button>
+        <button pButton label="Reset" class="p-button-secondary" (click)="reset()"></button>
+    </div>
+    <p-confirmDialog></p-confirmDialog>
+</div>

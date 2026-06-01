@@ -144,6 +144,11 @@ export const ADMIN_MENU_MODEL: MenuItem[] = [
                 icon: 'pi pi-fw pi-cog',
                 routerLink: ['/layout/settings/overview'],
                 items: [
+                    // {
+                    //     label: 'Access Control',
+                    //     icon: 'pi pi-fw pi-sliders-h',
+                    //     routerLink: ['/layout/settings/access-control']
+                    // },
                     {
                         label: 'Bulk Upload',
                         icon: 'pi pi-fw pi-upload',
@@ -157,7 +162,8 @@ export const ADMIN_MENU_MODEL: MenuItem[] = [
                     {
                         label: 'Customer Master',
                         icon: 'pi pi-fw pi-user',
-                        routerLink: ['/layout/settings/category-formate', 'customermaster']
+                        routerLink: ['/layout/settings/category-formate', 'customermaster'],
+                        routerLinkActiveOptions:{exact: false}
                     },
                     {
                         label: 'Tax Master',
@@ -167,7 +173,8 @@ export const ADMIN_MENU_MODEL: MenuItem[] = [
                     {
                         label: 'Supplier Master',
                         icon: 'pi pi-fw pi-sliders-h',
-                        routerLink: ['/layout/settings/category-formate', 'suppliermaster']
+                        routerLink: ['/layout/settings/category-formate', 'suppliermaster'],
+                        routerLinkActiveOptions:{exact:false}
                     },
                     {
                         label: 'UOM Master',
@@ -203,11 +210,21 @@ export const ADMIN_MENU_MODEL: MenuItem[] = [
                         icon: 'pi pi-fw pi-file',
                         routerLink: ['/layout/settings/category-formate', 'usertype']
                     },
+                     {
+                        label: 'Rule Detail',
+                        icon: 'pi pi-exclamation-triangle',
+                        routerLink: ['/layout/settings/rule-detail']
+                    },
                       {
                         label: 'My Approval',
                         icon: 'pi pi-fw pi-check-circle',
                         routerLink: ['/layout/settings/my-approval']
                     },
+                    //   {
+                    //     label: 'My Approval',
+                    //     icon: 'pi pi-fw pi-check-circle',
+                    //     routerLink: ['/layout/settings/my-approval']
+                    // },
                       {
                         label: 'Misc Charges',
                         icon: 'pi pi-fw pi-wallet',
@@ -427,6 +444,34 @@ export const STORE_OWNER_MENU_MODEL: MenuItem[] = [
                         label: 'Transaction Report',
                         icon: 'pi pi-fw pi-chart-line',
                         routerLink: ['/layout/reports/transaction-report']
+                    }
+                ]
+            }
+        ]
+    },
+     {
+        label: 'SETTINGS',
+        icon: 'pi pi-cog',
+        items: [
+            {
+                label: 'System Settings',
+                icon: 'pi pi-fw pi-cog',
+                routerLink: ['/layout/settings/overview'],
+                items: [
+                    {
+                        label: 'Rule Detail',
+                        icon: 'pi pi-exclamation-triangle',
+                        routerLink: ['/layout/settings/rule-detail']
+                    },
+                      {
+                        label: 'My Approval',
+                        icon: 'pi pi-fw pi-check-circle',
+                        routerLink: ['/layout/settings/my-approval']
+                    },
+                      {
+                        label: 'Misc Charges',
+                        icon: 'pi pi-fw pi-wallet',
+                        routerLink: ['/layout/settings/misc-charges']
                     }
                 ]
             }

@@ -18,7 +18,7 @@ import { DashboardService } from '@/core/services/dashboard.service';
 
             <p-chart
                 type="bar"
-                height="300"
+                height="350"
                 [data]="barData"
                 [options]="barOptions">
             </p-chart>

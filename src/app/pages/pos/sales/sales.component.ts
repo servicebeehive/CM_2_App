@@ -310,7 +310,7 @@ export class SalesComponent {
         this.setupBackButtonListener();
     }
 
-    deliveryBoyOptions = [
+    deliveryBoyOptions:any[] = [
         { fieldid: 1, fieldname: 'Chittaranjan Dasgupta' },
         { fieldid: 2, fieldname: 'Jaya Gupta' }
     ];
@@ -477,7 +477,7 @@ export class SalesComponent {
             p_mobileno: data.mobileno || '',
             p_deliveryboy: data.deliveryboy,
             p_gsttran: data.gstin || '',
-            chalanno: data.challanno,
+            chalanno: data.customergstno,
             p_billno: data.billno || '',
             p_transactionid: data.transactionid || 0,
             p_transactiondate: data.transactiondate ? new Date(data.transactiondate) : new Date(),
@@ -735,7 +735,7 @@ export class SalesComponent {
                 p_totalcost: billDetails.totalcost.toFixed(2),
                 p_totalsale: billDetails.totalsale.toFixed(2),
                 p_disctype: billDetails.discounttype == 'Y' ? true : false,
-                chalanno: billDetails.challanno,
+                chalanno: billDetails.customergstno,
                 p_deliveryboy: billDetails.deliveryboy,
                 p_overalldiscount: billDetails.discount,
                 discountvalueper: billDetails.discountvalueper,

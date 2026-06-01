@@ -8,7 +8,7 @@ import { TableModule } from 'primeng/table';
 import { CheckboxModule } from 'primeng/checkbox';
 import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ConfirmationService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { RippleModule } from 'primeng/ripple';
 import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
 import { AuthService } from '@/core/services/auth.service';
@@ -43,7 +43,8 @@ export class UserManagementComponent {
         private confirmationService: ConfirmationService,
         private authService: AuthService,
         private inventoryService: InventoryService,
-        private userService: UserService
+        private userService: UserService,
+        private messageService: MessageService
     ) {}
 
     ngOnInit() {
@@ -176,8 +177,7 @@ export class UserManagementComponent {
 
         this.userService.OnUserHeaderCreate(payload).subscribe({
             next: (res) => {
-                console.log('Create/Update response:', res);
-                // Close dialog
+                this.showSuccess(res.message);
                 this.visibleDialog = false;
                 this.onGetUserList();
             },
@@ -186,6 +186,32 @@ export class UserManagementComponent {
             }
         });
     }
+
+    removeItem(row: any) {
+        console.log('row', row);
+        this.confirmationService.confirm({
+            message: 'Are you sure you want to delete this?',
+            header: 'Confirm',
+            acceptLabel: 'Yes',
+            rejectLabel: 'Cancel',
+            accept: () => {
+                const username = this.authService.isLogIntType().username;
+                const payload = {
+                    p_type: "USER",
+                    p_transaction_id: row.userid,
+                    p_username: username
+                };
+                this.inventoryService.deletetransaction(payload).subscribe({
+                    next: (res) => {
+                        this.showSuccess(res.data.message);
+                        this.onGetUserList();
+                    }
+                });
+            },
+            reject: () => {}
+        });
+    }
+
     /** ✅ Submit Form **/
     onSubmit() {
         if (this.userForm.invalid) {
@@ -234,4 +260,9 @@ export class UserManagementComponent {
         input.value = '';
         this.globalFilter = '';
     }
+
+     showSuccess(message: string) {
+        this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
+    }
+
 }

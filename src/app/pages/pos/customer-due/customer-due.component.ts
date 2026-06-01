@@ -23,6 +23,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { CheckboxModule } from 'primeng/checkbox';
 import { AuthService } from '@/core/services/auth.service';
+import * as XLSX from 'xlsx';
 
 interface Customer {
     fieldid: number;
@@ -75,6 +76,12 @@ export class CustomerDueComponent {
     filteredProducts: any[] = [];
     columns: any[] = [];
     selectedRows: any[] = [];
+    requestOptions: any[] = [
+        { fieldid: 'APPROVED', fieldname: 'APPROVED' },
+        { fieldid: 'PENDING', fieldname: 'PENDING' },
+        { fieldid: 'REJECTED', fieldname: 'REJECTED' }
+    ];
+    selectedStatus: string = 'PENDING';
 
     constructor(
         private fb: FormBuilder,
@@ -102,13 +109,23 @@ export class CustomerDueComponent {
         }
     }
 
+    onRequestChange(event: any) {
+        const selectedRequest = event.value;
+        if (selectedRequest) {
+            this.filteredProducts = this.products.filter((i) => i.status === selectedRequest);
+        } else {
+            this.filteredProducts = [...this.products];
+        }
+        this.totalDueAmount();
+    }
+
     updatewriteoff(index: number, value: number) {
         if (this.products[index]) {
             this.products[index].write_off = value;
         }
     }
 
-    validateWriteoffAmount(row: any) {
+     validateWriteoffAmount(row: any) {
         const due = parseFloat(row.due_amount) || 0;
         const writeoff = parseFloat(row.write_off) || 0;
         if (writeoff > due) {
@@ -124,33 +141,46 @@ export class CustomerDueComponent {
         const fromdate = this.customerForm.controls['fromDate'].value;
         const todate = this.customerForm.controls['toDate'].value;
         const cusName = this.customerForm.controls['p_cusname'].value;
-
+        const username = this.authService.isLogIntType()?.username;
         const payload = {
             p_startdate: this.datePipe.transform(fromdate, 'yyyy/MM/dd'),
             p_enddate: this.datePipe.transform(todate, 'yyyy/MM/dd'),
             p_customer: cusName || null,
-            p_username: 'admin'
+            p_username: username
         };
         this.showData = false;
         this.inventoryService.getinvoicedetail(payload).subscribe({
             next: (res: any) => {
-                console.log('API RESULT:', res.data);
                 const data = res?.data || [];
                 this.products = Object.values(
                     data.reduce((acc: any, item: any) => {
                         const key = item.customer;
                         if (!acc[key]) {
                             acc[key] = {
+                                invoice_no: item.invoice_no,
                                 customer: item.customer,
                                 customerphone: item.customerphone,
-                                due_amount: 0
+                                due_amount: 0,
+                                status: item.approvalstatus ?? null,
+                                remarks:item.remarks,
+                                transactions: []
                             };
-                        } 
+                        }
                         acc[key].due_amount += Number(item.due_amount || 0);
+                        if (item.approvalstatus) {
+                            acc[key].status = item.approvalstatus;
+                        }
+
+                        acc[key].transactions.push({
+                            transaction_id: item.transactionid,
+                            due_amount: Number(item.due_amount || 0)
+                        });
                         return acc;
-                    },{})
-                ).filter((item:any)=> item.due_amount>0);
-                this.filteredProducts = [...this.products];
+                    }, {})
+                ).filter((item: any) => item.due_amount > 0);
+
+                this.filteredProducts = this.products.filter((i) => i.status === this.selectedStatus);
+
                 this.showData = true;
                 this.totalDueAmount();
                 if (this.products.length === 0) {
@@ -185,19 +215,20 @@ export class CustomerDueComponent {
     }
 
     reset() {
-        this.customerForm.reset();
-        this.filteredProducts = [];
-        this.products = [];
-        this.showData = false;
         this.customerForm.reset({
             fromDate: new Date(),
             toDate: new Date()
         });
+        
+        this.filteredProducts = [];
+        this.products = [];
+        this.showData = false;
     }
 
     createDropdownPayload(returnType: string) {
+        const username = this.authService.isLogIntType()?.username;
         return {
-            p_username: 'admin',
+            p_username: username,
             p_returntype: returnType
         };
     }
@@ -214,7 +245,63 @@ export class CustomerDueComponent {
         this.OnGetCustomer();
     }
 
-    writeoff() {}
+    // 2. writeoff() — build payload and call API
+    writeoff() {
+        const rowsWithWriteOff = this.filteredProducts.filter((row) => row.write_off && parseFloat(row.write_off) > 0 && !row.amountError);
+
+        if (rowsWithWriteOff.length === 0) {
+            this.errorSuccess('Please enter a write-off amount for at least one customer.');
+            return;
+        }
+
+        // Build flat transaction-level array
+        const writeOffJson: { transaction_id: number; writeoff_amount: number }[] = [];
+
+        for (const row of rowsWithWriteOff) {
+            const totalDue = parseFloat(row.due_amount) || 0;
+            const totalWriteOff = parseFloat(row.write_off) || 0;
+            let remaining = totalWriteOff;
+
+            // Distribute write-off across transactions proportionally
+            for (let i = 0; i < row.transactions.length; i++) {
+                const txn = row.transactions[i];
+                const isLast = i === row.transactions.length - 1;
+
+                let txnWriteOff: number;
+                if (isLast) {
+                    txnWriteOff = parseFloat(remaining.toFixed(2));
+                } else {
+                    txnWriteOff = parseFloat(((txn.due_amount / totalDue) * totalWriteOff).toFixed(2));
+                    remaining -= txnWriteOff;
+                }
+
+                if (txnWriteOff > 0) {
+                    writeOffJson.push({
+                        transaction_id: txn.transaction_id,
+                        writeoff_amount: txnWriteOff
+                    });
+                }
+            }
+        }
+        const userid = this.authService.isLogIntType()?.userid.toString();
+        const payload = {
+            p_writeoff_json: writeOffJson,
+            p_username: userid
+        };
+
+        this.inventoryService.updatewriteoffamount(payload).subscribe({
+            next: (res: any) => {
+                this.showSuccess(res.data.message);
+                this.Onreturndropdowndetails(); 
+                this.selectedStatus='PENDING';
+                this.submitDisable = true;
+            },
+            error: (err) => {
+                console.error(err);
+                this.errorSuccess('Failed to update write-off. Please try again.');
+            }
+        });
+    }
 
     private setTableColumns(): void {
         const formatDate = (dateValue: any): string => {
@@ -240,57 +327,55 @@ export class CustomerDueComponent {
             this.errorSuccess('No data available to download.');
             return;
         }
-        const csvContent = this.generateCSV();
-        this.downloadFile(csvContent, 'text/csv;charset=utf-8;', '.csv');
-
+        this.generateXLSX();
         this.showSuccess('Excel file downloaded successfully!');
     }
 
-    private generateCSV(): string {
-        const headers = this.columns.map((col) => this.escapeCSV(col.header));
-        const headerRow = headers.join(',');
+private generateXLSX(): void {
+    const rows = this.filteredProducts.map((item) => ({
+        'Customer Name': item.customer ?? '',
+        'Mobile No':     item.customerphone ?? '',
+        'Due Amount':    Number(item.due_amount) || 0,
+        'Status':        item.status ?? '',
+        'Remarks':       item.remarks ?? ''
+    }));
 
-        // Create data rows
-        const dataRows = this.filteredProducts.map((item) => {
-            const row = this.columns.map((col) => {
-                const value = item[col.fields];
-                const formattedValue = col.formatter ? col.formatter(value) : value;
-                return this.escapeCSV(formattedValue);
-            });
-            return row.join(',');
-        });
-        // Combine header and data rows
-        return [headerRow, ...dataRows].join('\n');
-    }
-    private escapeCSV(value: any): string {
-        if (value === null || value === undefined || value === '') {
-            return '';
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const colWidths = Object.keys(rows[0] ?? {}).map((key) => ({
+        wch: Math.max(
+            key.length,
+            ...rows.map((r: any) => String(r[key] ?? '').length)
+        ) + 2
+    }));
+    worksheet['!cols'] = colWidths;
+
+    const range = XLSX.utils.decode_range(worksheet['!ref'] ?? 'A1');
+    for (let col = range.s.c; col <= range.e.c; col++) {
+        const cellAddr = XLSX.utils.encode_cell({ r: 0, c: col });
+        if (worksheet[cellAddr]) {
+            worksheet[cellAddr].s = {
+                font: { bold: true },
+                fill: { fgColor: { rgb: 'D9E1F2' } },
+                alignment: { horizontal: 'center' }
+            };
         }
-        const stringValue = String(value);
-        const escapedValue = stringValue.replace(/"/g, '""');
-        if (/[,"\n\r]/.test(escapedValue)) {
-            return `"${escapedValue}"`;
-        }
-        return escapedValue;
     }
-    private downloadFile(data: string, mimeType: string, extension: string) {
-        const blob = new Blob([data], { type: mimeType });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = this.generateFileName() + extension;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-    }
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Customer Due');
+
+    const fileName = this.generateFileName() + '.xlsx';
+    XLSX.writeFile(workbook, fileName);
+}
+
     private generateFileName(): string {
         const customer = this.customerForm.get('p_cusname')?.value;
         const customername = this.cusMobNameOptions.find((c) => c.fieldid === customer);
-        console.log()
+        console.log();
         let fileName = `${customername?.fieldname || 'Customer'}_Report`;
         return fileName;
     }
+    
     onDownloadClick() {
         if (this.customerForm.invalid) {
             this.errorSuccess('Please fill all required fields before downloading.');

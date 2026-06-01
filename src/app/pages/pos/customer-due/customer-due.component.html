@@ -5,6 +5,19 @@
 
         <!-- Buttons - Hidden on mobile, shown in header on desktop -->
         <div class="hidden md:flex gap-4">
+            <p-dropdown
+                [options]="requestOptions"
+                optionValue="fieldid"
+                optionLabel="fieldname"
+                [filter]="true"
+                [showClear]="true"
+                filterPlaceholder="Search Status"
+                [(ngModel)]="selectedStatus"
+                [ngModelOptions]="{ standalone: true }"
+                placeholder="Status"
+                (onChange)="onRequestChange($event)"
+            >
+            </p-dropdown>
             <button pButton type="submit" label="Display" class="p-button-warning" (click)="Onreturndropdowndetails()"></button>
             <button pButton type="button" label="Write Off" class="p-button-warning" (click)="writeoff()" [disabled]="submitDisable"></button>
             <button pButton type="button" label="Download" icon="pi pi-download" iconPos="right" class="p-button-warning" (click)="onDownloadClick()"></button>
@@ -62,30 +75,23 @@
 
         <!-- Product Table with Pagination -->
         <div>
-            <p-table
-                [value]="filteredProducts"
-                dataKey="customerphone"
-                [(selection)]="selectedRows"
-                selectionMode="multiple"
-                [tableStyle]="{ 'min-width': '50rem' }"
-                [paginator]="true"
-                [rows]="10"
-                [rowsPerPageOptions]="[10, 20, 50]"
-                [responsiveLayout]="'scroll'"
-                class="p-datatable-gridlines mt-6 item-report"
-            >
+            <p-table [value]="filteredProducts" [tableStyle]="{ 'min-width': '50rem' }" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines mt-6 customer-due">
                 <ng-template pTemplate="header">
                     <tr class="bg-yellow-400">
+                        <th>Invoice No</th>
                         <th>Name</th>
                         <th>Mobile</th>
                         <th>Due Amount</th>
                         <th>Write Off</th>
-                        <th>Select</th>
+                        <th>Status</th>
+                        <th>Reason</th>
+                        <!-- <th>Select</th> -->
                     </tr>
                 </ng-template>
 
                 <ng-template pTemplate="body" let-row let-i="rowIndex">
                     <tr>
+                        <td>{{ row.invoice_no }}</td>
                         <td>{{ row.customer }}</td>
                         <td>{{ row.customerphone }}</td>
                         <td>{{ row.due_amount }}</td>
@@ -101,11 +107,15 @@
                                     (input)="validateWriteoffAmount(row)"
                                     placeholder="Amount"
                                     (keydown)="blockMinus($event)"
+                                    [disabled]="row.status === 'PENDING'"
+    [ngClass]="{'opacity-50 cursor-not-allowed bg-gray-100': row.status === 'PENDING'}"
                                 />
                                 <small class="text-red-500" *ngIf="row.amountError"> This cannot be greater than {{ row.due_amount }} </small>
                             </div>
                         </td>
-                        <td><p-tableCheckbox [value]="row"></p-tableCheckbox></td>
+                        <td>{{ row.status }}</td>
+                        <td>{{ row.remarks }}</td>
+                        <!-- <td><p-tableCheckbox [value]="row"></p-tableCheckbox></td> -->
                     </tr>
                 </ng-template>
 
