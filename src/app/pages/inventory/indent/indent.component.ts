@@ -24,16 +24,6 @@ import { AddinventoryComponent } from '@/pages/inventory/addinventory/addinvento
 import { AuthService } from '@/core/services/auth.service';
 import { OrderService } from '@/core/services/order.service';
 import { ShareService } from '@/core/services/shared.service';
-import { Router } from '@angular/router';
-
-// import { NgxPrintModule } from 'ngx-print';
-export function gstNumberValidator(control: AbstractControl): ValidationErrors | null {
-    if (!control.value) return null;
-
-    const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
-
-    return gstRegex.test(control.value.toUpperCase()) ? null : { invalidGst: true };
-}
 
 @Component({
     selector: 'app-indent',
@@ -164,18 +154,16 @@ export class IndentComponent {
     products: StockIn[] = [];
     today: Date = new Date();
     submitDisabledByBill: boolean = false;
-    discountplace: string = 'Enter Amount';
     public authService = inject(AuthService);
     public getUserDetails = {};
     itemOptions: any[] = [];
-    cusMobileOptions: any[] = [];
     profileOptions: any = {};
     public itemOptionslist: [] = [];
     public uomlist: any[] = [];
+      requestedByOptions :any[]= [];
     filteredDeliveryText = '';
     Uomid: string = '';
     mobilePlaceholder: string = 'Mobile No';
-    backshow: boolean = false;
     isLoadingBills: boolean = false;
     billValue: any = null;
     customerstate:string='';
@@ -195,11 +183,7 @@ export class IndentComponent {
 
     // Dropdowns / lists
     indentNoOptions: any[] = [];
-    vendorOptions: any[] = [
-        // { label: 'Cash', value: 'Cash' },
-        // { label: 'UPI', value: 'UPI' },
-        // { label: 'Card', value: 'Card' }
-    ];
+  
     // -----------------------------
     //  Constructor + Lifecycle
     // -----------------------------
@@ -212,7 +196,6 @@ export class IndentComponent {
         private orderService: OrderService,
         public datepipe: DatePipe,
         private sharedService: ShareService,
-        private route: Router
     ) {}
 
     ngOnInit(): void {
@@ -228,22 +211,9 @@ export class IndentComponent {
                 p_indentno: [null],
                 p_transactionid: [0],
                 p_transactiondate: [this.today, [Validators.required]],
-                p_customername: ['', [Validators.required, Validators.maxLength(100)]],
-                p_mobileno: ['', [Validators.required, Validators.pattern(/^[6-9]\d{9}$/)]],
                 searchMobileNo: [''],
-                p_vendor: ['Cash'],
-                p_totalcost: [0],
-                p_totalsale: [0],
-                p_deliveryboy: ['', Validators.maxLength(100)],
-                p_disctype: [false],
-                p_overalldiscount: [''],
-                p_roundoff: [''],
-                p_totalpayable: [0],
+                p_requestedby: ['', Validators.maxLength(100)],
                 p_currencyid: [0],
-                p_paymentdue: [''],
-                chalanno:[''],
-                // p_gstno: ['', [gstNumberValidator]],
-                p_gsttran: [false],
                 status: [''],
                 p_status: [''],
                 p_isactive: [''],
@@ -260,9 +230,6 @@ export class IndentComponent {
                 amount_before_tax: [''],
                 // FormArray for sale rows
                 p_sale: this.fb.array([])
-            },
-            {
-                validators: [this.costGreaterThanSaleValidator(), this.paidAmountLessThanFinalAmount()]
             }
         );
         this.indentForm.get('p_indentno')?.valueChanges.subscribe((value) => {
@@ -272,46 +239,7 @@ export class IndentComponent {
                 this.enableItemSearchAndSubmit();
             }
         });
-        this.indentForm.get('p_disctype')?.valueChanges.subscribe((value) => {
-            if (!value) {
-                this.discountplace = 'Enter Amount';
-            } else {
-                this.discountplace = 'Enter %';
-            }
-            this.applyDiscount();
-        });
-
-        // this.indentForm.get('p_gstno')!.statusChanges.subscribe((status) => {
-        //     const gstCtrl = this.indentForm.get('p_gstno');
-        //     const gstTransCtrl = this.indentForm.get('p_gsttran');
-
-        //     const value = gstCtrl?.value;
-        //     if (!value) {
-        //         gstTransCtrl?.setValue(false, { emitEvent: false });
-        //         return;
-        //     }
-
-        //     if (status === 'VALID') {
-        //         gstTransCtrl?.setValue(true, { emitEvent: false });
-        //     } else {
-        //         gstTransCtrl?.setValue(false, { emitEvent: false });
-        //     }
-        // });
-        const navigation = history.state;
-        console.log('Navigation state:', navigation);
-
-        if (navigation && navigation.saleData && navigation.itemsData) {
-            this.backshow = true;
-            this.mode = navigation.mode || 'edit';
-            this.populateSaleForm(navigation.saleData, navigation.itemsData);
-        }
-        this.setupBackButtonListener();
     }
-
-    deliveryBoyOptions = [
-        { fieldid: 1, fieldname: 'Chittaranjan Dasgupta' },
-        { fieldid: 2, fieldname: 'Jaya Gupta' }
-    ];
     // -----------------------------
     //  FormArray Getters / Helpers
     // -----------------------------
@@ -339,21 +267,6 @@ export class IndentComponent {
         // Disable print if BOTH are empty
         return !(billNo || hasItem);
     }
-    setupBackButtonListener() {
-        // This helps preserve state when using browser back button
-        window.addEventListener('beforeunload', () => {
-            // If user refreshes sales page, we don't want to preserve invoice state
-            this.sharedService.clearInvoiceState();
-        });
-    }
-
-    ngOnDestroy() {
-        // Optional: Clear event listener
-        window.removeEventListener('beforeunload', () => {});
-    }
-    // -----------------------------
-    //  Row Creation / Mapping
-    // -----------------------------
 
     // Sales Array => Create a FormGroup for a sale item
     createSaleItem(data?: any): FormGroup {
@@ -427,110 +340,6 @@ export class IndentComponent {
         }
     }
 
-    // -----------------------------
-    //  Dropdown / Data Loading
-    // -----------------------------
-    onMobileFilter(event: any) {
-        const typedValue = event.filter;
-        this.mobilePlaceholder = typedValue || 'Mobile No';
-
-        // Only update form control if typed value is 10 digits
-        if (typedValue && /^[6-9]\d{9}$/.test(typedValue)) {
-            this.indentForm.patchValue({
-                p_mobileno: typedValue,
-                p_customername: ''
-            });
-            this.mobilePlaceholder = 'Mobile No';
-        } else {
-            this.mobilePlaceholder = 'Mobile No';
-        }
-    }
-    onMobileSelect(event: any) {
-        const mobileSelection = this.cusMobileOptions.find((mobileNo) => mobileNo.fieldid === event.value);
-        const mobileMatch = mobileSelection.fieldvalue.match(/\d{10}/);
-        
-        if (mobileSelection) {
-            this.indentForm.patchValue({
-                p_mobileno: mobileMatch ? mobileMatch[0] : '',
-                p_customername: mobileSelection.fieldname,
-                p_gstno: mobileSelection.customergstno
-            });
-        }
-        if(mobileSelection.customergstno!== null){
-           this.indentForm.patchValue({
-            p_gsttran:true
-           });
-        }
-        else{
-             this.indentForm.patchValue({
-            p_gsttran:false
-           })
-        }
-    }
-
-    populateSaleForm(data: any, itemsData: any[]) {
-        this.customerstate = data.customerstate;
-        this.indentForm.patchValue({
-            p_customername: data.customername || '',
-            p_mobileno: data.mobileno || '',
-            p_deliveryboy: data.deliveryboy,
-            p_gsttran: data.gstin || '',
-            chalanno: data.challanno,
-            p_indentno: data.billno || '',
-            p_transactionid: data.transactionid || 0,
-            p_transactiondate: data.transactiondate ? new Date(data.transactiondate) : new Date(),
-            status: data.status || '',
-            p_totalcost: data.totalcost || 0,
-            p_totalsale: data.totalsale || 0,
-            p_disctype: data.discounttype === 'Y',
-            p_overalldiscount: data.discount || 0,
-            discountvalueper: data.discountvalueper || 0,
-            p_roundoff: data.roundoff || 0,
-            p_totalpayable: data.totalpayable || 0,
-            p_paymentdue: data.amountpaid,
-            sgst_9: data.sgst_9 || 0,
-            tax_18: data.tax_18 || 0,
-            cgst_9: data.cgst_9 || 0,
-            amount_before_tax: data.amount_before_tax || 0
-        });
-
-        this.saleArray.clear();
-
-        // Add items to FormArray
-        if (itemsData && itemsData.length > 0) {
-            itemsData.forEach((item: any) => {
-                this.saleArray.push(
-                    this.fb.group({
-                        TransactiondetailId: item.transactiondetailid || 0,
-                        ItemId: item.itemsku || 0,
-                        ItemName: item.itemname || '',
-                        UOMId: item.uomid || 0,
-                        UOMName: item.uomname || '',
-                        UomName: item.uomname,
-                        Quantity: item.quantity || 1,
-                        itemcost: item.itemcost || 0,
-                        MRP: item.mrp || 0,
-                        totalPayable: (item.quantity || 1) * (item.mrp || 0),
-                        curStock: item.current_stock || 0,
-                        warPeriod: item.warrenty || 0,
-                        location: '',
-                        hsncode: item.hsncode,
-                        itemsku: item.itemsku || '',
-                        apiCost: (item.quantity || 1) * (item.itemcost || 0)
-                    })
-                );
-
-                // Load UOM for each item
-                const index = this.saleArray.length - 1;
-                this.OnUMO(item.itemid || item.itemsku, index);
-            });
-        }
-
-        // Calculate totals
-        this.calculateSummary();
-        this.updateTotalCostSummary();
-    }
-
     // Generic payload creator
     createDropdownPayload(returnType: string) {
         return {
@@ -546,17 +355,11 @@ export class IndentComponent {
             error: (err) => console.log(err)
         });
     }
-    OnGetCusMobile() {
-        const payload = this.createDropdownPayload('VENDOR');
-        this.stockInService.getdropdowndetails(payload).subscribe({
-            next: (res) => (this.vendorOptions = res.data),
-            error: (err) => console.log(err)
-        });
-    }
-    OnGetDelivery() {
+
+    OnGetRequested() {
         const payload = this.createDropdownPayload('DELIVERY');
         this.stockInService.getdropdowndetails(payload).subscribe({
-            next: (res) => (this.deliveryBoyOptions = res.data),
+            next: (res) => (this.requestedByOptions = res.data),
             error: (err) => console.log(err)
         });
     }
@@ -589,24 +392,23 @@ export class IndentComponent {
     loadAllDropdowns() {
         this.OnGetItem();
         this.OnGetBillNo();
-        this.OnGetCusMobile();
-        this.OnGetDelivery();
+        this.OnGetRequested();
         this.OnGetProfile();
     }
 
-    onDeliveryFilter(event: any) {
+    onRequestedFilter(event: any) {
         this.filteredDeliveryText = event.filter.trim();
     }
-    addDeliveryPerson() {
+    OnaddRequestedPerson() {
         if (!this.filteredDeliveryText) return;
-        const exists = this.deliveryBoyOptions.some((x) => x.fieldname.toLowerCase() === this.filteredDeliveryText.toLowerCase());
+        const exists = this.requestedByOptions.some((x) => x.fieldname.toLowerCase() === this.filteredDeliveryText.toLowerCase());
         if (exists) return;
         const newItem = {
             fieldid: Date.now(),
             fieldname: this.filteredDeliveryText
         };
-        this.deliveryBoyOptions = [...this.deliveryBoyOptions, newItem];
-        this.indentForm.get('p_deliveryboy')?.setValue(newItem.fieldname);
+        this.requestedByOptions = [...this.requestedByOptions, newItem];
+        this.indentForm.get('p_requestedby')?.setValue(newItem.fieldname);
         this.deliveryperson.hide();
         this.filteredDeliveryText = '';
     }
@@ -641,10 +443,6 @@ export class IndentComponent {
             error: (err) => console.log(err)
         });
     }
-
-    // -----------------------------
-    //  Event Handlers (Item / Bill)
-    // -----------------------------
 
     // Called when an item is selected from the item dropdown
     OnItemChange(event: any) {
@@ -689,34 +487,6 @@ export class IndentComponent {
         this.calculateSummary();
     }
 
-    costGreaterThanSaleValidator(): ValidatorFn {
-        return (form: AbstractControl): ValidationErrors | null => {
-            const totalCost = Number(form.get('p_totalcost')?.value || 0);
-            const finalPayable = Number(form.get('p_totalpayable')?.value || 0);
-
-            // ❗ Condition: final payable must be >= total cost
-            if (finalPayable < totalCost) {
-                return { costNotGreater: true };
-            }
-
-            return null;
-        };
-    }
-
-    paidAmountLessThanFinalAmount(): ValidatorFn {
-        return (form: AbstractControl): ValidationErrors | null => {
-            const p_paymentdue = Number(form.get('p_paymentdue')?.value || 0);
-            const finalPayable = Number(form.get('p_totalpayable')?.value || 0);
-
-            if (finalPayable < p_paymentdue) {
-                return {
-                    amountNotGreater: true
-                };
-            }
-            return null;
-        };
-    }
-
     // Called when bill dropdown value changes
     onBillDetails(event: any) {
         const billDetails = this.indentNoOptions.find((billitem) => billitem.billno === event.value);
@@ -725,21 +495,10 @@ export class IndentComponent {
             this.customerstate = billDetails.customerstate
             this.indentForm.patchValue({
                 p_transactionid: billDetails.transactionid,
-                p_customername: billDetails.customername,
                 p_transactiondate: billDetails.transactiondate ? new Date(billDetails.transactiondate) : null,
-                p_mobileno: billDetails.mobileno,
                 status: billDetails.status,
-                p_vendor: billDetails.paymode,
-                p_totalcost: billDetails.totalcost.toFixed(2),
-                p_totalsale: billDetails.totalsale.toFixed(2),
-                p_disctype: billDetails.discounttype == 'Y' ? true : false,
-                chalanno: billDetails.challanno,
-                p_deliveryboy: billDetails.deliveryboy,
-                p_overalldiscount: billDetails.discount,
+                p_requestedby: billDetails.deliveryboy,
                 discountvalueper: billDetails.discountvalueper,
-                p_roundoff: billDetails.roundoff,
-                p_totalpayable: billDetails.totalpayable.toFixed(2),
-                p_paymentdue: billDetails.amountpaid,
                 sgst_9: billDetails.sgst_9,
                 tax_18: billDetails.tax_18,
                 cgst_9: billDetails.cgst_9,
@@ -764,12 +523,6 @@ export class IndentComponent {
                     });
                 }
                 this.mapSaleItems(res.data);
-
-                if (res.data && res.data.length > 0 && res.data[0].discounttype) {
-                    this.indentForm.patchValue({
-                        p_disctype: res.data[0].discounttype === 'Y'
-                    });
-                }
             }
         });
     }
@@ -806,57 +559,22 @@ export class IndentComponent {
             event.preventDefault(); // block decimal
         }
     }
-    // Custom validator to check if total cost exceeds final payable
-    costNotExceedPayableValidator(): ValidatorFn {
-        return (formGroup: AbstractControl): ValidationErrors | null => {
-            const totalCost = Number(formGroup.get('p_totalcost')?.value || 0);
-            const finalPayable = Number(formGroup.get('p_totalpayable')?.value || 0);
-
-            // Only validate if both have values
-            if (totalCost !== null && finalPayable !== null && totalCost < finalPayable) {
-                return { maxCost: true };
-            }
-            return null;
-        };
-    }
-    // -----------------------------
-    //  Validation / Submit helpers
-    // -----------------------------
 
     // Returns true when submit should be disabled
     isSubmitDisabled(): boolean {
-        // 1) No items → disable
         if (this.saleArray.length === 0) return true;
-
-        // 2) Stock errors set by updateTotal
         for (let row of this.saleArray.controls) {
             if (row.get('Quantity')?.errors?.['maxStock']) return true;
         }
-
-        // 3) Required header fields missing
-        // if (!this.indentForm.get('p_customername')?.value) return true;
-        // if (!this.indentForm.get('p_mobileno')?.value) return true;
         if (!this.indentForm.get('p_transactiondate')?.value) return true;
-
-        // 4) Per-row validation: qty cannot be 0 and cannot exceed stock
         for (let row of this.saleArray.controls) {
             const qty = Number(row.get('Quantity')?.value || 0);
             const stock = Number(row.get('curStock')?.value || 0);
             if (qty === 0) return true;
             if (qty > stock) return true;
         }
-
-        // All checks passed → enable submit
         return false;
     }
-
-    // -----------------------------
-    //  Form Actions (submit / reset)
-    // -----------------------------
-
-customerDetail(){
-    this.route.navigate(['/layout/settings/category-formate', 'customermaster'])
-}
 
     // Submit handler with confirmation and validation
     onSubmit() {
@@ -888,20 +606,11 @@ customerDetail(){
 
     // Reset form and clear sale array
     onReset() {
-        this.indentForm.reset({
-            p_gsttran: false
-        });
-        this.backshow = false;
+        this.indentForm.reset();
         this.saleArray.clear();
         this.indentForm.get('p_transactiondate')?.setValue(this.today);
-        this.indentForm.get('p_vendor')?.setValue('Cash');
     }
 
-    // -----------------------------
-    //  Calculations (row & summary)
-    // -----------------------------
-
-    // Recalculate totals for entire sale
     calculateSummary() {
         let totalMRP = 0;
 
@@ -912,13 +621,6 @@ customerDetail(){
             totalMRP += qty * mrp;
         });
 
-        this.indentForm.patchValue({
-            p_totalsale: totalMRP.toFixed(2),
-            p_roundoff: 0,
-            p_totalpayable: totalMRP.toFixed(2)
-        });
-
-        this.applyDiscount();
     }
 
     // Update a specific row total, ensure stock constraints
@@ -950,33 +652,6 @@ customerDetail(){
         this.indentForm.updateValueAndValidity();
     }
 
-    back() {
-        this.route.navigate(['/layout/pos/invoice']);
-    }
-    // Apply overall discount & round off
-    applyDiscount() {
-        const totalSale = Number(this.indentForm.get('p_totalsale')?.value || 0);
-        const discountValue = Number(this.indentForm.get('p_overalldiscount')?.value || 0);
-        const isPresent = this.indentForm.get('p_disctype')?.value;
-        let discountAmount = 0;
-
-        if (isPresent) {
-            discountAmount = (totalSale * discountValue) / 100;
-        } else {
-            discountAmount = discountValue;
-        }
-        let finalPayable = totalSale - discountAmount;
-
-        // Round off to 2 decimals difference and then round to integer for payable
-        const roundOff = +(finalPayable - Math.floor(finalPayable)).toFixed(2);
-
-        this.indentForm.patchValue({
-            p_roundoff: roundOff,
-            p_totalpayable: Math.round(finalPayable)
-        });
-        this.indentForm.updateValueAndValidity();
-    }
-
     // -----------------------------
     //  API Body Cleaning & Submit
     // -----------------------------
@@ -989,24 +664,24 @@ customerDetail(){
             p_transactiontype: 'SALE',
             p_transactionid: body.p_transactionid ?? 0,
             p_transactiondate: formattedDate || '',
-            p_customername: body.p_customername || '',
-            p_mobileno: body.p_mobileno || '',
-            p_totalcost: Number(body.p_totalcost) || 0,
-            p_totalsale: Number(body.p_totalsale) || 0,
-            p_overalldiscount: Number(body.p_overalldiscount) || 0,
-            p_roundoff: body.p_roundoff ? body.p_roundoff.toString() : '0.00',
-            p_totalpayable: Number(body.p_totalpayable) || 0,
-            p_currencyid: Number(body.p_currencyid) || 0,
-            p_custgstno: body.chalanno,
-            p_gsttran: body.p_gsttran === true ? 'Y' : body.p_gsttran === false ? 'N' : 'N',
+            p_customername: '',
+            p_mobileno:  '',
+            p_totalcost: 0,
+            p_totalsale: 0,
+            p_overalldiscount: 0,
+            p_roundoff:'0.00',
+            p_totalpayable: 0,
+            p_currFencyid: Number(body.p_currencyid) || 0,
+            p_custgstno:0,
+            p_gsttran:'',
             p_status: body.p_status || 'Done',
             p_isactive: 'Y',
             p_linktransactionid: 0,
-            p_creditnoteno: body.p_deliveryboy || '',
-            p_replacesimilir: body.p_disctype === true ? 'Y' : 'N',
-            p_discounttype: body.p_disctype === true ? 'Y' : 'N',
-            p_paymentmode: body.p_vendor,
-            p_paymentdue: Number(body.p_paymentdue) || 0,
+            p_creditnoteno: body.p_requestedby || '',
+            p_replacesimilir:'',
+            p_discounttype: '',
+            p_paymentmode: '',
+            p_paymentdue:  0,
             p_sale: (body.p_sale || []).map((x: any) => ({
                 TransactiondetailId: x.TransactiondetailId || 0,
                 ItemId: x.ItemId,
@@ -1023,10 +698,6 @@ customerDetail(){
         };
     }
 
-    // -----------------------------
-    //  API Submit + Notifications
-    // -----------------------------
-
     // Send header (and sale) to API, show toast notifications on result
     OnSalesHeaderCreate(data: any) {
         const apibody = this.cleanRequestBody(this.indentForm.value);
@@ -1036,7 +707,6 @@ customerDetail(){
                 const billno = res.data[0]?.billno;
                 this.OnGetBillNo();
                 this.OnGetItem();
-                this.OnGetCusMobile();
                 this.indentForm.controls['p_indentno'].setValue(billno);
                 if (res.data && res.data.length > 0) {
                     this.indentForm.patchValue({
@@ -1052,7 +722,6 @@ customerDetail(){
                         }
                     }
                 }, 500);
-                console.log('mobile option:', this.cusMobileOptions);
                 console.log('res', res);
                 this.messageService.add({
                     severity: 'success',
@@ -1180,7 +849,6 @@ customerDetail(){
                 row.patchValue({
                     MRP: mrp,
                     itemcost: cost,
-                    totalPayable: qty * mrp,
                     apiCost: qty * cost,
                     curStock: convertedStock
                 });
@@ -1232,14 +900,11 @@ customerDetail(){
         this.orderService.getcalculatedMRP(apibody).subscribe({
             next: (res: any) => {
                 if (res.success) {
-                    const mrp = Number(res?.data.totalmrp || 0);
                     const cost = Number(res?.data.totalcost || 0);
 
                     // ⭐ IMPORTANT — Update purchase price also
                     row.patchValue({
-                        MRP: mrp,
                         itemcost: cost, // <-- FIXED
-                        totalPayable: qty * mrp,
                         apiCost: qty * cost // <-- used for cost summary
                     });
                 }
@@ -1275,9 +940,6 @@ customerDetail(){
             finalCost += qty * cost; // ⭐ UOM adjusted cost
         });
 
-        this.indentForm.patchValue({
-            p_totalcost: finalCost.toFixed(2)
-        });
     }
 
     printInvoice() {

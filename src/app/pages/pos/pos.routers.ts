@@ -6,6 +6,7 @@ import { CreditNoteComponent } from './credit-note/credit-note.component';
 import { InvoiceComponent } from './invoice/invoice.component';
 import { SalesRequisitionComponent } from './sales-requisition/sales-requisition.component';
 import { CustomerDueComponent } from './customer-due/customer-due.component';
+import { RentedComponent } from './rented/rented.component';
 
 export default [
     { path: 'sales', component: SalesComponent },
@@ -15,5 +16,6 @@ export default [
     { path: 'invoice', component: InvoiceComponent },
     { path: 'sales-requisition', component: SalesRequisitionComponent },
     { path: 'customer-due', component: CustomerDueComponent },
+    { path: 'rented', component: RentedComponent },
     { path: '**', redirectTo: '/notfound' }
 ] as Routes;

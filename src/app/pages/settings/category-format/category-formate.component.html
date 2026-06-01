@@ -124,11 +124,12 @@
         <div class="flex flex-col">
           <label class="font-medium mb-1">Country <span class="text-red-500">*</span></label>
           <p-dropdown
-            [options]="userRoleOptions"
-            optionLabel="fieldname"
-            optionValue="fieldid"
+            [options]="countries"
+            optionLabel="country_name"
+            optionValue="country_id"
             formControlName="customercountry"
             placeholder="Select Country"
+            (onChange)="onCountryChange($event)"
           ></p-dropdown>
           <small class="text-red-500 mt-1" *ngIf="masterForm.get('customercountry')?.touched && masterForm.get('customercountry')?.invalid">
             Country is required
@@ -139,11 +140,12 @@
         <div class="flex flex-col">
           <label class="font-medium mb-1">State <span class="text-red-500">*</span></label>
           <p-dropdown
-            [options]="userRoleOptions"
-            optionLabel="fieldname"
-            optionValue="fieldid"
+            [options]="states"
+            optionLabel="state_name"
+            optionValue="state_id"
             formControlName="customerstate"
             placeholder="Select State"
+            (onChange)="onGetStateChange($event)"
           ></p-dropdown>
           <small class="text-red-500 mt-1" *ngIf="masterForm.get('customerstate')?.touched && masterForm.get('customerstate')?.invalid">
             State is required
@@ -154,9 +156,9 @@
         <div class="flex flex-col">
           <label class="font-medium mb-1">City <span class="text-red-500">*</span></label>
           <p-dropdown
-            [options]="userRoleOptions"
-            optionLabel="fieldname"
-            optionValue="fieldid"
+            [options]="cities"
+            optionLabel="city_name"
+            optionValue="city_id"
             formControlName="customercity"
             placeholder="Select City"
           ></p-dropdown>
@@ -306,11 +308,12 @@
         <div class="flex flex-col">
           <label class="font-medium mb-1">Country <span class="text-red-500">*</span></label>
           <p-dropdown
-            [options]="userRoleOptions"
-            optionLabel="fieldname"
-            optionValue="fieldid"
+            [options]="countries"
+            optionLabel="country_name"
+            optionValue="country_id"
             formControlName="suppliercountry"
             placeholder="Select Country"
+            (onChange)="onCountryChange($event)"
           ></p-dropdown>
           <small class="text-red-500 mt-1" *ngIf="masterForm.get('suppliercountry')?.touched && masterForm.get('suppliercountry')?.invalid">
             Country is required
@@ -321,11 +324,12 @@
         <div class="flex flex-col">
           <label class="font-medium mb-1">State <span class="text-red-500">*</span></label>
           <p-dropdown
-            [options]="userRoleOptions"
-            optionLabel="fieldname"
-            optionValue="fieldid"
+            [options]="states"
+            optionLabel="state_name"
+            optionValue="state_id"
             formControlName="supplierstate"
             placeholder="Select State"
+            (onChange)="onGetStateChange($event)"
           ></p-dropdown>
           <small class="text-red-500 mt-1" *ngIf="masterForm.get('supplierstate')?.touched && masterForm.get('supplierstate')?.invalid">
             State is required
@@ -336,9 +340,9 @@
         <div class="flex flex-col">
           <label class="font-medium mb-1">City <span class="text-red-500">*</span></label>
           <p-dropdown
-            [options]="userRoleOptions"
-            optionLabel="fieldname"
-            optionValue="fieldid"
+            [options]="cities"
+            optionLabel="city_name"
+            optionValue="city_id"
             formControlName="suppliercity"
             placeholder="Select City"
           ></p-dropdown>

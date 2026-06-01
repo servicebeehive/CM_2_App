@@ -16,7 +16,7 @@
                     type="submit"
                     label="Submit"
                     class="p-button-warning w-full md:w-auto"
-                    [disabled]="indentForm.invalid || isSubmitDisabled() || submitDisabledByBill || indentForm.hasError('costNotGreater') || indentForm.hasError('amountNotGreater')"
+                    [disabled]="indentForm.invalid || isSubmitDisabled() || submitDisabledByBill"
                 ></button>
                 <!-- PRINT -->
                 <button pButton type="button" ngxPrint printSectionId="invoicePrintSection" label="Print" (click)="printInvoice()" class="p-button-primary w-full md:w-auto" [disabled]="!this.indentForm.get('p_indentno')?.value"></button>
@@ -62,11 +62,11 @@
               <!-- REQUESTED BY -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1 text-sm md:text-base">Requested By</label>
-                <p-dropdown #deliveryperson [options]="deliveryBoyOptions" optionLabel="fieldname" optionValue="fieldname" [filter]="true" filterPlaceholder="Search Requested Person" formControlName="p_requestedby" placeholder="Select Requested Person" appendTo="body" (onFilter)="onDeliveryFilter($event)">
+                <p-dropdown #deliveryperson [options]="requestedByOptions" optionLabel="fieldname" optionValue="fieldname" [filter]="true" filterPlaceholder="Search Requested Person" formControlName="p_requestedby" placeholder="Select Requested Person" appendTo="body" (onFilter)="onRequestedFilter($event)">
                     <ng-template pTemplate="emptyfilter">
                         <div class="text-center">
                             <div>No record found</div>
-                            <button pButton type="button" label="Add" icon="pi pi-plus" class="w-full" (click)="addDeliveryPerson()"></button>
+                            <button pButton type="button" label="Add" icon="pi pi-plus" class="w-full" (click)="OnaddRequestedPerson()"></button>
                         </div>
                     </ng-template>
                  </p-dropdown>
@@ -232,10 +232,10 @@
 
                 <strong>Buyer (Bill to)</strong><br /><br />
 
-                <strong>{{ indentForm.get('p_customername')?.value }}</strong
+                <strong></strong
                 ><br />
                 {{ indentForm.get('p_customeraddress')?.value }}<br />
-                Mobile: {{ indentForm.get('p_mobileno')?.value }}<br />
+                Mobile: <br />
                 <br />
 
                 GSTIN/UIN : {{ indentForm.get('p_gstno')?.value || '-' }}<br />
@@ -263,7 +263,7 @@
                     <tr>
                         <td><strong>Mode of Payment</strong></td>
                         <td>
-                            <strong>{{ indentForm.get('p_vendor')?.value }}</strong>
+                            <strong></strong>
                         </td>
                     </tr>
 
@@ -284,7 +284,7 @@
 
                     <tr>
                         <td>Dispatch Doc No.</td>
-                        <td>{{indentForm.get('chalanno')?.value}}</td>
+                        <td></td>
                     </tr>
 
                     <tr>
@@ -294,7 +294,7 @@
 
                     <tr>
                         <td>Dispatched through</td>
-                        <td>{{ indentForm.get('p_deliveryboy')?.value }}</td>
+                        <td>{{ indentForm.get('p_requestedby')?.value }}</td>
                     </tr>
 
                     <tr>
@@ -341,7 +341,7 @@
             <!-- SUB TOTAL -->
             <tr>
                 <td colspan="7" style="text-align: right; font-weight: bold">Total</td>
-                <td>₹{{ indentForm.get('p_totalsale')?.value | number: '1.2-2' }}</td>
+                <td>₹</td>
             </tr>
             <tr>
                 <td colspan="7" style="text-align: right; font-weight: bold">Discount {{ indentForm.get('p_disctype')?.value ? indentForm.get('p_overalldiscount')?.value + '%' : '' }}</td>
@@ -352,7 +352,7 @@
             <!-- ROUND OFF -->
             <tr>
                 <td colspan="7" style="text-align: right"><b>ROUND OFF +/-</b></td>
-                <td>{{ indentForm.get('p_roundoff')?.value | number: '1.2-2' }}</td>
+                <td></td>
             </tr>
         </tbody>
 

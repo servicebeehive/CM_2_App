@@ -1,5 +1,5 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, EventEmitter, inject, Input, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, inject, Input, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { ChipModule } from 'primeng/chip';
@@ -9,7 +9,7 @@ import { FluidModule } from 'primeng/fluid';
 import { InputTextModule } from 'primeng/inputtext';
 import { RippleModule } from 'primeng/ripple';
 import { SelectModule } from 'primeng/select';
-import { DropdownModule } from 'primeng/dropdown';
+import { Dropdown, DropdownModule } from 'primeng/dropdown';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { TableModule } from 'primeng/table';
 import { TextareaModule } from 'primeng/textarea';
@@ -22,6 +22,7 @@ import { ShareService } from '@/core/services/shared.service';
 import { DatePickerModule } from 'primeng/datepicker';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+
 interface Product {
     name: string;
     price: string;
@@ -68,7 +69,7 @@ interface Image {
     ],
     templateUrl: './addinventory.component.html',
     styleUrl: './addinventory.component.scss',
-    providers: [DatePipe]
+    providers: [DatePipe, MessageService]
 })
 export class AddinventoryComponent {
     @Input() transationid: any = null;
@@ -83,6 +84,9 @@ export class AddinventoryComponent {
     @Input() uomOptions: any[] = [];
     @Input() vendorOptions: any[] = [];
     @Input() purchaseIdOptions: any[] = [];
+
+    @ViewChild('locationDropdown') locationDropdown!: Dropdown;
+    
     public ChilduomOptions: [] = [];
     public authService = inject(AuthService);
     copyMessage: string = '';
@@ -90,7 +94,7 @@ export class AddinventoryComponent {
     addForm!: FormGroup;
     filteredItemCode: any[] = [];
     dateTime = new Date();
-    // ✅ Move dropdown options into variables
+
     itemCodeOptions = [];
     parentUOMOptions = [];
     uom = [];
@@ -99,22 +103,41 @@ export class AddinventoryComponent {
     uomTableDisabled = false;
     resetDisabled = false;
     products: any[] = [];
-    itemtypeOptions: any[]=[
-        {fieldid:'consumable' , fieldname:'Consumable'},
-        {fieldid:'returnable' , fieldname:'Returnable'},
-        {fieldid:'rentable' , fieldname:'Rentable'}
+
+    itemtypeOptions: any[] = [
+        { fieldid: 'consumable', fieldname: 'Consumable' },
+        { fieldid: 'returnable', fieldname: 'Returnable' }
     ];
-    taxOptions:any[] = [
-        {fieldid:'5', fieldname:'5%' },
-        {fieldid:'10',fieldname:'10%'}
+    taxOptions: any[] = [
+        { fieldid: '5', fieldname: '5%' },
+        { fieldid: '10', fieldname: '10%' }
     ];
+
+    /** Payment type options for lease / rent */
+    paymentTypeOptions: any[] = [
+        { label: 'Monthly', value: 'monthly' },
+        { label: 'Quarterly', value: 'quarterly' },
+        { label: 'Yearly', value: 'yearly' },
+        { label: 'One Time', value: 'onetime' }
+    ];
+
     selectItemType = [
         { label: 'Select Existing Item', value: 1 },
         { label: 'Add New Item', value: 2 }
     ];
 
+    locationOptions: { label: string; value: string }[] = [
+        { label: 'Main Warehouse', value: 'Main Warehouse' },
+        { label: 'Site A', value: 'Site A' },
+        { label: 'Site B', value: 'Site B' }
+    ];
+
     filteredUOM: any[] = [];
     searchValue: string = '';
+    newLocationLabel:string = '';
+    showAddLocation:boolean = false;
+    showEmptyFilter = false;
+
     constructor(
         private fb: FormBuilder,
         public inventoryService: InventoryService,
@@ -144,19 +167,85 @@ export class AddinventoryComponent {
                 activeItem: [true],
                 gstItem: [true],
                 itemSearch: [''],
-                itemtype:[''],
-                p_tax:['']
+                itemtype: [''],
+                p_tax: [''],
+                // New fields
+                transactionType: ['purchase'],
+                paymentType: [''],
+                leaseStartDate: [null],
+                leaseEndDate: [null]
             },
             { validators: this.mrpValidator }
         );
+
         this.addForm.get('purchasePrice')?.valueChanges.subscribe(() => this.updateCostPerItem());
         this.addForm.get('qty')?.valueChanges.subscribe(() => this.updateCostPerItem());
+
+        // React to transactionType changes
+        this.addForm.get('transactionType')?.valueChanges.subscribe((type: string) => {
+            this.onTransactionTypeChange(type);
+        });
+
         this.resetChildUOMTable();
+    }
+
+    /** Helper to check current transaction type */
+    isTransactionType(type: string): boolean {
+        return this.addForm.get('transactionType')?.value === type;
+    }
+
+    /** Handle side effects when switching transaction type */
+    onTransactionTypeChange(type: string): void {
+        const isPurchase = type === 'purchase';
+        const isLease = type === 'lease';
+
+        // Fields to disable on lease/rent
+        const leaseRentDisabledFields = ['minStock', 'warPeriod', 'p_expirydate'];
+
+        if (isPurchase) {
+            // Re-enable purchase-only fields
+            leaseRentDisabledFields.forEach((f) => this.addForm.get(f)?.enable());
+
+            // Clear & remove validators for lease/rent-only fields
+            this.addForm.get('paymentType')?.clearValidators();
+            this.addForm.get('paymentType')?.setValue('');
+            this.addForm.get('leaseStartDate')?.clearValidators();
+            this.addForm.get('leaseStartDate')?.setValue(null);
+            this.addForm.get('leaseEndDate')?.clearValidators();
+            this.addForm.get('leaseEndDate')?.setValue(null);
+        } else {
+            // Disable purchase-only fields
+            leaseRentDisabledFields.forEach((f) => {
+                this.addForm.get(f)?.setValue('');
+                this.addForm.get(f)?.disable();
+            });
+
+            // Require paymentType for lease/rent
+            this.addForm.get('paymentType')?.setValidators(Validators.required);
+
+            if (isLease) {
+                // Require lease period dates
+                this.addForm.get('leaseStartDate')?.setValidators(Validators.required);
+                this.addForm.get('leaseEndDate')?.setValidators(Validators.required);
+            } else {
+                // rent — clear lease period
+                this.addForm.get('leaseStartDate')?.clearValidators();
+                this.addForm.get('leaseStartDate')?.setValue(null);
+                this.addForm.get('leaseEndDate')?.clearValidators();
+                this.addForm.get('leaseEndDate')?.setValue(null);
+            }
+        }
+
+        // Update validity for affected controls
+        ['paymentType', 'leaseStartDate', 'leaseEndDate'].forEach((f) => {
+            this.addForm.get(f)?.updateValueAndValidity();
+        });
     }
 
     resetChildUOMTable() {
         this.products = [];
     }
+
     allowOnlyNumbers(event: KeyboardEvent) {
         const allowedChars = /[0-9]\b/;
         const inputChar = String.fromCharCode(event.key.charCodeAt(0));
@@ -176,8 +265,9 @@ export class AddinventoryComponent {
         }
         return null;
     };
+
     blockMinus(event: KeyboardEvent) {
-        if (event.key === '-' || event.key === 'Minus' || event.key === 'e' || event.key === 'e') {
+        if (event.key === '-' || event.key === 'Minus' || event.key === 'e') {
             event.preventDefault();
         }
     }
@@ -186,6 +276,29 @@ export class AddinventoryComponent {
         const input = event.target as HTMLInputElement;
         input.value = input.value.toUpperCase();
     }
+
+    onLocationFilter(event: any): void {
+  this.newLocationLabel = (event.filter || '').trim();
+  const matched = this.locationOptions.some(o =>
+    o.label.toLowerCase().includes(this.newLocationLabel.toLowerCase())
+  );
+  this.showEmptyFilter = this.newLocationLabel.length > 0 && !matched;
+}
+
+addNewLocation(): void {
+  if (!this.newLocationLabel) return;
+
+  const exists = this.locationOptions.some(
+    o => o.label.toLowerCase() === this.newLocationLabel.toLowerCase());
+  if (exists) return;
+
+  const newOption = { label: this.newLocationLabel, value: this.newLocationLabel };
+  this.locationOptions = [...this.locationOptions, newOption];
+  this.addForm.get('location')?.setValue(newOption.value);
+  this.newLocationLabel = '';
+
+  this.locationDropdown.hide();
+}
 
     updateCostPerItem(): void {
         const purchasePrice = parseFloat(this.addForm.get('purchasePrice')?.value);
@@ -205,8 +318,8 @@ export class AddinventoryComponent {
 
     enterEditItemMode(itemData: any) {
         this.addForm.patchValue({
-            itemid:itemData.itemid,
-            p_tranpurchaseid:itemData.purchaseid,
+            itemid: itemData.itemid,
+            p_tranpurchaseid: itemData.purchaseid,
             itembarcode: itemData.itembarcode,
             itemCode: itemData.itemsku || itemData.itemid,
             itemName: itemData.itemname,
@@ -221,22 +334,20 @@ export class AddinventoryComponent {
             mrp: itemData.saleprice,
             parentUOM: itemData.uomid,
             qty: itemData.quantity,
-            costPerItem: (itemData.costprice).toFixed(5),
+            costPerItem: itemData.costprice.toFixed(5),
             warPeriod: itemData.warrentyperiod
         });
 
-        // load child UOM and master child options
         this.OnChildOM(itemData.itemid);
         this.viewItem(itemData.uomid);
         this.resetDisabled = true;
-        // Disable only the item-related fields (not purchasePrice/mrp/qty)
         this.disableItemRelatedControls();
         this.addForm.get('purchasePrice')?.enable();
         this.addForm.get('mrp')?.enable();
         this.addForm.get('qty')?.enable();
-        // disable child UOM table & Add UOM button
         this.uomTableDisabled = true;
     }
+
     enterItemUpdateMode(itemData: any) {
         this.addForm.patchValue({
             itembarcode: itemData.itembarcode,
@@ -249,21 +360,17 @@ export class AddinventoryComponent {
             activeItem: itemData.isactive === 'Y',
             location: itemData.location,
             minStock: itemData.minimumstock,
-            // purchasePrice: itemData.costprice * itemData.quantity,
             mrp: itemData.saleprice,
             parentUOM: itemData.uomid,
             qty: itemData.quantity,
-            costPerItem: (itemData.costprice).toFixed(5),
+            costPerItem: itemData.costprice.toFixed(5),
             warPeriod: itemData.warrentyperiod
         });
 
-        // load child UOM and master child options
         this.OnChildOM(itemData.itemid);
         this.viewItem(itemData.uomid);
         this.resetDisabled = true;
         this.addForm.disable();
-
-        // Disable only the item-related fields (not purchasePrice/mrp/qty)
         this.disableItemRelatedControls();
         this.addForm.get('category')?.enable();
         this.addForm.get('minStock')?.enable();
@@ -272,6 +379,7 @@ export class AddinventoryComponent {
         this.addForm.get('location')?.enable();
         this.addForm.get('gstItem')?.enable();
         this.addForm.get('activeItem')?.enable();
+        this.addForm.get('discount')?.enable();
     }
 
     enterAddItemMode(itemData: any) {
@@ -287,27 +395,21 @@ export class AddinventoryComponent {
             activeItem: itemData.isactive === 'Y',
             location: itemData.location,
             minStock: itemData.minimumstock,
-            purchasePrice: this.mode == 'add' ? 0 : (itemData.pruchaseprice).toFixed(2),
-            // purchasePrice:itemData.pruchaseprice,
+            purchasePrice: this.mode == 'add' ? 0 : itemData.pruchaseprice.toFixed(2),
             mrp: itemData.saleprice,
             parentUOM: itemData.uomid,
             qty: itemData.quantity,
-            // costPerItem:itemData.pruchaseprice,
-            costPerItem: (itemData.costprice).toFixed(5),
+            costPerItem: itemData.costprice.toFixed(5),
             warPeriod: itemData.warrentyperiod
         });
 
-        // load child UOM and master child options
         this.OnChildOM(itemData.itemid);
         this.viewItem(itemData.uomid);
-
-        // Disable only the item-related fields (not purchasePrice/mrp/qty)
         this.disableItemRelatedControls();
         this.addForm.get('purchasePrice')?.enable();
         this.addForm.get('mrp')?.enable();
         this.addForm.get('qty')?.enable();
         this.addForm.get('itemSearch')?.enable();
-        // disable child UOM table & Add UOM button
         this.uomTableDisabled = true;
     }
 
@@ -318,17 +420,17 @@ export class AddinventoryComponent {
         this.resetChildUOMTable();
         this.addForm.get('activeItem')?.setValue(true);
         this.addForm.get('gstItem')?.setValue(true);
+        this.addForm.get('transactionType')?.setValue('purchase');
         this.showCopyMessage = false;
     }
 
     private disableItemRelatedControls() {
-        // disable fields that should not be editable after selecting an existing item
-        const controls = ['itembarcode', 'itemCode', 'parentUOM', 'category', 'itemName', 'curStock', 'location', 'minStock', 'warPeriod', 'p_expirydate', 'activeItem', 'gstItem', 'itemSearch'];
+        const controls = ['itembarcode', 'itemCode', 'parentUOM', 'category', 'itemName', 'curStock', 'location', 'minStock', 'warPeriod', 'p_expirydate', 'activeItem', 'gstItem', 'itemSearch', 'discount'];
         controls.forEach((c) => this.addForm.get(c)?.disable());
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        if(!this.addForm) return;
+        if (!this.addForm) return;
         const hasEditDataChange = !!changes['editData'] && !!this.editData;
         const formReady = !!this.addForm;
         if (hasEditDataChange && formReady) {
@@ -345,6 +447,7 @@ export class AddinventoryComponent {
             this.enterAddModeReset();
         }
     }
+
     copy(event: any) {
         const itemCode = this.addForm.get('itemCode')?.value;
         if (!itemCode || itemCode === '') {
@@ -363,6 +466,7 @@ export class AddinventoryComponent {
         this.addForm.get('itembarcode')?.setValue('');
         this.addForm.get('itemCode')?.setValue('');
     }
+
     onBlur(event: FocusEvent) {
         const itemcodevalue = (event.target as HTMLInputElement).value.trim();
 
@@ -387,6 +491,7 @@ export class AddinventoryComponent {
             error: (err) => console.log(err)
         });
     }
+
     onBlurBarCode(event: FocusEvent) {
         const itembarcodevalue = (event.target as HTMLInputElement).value;
 
@@ -418,19 +523,19 @@ export class AddinventoryComponent {
             this.filteredUOM = [...this.uom];
             return;
         }
-        //  this.filteredUOM=this.uom.filter(u=>u.label.toLowerCase().includes(query));//commented beacause of error
     }
 
     filterItemCode(event: any) {
         const query = event.query.toLowerCase();
-        // this.filteredItemCode=this.itemCodeOptions.filter(v=>v.label.toLowerCase().includes(query)); //commented beacause of error
         if (!this.filteredItemCode.some((v) => v.label.toLowerCase() === query)) {
             this.filteredItemCode.push({ label: event.query });
         }
     }
+
     addRow() {
         this.products.push({ childUOM: null, conversion: null, mrpUom: null });
     }
+
     removeRow() {
         if (this.products.length > 1) {
             this.products.pop();
@@ -438,6 +543,7 @@ export class AddinventoryComponent {
             this.resetChildUOMTable();
         }
     }
+
     isChildUOMValid(): boolean {
         this.addForm.updateValueAndValidity();
         if (!this.products || this.products.length === 0) return true;
@@ -448,19 +554,16 @@ export class AddinventoryComponent {
             const hasConversion = !!row.conversion?.toString().trim();
             const hasMrp = !!row.mrpUom?.toString().trim();
 
-            // ✅ Case 1: completely empty row → OK
             if (!hasChild && !hasConversion && !hasMrp) {
                 row.mrpError = false;
                 continue;
             }
 
-            // ❌ Case 2: partially filled row → INVALID
             if (!(hasChild && hasConversion && hasMrp)) {
                 row.mrpError = false;
                 return false;
             }
 
-            // ✅ Case 3: all fields present → validate numbers
             const conv = Number(row.conversion);
             const mrpUom = Number(row.mrpUom);
 
@@ -482,12 +585,11 @@ export class AddinventoryComponent {
     }
 
     mapFormToPayload(form: any, childUOM: any[]) {
-        console.log("shds",form);
-        //   return
+        console.log('shds', form);
 
         return {
             p_operationtype: this.mode == 'itemedit' ? 'ITEM_UPD' : 'PUR_INSERT',
-            p_purchaseid: this.mode == 'itemedit' ? '0' : this.transationid?.toString() ?? '0',
+            p_purchaseid: this.mode == 'itemedit' ? '0' : (this.transationid?.toString() ?? '0'),
             p_itembarcode: form.itembarcode,
             p_itemsku: form.itemCode,
             p_itemname: form.itemName,
@@ -506,7 +608,11 @@ export class AddinventoryComponent {
             p_warehourse: form.warehouse || 'ShristiShop',
             p_isactive: form.activeItem ? 'Y' : 'N',
             p_gstitem: form.gstItem ? 'Y' : 'N',
-
+            // Transaction type fields
+            p_transactiontype: form.transactionType,
+            p_paymenttype: form.paymentType ?? '',
+            p_leasestartdate: this.datePipe.transform(form.leaseStartDate, 'dd/MM/yyyy') ?? '',
+            p_leaseenddate: this.datePipe.transform(form.leaseEndDate, 'dd/MM/yyyy') ?? '',
             // Child UOM logic
             p_childuom: childUOM.length > 0 ? 'Y' : 'N',
             p_uom:
@@ -518,11 +624,9 @@ export class AddinventoryComponent {
                           childmrp: Number(x.mrpUom)
                       }))
                     : [],
-
             // User Session Info
             p_loginuser: this.shareservice.getUserData()?.username || 'admin'
         };
-
     }
 
     onSubmit() {
@@ -530,7 +634,6 @@ export class AddinventoryComponent {
         if (this.mode == 'itemedit') {
             this.inventoryService.Oninsertitemdetails(this.mapFormToPayload(this.addForm.getRawValue(), this.products)).subscribe({
                 next: (res) => {
-                   
                     const msg = res?.data?.[0]?.msg || 'Item saved successfully';
                     this.showSuccess(msg);
                     this.save.emit(this.addForm.getRawValue());
@@ -560,9 +663,11 @@ export class AddinventoryComponent {
         this.resetChildUOMTable();
         this.addForm.get('activeItem')?.setValue(true);
         this.addForm.get('gstItem')?.setValue(true);
+        this.addForm.get('transactionType')?.setValue('purchase');
         this.addForm.enable();
         this.uomTableDisabled = false;
     }
+
     onItemCodeChange(event: any) {
         this.showCopyMessage = false;
 
@@ -578,6 +683,7 @@ export class AddinventoryComponent {
     showSuccess(message: string) {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
     }
+
     OnChildOM(id: number) {
         const payload = {
             p_username: 'admin',
@@ -589,38 +695,39 @@ export class AddinventoryComponent {
             next: (res: any) => {
                 console.log('CHILD UOM DATA =>', res.data);
                 if (!res.data || res.data.length === 0) {
-                    this.products = []; // or keep existing rows
+                    this.products = [];
                     return;
                 }
 
-                // ✅ Assign API data into table rows (NO FUNCTIONALITY CHANGES)
                 this.products = res.data.map((x: any) => ({
-                    childUOM: x.childuomid, // bind to dropdown
-                    conversion: x.uomconversion, // number input
-                    mrpUom: x.childmrp // number input
+                    childUOM: x.childuomid,
+                    conversion: x.uomconversion,
+                    mrpUom: x.childmrp
                 }));
             },
-
             error: (err) => {
                 console.error(err);
             }
         });
     }
+
     Reset() {
         this.addForm.reset();
-        this.enterAddModeReset();
         this.enterAddModeReset();
         this.resetChildUOMTable();
         this.showCopyMessage = false;
     }
+
     getFilteredChildUOM() {
         const parent = this.addForm.get('parentUOM')?.value;
         return this.uomOptions.filter((u) => u.fieldid !== parent);
     }
+
     onItemParentUM(event: any) {
         this.viewItem(event.value);
         this.clearChildUOMValues();
     }
+
     clearChildUOMValues() {
         if (this.products && this.products.length > 0) {
             this.products.forEach((row) => {
@@ -628,9 +735,10 @@ export class AddinventoryComponent {
                 row.conversion = '';
                 row.mrpUom = '';
                 row.mrpError = false;
-            }); 
+            });
         }
     }
+
     viewItem(id: number) {
         console.log(id);
         this.ChilduomOptions = [];
@@ -643,15 +751,11 @@ export class AddinventoryComponent {
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res: any) => {
                 if (!res.data || res.data.length === 0) {
-                    //  this.showError("No Child UOM Data Available");
                     return;
                 }
-
-                this.ChilduomOptions = res.data; // assign data
-                //   this.childUomDialog = true;   // open popup
+                this.ChilduomOptions = res.data;
             },
             error: (err) => {
-                // this.showError("Failed to load Child UOM Details");
                 console.error(err);
             }
         });

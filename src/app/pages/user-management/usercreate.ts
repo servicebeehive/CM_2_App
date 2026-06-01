@@ -435,7 +435,6 @@ export class UserCreate {
         });
     }
     onGetStateChange(data: any) {
-        console.log(data.value);
         const stateId = data.value;
         this.profileForm.patchValue({
             companycity: ''
@@ -469,7 +468,6 @@ export class UserCreate {
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res) => {
                 if (res.data && res.data.length > 0) {
-                    console.log('res:', res.data);
                     this.cities = res.data;
                     this.profileForm.patchValue({
                         companycity: res.data[0].city_id
@@ -488,7 +486,6 @@ export class UserCreate {
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res) => {
                 if (res.data && res.data.length > 0) {
-                    console.log('res:', res.data);
                     this.states = res.data;
                 }
             }

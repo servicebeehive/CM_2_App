@@ -32,6 +32,9 @@ export class CategoryFormateComponent {
     user: any[] = [];
     filterMaster: any[] = [];
     userRoleOptions: any[] = [];
+    countries:any[]=[];
+    states:any[]=[];
+    cities:any[]=[];
     editMode = false;
     selectedUser: any = null;
     globalFilter: string = '';
@@ -74,10 +77,11 @@ export class CategoryFormateComponent {
             this.tableColumns = this.tableConfig[master];
             this.loadMasterData(master);
         });
-        this.filterMaster = [...this.masterDetails];
+        // this.filterMaster = [...this.masterDetails];
         // this.onGetUserList();
         this.loggedInUserName = this.authService.isLogIntType().username;
         this.loggedInUserRole = this.authService.isLogIntType().usertypename;
+        this.onGetCountry();
     }
 
     initForm() {
@@ -245,7 +249,7 @@ export class CategoryFormateComponent {
             this.masterForm.addControl('supplierpincode', this.fb.control('', Validators.required));
             this.masterForm.addControl('supplierphone', this.fb.control('', Validators.required));
             this.masterForm.addControl('supplieremail', this.fb.control('', [Validators.required, Validators.email]));
-            this.masterForm.addControl('suppliergstno', this.fb.control('', Validators.required));
+            this.masterForm.addControl('suppliergst', this.fb.control('', Validators.required));
             this.masterForm.addControl('suppliercontactname', this.fb.control('', Validators.required));
             this.masterForm.addControl('suppliercontactphone', this.fb.control('', Validators.required));
             this.masterForm.addControl('suppliercontactemail', this.fb.control('', [Validators.required, Validators.email]));
@@ -297,17 +301,80 @@ export class CategoryFormateComponent {
         }
     }
 
-    openEditDialog(user: any) {
+    openEditDialog(row: any) {
+        this.selectedMaster = this.masterForm.get('master')?.value ?? 'categorymaster';
+        this.addControlsByMaster(this.selectedMaster);
         this.visibleDialog = true;
         this.editMode = true;
-        this.selectedUser = user;
+        this.selectedUser = row;
 
-        console.log('user role', user.usertypename);
-        this.masterForm.patchValue({
-            p_categorydesc: user.usertypeid,
-            p_categoryname: user.username,
-            checked: user.isactive === 'Y'
-        });
+        const patchMap: Record<string, any> = {
+    categorymaster: {
+      p_categoryname: row.fieldname,
+      p_categorydesc: row.fielddesc,
+      checked: row.isactive === 'Y'
+    },
+    customermaster: {
+      customername: row.customername,
+      customeraddress: row.customeraddress,
+      customercountry: row.customercountry,
+      customerstate: row.customerstate,
+      customercity: row.customercity,
+      customerpincode: row.customerpincode,
+      customerphone: row.customerphone,
+      customeremail: row.customeremail,
+      customergstno: row.customergstno,
+      customercontactname: row.customercontactname,
+      customercontactphone: row.customercontactphone,
+      customercontactemail: row.customercontactemail,
+      checked: row.isactive === 'Y'
+    },
+    suppliermaster: {
+      suppliername: row.suppliername,
+      supplieraddress: row.supplieraddress,
+      suppliercountry: row.suppliercountry,
+      supplierstate: row.supplierstate,
+      suppliercity: row.suppliercity,
+      supplierpincode: row.supplierpincode,
+      supplierphone: row.supplierphone,
+      supplieremail: row.supplieremail,
+      suppliergst: row.suppliergst,       // ✅ match template field name
+      suppliercontactname: row.suppliercontactname,
+      suppliercontactphone: row.suppliercontactphone,
+      suppliercontactemail: row.suppliercontactemail,
+      checked: row.isactive === 'Y'
+    },
+    taxmaster: {
+      taxname: row.fieldname,
+      taxdesc: row.fielddesc,
+      taxtype: row.taxtype,
+      taxpercentage: row.taxpercentage,
+      checked: row.isactive === 'Y'
+    },
+    uommaster: {
+      uomname: row.fieldname,
+      uomdesc: row.fielddesc,
+      childuomname: row.childuomname,
+      checked: row.isactive === 'Y'
+    },
+    usertype: {
+      p_uname: row.username,
+      p_utypeid: row.usertypeid,
+      p_ufullname: row.fullname,
+      p_phone: row.phone,
+      p_email: row.email,
+      checked: row.isactive === 'Y'
+    },
+    advance: {
+      rulename: row.fieldname,
+      ruledesc: row.fielddesc,
+      rulevalue: row.fieldvalue,
+      checked: row.isactive === 'Y'
+    }
+  };
+
+  const patch = patchMap[this.selectedMaster];
+  if (patch) this.masterForm.patchValue(patch);
     }
 
     closeDialog() {
@@ -380,14 +447,95 @@ export class CategoryFormateComponent {
             }
         });
     }
-    /** ✅ Submit Form **/
-    onSubmit() {
-        if (this.masterForm.invalid) {
-            this.masterForm.markAllAsTouched();
-            return;
-        }
-        this.onUserCreation(this.masterForm.getRawValue());
+
+    onGetCountry(){
+      const payload = this.createDropdownPayload('COUNTRY');
+      this.inventoryService.getdropdowndetails(payload).subscribe({
+        next:(res)=>{
+            this.countries = res.data || [];
+        },
+        error:(err)=> console.log(err)
+      });
     }
+
+    onCountryChange(event:any){
+        const countryId = event.value;
+        const payload = {
+            p_returntype: 'STATE',
+            p_returnvalue:countryId
+        };
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res)=>{
+                if(res.data && res.data.length>0){
+                    this.states = res.data;
+                }
+            }
+        })
+    }
+
+    onGetStateChange(data: any) {
+  const stateId = data.value;
+  this.masterForm.patchValue({ suppliercity: '', customercity: '' });
+  this.cities = [];
+  if (!stateId) return;
+
+  const stateCode = this.states.find(s => s.state_id === stateId);
+  if (stateCode) {
+    this.masterForm.patchValue({
+      customerstate: stateCode.state_id,
+      supplierstate: stateCode.state_id
+    });
+  }
+
+  const payload = { p_returntype: 'CITY', p_returnvalue: stateId };
+  this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+    next: (res) => {
+      if (res.data?.length > 0) {
+        this.cities = res.data;
+        this.masterForm.patchValue({ customercity: res.data[0].city_id });
+      }
+    },
+    error: (err) => console.log(err)
+  });
+}
+
+   onSubmit() {
+  if (this.masterForm.invalid) {
+    this.masterForm.markAllAsTouched();
+    return;
+  }
+  const data = this.masterForm.getRawValue();
+  const master = this.selectedMaster;
+
+  // Build payload per master type
+  const payloadMap: Record<string, any> = {
+    categorymaster: {
+      p_operationtype: this.editMode ? 'UPDATE' : 'INSERT',
+      p_categoryname: data.p_categoryname,
+      p_categorydesc: data.p_categorydesc,
+      p_active: data.checked ? 'Y' : 'N'
+    },
+    usertype: {
+      p_operationtype: this.editMode ? 'UPDATE' : 'INSERT',
+      p_uname: data.p_uname,
+      p_utypeid: data.p_utypeid,
+      p_ufullname: data.p_ufullname,
+      p_pwd: data.p_pwd,
+      p_phone: data.p_phone,
+      p_email: data.p_email,
+      p_active: data.checked ? 'Y' : 'N'
+    },
+    // Add customermaster, suppliermaster, taxmaster, etc. similarly
+  };
+
+  const payload = payloadMap[master];
+  if (!payload) return;
+
+  this.userService.OnUserHeaderCreate(payload).subscribe({
+    next: () => { this.visibleDialog = false; this.loadMasterData(master); },
+    error: (err) => console.error(err)
+  });
+}
 
     createDropdownPayload(returnType: string) {
         return {

@@ -195,6 +195,7 @@ export class SalesComponent {
 
     // Dropdowns / lists
     billNoOptions: any[] = [];
+    SRNoOptions:any[]=[];
     transactionMode: any[] = [
         { label: 'Cash', value: 'Cash' },
         { label: 'UPI', value: 'UPI' },
@@ -242,6 +243,7 @@ export class SalesComponent {
                 p_currencyid: [0],
                 p_paymentdue: [''],
                 chalanno:[''],
+                p_requisitionno:[''],
                 // p_gstno: ['', [gstNumberValidator]],
                 p_gsttran: [false],
                 status: [''],

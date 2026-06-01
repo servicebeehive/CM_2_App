@@ -62,7 +62,7 @@
              <!-- Sales Person -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1 text-sm md:text-base">Requested Person</label>
-                 <p-dropdown #deliveryperson [options]="deliveryBoyOptions" optionLabel="fieldname" optionValue="fieldname" [filter]="true" filterPlaceholder="Search Sales Person" formControlName="p_deliveryboy" placeholder="Select Delivery Person" appendTo="body" (onFilter)="onDeliveryFilter($event)">
+                 <p-dropdown #deliveryperson [options]="requestedByOptions" optionLabel="fieldname" optionValue="fieldname" [filter]="true" filterPlaceholder="Search Sales Person" formControlName="p_requestedby" placeholder="Select Delivery Person" appendTo="body" (onFilter)="onRequestedByFilter($event)">
                     <ng-template pTemplate="emptyfilter">
                         <div class="text-center">
                             <div>No record found</div>
@@ -187,6 +187,7 @@
                         <tr class="bg-yellow-400">
                             <th>Item Code</th>
                             <th>Item Name</th>
+                            <th>Cur Stock</th>
                             <th>UOM</th>
                             <th>Qty</th>
                             <th>MRP</th>
@@ -200,6 +201,7 @@
                         <tr [formGroup]="row">
                             <td class="text-xs md:text-sm">{{ row.get('itemsku')?.value }}</td>
                             <td class="text-xs md:text-sm">{{ row.get('ItemName')?.value }}</td>
+                             <td class="text-xs md:text-sm">{{ row.get('curStock')?.value }}</td>
                             <td>
                                 <p-dropdown
                                     #uomDropdown
@@ -353,7 +355,7 @@
 
                     <tr>
                         <td>Dispatched through</td>
-                        <td>{{ salesForm.get('p_deliveryboy')?.value }}</td>
+                        <td>{{ salesForm.get('p_requestedby')?.value }}</td>
                     </tr>
 
                     <tr>

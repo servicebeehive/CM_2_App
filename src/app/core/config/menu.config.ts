@@ -94,6 +94,11 @@ export const ADMIN_MENU_MODEL: MenuItem[] = [
                         routerLink: ['/layout/pos/invoice']
                     },
                     {
+                        label:'Rent',
+                        icon:'pi pi-fw pi-file-edit',
+                        routerLink: ['/layout/pos/rented']
+                    },
+                    {
                        label: 'Sales Requisition',
                        icon: 'pi pi-fw pi-shopping-bag',
                        routerLink: ['/layout/pos/sales-requisition']
@@ -197,16 +202,6 @@ export const ADMIN_MENU_MODEL: MenuItem[] = [
                         label: 'UserType',
                         icon: 'pi pi-fw pi-file',
                         routerLink: ['/layout/settings/category-formate', 'usertype']
-                    },
-                     {
-                        label: 'Customer Master',
-                        icon: 'pi pi-fw pi-user',
-                        routerLink: ['/layout/settings/category-formate', 'customermaster']
-                    },
-                    {
-                        label: 'Supplier Master',
-                        icon: 'pi pi-fw pi-truck',
-                        routerLink: ['/layout/settings/category-formate', 'suppliermaster']
                     },
                       {
                         label: 'My Approval',
