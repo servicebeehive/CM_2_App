@@ -16,6 +16,7 @@ import { InventoryService } from '@/core/services/inventory.service';
 import { UserService } from '@/core/services/user.service';
 import { ActivatedRoute } from '@angular/router';
 import { state } from '@angular/animations';
+import { Subject, switchMap } from 'rxjs';
 
 export function gstNumberValidator(control: AbstractControl): ValidationErrors | null {
     if (!control.value) return null;
@@ -50,7 +51,6 @@ export class CategoryFormateComponent {
     showGlobalSearch: boolean = true;
 
     masterDetails: [] = [];
-    loggedInUserName: string = '';
     loggedInUserRole: string = '';
     pageTitle = 'Category Master';
     addButtonLabel = 'Add Category';
@@ -68,34 +68,42 @@ export class CategoryFormateComponent {
         private messageService: MessageService
     ) {}
 
-    ngOnInit() {
-        this.initForm();
+private routeChange$ = new Subject<string>();
 
-        this.route.paramMap.subscribe((params) => {
-            const master = params.get('master') || 'categorymaster';
+   ngOnInit() {
+    this.initForm();
+    this.onGetCountry();
+    this.loggedInUserRole = this.authService.isLogIntType().usertypename;
+    this.routeChange$.pipe(
+        switchMap((master) => {
+            this.masterDetails = [];
+            this.filterMaster = [];
             this.masterForm.get('master')?.setValue(master);
             this.updateTitleMaster(master);
             this.tableColumns = this.tableConfig[master];
-            this.loadMasterData(master);
-            this.onGetDataList();
-        });
-        this.filterMaster = [...this.masterDetails];
-        this.loggedInUserName = this.authService.isLogIntType().username;
-        this.loggedInUserRole = this.authService.isLogIntType().usertypename;
 
-        this.onGetCountry();
-    }
+            const payloadType = master === 'customermaster' ? 'CUSTOMERALL' : 'VENDORALL';
+            const payload = this.createDropdownPayload(payloadType);
+            return this.inventoryService.getdropdowndetails(payload);
+        })
+    ).subscribe({
+        next: (res) => {
+            this.masterDetails = res.data || [];
+            this.filterMaster = [...this.masterDetails];
+        }
+    });
+
+    this.route.paramMap.subscribe((params) => {
+        const master = params.get('master') || 'categorymaster';
+        this.routeChange$.next(master);
+    });
+}
 
     initForm() {
         this.masterForm = this.fb.group({
             master: ['categorymaster'],
             checked: [true]
         });
-        // this.masterForm.get('master')?.valueChanges.subscribe((value) => {
-        //     this.updateTitleMaster(value);
-        //     this.loadMasterData(value);
-        //     this.tableColumns = this.tableConfig[value];
-        // });
     }
 
     allowOnlyDigits(event: KeyboardEvent) {
@@ -373,7 +381,10 @@ removeItem(row: any) {
 
     onGetDataList() {
         const master = this.masterForm.get('master')?.value;
-        console.log('gfdg',master)
+        
+         this.masterDetails = [];
+    this.filterMaster = [];
+
         let apicall$;
         if (master === 'customermaster') {
             const payload = this.createDropdownPayload('CUSTOMERALL');

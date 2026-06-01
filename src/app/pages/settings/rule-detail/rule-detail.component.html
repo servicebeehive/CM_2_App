@@ -38,8 +38,8 @@
                 <td>{{ user.is_active }}</td>
                 <td>
                     <div class="flex gap-2">
+                         <i class="pi pi-pencil cursor-pointer text-blue-500" (click)="openEditDialog(user)"> </i>
                         <i class="pi pi-trash cursor-pointer text-red-500" (click)="deleteRow(user)"></i>
-                        <i class="pi pi-pencil cursor-pointer text-blue-500" (click)="openEditDialog(user)"> </i>
                     </div>
                 </td>
             </tr>
