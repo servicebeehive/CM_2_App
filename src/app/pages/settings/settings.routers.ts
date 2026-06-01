@@ -6,6 +6,7 @@ import { CategoryFormateComponent } from './category-formate/category-formate.co
 import { MyApprovalComponent } from './my-approval/my-approval.component';
 import { MiscChargesComponent } from './misc-charges/misc-charges.component';
 import { AccessControlComponent } from './access-control/access-control.component';
+import { RuleDetailComponent } from './rule-detail/rule-detail.component';
 
 export default [
     { path: 'access-control', component: AccessControlComponent },
@@ -13,6 +14,7 @@ export default [
     { path: 'category-formate/:master', component: CategoryFormateComponent },
     { path: 'my-approval', component: MyApprovalComponent },
     { path: 'misc-charges', component: MiscChargesComponent },
+    { path: 'rule-detail', component: RuleDetailComponent},
     { path: 'profile', component: UserCreate },
     { path: 'changepassword', component: NewPassword },
     { path: '**', redirectTo: '/notfound' }

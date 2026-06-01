@@ -23,7 +23,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { CheckboxModule } from 'primeng/checkbox';
 import { AuthService } from '@/core/services/auth.service';
-
+import * as XLSX from 'xlsx';
 @Component({
     selector: 'app-misc-charges',
     imports: [
@@ -54,7 +54,7 @@ import { AuthService } from '@/core/services/auth.service';
     providers: [ConfirmationService, DatePipe]
 })
 export class MiscChargesComponent {
-    customerForm!: FormGroup;
+    miscChargeForm!: FormGroup;
     visibleDialog = false;
     selectedRow: any = null;
     selection: boolean = true;
@@ -63,16 +63,19 @@ export class MiscChargesComponent {
     globalFilter: string = '';
     showData: boolean = false;
     submitDisable: boolean = true;
-    headOptions = [
-        { fieldid: 'bankcharge', fieldname: 'Bank Charge' },
-        { fieldid: 'paytmcharge', fieldname: 'Paytm Charge' }
+    editmode: boolean = false;
+    allProducts: any[] = [];
+    headOptions:any[]=[
+         { fieldid: 'Bank Charge', fieldname: 'Bank Charge' },
+        { fieldid: 'Paytm Charge', fieldname: 'Paytm Charge' }
     ];
     requestOptions: any[] = [
-        { fieldid: 'Approved', fieldname: 'Approved' },
-        { fieldid: 'Pending', fieldname: 'Pending' },
-        { fieldid: 'Rejected', fieldname: 'Rejected' }
+        { fieldid: 'APPROVED', fieldname: 'APPROVED' },
+        { fieldid: 'PENDING', fieldname: 'PENDING' },
+        { fieldid: 'REJECTED', fieldname: 'REJECTED' }
     ];
-    products: any[] = [];
+
+    selectedCharge: any;
     filteredProducts: any[] = [];
     columns: any[] = [];
     selectedRows: any[] = [];
@@ -82,61 +85,175 @@ export class MiscChargesComponent {
         private inventoryService: InventoryService,
         private authService: AuthService,
         private messageService: MessageService,
-        private datePipe: DatePipe
+        private datePipe: DatePipe,
+        private confirmationService: ConfirmationService
     ) {}
 
     ngOnInit(): void {
-        this.customerForm = this.fb.group({
+        this.miscChargeForm = this.fb.group({
             curdate: [new Date()],
             p_head: [],
             p_amount: [null, [Validators.required, Validators.min(1)]],
-            p_request: ['Pending']
+            p_request: ['PENDING']
         });
 
-        this.setTableColumns();
-        this.customerForm.get('p_request')?.valueChanges.subscribe(()=>{
-            if(this.products.length>0){
-                const request = this.customerForm.controls['p_request'].value;
-                
-            }
-        })
-        
+        this.onGetTransMics();
     }
 
     blockMinus(event: KeyboardEvent) {
-        console.log(event);
         if (event.key === '-' || event.key === 'Minus' || event.key === 'e' || event.key === 'E') {
             event.preventDefault();
         }
     }
 
-    submit() {}
+    private formatLocalDate(date: Date): string {
+        const d = new Date(date);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
 
-    Onreturndropdowndetails() {
-        const fromdate = this.customerForm.controls['date'].value;
-        const head = this.customerForm.controls['p_head'].value;
+    onRequestChange(event: any) {
+        const selectedRequest = event.value;
+        if (selectedRequest) {
+            this.filteredProducts = this.allProducts.filter((i) => i.status === selectedRequest);
+        } else {
+            this.filteredProducts = this.allProducts;
+        }
+    }
 
-        const payload = {
-            p_startdate: this.datePipe.transform(fromdate, 'yyyy/MM/dd'),
-            p_customer: head || null,
-            p_username: 'admin'
+    createDropdownPayload(returnType: string) {
+        return {
+            p_username: 'admin',
+            p_returntype: returnType
         };
-        this.showData = false;
-        this.inventoryService.getinvoicedetail(payload).subscribe({
-            next: (res: any) => {
-                console.log('API RESULT:', res.data);
-                this.products = res?.data || [];
-                this.filteredProducts = [...this.products];
-                this.showData = true;
-                if (this.products.length === 0) {
-                    this.showSuccess('No Data Available for the selected filters.');
-                }
+    }
+
+    onGetTransMics() {
+        this.editmode = false;
+        this.selectedCharge = null;
+        const payload = this.createDropdownPayload('TRANMISC');
+        this.inventoryService.getdropdowndetails(payload).subscribe({
+            next: (res) => {
+                this.allProducts = res.data;
+                this.filteredProducts = res.data;
             },
-            error: (err) => {
-                console.error(err);
-                this.errorSuccess('Error loading data. Please try again.');
-                this.showData = false;
+            error: (err) => console.log(err)
+        });
+    }
+
+    onMiscEdit(data: any) {
+        const username = this.authService.isLogIntType().userid.toString();
+        const payload: any = {
+            p_transaction_id: this.selectedCharge.transaction_id,
+            p_transaction_date: data.curdate instanceof Date ? this.formatLocalDate(data.curdate) : data.curdate,
+            p_head: data.p_head,
+            p_amount: data.p_amount,
+            p_username: username
+        };
+        this.inventoryService.upserttransactionmisc(payload).subscribe({
+            next: (res) => {
+                this.showSuccess(res.data.message);
+                this.onGetTransMics();
+                this.miscChargeForm.reset({
+                    curdate: new Date(),
+                    p_request: 'PENDING'
+                });
             }
+        });
+    }
+
+    onMiscChargeCreation(data: any) {
+        const username = this.authService.isLogIntType().userid.toString();
+        console.log('user', data);
+        const payload: any = {
+            p_transaction_id: 0,
+            p_transaction_date: this.formatLocalDate(data.curdate),
+            p_head: data.p_head,
+            p_amount: data.p_amount,
+            p_username: username
+        };
+        this.inventoryService.upserttransactionmisc(payload).subscribe({
+            next: (res) => {
+                this.showSuccess(res.data.message);
+                this.onGetTransMics();
+                this.miscChargeForm.reset({
+                    curdate: new Date(),
+                    p_request: 'PENDING'
+                });
+            }
+        });
+    }
+
+    submit() {
+        if (this.miscChargeForm.invalid) {
+            this.miscChargeForm.markAllAsTouched();
+            return;
+        }
+        const formData = this.miscChargeForm.getRawValue();
+        if (this.editmode && this.selectedCharge) {
+            this.confirmationService.confirm({
+                message: 'Are you sure you want to update this?',
+                header: 'Confirm',
+                acceptLabel: 'Yes',
+                rejectLabel: 'Cancel',
+                accept: () => {
+                    this.onMiscEdit(formData);
+                },
+                reject: () => {}
+            });
+        } else {
+            this.confirmationService.confirm({
+                message: 'Are you sure you want to create this?',
+                header: 'Confirm',
+                acceptLabel: 'Yes',
+                rejectLabel: 'Cancel',
+                accept: () => {
+                    this.onMiscChargeCreation(formData);
+                },
+                reject: () => {}
+            });
+        }
+    }
+
+    onEdit(data: any) {
+        console.log('edit', data);
+        this.selectedCharge = data;
+        this.editmode = true;
+        const head = this.headOptions.find((h) => h.fieldname === data.head);
+        console.log(head)
+        const [year, month, day] = data.transaction_date.split('-').map(Number);
+        this.miscChargeForm.patchValue({
+            curdate: new Date(year, month - 1, day),
+            p_head: head?.fieldname,
+            p_amount: data.amount,
+            p_request: ''
+        });
+    }
+
+    removeItem(row: any) {
+        console.log('row', row);
+        this.confirmationService.confirm({
+            message: 'Are you sure you want to delete this?',
+            header: 'Confirm',
+            acceptLabel: 'Yes',
+            rejectLabel: 'Cancel',
+            accept: () => {
+                const username = this.authService.isLogIntType().username;
+                const payload = {
+                    p_type: 'TRANMISC',
+                    p_transaction_id: row.transaction_id,
+                    p_username: username
+                };
+                this.inventoryService.deletetransaction(payload).subscribe({
+                    next: (res) => {
+                        this.showSuccess(res.data.message);
+                        this.onGetTransMics();
+                    }
+                });
+            },
+            reject: () => {}
         });
     }
 
@@ -146,139 +263,49 @@ export class MiscChargesComponent {
     }
 
     reset() {
-        this.customerForm.reset();
-        this.filteredProducts = [];
-        this.products = [];
         this.showData = false;
-        this.customerForm.reset({
-            curdate: new Date()
+        this.editmode = false;
+        this.selectedCharge = null;
+        this.miscChargeForm.reset({
+            curdate: new Date(),
+            p_request: 'PENDING'
         });
     }
 
-    // createDropdownPayload(returnType: string) {
-    //     return {
-    //         p_username: 'admin',
-    //         p_returntype: returnType
-    //     };
-    // }
-
-    // OnGetCustomer() {
-    //     const payload = this.createDropdownPayload('CUSTOMER');
-    //     this.inventoryService.getdropdowndetails(payload).subscribe({
-    //         next: (res) => (this.cusMobNameOptions = res.data),
-    //         error: (err) => console.log(err)
-    //     });
-    // }
-
-    // loadAllDropdowns() {
-    //     this.OnGetCustomer();
-    // }
-
-    private setTableColumns(): void {
-        const formatDate = (dateValue: any): string => {
-            if (!dateValue) return '';
-            try {
-                const date = new Date(dateValue);
-                if (!isNaN(date.getTime())) {
-                    return this.datePipe.transform(date, 'dd/MM/yyyy') || '';
-                }
-            } catch {}
-            return String(dateValue);
-        };
-
-        this.columns = [
-            { fields: 'curdate', header: 'Date', formatter: formatDate },
-            { fields: 'head', header: 'Head' },
-            { fields: 'categoryname', header: 'Amount' },
-            { fields: 'currentstock', header: 'Status' },
-            { fields: 'uomname', header: 'Reason' }
-        ];
-    }
-
-    downloadExcel() {
-        if (!this.filteredProducts || this.filteredProducts.length === 0) {
-            this.errorSuccess('No data available to download.');
-            return;
-        }
-        const csvContent = this.generateCSV();
-        this.downloadFile(csvContent, 'text/csv;charset=utf-8;', '.csv');
-
-        this.showSuccess('Excel file downloaded successfully!');
-    }
-
-    private generateCSV(): string {
-        const headers = this.columns.map((col) => this.escapeCSV(col.header));
-        const headerRow = headers.join(',');
-
-        // Create data rows
-        const dataRows = this.filteredProducts.map((item) => {
-            const row = this.columns.map((col) => {
-                const value = item[col.fields];
-                const formattedValue = col.formatter ? col.formatter(value) : value;
-                return this.escapeCSV(formattedValue);
-            });
-            return row.join(',');
-        });
-        // Combine header and data rows
-        return [headerRow, ...dataRows].join('\n');
-    }
-    private escapeCSV(value: any): string {
-        if (value === null || value === undefined || value === '') {
-            return '';
-        }
-        const stringValue = String(value);
-        const escapedValue = stringValue.replace(/"/g, '""');
-        if (/[,"\n\r]/.test(escapedValue)) {
-            return `"${escapedValue}"`;
-        }
-        return escapedValue;
-    }
-    private downloadFile(data: string, mimeType: string, extension: string) {
-        const blob = new Blob([data], { type: mimeType });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = this.generateFileName() + extension;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-    }
-    private generateFileName(): string {
-        const reportType = this.customerForm.get('curdate')?.value;
-        const category = this.customerForm.get('category')?.value;
-        const item = this.customerForm.get('item')?.value;
-        const currentDate = this.datePipe.transform(new Date(), 'yyyy-MM-dd_HH-mm');
-
-        let fileName = `${reportType}_Report_${currentDate}`;
-
-        if (category) {
-            fileName += `_Category_${category}`;
-        }
-
-        if (item) {
-            fileName += `_Item_${item}`;
-        }
-
-        return fileName;
-    }
     onDownloadClick() {
-        if (this.customerForm.invalid) {
-            this.errorSuccess('Please fill all required fields before downloading.');
-            return;
+        if (!this.filteredProducts?.length) {
+            return this.errorSuccess('No data available to download.');
         }
-
-        if (!this.filteredProducts || this.filteredProducts.length === 0) {
-            if (!this.showData) {
-                this.errorSuccess('Please click "Display" first to load data before downloading.');
-                return;
-            } else {
-                this.errorSuccess('No data available to download.');
-                return;
-            }
-        }
-
         this.downloadExcel();
+    }
+
+    private downloadExcel() {
+        const exportData = this.filteredProducts.map((item) => ({
+            Date: item.transaction_date ? this.datePipe.transform(new Date(item.transaction_date), 'dd/MM/yyyy') : '',
+            Head: item.head || '',
+            Amount: item.amount || '',
+            Status: item.status || '',
+            Reason: item.reason || ''
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+
+        // Column widths
+        worksheet['!cols'] = [
+            { wch: 15 }, // Date
+            { wch: 20 }, // Head
+            { wch: 15 }, // Amount
+            { wch: 15 }, // Status
+            { wch: 25 } // Reason
+        ];
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Misc Charges');
+
+        const date = this.datePipe.transform(new Date(), 'yyyy-MM-dd_HH-mm');
+        XLSX.writeFile(workbook, `MiscCharges_Report_${date}.xlsx`);
+
+        this.showSuccess('Excel downloaded successfully!');
     }
 
     showSuccess(message: string) {

@@ -24,6 +24,7 @@ export const API_ENDPOINTS = {
     inserttransactiondetails:'/inserttransactiondetails',
     gettransactiondetails:'/gettrasnactiondetails',
     gettransactionreport:'/gettrasnactionreport',
+    updatewriteoffamount:'/fnupdatewriteoffamount'
   },
   sales:{
     getcalculatedMRP:'/getcalculatedMRP'
@@ -38,13 +39,19 @@ export const API_ENDPOINTS = {
   dashboardservice: {
     topbar: '/getdashboardreport'
   },
-
-
   user:{
     getuserdetails:'/getuserdetails',
      updateprofie:'/updateprofile'
+  },
+  settings:{
+    gettransactionmisc:'/tbltransactionmisc',
+    upserttransactionmisc:'/fnupserttransactionmisc',
+    deletetransaction:'/fndeletetransaction',
+    upsertcustomermaster:'/fnupsertcustomermaster',
+    upsertsuppliermaster:'/fnupsertsuppliermaster',
+    fnmanageapprovalrulelevels:'/fnmanageapprovalrulelevels',
+    approverequest:'/fnapproverequest'
   }
-
 };
 
 

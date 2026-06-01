@@ -5,7 +5,7 @@
 
         <!-- Buttons - Hidden on mobile, shown in header on desktop -->
         <div class="hidden md:flex gap-4">
-            <button pButton type="button" label="Display" class="p-button-warning" (click)="Onreturndropdowndetails()"></button>
+            <button pButton type="button" label="Display" class="p-button-warning" (click)="display()"></button>
             <button pButton type="button" label="Download" icon="pi pi-download" iconPos="right" class="p-button-warning" (click)="onDownloadClick()"></button>
             <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
         </div>
@@ -22,34 +22,24 @@
             <!-- Type -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Type</label>
-                <p-dropdown [options]="typeOptions" optionValue="fieldid" optionLabel="fieldname" [filter]="true" [showClear]="true" filterPlaceholder="Search Type" formControlName="p_type" placeholder="Type" class="w-full"> </p-dropdown>
+                <p-dropdown [options]="typeOptions" optionValue="rule_name" optionLabel="rule_name" [filter]="true" [showClear]="true" filterPlaceholder="Search Type" formControlName="p_type" placeholder="Type" class="w-full"> </p-dropdown>
             </div>
         </div>
 
         <!-- Action Buttons - Visible only on mobile, below form fields -->
         <div class="flex md:hidden justify-center gap-2 mt-6">
-            <button pButton type="button" label="Display" class="p-button-warning flex-1" (click)="Onreturndropdowndetails()" [disabled]="customerForm.invalid"></button>
+            <button pButton type="button" label="Display" class="p-button-warning flex-1" (click)="display()" [disabled]="customerForm.invalid"></button>
             <button pButton type="button" label="Download" class="p-button-warning flex-1" (click)="onDownloadClick()"></button>
             <button pButton type="button" label="Reset" class="p-button-secondary flex-1" (click)="reset()"></button>
         </div>
 
         <!-- Product Table with Pagination -->
         <div>
-            <p-table
-                [value]="filteredProducts"
-                dataKey="mobile"
-                [(selection)]="selectedRows"
-                selectionMode="multiple"
-                [tableStyle]="{ 'min-width': '50rem' }"
-                [paginator]="true"
-                [rows]="10"
-                [rowsPerPageOptions]="[10, 20, 50]"
-                [responsiveLayout]="'scroll'"
-                class="p-datatable-gridlines mt-6 item-report"
-            >
+            <p-table [value]="filteredProducts" [tableStyle]="{ 'min-width': '50rem' }" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines mt-6 item-report">
                 <ng-template pTemplate="header">
                     <tr class="bg-yellow-400">
                         <th>Id</th>
+                        <th>Invoice No</th>
                         <th>Type</th>
                         <th>Requester</th>
                         <th>Mobile</th>
@@ -62,18 +52,19 @@
 
                 <ng-template pTemplate="body" let-row let-i="rowIndex">
                     <tr>
-                        <td>{{ row.id }}</td>
-                        <td>{{ row.type }}</td>
-                        <td>{{ row.requester }}</td>
+                        <td>{{ row.request_id }}</td>
+                        <td>{{ row.invoice_no }}</td>
+                        <td>{{ row.request_type }}</td>
+                        <td>{{ row.customer_name }}</td>
                         <td>{{ row.mobile }}</td>
-                        <td>{{ row.date }}</td>
+                        <td>{{ row.request_date | date: 'dd/MM/yyyy' }}</td>
                         <td>{{ row.amount }}</td>
                         <td>{{ row.status }}</td>
                         <td class="text-center w-[60px]">
                             <div class="flex g-2">
-                                <button pButton type="button" icon="pi pi-eye" class="p-button-text p-button-sm p-button-info" (click)="view(row.id)"></button>
-                                <button pButton type="button" icon="pi pi-check-square" class="p-button-text p-button-sm p-button-success" (click)="approved(row)"></button>
-                                <button pButton type="button" icon="pi pi-ban" class="p-button-text p-button-sm p-button-danger" (click)="reject(row)"></button>
+                                <!-- <button pButton type="button" icon="pi pi-eye" class="p-button-text p-button-sm p-button-info" (click)="view(row.id)"></button> -->
+                                <button pButton type="button" icon="pi pi-check-square" class="p-button-text p-button-sm p-button-success" (click)="approved(row)" [disabled]="row.status !== 'PENDING'"></button>
+                                <button pButton type="button" icon="pi pi-ban" class="p-button-text p-button-sm p-button-danger" (click)="reject(row)" [disabled]="row.status !== 'PENDING'"></button>
                             </div>
                         </td>
                     </tr>
@@ -125,7 +116,7 @@
                         <td>{{ row.level }}</td>
                         <td>{{ row.approver }}</td>
                         <td>
-                            <p-tag [value]="row.status" [severity]="getSeverity(row.status)"> </p-tag>
+                            <p-tag [value]="row.status"> </p-tag>
                         </td>
                         <td>{{ row.date }}</td>
                         <td>{{ row.comment }}</td>

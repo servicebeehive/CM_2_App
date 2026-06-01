@@ -134,11 +134,11 @@ export const ADMIN_MENU_MODEL: MenuItem[] = [
                 icon: 'pi pi-fw pi-cog',
                 routerLink: ['/layout/settings/overview'],
                 items: [
-                    {
-                        label: 'Access Control',
-                        icon: 'pi pi-fw pi-sliders-h',
-                        routerLink: ['/layout/settings/access-control']
-                    },
+                    // {
+                    //     label: 'Access Control',
+                    //     icon: 'pi pi-fw pi-sliders-h',
+                    //     routerLink: ['/layout/settings/access-control']
+                    // },
                     {
                         label: 'User Management',
                         icon: 'pi pi-fw pi-users',
@@ -147,18 +147,25 @@ export const ADMIN_MENU_MODEL: MenuItem[] = [
                      {
                         label: 'Customer Master',
                         icon: 'pi pi-fw pi-user',
-                        routerLink: ['/layout/settings/category-formate', 'customermaster']
+                        routerLink: ['/layout/settings/category-formate', 'customermaster'],
+                        routerLinkActiveOptions:{exact: false}
                     },
                     {
                         label: 'Supplier Master',
                         icon: 'pi pi-fw pi-truck',
-                        routerLink: ['/layout/settings/category-formate', 'suppliermaster']
+                        routerLink: ['/layout/settings/category-formate', 'suppliermaster'],
+                        routerLinkActiveOptions:{exact:false}
                     },
-                      {
-                        label: 'My Approval',
-                        icon: 'pi pi-fw pi-check-circle',
-                        routerLink: ['/layout/settings/my-approval']
+                    {
+                        label: 'Rule Detail',
+                        icon: 'pi pi-exclamation-triangle',
+                        routerLink: ['/layout/settings/rule-detail']
                     },
+                    //   {
+                    //     label: 'My Approval',
+                    //     icon: 'pi pi-fw pi-check-circle',
+                    //     routerLink: ['/layout/settings/my-approval']
+                    // },
                       {
                         label: 'Misc Charges',
                         icon: 'pi pi-fw pi-wallet',
@@ -378,6 +385,34 @@ export const STORE_OWNER_MENU_MODEL: MenuItem[] = [
                         label: 'Transaction Report',
                         icon: 'pi pi-fw pi-chart-line',
                         routerLink: ['/layout/reports/transaction-report']
+                    }
+                ]
+            }
+        ]
+    },
+     {
+        label: 'SETTINGS',
+        icon: 'pi pi-cog',
+        items: [
+            {
+                label: 'System Settings',
+                icon: 'pi pi-fw pi-cog',
+                routerLink: ['/layout/settings/overview'],
+                items: [
+                    {
+                        label: 'Rule Detail',
+                        icon: 'pi pi-exclamation-triangle',
+                        routerLink: ['/layout/settings/rule-detail']
+                    },
+                      {
+                        label: 'My Approval',
+                        icon: 'pi pi-fw pi-check-circle',
+                        routerLink: ['/layout/settings/my-approval']
+                    },
+                      {
+                        label: 'Misc Charges',
+                        icon: 'pi pi-fw pi-wallet',
+                        routerLink: ['/layout/settings/misc-charges']
                     }
                 ]
             }

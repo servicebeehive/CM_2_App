@@ -21,7 +21,7 @@
         [tableStyle]="{ 'table-layout': 'fixed', width: '100%', overflow: 'hidden', 'text-overflow': 'ellipsis', 'white-space': 'nowrap' }"
         dataKey="id"
         [paginator]="true"
-        [rows]="5"
+        [rows]="10"
         [rowsPerPageOptions]="[5, 10, 20]"
         [responsiveLayout]="'scroll'"
         class="p-datatable-gridlines mt-6"
@@ -40,7 +40,8 @@
                     <td [style.width]="col.width">{{ row[col.field] }}</td>
                 }
                 <td class="text-center">
-                    <i class="pi pi-pencil cursor-pointer text-blue-500" style="width: 80px; text-align: center" (click)="openEditDialog(row)"></i>
+                    <i class="pi pi-pencil cursor-pointer text-blue-500" (click)="openEditDialog(row)"></i>
+                    <i class="pi pi-trash ms-2 text-red-500 cursor-pointer text-sm md:text-base" (click)="removeItem(row)"> </i>
                 </td>
             </tr>
         </ng-template>

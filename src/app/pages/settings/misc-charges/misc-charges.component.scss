@@ -5,7 +5,7 @@
 ::ng-deep .misc-charge {
     .p-datatable-wrapper{
         max-height: 500px;
-        min-width: 120px;
+        min-width: 60px;
         overflow: auto;
         border-radius: 6px;
         border: 1px solid var(--surface-border);
@@ -13,31 +13,50 @@
 
 .p-datatable-thead > tr > th:nth-child(1),
     .p-datatable-tbody > tr > td:nth-child(1) {
-        min-width: 120px !important;
-        max-width: 120px !important;
+        min-width: 80px !important;
+        max-width: 100px !important;
     }
 
     .p-datatable-thead > tr > th:nth-child(1),
     .p-datatable-tbody > tr > td:nth-child(1) {
-        min-width: 120px !important;
-        max-width: 120px !important;
+        min-width: 80px !important;
+        max-width: 100px !important;
+    }
+
+    p-datatable-thead > tr > th:nth-child(2),
+    .p-datatable-tbody > tr > td:nth-child(2) {
+        min-width: 80px !important;
+        max-width: 100px !important;
     }
 
     .p-datatable-thead > tr > th:nth-child(3),
     .p-datatable-tbody > tr > td:nth-child(3) {
-        min-width: 120px !important;
-        max-width: 120px !important;
+        min-width: 80px !important;
+        max-width: 100px !important;
     }
 
      .p-datatable-thead > tr > th:nth-child(4),
     .p-datatable-tbody > tr > td:nth-child(4) {
-        min-width: 120px !important;
-        max-width: 120px !important;
+        min-width: 80px !important;
+        max-width: 100px !important;
     }
 
     .p-datatable-thead > tr > th:nth-child(5),
     .p-datatable-tbody > tr > td:nth-child(5) {
-        min-width: 250px !important;
-        max-width: 300px !important;
+        min-width: 80px !important;
+        max-width: 100px !important;
+    }
+
+.p-datatable-thead > tr > th:nth-child(6),
+    .p-datatable-tbody > tr > td:nth-child(6) {
+        min-width: 140px !important;
+        max-width: 140px !important;
+    }
+
+
+     .p-datatable-thead > tr > th:last-child,
+    .p-datatable-tbody > tr > td:last-child {
+        min-width: 60px !important;
+        max-width: 60px !important;
     }
 }

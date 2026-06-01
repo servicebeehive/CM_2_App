@@ -545,8 +545,9 @@ export class InvoiceComponent {
 
     openInvoice(row: any) {
         if (!row || !row.invoice_no) return;
+        const username = this.authService.isLogIntType()?.username;
         const payload = {
-            p_username: 'admin',
+            p_username: username,
             p_returntype: 'SALEPRINT',
             p_returnvalue: row.invoice_no
         };
@@ -746,7 +747,7 @@ export class InvoiceComponent {
             p_mobileno: data.mobileno || '',
             p_customergstno: data.customergstno,
             p_customerstate: data.customerstate,
-            chalanno:data.challanno,
+            chalanno:data.customergstno,
             deliveryboy: data.deliveryboy,
             p_totalsale: data.totalsale || 0,
             p_totalpayable: data.totalpayable || 0,
