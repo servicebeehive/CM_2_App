@@ -208,8 +208,8 @@
  <!-- Customer Contact Name -->
         <div class="flex flex-col">
           <label class="font-medium mb-1">Contact Name <span class="text-red-500">*</span></label>
-          <input pInputText formControlName="customercontactname" placeholder="Customer Contact Name" />
-          <small class="text-red-500 mt-1" *ngIf="masterForm.get('customercontactname')?.touched && masterForm.get('customercontactname')?.invalid">
+          <input pInputText formControlName="customercontactperson" placeholder="Customer Contact Name" />
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('customercontactperson')?.touched && masterForm.get('customercontactperson')?.invalid">
             Customer Name is required
           </small>
         </div>
