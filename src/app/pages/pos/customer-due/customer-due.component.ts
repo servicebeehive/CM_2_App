@@ -98,12 +98,10 @@ export class CustomerDueComponent {
             p_cusname: [],
             totalDueAmount: []
         });
-        this.setTableColumns();
         this.loadAllDropdowns();
     }
 
     blockMinus(event: KeyboardEvent) {
-        console.log(event);
         if (event.key === '-' || event.key === 'Minus' || event.key === 'e' || event.key === 'E') {
             event.preventDefault();
         }
@@ -125,7 +123,7 @@ export class CustomerDueComponent {
         }
     }
 
-     validateWriteoffAmount(row: any) {
+    validateWriteoffAmount(row: any) {
         const due = parseFloat(row.due_amount) || 0;
         const writeoff = parseFloat(row.write_off) || 0;
         if (writeoff > due) {
@@ -162,15 +160,14 @@ export class CustomerDueComponent {
                                 customerphone: item.customerphone,
                                 due_amount: 0,
                                 status: item.approvalstatus ?? null,
-                                remarks:item.remarks,
+                                remarks: item.remarks,
                                 transactions: []
                             };
                         }
                         acc[key].due_amount += Number(item.due_amount || 0);
-                        if (item.approvalstatus) {
-                            acc[key].status = item.approvalstatus;
-                        }
 
+                        acc[key].status = item.approvalstatus ?? acc[key].status;
+                        acc[key].remarks = item.remarks ?? acc[key].remarks;
                         acc[key].transactions.push({
                             transaction_id: item.transactionid,
                             due_amount: Number(item.due_amount || 0)
@@ -179,7 +176,7 @@ export class CustomerDueComponent {
                     }, {})
                 ).filter((item: any) => item.due_amount > 0);
 
-                this.filteredProducts = this.products.filter((i) => i.status === this.selectedStatus);
+                this.filteredProducts = this.selectedStatus ? this.products.filter((i) => i.status === this.selectedStatus) : [...this.products];
 
                 this.showData = true;
                 this.totalDueAmount();
@@ -219,7 +216,7 @@ export class CustomerDueComponent {
             fromDate: new Date(),
             toDate: new Date()
         });
-        
+        this.selectedStatus='PENDING';
         this.filteredProducts = [];
         this.products = [];
         this.showData = false;
@@ -292,8 +289,8 @@ export class CustomerDueComponent {
         this.inventoryService.updatewriteoffamount(payload).subscribe({
             next: (res: any) => {
                 this.showSuccess(res.data.message);
-                this.Onreturndropdowndetails(); 
-                this.selectedStatus='PENDING';
+                this.Onreturndropdowndetails();
+                this.selectedStatus = 'PENDING';
                 this.submitDisable = true;
             },
             error: (err) => {
@@ -301,25 +298,6 @@ export class CustomerDueComponent {
                 this.errorSuccess('Failed to update write-off. Please try again.');
             }
         });
-    }
-
-    private setTableColumns(): void {
-        const formatDate = (dateValue: any): string => {
-            if (!dateValue) return '';
-            try {
-                const date = new Date(dateValue);
-                if (!isNaN(date.getTime())) {
-                    return this.datePipe.transform(date, 'dd/MM/yyyy') || '';
-                }
-            } catch {}
-            return String(dateValue);
-        };
-
-        this.columns = [
-            { fields: 'customer', header: 'Name' },
-            { fields: 'customerphone', header: 'Mobile No' },
-            { fields: 'due_amount', header: 'Due Amount' }
-        ];
     }
 
     downloadExcel() {
@@ -331,51 +309,47 @@ export class CustomerDueComponent {
         this.showSuccess('Excel file downloaded successfully!');
     }
 
-private generateXLSX(): void {
-    const rows = this.filteredProducts.map((item) => ({
-        'Customer Name': item.customer ?? '',
-        'Mobile No':     item.customerphone ?? '',
-        'Due Amount':    Number(item.due_amount) || 0,
-        'Status':        item.status ?? '',
-        'Remarks':       item.remarks ?? ''
-    }));
+    private generateXLSX(): void {
+        const rows = this.filteredProducts.map((item) => ({
+            'Customer Name': item.customer ?? '',
+            'Mobile No': item.customerphone ?? '',
+            'Due Amount': Number(item.due_amount) || 0,
+            Status: item.status ?? '',
+            Remarks: item.remarks ?? ''
+        }));
 
-    const worksheet = XLSX.utils.json_to_sheet(rows);
-    const colWidths = Object.keys(rows[0] ?? {}).map((key) => ({
-        wch: Math.max(
-            key.length,
-            ...rows.map((r: any) => String(r[key] ?? '').length)
-        ) + 2
-    }));
-    worksheet['!cols'] = colWidths;
+        const worksheet = XLSX.utils.json_to_sheet(rows);
+        const colWidths = Object.keys(rows[0] ?? {}).map((key) => ({
+            wch: Math.max(key.length, ...rows.map((r: any) => String(r[key] ?? '').length)) + 2
+        }));
+        worksheet['!cols'] = colWidths;
 
-    const range = XLSX.utils.decode_range(worksheet['!ref'] ?? 'A1');
-    for (let col = range.s.c; col <= range.e.c; col++) {
-        const cellAddr = XLSX.utils.encode_cell({ r: 0, c: col });
-        if (worksheet[cellAddr]) {
-            worksheet[cellAddr].s = {
-                font: { bold: true },
-                fill: { fgColor: { rgb: 'D9E1F2' } },
-                alignment: { horizontal: 'center' }
-            };
+        const range = XLSX.utils.decode_range(worksheet['!ref'] ?? 'A1');
+        for (let col = range.s.c; col <= range.e.c; col++) {
+            const cellAddr = XLSX.utils.encode_cell({ r: 0, c: col });
+            if (worksheet[cellAddr]) {
+                worksheet[cellAddr].s = {
+                    font: { bold: true },
+                    fill: { fgColor: { rgb: 'D9E1F2' } },
+                    alignment: { horizontal: 'center' }
+                };
+            }
         }
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Customer Due');
+
+        const fileName = this.generateFileName() + '.xlsx';
+        XLSX.writeFile(workbook, fileName);
     }
-
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Customer Due');
-
-    const fileName = this.generateFileName() + '.xlsx';
-    XLSX.writeFile(workbook, fileName);
-}
 
     private generateFileName(): string {
         const customer = this.customerForm.get('p_cusname')?.value;
         const customername = this.cusMobNameOptions.find((c) => c.fieldid === customer);
-        console.log();
         let fileName = `${customername?.fieldname || 'Customer'}_Report`;
         return fileName;
     }
-    
+
     onDownloadClick() {
         if (this.customerForm.invalid) {
             this.errorSuccess('Please fill all required fields before downloading.');

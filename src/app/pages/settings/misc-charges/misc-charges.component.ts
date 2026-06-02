@@ -96,7 +96,14 @@ export class MiscChargesComponent {
             p_amount: [null, [Validators.required, Validators.min(1)]],
             p_request: ['PENDING']
         });
+       
+        this.miscChargeForm.get('p_request')?.valueChanges.subscribe(status => {
+        this.filteredProducts = status
+            ? this.allProducts.filter(item => item.status === status)
+            : [...this.allProducts];
+    });
 
+        console.log('request',this.miscChargeForm.get('p_request')?.value)
         this.onGetTransMics();
     }
 
@@ -114,15 +121,6 @@ export class MiscChargesComponent {
         return `${year}-${month}-${day}`;
     }
 
-    onRequestChange(event: any) {
-        const selectedRequest = event.value;
-        if (selectedRequest) {
-            this.filteredProducts = this.allProducts.filter((i) => i.status === selectedRequest);
-        } else {
-            this.filteredProducts = this.allProducts;
-        }
-    }
-
     createDropdownPayload(returnType: string) {
         return {
             p_username: 'admin',
@@ -137,7 +135,8 @@ export class MiscChargesComponent {
         this.inventoryService.getdropdowndetails(payload).subscribe({
             next: (res) => {
                 this.allProducts = res.data;
-                this.filteredProducts = res.data;
+                const status = this.miscChargeForm?.get('p_request')?.value;
+                this.filteredProducts = status? this.allProducts.filter(item=> item.status === status) : [...this.allProducts];
             },
             error: (err) => console.log(err)
         });
@@ -218,7 +217,6 @@ export class MiscChargesComponent {
     }
 
     onEdit(data: any) {
-        console.log('edit', data);
         this.selectedCharge = data;
         this.editmode = true;
         const head = this.headOptions.find((h) => h.fieldname === data.head);
