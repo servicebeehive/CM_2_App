@@ -561,7 +561,8 @@ export class InvoiceComponent {
                             mode: 'edit',
                             saleData: invoiceSummary,
                             itemsData: res.data,
-                            returnUrl: '/layout/pos/invoice'
+                            returnUrl: '/layout/pos/invoice',
+                            from: 'invoice'
                         }
                     });
                 } else {

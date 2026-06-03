@@ -191,6 +191,7 @@ export class SalesComponent {
     branchname: string = '';
     ifsc: string = '';
     pan: string = '';
+    fromPage:string='';
     @ViewChild(AddinventoryComponent) addInventoryComp!: AddinventoryComponent;
 
     // Dropdowns / lists
@@ -303,6 +304,7 @@ export class SalesComponent {
         if (navigation && navigation.saleData && navigation.itemsData) {
             this.backshow = true;
             this.mode = navigation.mode || 'edit';
+            this.fromPage = navigation.from || '';
             this.populateSaleForm(navigation.saleData, navigation.itemsData);
         }
         this.setupBackButtonListener();
@@ -618,7 +620,6 @@ export class SalesComponent {
         };
         this.salesService.Getreturndropdowndetails(payload).subscribe({
             next: (res) => {
-                console.log('result:', res);
                 this.itemOptionslist = res.data;
             },
             error: (err) => console.log(err)
@@ -950,9 +951,16 @@ customerDetail(){
         this.salesForm.updateValueAndValidity();
     }
 
-    back() {
+   back() {
+    console.log(this.fromPage)
+   if (this.fromPage === 'invoice') {
+        this.route.navigate(['/layout/pos/invoice']);
+    } else if (this.fromPage === 'approval') {
+        this.route.navigate(['/layout/settings/my-approval']);
+    } else {
         this.route.navigate(['/layout/pos/invoice']);
     }
+}
     // Apply overall discount & round off
     applyDiscount() {
         const totalSale = Number(this.salesForm.get('p_totalsale')?.value || 0);

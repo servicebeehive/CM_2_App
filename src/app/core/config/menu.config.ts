@@ -358,6 +358,11 @@ export const STORE_OWNER_MENU_MODEL: MenuItem[] = [
                 icon: 'pi pi-fw pi-desktop',
                 routerLink: ['/layout/pos/overview'],
                 items: [
+                      {
+                        label: 'Sales',
+                        icon: 'pi pi-fw pi-dollar',
+                        routerLink: ['/layout/pos/sales']
+                    },
                     {
                         label: 'Invoice',
                         icon: 'pi pi-fw pi-file',

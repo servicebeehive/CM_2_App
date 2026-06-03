@@ -27,6 +27,7 @@ import { Card } from 'primeng/card';
 import { Divider } from 'primeng/divider';
 import { Tag } from 'primeng/tag';
 import * as XLSX from 'xlsx';
+import { Router } from '@angular/router';
 
 @Component({
     selector: 'app-my-approval',
@@ -91,7 +92,8 @@ export class MyApprovalComponent {
         private authService: AuthService,
         private messageService: MessageService,
         private datePipe: DatePipe,
-        private confirmationService: ConfirmationService
+        private confirmationService: ConfirmationService,
+        private router:Router
     ) {}
 
     ngOnInit(): void {
@@ -224,29 +226,57 @@ export class MyApprovalComponent {
         this.downloadExcel();
     }
 
-    view(id: number) {
-        console.log(id);
-        this.viewdetails = true;
+    view(row: any) {
+       if (!row || !row.invoice_no) return;
+        const username = this.authService.isLogIntType()?.username;
         const payload = {
-            p_username: 'admin',
-            p_returntype: 'CHILDUOM',
-            p_returnvalue: id.toString()
+            p_username: username,
+            p_returntype: 'SALEPRINT',
+            p_returnvalue: row.invoice_no
         };
 
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res: any) => {
-                if (!res.data || res.data.length === 0) {
-                    //  this.showError("No Child UOM Data Available");
-                    return;
+            this.router.navigate(['/layout/pos/sales'], {
+                state: {
+                    saleData: {
+                        p_billno: row.billno,
+                        p_transactionid: row.transactionid,
+                        p_customername: row.customer_name,
+                        p_mobileno: row.mobileno,
+                        p_transactiondate: row.transactiondate ? new Date(row.transactiondate) : new Date(),
+                        p_deliveryboy: row.deliveryboy,
+                        p_gsttran: row.gstin,
+                        status: row.status || '',
+                        chalanno: row.customergstno,
+                        p_totalcost: row.totalcost || 0,
+                        p_totalsale: row.totalsale || 0,
+                        p_disctype: row.discounttype || 0,
+                        p_overalldiscount: row.discount || 0,
+                        discountvalueper: row.discountvalueper || 0,
+                        p_roundoff: row.roundoff || 0,
+                        p_totalpayable: row.totalpayable || 0,
+                        p_paymentdue: row.amountpaid,
+                        sgst_9: row.sgst_9 || 0,
+                        tax_18: row.tax_18 || 0,
+                        cgst_9: row.cgst_9 || 0,
+                        amount_before_tax: row.amount_before_tax || 0,
+                        ...(res.data?.[0] || {})
+                    },
+                    itemsData: res.data || [],
+                    mode: 'edit',
+                    from:'approval'
                 }
-
-                // this.childUOMList = res.data; // assign data
-                // this.childUomDialog = true; // open popup
-            },
-            error: (err) => {
-                // this.showError("Failed to load Child UOM Details");
-                console.error(err);
-            }
+            });
+        },
+        error: (err) => {
+            console.error(err);
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Failed to load invoice details'
+            });
+        }
         });
     }
 
@@ -315,7 +345,7 @@ export class MyApprovalComponent {
             p_user_id: this.authService.isLogIntType()?.userid,
             p_usertype_id: this.authService.isLogIntType()?.usertypeid,
             p_action: 'REJECT',
-            p_remarks: ''
+            p_remarks: this.rejectComment
         };
 
         this.inventoryService.approverequest(payload).subscribe({

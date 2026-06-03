@@ -283,7 +283,7 @@ export class MiscChargesComponent {
             Head: item.head || '',
             Amount: item.amount || '',
             Status: item.status || '',
-            Reason: item.reason || ''
+            Remark: item.reason || ''
         }));
 
         const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -294,7 +294,7 @@ export class MiscChargesComponent {
             { wch: 20 }, // Head
             { wch: 15 }, // Amount
             { wch: 15 }, // Status
-            { wch: 25 } // Reason
+            { wch: 25 } // Remark
         ];
 
         const workbook = XLSX.utils.book_new();
