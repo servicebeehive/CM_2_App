@@ -1,50 +1,40 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, ViewChild } from '@angular/core';
-import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AbstractControl, FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { ConfirmationService, MessageService } from 'primeng/api';
+import { AutoCompleteModule } from 'primeng/autocomplete';
 import { ButtonModule } from 'primeng/button';
+import { CheckboxModule } from 'primeng/checkbox';
 import { ChipModule } from 'primeng/chip';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { DatePickerModule } from 'primeng/datepicker';
+import { DialogModule } from 'primeng/dialog';
+import { DropdownModule } from 'primeng/dropdown';
 import { EditorModule } from 'primeng/editor';
 import { FileUploadModule } from 'primeng/fileupload';
 import { FluidModule } from 'primeng/fluid';
 import { InputTextModule } from 'primeng/inputtext';
-import { AutoCompleteModule } from 'primeng/autocomplete';
+import { MessageModule } from 'primeng/message';
 import { RippleModule } from 'primeng/ripple';
 import { SelectModule } from 'primeng/select';
-import { DropdownModule } from 'primeng/dropdown';
-import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { TableModule } from 'primeng/table';
 import { TextareaModule } from 'primeng/textarea';
-import { MessageModule } from 'primeng/message';
-import { DatePickerModule } from 'primeng/datepicker';
-import { DialogModule } from 'primeng/dialog';
-import { StockIn } from '@/types/stockin.model';
-import { InventoryService } from '@/core/services/inventory.service';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ConfirmationService, MessageService } from 'primeng/api';
-import { CheckboxModule } from 'primeng/checkbox';
-import { Paginator } from 'primeng/paginator';
-import { Router, RouterLink } from '@angular/router';
-import { AuthService } from '@/core/services/auth.service';
-import { ShareService } from '@/core/services/shared.service';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { Tooltip } from 'primeng/tooltip';
-interface Product {
-    name: string;
-    price: string;
-    code: string;
-    sku: string;
-    status: string;
-    tags: string[];
-    category: string;
-    colors: string[];
-    stock: string;
-    inStock: boolean;
-    description: string;
-    images: Image[];
-}
 
-interface Image {
-    name: string;
-    objectURL: string;
+import { AuthService } from '@/core/services/auth.service';
+import { InventoryService } from '@/core/services/inventory.service';
+import { ShareService } from '@/core/services/shared.service';
+
+// ---------------------------------------------------------------------------
+// Column definition type — avoids `any[]` for column arrays
+// ---------------------------------------------------------------------------
+interface TableColumn {
+    fields: string;
+    header: string;
+    formatter?: (value: any) => any;
 }
 
 interface Customer {
@@ -53,8 +43,10 @@ interface Customer {
     fieldvalue: string;
     customergstno: string;
 }
+
 @Component({
     selector: 'app-invoice',
+    standalone: true,
     imports: [
         CommonModule,
         EditorModule,
@@ -83,58 +75,80 @@ interface Customer {
     styleUrl: './invoice.component.scss',
     providers: [ConfirmationService, DatePipe]
 })
-export class InvoiceComponent {
+export class InvoiceComponent implements OnInit {
+    // -------------------------------------------------------------------------
+    //  DI
+    // -------------------------------------------------------------------------
+    private readonly fb = inject(FormBuilder);
+    private readonly inventoryService = inject(InventoryService);
+    private readonly authService = inject(AuthService);
+    private readonly messageService = inject(MessageService);
+    private readonly router = inject(Router);
+    private readonly sharedService = inject(ShareService);
+    private readonly confirmationService = inject(ConfirmationService);
+    private readonly destroyRef = inject(DestroyRef);
+    public readonly datepipe = inject(DatePipe);
+
+    // -------------------------------------------------------------------------
+    //  State
+    // -------------------------------------------------------------------------
     invoiceForm!: FormGroup;
 
-    pagedProducts: any[] = [];
-    first: number = 0;
     today: Date = new Date();
-    rowsPerPage: number = 5;
-    submitDisable: boolean = true;
-    companyName: string = '';
-    companyAddress: string = '';
-    companycity: string = '';
-    companystate: string = '';
-    statecode: string = '';
-    companyemail: string = '';
-    companygstno: string = '';
-    bankname: string = '';
-    accountno: string = '';
-    branchname: string = '';
-    ifsc: string = '';
-    pan: string = '';
-    hsncode: string = '';
+    submitDisable = true;
+    showData = false;
     ledgerData = false;
-    // ✅ Move dropdown options into variables
-    cusMobileOptions = [];
+    hsncode = '';
+
+    // Company / profile
+    companyName = '';
+    companyAddress = '';
+    companycity = '';
+    companystate = '';
+    statecode = '';
+    companyemail = '';
+    companygstno = '';
+    bankname = '';
+    accountno = '';
+    branchname = '';
+    ifsc = '';
+    pan = '';
+
+    // Dropdown options
+    cusMobileOptions: any[] = [];
     cusMobNameOptions: Customer[] = [];
-    profileOptions: any = {};
     statusOptions: any[] = [];
+
+    // Table data
     products: any[] = [];
     filteredProducts: any[] = [];
     invoiceData: any[] = [];
     customerLedgerData: any[] = [];
-    columns: any[] = [];
-    displayColumns: any[]=[];
-    showData: boolean = false;
-    transactionMode: any[] = [
+
+    // Column definitions — typed
+    columns: TableColumn[] = [];
+    displayColumns: TableColumn[] = [];
+
+    selectedStatus: string | null = null;
+
+    readonly transactionMode = [
         { label: 'Cash', value: 'Cash' },
         { label: 'UPI', value: 'UPI' },
         { label: 'Card', value: 'Card' }
     ];
-    invoiceSummary: any = {};
-    constructor(
-        private fb: FormBuilder,
-        private inventoryService: InventoryService,
-        private authService: AuthService,
-        private messageService: MessageService,
-        public datepipe: DatePipe,
-        private router: Router,
-        private sharedService: ShareService,
-        private confirmationService: ConfirmationService
-    ) {}
 
+    // -------------------------------------------------------------------------
+    //  Lifecycle
+    // -------------------------------------------------------------------------
     ngOnInit(): void {
+        this.buildForm();
+        this.setTableColumns();
+        this.loadAllDropdowns();
+        this.onGetStockIn();
+        this.restoreSavedState();
+    }
+
+    private buildForm(): void {
         this.invoiceForm = this.fb.group(
             {
                 p_cusname: [''],
@@ -142,7 +156,7 @@ export class InvoiceComponent {
                 toDate: [this.today, Validators.required],
                 status: [''],
                 due_amount: [''],
-                //PRINT SECTION VARIABLE
+                // Print fields
                 p_billno: [''],
                 p_transactiondate: [''],
                 p_transactionid: [''],
@@ -151,7 +165,7 @@ export class InvoiceComponent {
                 p_mobileno: [''],
                 p_customergstno: [''],
                 p_customerstate: [''],
-                chalanno:[''],
+                chalanno: [''],
                 deliveryboy: [''],
                 p_totalsale: [''],
                 p_totalpayable: [''],
@@ -170,223 +184,85 @@ export class InvoiceComponent {
             },
             { validators: this.dateRangeValidator }
         );
-        this.loadAllDropdowns();
-        this.setTableColumns();
-        this.onGetStockIn();
-        const savedState = this.sharedService.getInvoiceState();
-        if (savedState) {
-            this.invoiceForm.patchValue(savedState.filters);
-            this.products = savedState.data;
-            this.filteredProducts = [...savedState.data];
-            console.log('Restored state from navigation');
-        }
-    }
-    blockMinus(event: KeyboardEvent) {
-        console.log(event);
-        if (event.key === '-' || event.key === 'Minus' || event.key === 'e' || event.key === 'E') {
-            event.preventDefault();
-        }
-    }
-    dateRangeValidator(form: FormGroup) {
-        const fromDate = form.get('fromDate')?.value;
-        const toDate = form.get('toDate')?.value;
-        if (!fromDate || !toDate) return null;
-        const from = new Date(fromDate);
-        const to = new Date(toDate);
-        return to >= from ? null : { dateRangeInvalid: true };
     }
 
-    validateReceivedAmount(row: any) {
-        const due = parseFloat(row.due_amount) || 0;
-        const received = parseFloat(row.received_amount) || 0;
-
-        if (received > due) {
-            row.amountError = true;
-            this.submitDisable = true;
-        } else {
-            row.amountError = false;
-            this.submitDisable = false;
+    private restoreSavedState(): void {
+        const saved = this.sharedService.getInvoiceState();
+        if (saved) {
+            this.invoiceForm.patchValue(saved.filters);
+            this.products = saved.data;
+            this.filteredProducts = [...saved.data];
         }
     }
 
+    // -------------------------------------------------------------------------
+    //  Validators
+    // -------------------------------------------------------------------------
+    dateRangeValidator(form: FormGroup): { dateRangeInvalid: true } | null {
+        const from = form.get('fromDate')?.value;
+        const to = form.get('toDate')?.value;
+        if (!from || !to) return null;
+        return new Date(to) >= new Date(from) ? null : { dateRangeInvalid: true };
+    }
+
+    // -------------------------------------------------------------------------
+    //  FormArray helpers
+    // -------------------------------------------------------------------------
     getStockArray(): FormArray {
         return this.invoiceForm.get('p_stock') as FormArray;
     }
-    onGetStockIn() {
-        this.products = this.inventoryService.productItem || [];
+
+    private initialiseFormArray(): void {
+        const arr = this.getStockArray();
+        arr.clear();
+        this.products.forEach((p) => arr.push(this.fb.control(p.received_amount ?? 0)));
     }
 
-    updateReceivedAmount(index: number, value: number): void {
-        if (this.products[index]) {
-            this.products[index].received_amount = value;
-        }
+    // -------------------------------------------------------------------------
+    //  Dropdown loading
+    // -------------------------------------------------------------------------
+    private loadAllDropdowns(): void {
+        this.loadDropdown('STATUS', (res) => (this.statusOptions = res));
+        this.loadDropdown('CUSTOMER', (res) => (this.cusMobNameOptions = res));
+        this.loadDropdown('MOBILE', (res) => (this.cusMobileOptions = res));
+        this.loadProfile();
     }
-    display() {
-        // const p_mobile = this.invoiceForm.controls['p_mobile'].value;
-        const p_cusname = this.invoiceForm.controls['p_cusname'].value;
-        const startDate = this.invoiceForm.controls['fromDate'].value;
-        const endDate = this.invoiceForm.controls['toDate'].value;
-        const status = this.invoiceForm.controls['status'].value;
-        if ((startDate && endDate) || p_cusname || status) {
-            const payload = {
-                p_startdate: this.datepipe.transform(startDate, 'yyyy/MM/dd'),
-                p_enddate: this.datepipe.transform(endDate, 'yyyy/MM/dd'),
-                // p_mobile: p_mobile || null,
-                p_customer: p_cusname || null,
-                p_status: status || null,
-                p_username: 'admin'
-            };
-            this.showData = false;
-            this.inventoryService.getinvoicedetail(payload).subscribe({
-                next: (res: any) => {
-                    console.log('API RESEULT:', res.data);
-                    this.products = res?.data || [];
-                    this.filteredProducts = [...this.products];
-                    this.showData = true;
-                    this.totalDueAmount();
-                    this.initialzeFormArray();
-                    this.saveCurrentState();
-                    this.filteredProducts = [...this.products];
 
-                    this.filteredProducts.forEach((row) => {
-                        if (!row.p_paymode) {
-                            row.p_paymode = 'Cash';
-                        }
-                    });
-                    if (this.products.length === 0) {
-                        let message = 'No Data Available for this Category and Item';
-                        this.showSuccess(message);
-                    }
+    private loadDropdown(returnType: string, onSuccess: (data: any[]) => void): void {
+        this.inventoryService
+            .getdropdowndetails({ p_username: 'admin', p_returntype: returnType })
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({ next: (res) => onSuccess(res.data), error: console.error });
+    }
+
+    private loadProfile(): void {
+        this.inventoryService
+            .getdropdowndetails({ p_username: 'admin', p_returntype: 'PROFILE' })
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (res) => {
+                    if (!res.data?.length) return;
+                    const p = res.data[0];
+                    this.companyName = p.companyname;
+                    this.companyAddress = p.companyaddress;
+                    this.companystate = p.state_name;
+                    this.companycity = p.city_name;
+                    this.companyemail = p.companyemail;
+                    this.companygstno = p.companygstno;
+                    this.statecode = p.statecode;
+                    this.bankname = p.bankname;
+                    this.accountno = p.accountno;
+                    this.branchname = p.branch;
+                    this.ifsc = p.ifsc;
+                    this.pan = p.pan;
                 },
-                error: (err) => {
-                    console.log(err);
-                    this.showData = false;
-                }
+                error: console.error
             });
-        } else {
-            let message = 'Please select date';
-            this.errorSuccess(message);
-        }
-    }
-    customerLedger() {
-        const selectedId = this.invoiceForm.controls['p_cusname'].value;
-        const selectedValue: any = this.cusMobNameOptions.find((item: any) => item.fieldid === selectedId);
-        const selectedCustomer = selectedValue?.fieldvalue;
-        const mobileMatch = selectedCustomer?.match(/\d{10}/)?.[0];
-
-        if (mobileMatch === null) {
-            this.filteredProducts = [];
-            this.products = [];
-        }
-        if (!mobileMatch) {
-            let message = 'Please select the mobile no. before filtering';
-            this.errorSuccess(message);
-        }
-
-        if (mobileMatch) {
-            const payload = {
-                p_returnvalue: mobileMatch,
-                p_returntype: 'CUSTOMERLEDGER',
-                p_username: 'admin'
-            };
-
-            this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-                next: (res: any) => {
-                    console.log('Ledger:', res.data);
-                    this.ledgerData = true;
-                    this.customerLedgerData = res.data;
-                },
-                error: (err) => {
-                    console.log(err);
-                }
-            });
-        }
-    }
-    get dueAmount(): number {
-        if (!this.customerLedgerData || this.customerLedgerData.length === 0) return 0;
-        return this.customerLedgerData.reduce((sum, item: any) => {
-            const invoiceamount = item.totalpayable || 0;
-            const paidamount = item.paid_amount || 0;
-            return sum + (invoiceamount - paidamount);
-        }, 0);
     }
 
-    totalDueAmount(): void {
-        if (!this.products || this.products.length === 0) {
-            this.invoiceForm.get('totalDueAmount')?.setValue('0');
-            return;
-        }
-        const totalSaleDue = this.products.reduce((total, product) => {
-            const isSaleTransaction = product.transactiontype && product.transactiontype.toUpperCase() === 'SALE';
-            if (isSaleTransaction) {
-                const dueAmount = Number(product.due_amount) || 0;
-                return total + dueAmount;
-            }
-            return total;
-        }, 0);
-        const roundedTotal = Number(totalSaleDue.toFixed(2));
-
-        this.invoiceForm.get('totalDueAmount')?.setValue(roundedTotal);
-    }
-    private initialzeFormArray(): void {
-        const stockArray = this.getStockArray();
-
-        // Clear existing controls
-        while (stockArray.length !== 0) {
-            stockArray.removeAt(0);
-        }
-
-        // Add controls for each product
-        this.products.forEach((product) => {
-            stockArray.push(this.fb.control(product.received_amount || 0));
-        });
-    }
-    saveCurrentState() {
-        const currentFilters = this.invoiceForm.value;
-        this.sharedService.setInvoiceState(currentFilters, this.products);
-    }
-    onDueAmountFilter(event: any) {
-        const isChecked = this.invoiceForm.controls['p_checked'].value;
-        if (isChecked) {
-            this.filteredProducts = this.products.filter((item: any) => {
-                const dueAmount = Number(item.due_amount) || 0;
-                return dueAmount > 0;
-            });
-        } else {
-            this.filteredProducts = [...this.products];
-        }
-    }
-    onPageChange(event: any) {
-        this.first = event.first;
-        this.rowsPerPage = event.rows;
-    }
-
-    get grandTotal(): number {
-        return this.products.reduce((sum, p) => sum + (p.total || 0), 0);
-    }
-
-    private generateFileName(type: 'ledger' | 'display'): string {
-
-    if (type === 'display') {
-        const fromdateRaw = this.invoiceForm.get('fromDate')?.value;
-        const todateRaw = this.invoiceForm.get('toDate')?.value;
-
-        let fromdate = this.datepipe.transform(fromdateRaw, 'dMMMyy');
-        let todate = this.datepipe.transform(todateRaw, 'dMMMyy');
-
-        return `Invoice_${fromdate}-${todate}`;
-    }
-
-    if (type === 'ledger') {
-        const customer = this.invoiceForm.get('p_cusname')?.value;
-        const customerName = this.cusMobNameOptions.find((c) => c.fieldid === customer);
-
-        return `${customerName?.fieldname || 'Customer'}_Ledger`;
-    }
-
-    return 'Download';
-}
-
+    // -------------------------------------------------------------------------
+    //  Table columns
+    // -------------------------------------------------------------------------
     private setTableColumns(): void {
         this.columns = [
             { fields: 'customername', header: 'Customer Name' },
@@ -398,7 +274,7 @@ export class InvoiceComponent {
             { fields: 'paid_amount', header: 'Paid Amount' },
             { fields: 'remarks', header: 'Remarks' }
         ];
-    
+
         this.displayColumns = [
             { fields: 'transactiontype', header: 'Transaction Type' },
             { fields: 'invoice_no', header: 'Invoice No' },
@@ -409,399 +285,443 @@ export class InvoiceComponent {
             { fields: 'total_amount', header: 'Total Amount' },
             { fields: 'paid_amount', header: 'Paid Amount' },
             { fields: 'due_amount', header: 'Due Amount' },
-            { fields: 'status', header: 'Status' }, 
+            { fields: 'status', header: 'Status' }
         ];
     }
 
-    download() {
-        if (this.customerLedgerData?.length) {
-            this.downloadExcel();
-        } else {
-            this.errorSuccess('No data available to download');
+    // -------------------------------------------------------------------------
+    //  Data loading
+    // -------------------------------------------------------------------------
+    onGetStockIn(): void {
+        this.products = this.inventoryService.productItem ?? [];
+    }
+
+    display(): void {
+        const { p_cusname, fromDate, toDate, status } = this.invoiceForm.value;
+
+        if (!fromDate || !toDate) {
+            this.errorSuccess('Please select a date range.');
+            return;
         }
-    }
-    private downloadFile(data: string, mimeType: string, extension: string,type:'ledger' | 'display') {
-        const blob = new Blob([data], { type: mimeType });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = this.generateFileName(type) + extension;
-        document.body.appendChild(link);
-        link.click();
-        document.body.appendChild(link);
-        window.URL.revokeObjectURL(url);
-    }
 
-    downloadExcel() {
-        const csvContent = this.generateCSV();
-        this.downloadFile(csvContent, 'text/csv;charset=utf-8;', '.csv','ledger');
-        this.showSuccess('Excel file downloaded successfully!');
-    }
-
- downloadDispalyExcel() {
-    if (!this.filteredProducts || this.filteredProducts.length === 0) {
-        this.errorSuccess('No data available to download.');
-        return;
-    }
-
-    const csvContent = this.generateDisplayCSV();
-    this.downloadFile(csvContent, 'text/csv;charset=utf-8;', '.csv', 'display');
-    this.showSuccess('Display Excel downloaded successfully!');
-}
-    private generateCSV(): string {
-        const headers = this.columns.map((col) => this.escapeCSV(col.header));
-        const headerRow = headers.join(',');
-        const dataRows = this.customerLedgerData.map((item) => {
-            const row = this.columns.map((col) => {
-                const value = item[col.fields];
-                const formattedValue = col.formatter ? col.formatter(value) : value;
-                return this.escapeCSV(formattedValue);
-            });
-            return row.join(',');
-        });
-        return [headerRow, ...dataRows].join('\n');
-    }
-    private escapeCSV(value: any): string {
-        if (value === null || value === undefined || value === '') {
-            return '';
-        }
-        const stringValue = String(value);
-        const escapedValue = stringValue.replace(/"/g, '""');
-        if (/[,"\n\r]/.test(escapedValue)) {
-            return `"${escapedValue}"`;
-        }
-        return escapedValue;
-    }
-
-    reset() {
-        this.invoiceForm.reset({
-            fromDate: new Date(),
-            toDate: new Date()
-        });
-        this.filteredProducts = [];
-        this.products = [];
-        this.invoiceData = [];
-        this.showData = false;
-    }
-    createDropdownPayload(returnType: string) {
-        return {
-            p_username: 'admin',
-            p_returntype: returnType
-        };
-    }
-    OnGetCusName() {
-        const payload = this.createDropdownPayload('CUSTOMER');
-        this.inventoryService.getdropdowndetails(payload).subscribe({
-            next: (res) => (this.cusMobNameOptions = res.data),
-            error: (err) => console.log(err)
-        });
-    }
-    OnGetStatus() {
-        const payload = this.createDropdownPayload('STATUS');
-        this.inventoryService.getdropdowndetails(payload).subscribe({
-            next: (res) => (this.statusOptions = res.data),
-            error: (err) => console.log(err)
-        });
-    }
-    OnGetCusMobile() {
-        const payload = this.createDropdownPayload('MOBILE');
-        this.inventoryService.getdropdowndetails(payload).subscribe({
-            next: (res) => (this.cusMobileOptions = res.data),
-            error: (err) => console.log(err)
-        });
-    }
-
-    OnGetProfile() {
-        const payload = this.createDropdownPayload('PROFILE');
-        this.inventoryService.getdropdowndetails(payload).subscribe({
-            next: (res) => {
-                if (res.data && res.data.length > 0) {
-                    this.profileOptions = res.data;
-                    const profile = res.data[0];
-                    ((this.companyName = profile.companyname),
-                        (this.companyAddress = profile.companyaddress),
-                        (this.companystate = profile.state_name),
-                        (this.companycity = profile.city_name),
-                        (this.companyemail = profile.companyemail),
-                        (this.companygstno = profile.companygstno),
-                        (this.statecode = profile.statecode),
-                        (this.bankname = profile.bankname),
-                        (this.accountno = profile.accountno),
-                        (this.branchname = profile.branch),
-                        (this.ifsc = profile.ifsc),
-                        (this.pan = profile.pan));
-                }
-            },
-            error: (err) => console.log(err)
-        });
-    }
-
-    loadAllDropdowns() {
-        this.OnGetStatus();
-        this.OnGetCusName();
-        this.OnGetCusMobile();
-        this.OnGetProfile();
-    }
-
-    openInvoice(row: any) {
-        if (!row || !row.invoice_no) return;
-        const username = this.authService.isLogIntType()?.username;
         const payload = {
-            p_username: username,
-            p_returntype: 'SALEPRINT',
-            p_returnvalue: row.invoice_no
+            p_startdate: this.datepipe.transform(fromDate, 'yyyy/MM/dd'),
+            p_enddate: this.datepipe.transform(toDate, 'yyyy/MM/dd'),
+            p_customer: p_cusname || null,
+            p_status: status || null,
+            p_username: 'admin'
         };
-        this.saveCurrentState();
-        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-            next: (res: any) => {
-                if (res.data && res.data.length > 0) {
-                    const invoiceSummary = res.data[0];
-                    this.router.navigate(['/layout/pos/sales'], {
-                        state: {
-                            mode: 'edit',
-                            saleData: invoiceSummary,
-                            itemsData: res.data,
-                            returnUrl: '/layout/pos/invoice',
-                            from: 'invoice'
-                        }
-                    });
-                } else {
-                    this.messageService.add({
-                        severity: 'warn',
-                        summary: 'No Data',
-                        detail: 'Invoice data not found'
-                    });
+
+        this.showData = false;
+
+        this.inventoryService
+            .getinvoicedetail(payload)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (res: any) => {
+                    this.products = res?.data ?? [];
+                    this.filteredProducts = this.products.map((row) => ({
+                        ...row,
+                        p_paymode: row.p_paymode ?? 'Cash'
+                    }));
+
+                    this.showData = true;
+                    this.totalDueAmount();
+                    this.initialiseFormArray();
+                    this.saveCurrentState();
+
+                    if (this.products.length === 0) {
+                        this.showSuccess('No Data Available for the selected filters.');
+                    }
+                },
+                error: (err) => {
+                    console.error(err);
+                    this.showData = false;
                 }
-            },
-            error: () => {
-                this.messageService.add({
-                    severity: 'error',
-                    summary: 'Error',
-                    detail: 'Failed to load invoice'
-                });
+            });
+    }
+
+    customerLedger(): void {
+        const selectedId = this.invoiceForm.get('p_cusname')?.value;
+        const selectedValue = this.cusMobNameOptions.find((c) => c.fieldid === selectedId);
+        const mobile = selectedValue?.fieldvalue?.match(/\d{10}/)?.[0];
+
+        if (!mobile) {
+            this.filteredProducts = [];
+            this.products = [];
+            this.errorSuccess('Please select a valid customer with a mobile number.');
+            return;
+        }
+
+        this.inventoryService
+            .Getreturndropdowndetails({ p_returnvalue: mobile, p_returntype: 'CUSTOMERLEDGER', p_username: 'admin' })
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (res: any) => {
+                    this.ledgerData = true;
+                    this.customerLedgerData = res.data;
+                },
+                error: console.error
+            });
+    }
+
+    // -------------------------------------------------------------------------
+    //  Computed totals
+    // -------------------------------------------------------------------------
+    get dueAmount(): number {
+        return this.customerLedgerData.reduce((sum, item: any) => sum + ((item.totalpayable ?? 0) - (item.paid_amount ?? 0)), 0);
+    }
+
+    get grandTotal(): number {
+        return this.products.reduce((sum, p) => sum + (p.total ?? 0), 0);
+    }
+
+    totalDueAmount(): void {
+        const total = this.products.reduce((sum, p) => {
+            if (p.transactiontype?.toUpperCase() === 'SALE') {
+                return sum + (Number(p.due_amount) || 0);
             }
+            return sum;
+        }, 0);
+
+        this.invoiceForm.get('totalDueAmount')?.setValue(+total.toFixed(2));
+    }
+
+    // -------------------------------------------------------------------------
+    //  Filters
+    // -------------------------------------------------------------------------
+    onDueAmountFilter(): void {
+        const checked = this.invoiceForm.get('p_checked')?.value;
+        this.filteredProducts = checked ? this.products.filter((item) => Number(item.due_amount) > 0) : [...this.products];
+    }
+
+    onPageChange(event: any): void {
+        // handled by p-table internally; keep if paginator emits custom events
+    }
+
+    // -------------------------------------------------------------------------
+    //  Validation helpers
+    // -------------------------------------------------------------------------
+    validateReceivedAmount(row: any): void {
+        const due = parseFloat(row.due_amount) || 0;
+        const received = parseFloat(row.received_amount) || 0;
+        row.amountError = received > due;
+        this.submitDisable = row.amountError;
+    }
+
+    blockMinus(event: KeyboardEvent): void {
+        if (['-', 'Minus', 'e', 'E'].includes(event.key)) {
+            event.preventDefault();
+        }
+    }
+
+    canPrint(row: any): boolean {
+        return row?.transactiontype?.toUpperCase() === 'SALE';
+    }
+
+    // -------------------------------------------------------------------------
+    //  State persistence
+    // -------------------------------------------------------------------------
+    saveCurrentState(): void {
+        this.sharedService.setInvoiceState(this.invoiceForm.value, this.products);
+    }
+
+    // -------------------------------------------------------------------------
+    //  Navigation
+    // -------------------------------------------------------------------------
+    openInvoice(row: any): void {
+        if (!row?.invoice_no) return;
+        const username = this.authService.isLogIntType()?.username;
+
+        this.saveCurrentState();
+
+        this.inventoryService
+            .Getreturndropdowndetails({ p_username: username, p_returntype: 'SALEPRINT', p_returnvalue: row.invoice_no })
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (res: any) => {
+                    if (!res.data?.length) {
+                        this.messageService.add({ severity: 'warn', summary: 'No Data', detail: 'Invoice data not found' });
+                        return;
+                    }
+                    this.router.navigate(['/layout/pos/sales'], {
+                        state: { mode: 'edit', saleData: res.data[0], itemsData: res.data, from: 'invoice' }
+                    });
+                },
+                error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load invoice' })
+            });
+    }
+
+    // -------------------------------------------------------------------------
+    //  Payment submission
+    // -------------------------------------------------------------------------
+    submit(): void {
+        this.confirmationService.confirm({
+            message: 'Are you sure you want to make this change?',
+            header: 'Confirm',
+            acceptLabel: 'Yes',
+            rejectLabel: 'Cancel',
+            accept: () => this.processPayments()
         });
     }
 
-    getReceivedAmountControl(index: number): AbstractControl | null {
-        const stockArray = this.getStockArray();
-        return stockArray.at(index)?.get('received_amount') || null;
-    }
+    private processPayments(): void {
+        const payloadItems = this.products
+            .filter((row) => (parseFloat(row.received_amount) || 0) > 0)
+            .map((row) => {
+                const received = parseFloat(row.received_amount);
+                const due = parseFloat(row.due_amount);
 
-    onChangeROPdown() {
-        const payloadItems = [];
-
-        // Process only rows with received amount > 0
-        for (let i = 0; i < this.products.length; i++) {
-            const row = this.products[i];
-            const receivedAmount = parseFloat(row.received_amount) || 0;
-            const modeoftrans = row.p_paymode;
-            if (receivedAmount > 0) {
-                // Validate amount before adding
-                if (receivedAmount > parseFloat(row.due_amount)) {
+                if (received > due) {
                     this.messageService.add({
                         severity: 'error',
                         summary: 'Error',
                         detail: `Received amount for invoice ${row.invoice_no} exceeds due amount`
                     });
-                    return;
+                    throw new Error('validation'); // stops map + caught below
                 }
-                payloadItems.push({
+
+                return {
                     adjtype: row.invoice_no,
-                    // Add other required fields
                     ItemId: 0,
                     batchId: 0,
                     Quantity: 0,
-                    mrpvalue: receivedAmount,
-                    transmode: modeoftrans
-                });
-            }
-       }
+                    mrpvalue: received,
+                    transmode: row.p_paymode
+                };
+            });
 
         if (payloadItems.length === 0) {
             this.messageService.add({
                 severity: 'warn',
                 summary: 'Warning',
-                detail: 'Please enter received amount for at least one invoice'
+                detail: 'Please enter a received amount for at least one invoice.'
             });
             return;
         }
 
-        const payload = {
-            p_stock: payloadItems,
-            p_updatetype: 'DUE',
-            p_username: 'admin' // Add username if required
-        };
-        // Call API
-        this.inventoryService.updatestockadjustment(payload).subscribe({
-            next: (res: any) => {
-                this.showSuccess('Transaction has been saved successfully');
-
-                // Refresh the data
-                this.display();
-            },
-            error: (err) => {
-                console.error('Error saving amounts:', err);
-                this.messageService.add({
-                    severity: 'error',
-                    summary: 'Error',
-                    detail: 'Failed to save received amounts'
-                });
-            }
-        });
-    }
-    submit() {
-        this.confirmationService.confirm({
-            message: 'Are you sure you want to make change?',
-            header: 'Confirm',
-            acceptLabel: 'Yes',
-            rejectLabel: 'Cancel',
-            accept: () => {
-                this.onChangeROPdown();
-            },
-            reject: () => {}
-        });
+        this.inventoryService
+            .updatestockadjustment({ p_stock: payloadItems, p_updatetype: 'DUE', p_username: 'admin' })
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: () => {
+                    this.showSuccess('Transaction saved successfully.');
+                    this.display();
+                },
+                error: (err) => {
+                    console.error(err);
+                    this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to save received amounts.' });
+                }
+            });
     }
 
-    private generateDisplayCSV(): string {
-      const headers = this.displayColumns.map((col)=> this.escapeCSV(col.header));
-      const headerRow = headers.join(',');
-
-      const dataRows = this.filteredProducts.map((item)=>{
-        const row = this.displayColumns.map((col)=>{
-            const value = item[col.fields];
-            const formattedValue = col.formatter ? col.formatter(value) : value;
-            return this.escapeCSV(formattedValue);
-        });
-        return row.join(',');
-      });
-      return [headerRow, ...dataRows].join('\n');
-    }
-
-    onDownloadClick(){
-        if(this.invoiceForm.invalid){
-            this.errorSuccess('Please fill all required fields before downloading.');
-            return;
-        }
-
-      if (!this.filteredProducts || this.filteredProducts.length === 0) {
-            if (!this.showData) {
-                this.errorSuccess('Please click "Display" first to load data before downloading.');
-                return;
-            } else {
-                this.errorSuccess('No data available to download.');
-                return;
-            }
-        } 
-        this.downloadDispalyExcel(); 
-    }
-
-    showSuccess(message: string) {
-        this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
-    }
-    errorSuccess(message: string) {
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: message });
-    }
-    canPrint(row: any): boolean {
-        if (!row || !row.transactiontype) return false;
-        return row.transactiontype.toUpperCase() === 'SALE';
-    }
-    printInvoice(row: any) {
-        // Create payload FIRST
-        const payload = {
-            p_username: 'admin',
-            p_returntype: 'SALEPRINT',
-            p_returnvalue: row.invoice_no
-        };
-        // Make API call
-        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-            next: (res) => {
-                console.log('API Result:', res.data);
-                if (Array.isArray(res.data) && res.data.length > 0) {
+    // -------------------------------------------------------------------------
+    //  Print
+    // -------------------------------------------------------------------------
+    printInvoice(row: any): void {
+        this.inventoryService
+            .Getreturndropdowndetails({ p_username: 'admin', p_returntype: 'SALEPRINT', p_returnvalue: row.invoice_no })
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (res) => {
+                    if (!Array.isArray(res.data) || !res.data.length) return;
                     this.invoiceData = res.data;
                     this.hsncode = res.data[0].hsncode;
+                    this.populateInvoiceForm(res.data[0]);
+                    setTimeout(() => this.openPrintWindow(), 100);
+                },
+                error: (err) => {
+                    console.error(err);
+                    this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load invoice data.' });
                 }
-
-                this.populateInvoiceForm(res.data[0]);
-                setTimeout(() => {
-                    this.openPrintWindow();
-                }, 100);
-            },
-            error: (err) => {
-                console.error('API Error:', err);
-                this.messageService.add({
-                    severity: 'error',
-                    summary: 'Error',
-                    detail: 'Failed to load invoice data'
-                });
-            }
-        });
+            });
     }
 
-    private populateInvoiceForm(data: any) {
+    private populateInvoiceForm(data: any): void {
         if (!data) return;
         this.invoiceForm.patchValue({
-            p_billno: data.billno || '',
-            p_transactiondate: data.transactiondate || '',
-            p_transactionid: data.transactionid || '',
-            p_customername: data.customername || '',
-            p_mobileno: data.mobileno || '',
+            p_billno: data.billno ?? '',
+            p_transactiondate: data.transactiondate ?? '',
+            p_transactionid: data.transactionid ?? '',
+            p_customername: data.customername ?? '',
+            p_mobileno: data.mobileno ?? '',
             p_customergstno: data.customergstno,
             p_customerstate: data.customerstate,
-            chalanno:data.customergstno,
+            chalanno: data.customergstno,
             deliveryboy: data.deliveryboy,
-            p_totalsale: data.totalsale || 0,
-            p_totalpayable: data.totalpayable || 0,
-            p_disctype: data.discounttype || 'N',
-            p_overalldiscount: data.discount || 0,
-            discountvalueper: data.discount || 0,
-            p_roundoff: data.roundoff || 0,
-            amount_before_tax: data.amount_before_tax || 0,
-            cgst_9: data.cgst_9 || 0,
-            sgst_9: data.sgst_9 || 0,
-            tax_18: data.tax_18 || 0,
-            p_totalqty: data.quantity || 0
+            p_totalsale: data.totalsale ?? 0,
+            p_totalpayable: data.totalpayable ?? 0,
+            p_disctype: data.discounttype ?? 'N',
+            p_overalldiscount: data.discount ?? 0,
+            discountvalueper: data.discount ?? 0,
+            p_roundoff: data.roundoff ?? 0,
+            amount_before_tax: data.amount_before_tax ?? 0,
+            cgst_9: data.cgst_9 ?? 0,
+            sgst_9: data.sgst_9 ?? 0,
+            tax_18: data.tax_18 ?? 0,
+            p_totalqty: data.quantity ?? 0
         });
     }
-    private openPrintWindow() {
-        // Now open print window AFTER getting data
-        const printContents = document.getElementById('invoicePrintSection')?.innerHTML;
-        if (!printContents) {
+
+    private openPrintWindow(): void {
+        const contents = document.getElementById('invoicePrintSection')?.innerHTML;
+        if (!contents) {
             console.error('Invoice print section not found');
             return;
         }
 
-        const popupWindow = window.open('', '_blank', 'width=900,height=1500');
-        if (popupWindow) {
-            popupWindow.document.open();
-            popupWindow.document.write(`
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <style>
-                          @page {
-                        margin: 0;
-                        size: auto;
-                    }
-                            /* Your print styles here */
-                            body { font-family: Arial, sans-serif; }
-                            /* Add more styles as needed */
-                        </style>
-                    </head>
-                    <body>
-                        ${printContents}
-                        <script>
-                            window.onload = function() {
-                                window.print();
-                                window.onafterprint = function() {
-                                    window.close();
-                                };
-                            };
-                        </script>
-                    </body>
-                    </html>
-                `);
-            popupWindow.document.close();
+        const win = window.open('', '_blank', 'width=900,height=1500');
+        if (!win) return;
+
+        win.document.write(`
+            <!DOCTYPE html><html><head>
+            <style>
+                @page { margin: 0; size: auto; }
+                body  { font-family: Arial, sans-serif; }
+            </style>
+            </head><body>
+                ${contents}
+                <script>
+                    window.onload = function () {
+                        window.print();
+                        window.onafterprint = function () { window.close(); };
+                    };
+                <\/script>
+            </body></html>
+        `);
+        win.document.close();
+    }
+
+    // -------------------------------------------------------------------------
+    //  Reset
+    // -------------------------------------------------------------------------
+    reset(): void {
+        this.invoiceForm.reset({ fromDate: new Date(), toDate: new Date() });
+        this.products = [];
+        this.filteredProducts = [];
+        this.invoiceData = [];
+        this.showData = false;
+    }
+
+    // -------------------------------------------------------------------------
+    //  Toast helpers
+    // -------------------------------------------------------------------------
+    showSuccess(message: string): void {
+        this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
+    }
+    errorSuccess(message: string): void {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: message });
+    }
+
+    // =========================================================================
+    //  EXCEL / CSV DOWNLOAD  — fully rewritten
+    // =========================================================================
+
+    /**
+     * Build a CSV string from any dataset + column definition.
+     * Single method replaces generateCSV() + generateDisplayCSV().
+     */
+    private buildCSV(data: any[], columns: TableColumn[]): string {
+        const escape = (v: any): string => {
+            if (v === null || v === undefined) return '';
+            const s = String(v).replace(/"/g, '""');
+            return /[,"\n\r]/.test(s) ? `"${s}"` : s;
+        };
+
+        const header = columns.map((c) => escape(c.header)).join(',');
+
+        const rows = data.map((item) =>
+            columns
+                .map((col) => {
+                    const raw = item[col.fields];
+                    return escape(col.formatter ? col.formatter(raw) : raw);
+                })
+                .join(',')
+        );
+
+        return [header, ...rows].join('\n');
+    }
+
+    /**
+     * Trigger a browser file download.
+     * FIX: original code called appendChild(link) twice — link was never removed.
+     */
+    private triggerDownload(content: string, mimeType: string, filename: string): void {
+        const blob = new Blob([content], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+
+        link.href = url;
+        link.download = filename;
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link); // ← removed exactly once
+        URL.revokeObjectURL(url);
+    }
+
+    /** Derive a meaningful filename from form values. */
+    private buildFilename(type: 'ledger' | 'display'): string {
+        if (type === 'display') {
+            const from = this.datepipe.transform(this.invoiceForm.get('fromDate')?.value, 'dMMMyy');
+            const to = this.datepipe.transform(this.invoiceForm.get('toDate')?.value, 'dMMMyy');
+            return `Invoice_${from}-${to}.csv`;
         }
+
+        const customerId = this.invoiceForm.get('p_cusname')?.value;
+        const customerName = this.cusMobNameOptions.find((c) => c.fieldid === customerId)?.fieldname ?? 'Customer';
+        return `${customerName}_Ledger.csv`;
+    }
+
+    /** Download the customer ledger CSV. */
+    downloadExcel(): void {
+        if (!this.customerLedgerData.length) {
+            this.errorSuccess('No ledger data available to download.');
+            return;
+        }
+
+        const csv = this.buildCSV(this.customerLedgerData, this.columns);
+        this.triggerDownload(csv, 'text/csv;charset=utf-8;', this.buildFilename('ledger'));
+        this.showSuccess('Ledger downloaded successfully.');
+    }
+
+    /** Download the display / invoice list CSV. */
+    downloadDisplayExcel(): void {
+        if (!this.filteredProducts.length) {
+            this.errorSuccess(this.showData ? 'No data available to download.' : 'Please click "Display" first to load data.');
+            return;
+        }
+
+        const csv = this.buildCSV(this.filteredProducts, this.displayColumns);
+        this.triggerDownload(csv, 'text/csv;charset=utf-8;', this.buildFilename('display'));
+        this.showSuccess('Invoice list downloaded successfully.');
+    }
+
+    /** Entry point from the Download button — decides which export to run. */
+    onDownloadClick(): void {
+        if (this.invoiceForm.invalid) {
+            this.errorSuccess('Please fill all required fields before downloading.');
+            return;
+        }
+
+        // If ledger data is loaded, prefer that; otherwise export the display list.
+        if (this.customerLedgerData.length) {
+            this.downloadExcel();
+        } else {
+            this.downloadDisplayExcel();
+        }
+    }
+
+    // Kept for template backward-compat (button that downloads display list directly)
+    download(): void {
+        this.customerLedgerData.length ? this.downloadExcel() : this.errorSuccess('No data available to download.');
+    }
+
+    getReceivedAmountControl(index: number): AbstractControl | null {
+        return this.getStockArray().at(index) ?? null;
+    }
+
+    updateReceivedAmount(index: number, value: number): void {
+        if (this.products[index]) this.products[index].received_amount = value;
     }
 }

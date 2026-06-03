@@ -174,7 +174,7 @@ export class CustomerDueComponent {
                         });
                         return acc;
                     }, {})
-                ).filter((item: any) => item.due_amount > 0);
+                ).filter((item: any) => item.due_amount > 0 || item.status === 'APPROVED');
 
                 this.filteredProducts = this.selectedStatus ? this.products.filter((i) => i.status === this.selectedStatus) : [...this.products];
 
