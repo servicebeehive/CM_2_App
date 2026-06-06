@@ -1,19 +1,14 @@
 <div class="card p-3 md:p-6">
-    <!-- ================================================================
-         SALES FORM
-    ================================================================= -->
     <form [formGroup]="salesForm" (ngSubmit)="onSubmit()" class="space-y-6 md:space-y-8">
 
         <!-- ── Header + Action Buttons ─────────────────────────────── -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4 md:mb-6">
-            <span class="block text-surface-900 font-bold text-lg md:text-xl">Sales</span>
+            <span class="block text-surface-900 font-bold text-lg md:text-2xl">Sales</span>
 
             <div class="flex flex-wrap gap-2 md:gap-4 w-full md:w-auto">
                 <button pButton type="button" label="Customer Detail"
                         (click)="customerDetail()" class="p-button-primary w-full md:w-auto">
                 </button>
-
-                <!-- SUBMIT: disable on form errors OR business-rule errors -->
                 <button pButton type="submit" label="Submit"
                         class="p-button-warning w-full md:w-auto"
                         [disabled]="salesForm.invalid
@@ -22,19 +17,15 @@
                                  || salesForm.hasError('costNotGreater')
                                  || salesForm.hasError('amountNotGreater')">
                 </button>
-
-                <!-- PRINT: disabled until a bill number exists -->
                 <button pButton type="button" label="Print"
                         class="p-button-primary w-full md:w-auto"
                         (click)="printInvoice()"
                         [disabled]="!salesForm.get('p_billno')?.value">
                 </button>
-
                 <button pButton type="button" label="Reset"
                         class="p-button-secondary w-full md:w-auto"
                         (click)="onReset()">
                 </button>
-
                 @if (backshow) {
                     <button pButton type="button" label="Back"
                             class="p-button-secondary w-full md:w-auto"
@@ -44,12 +35,12 @@
             </div>
         </div>
 
-        <!-- ── Header Fields ───────────────────────────────────────── -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 md:gap-x-8 gap-y-3 md:gap-y-4 w-full">
+        <!-- ── Header Fields — 4 cols on desktop, 1 col on mobile ─── -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-4 w-full">
 
             <!-- Invoice No -->
             <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">Invoice No</label>
+                <label class="font-medium mb-1">Invoice No</label>
                 <p-dropdown [options]="billNoOptions"
                             optionLabel="billno" optionValue="billno"
                             placeholder="Invoice No."
@@ -63,7 +54,7 @@
 
             <!-- Transaction Date -->
             <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">Transaction Date</label>
+                <label class="font-medium mb-1">Transaction Date</label>
                 <p-datepicker fluid formControlName="p_transactiondate"
                               dateFormat="dd/mm/yy" [showIcon]="true"
                               placeholder="Transaction Date" [maxDate]="today">
@@ -72,7 +63,7 @@
 
             <!-- Transaction Mode -->
             <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">Transaction Mode</label>
+                <label class="font-medium mb-1">Transaction Mode</label>
                 <p-dropdown [options]="transactionMode"
                             optionLabel="label" optionValue="value"
                             placeholder="Transaction Mode"
@@ -84,7 +75,7 @@
 
             <!-- Delivery Person -->
             <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">Delivery Person</label>
+                <label class="font-medium mb-1">Delivery Person</label>
                 <p-dropdown #deliveryperson
                             [options]="deliveryBoyOptions"
                             optionLabel="fieldname" optionValue="fieldname"
@@ -106,7 +97,7 @@
 
             <!-- Search Mobile No -->
             <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">Search Mobile No</label>
+                <label class="font-medium mb-1">Search Mobile No</label>
                 <p-dropdown [options]="cusMobileOptions"
                             class="w-full"
                             optionValue="fieldid" optionLabel="fieldvalue"
@@ -121,15 +112,14 @@
 
             <!-- Mobile No -->
             <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">
+                <label class="font-medium mb-1">
                     Mobile No <span class="text-red-500">*</span>
                 </label>
                 <input pInputText type="number"
                        [placeholder]="mobilePlaceholder"
                        maxlength="10"
                        formControlName="p_mobileno"
-                       (keypress)="allowOnlyNumbers($event)"
-                       class="text-sm md:text-base" />
+                       (keypress)="allowOnlyNumbers($event)" />
                 <ng-container *ngIf="salesForm.get('p_mobileno')?.touched">
                     <small class="text-red-500 mt-1 text-xs"
                            *ngIf="salesForm.get('p_mobileno')?.errors?.['required']">
@@ -144,12 +134,11 @@
 
             <!-- Customer Name -->
             <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">
+                <label class="font-medium mb-1">
                     Customer Name <span class="text-red-500">*</span>
                 </label>
                 <input pInputText placeholder="Customer Name"
-                       formControlName="p_customername"
-                       class="text-sm md:text-base" />
+                       formControlName="p_customername" />
                 <small class="text-red-500 mt-1 text-xs"
                        *ngIf="salesForm.get('p_customername')?.touched
                            && salesForm.get('p_customername')?.errors?.['required']">
@@ -159,15 +148,15 @@
 
             <!-- Chalan No -->
             <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">Chalan No</label>
+                <label class="font-medium mb-1">Chalan No</label>
                 <input pInputText formControlName="chalanno" placeholder="Chalan No"
                        (keypress)="allowOnlyNumbers($event)" />
             </div>
 
-            <!-- Item Selector (spans 2 cols) -->
-            <div class="flex flex-col col-span-2">
-                <label class="font-medium mb-1 text-sm md:text-base">Item</label>
-                <p-select class="w-full mb-3 md:mb-4"
+            <!-- Item Selector — spans 2 cols on desktop -->
+            <div class="flex flex-col sm:col-span-2 lg:col-span-2">
+                <label class="font-medium mb-1">Item</label>
+                <p-select class="w-full"
                           [options]="itemOptions"
                           optionLabel="itemcombine" optionValue="itemid"
                           formControlName="p_itemdata"
@@ -177,12 +166,12 @@
                           [disabled]="submitDisabledByBill"
                           (onChange)="onItemChange($event)">
                     <ng-template #selectedItem let-item>
-                        <span class="text-sm md:text-base">{{ item.itemcombine }}</span>
+                        <span>{{ item.itemcombine }}</span>
                     </ng-template>
                     <ng-template #item let-details>
                         <div class="flex items-center justify-between w-full">
-                            <span class="text-sm md:text-base">{{ details.itemcombine }}</span>
-                            <span class="text-xs md:text-sm"
+                            <span>{{ details.itemcombine }}</span>
+                            <span class="text-xs"
                                   [ngClass]="details.currentstock === 0 ? 'text-red-500' : 'text-green-600'">
                                 Stock: {{ details.currentstock }}
                             </span>
@@ -192,14 +181,14 @@
             </div>
 
             <!-- GST Transaction -->
-            <div class="flex items-center gap-2 md:gap-4 mt-0 md:mt-3">
+            <div class="flex items-center gap-4 mt-0 lg:mt-5">
                 <p-checkbox binary="true" variant="filled" formControlName="p_gsttran"></p-checkbox>
-                <label class="font-medium text-sm md:text-base">GST Transaction</label>
+                <label class="font-medium">GST Transaction</label>
             </div>
 
             <!-- Status Badge -->
-            <div class="flex items-center gap-2 md:gap-4 mt-0 md:mt-3">
-                <span class="text-xl font-bold">Status &nbsp;</span>
+            <div class="flex items-center gap-4 mt-0 lg:mt-5">
+                <span class="text-xl font-bold">Status</span>
                 <span class="font-bold text-xl"
                       [ngStyle]="{
                           color: salesForm.get('status')?.value === 'Done'           ? 'green'
@@ -212,22 +201,24 @@
             </div>
         </div>
 
-        <!-- ── Barcode input (hidden, always focused) ───────────────── -->
+        <!-- ── Barcode input (hidden) ───────────────────────────────── -->
         <input #barcodeInput type="text"
                class="absolute opacity-0 pointer-events-none"
                placeholder="Scan barcode / SKU"
                (keydown.enter)="onBarcodeScan($event)" />
 
-        <!-- ── Sale Items Table (FormArray) ────────────────────────── -->
+        <!-- ── Sale Items Table ─────────────────────────────────────── -->
         <div class="mt-4 md:mt-6">
             <p-table [value]="saleArray.controls"
                      dataKey="ItemId"
                      [totalRecords]="saleArray.controls.length"
-                     responsiveLayout="scroll"
+                     responsiveLayout="stack"
+                     breakpoint="768px"
                      [paginator]="true" [rows]="10"
                      [rowsPerPageOptions]="[10, 20, 50]"
                      appendTo="body"
-                     class="p-datatable-gridlines sale-report">
+                     class="p-datatable-gridlines"
+                     styleClass="sale-report">
 
                 <ng-template pTemplate="header">
                     <tr class="bg-yellow-400">
@@ -246,12 +237,20 @@
 
                 <ng-template pTemplate="body" let-row let-i="rowIndex">
                     <tr [formGroup]="row">
-                        <td class="text-xs md:text-sm">{{ row.get('itemsku')?.value }}</td>
-                        <td class="text-xs md:text-sm">{{ row.get('ItemName')?.value }}</td>
-                        <td class="text-xs md:text-sm">{{ row.get('curStock')?.value }}</td>
-
-                        <!-- UOM dropdown -->
                         <td>
+                            <span class="p-column-title">Item Code</span>
+                            {{ row.get('itemsku')?.value }}
+                        </td>
+                        <td>
+                            <span class="p-column-title">Item Name</span>
+                            {{ row.get('ItemName')?.value }}
+                        </td>
+                        <td>
+                            <span class="p-column-title">Current Stock</span>
+                            {{ row.get('curStock')?.value }}
+                        </td>
+                        <td>
+                            <span class="p-column-title">UOM</span>
                             <p-dropdown #uomDropdown
                                         [options]="uomlist[i]"
                                         optionLabel="fieldname" optionValue="fieldid"
@@ -259,29 +258,38 @@
                                         formControlName="UOMId"
                                         [filter]="true" filterPlaceholder="Search UOM"
                                         appendTo="body"
-                                        (onChange)="onUOMChange($event, i)"
-                                        class="text-xs md:text-sm">
+                                        (onChange)="onUOMChange($event, i)">
                             </p-dropdown>
                         </td>
-
-                        <!-- Quantity — single (input) handler -->
                         <td>
+                            <span class="p-column-title">Qty</span>
                             <input pInputText type="number"
                                    formControlName="Quantity"
                                    min="1" step="1"
-                                   class="w-[60px] md:w-[70px] text-xs md:text-sm"
+                                   class="w-[70px]"
                                    (keypress)="blockDecimal($event)"
                                    (input)="OnQtyChange(i)"
                                    [ngClass]="{ 'border-red-500': row.get('Quantity')?.errors?.['maxStock'] }" />
                         </td>
-
-                        <td class="text-xs md:text-sm">{{ row.get('MRP')?.value | number:'1.2-2' }}</td>
-                        <td class="text-xs md:text-sm">{{ row.get('totalPayable')?.value | number:'1.2-2' }}</td>
-                        <td class="text-xs md:text-sm">{{ row.get('warPeriod')?.value }}</td>
-                        <td class="text-xs md:text-sm">{{ row.get('location')?.value }}</td>
-
+                        <td>
+                            <span class="p-column-title">MRP</span>
+                            {{ row.get('MRP')?.value | number:'1.2-2' }}
+                        </td>
+                        <td>
+                            <span class="p-column-title">Total</span>
+                            {{ row.get('totalPayable')?.value | number:'1.2-2' }}
+                        </td>
+                        <td>
+                            <span class="p-column-title">Warranty</span>
+                            {{ row.get('warPeriod')?.value }}
+                        </td>
+                        <td>
+                            <span class="p-column-title">Location</span>
+                            {{ row.get('location')?.value }}
+                        </td>
                         <td class="text-center">
-                            <i class="pi pi-trash text-red-500 cursor-pointer text-sm md:text-base"
+                            <span class="p-column-title">Action</span>
+                            <i class="pi pi-trash text-red-500 cursor-pointer"
                                (click)="removeItem(i)">
                             </i>
                         </td>
@@ -289,33 +297,33 @@
                 </ng-template>
 
                 <ng-template pTemplate="paginatorleft">
-                    <span class="text-gray-600 ms-2 text-xs md:text-sm">
+                    <span class="total-items text-gray-600 ms-2 text-sm">
                         Total Items: {{ saleArray.controls.length }}
                     </span>
                 </ng-template>
             </p-table>
         </div>
 
-        <!-- ── Summary Row ──────────────────────────────────────────── -->
-        <div class="grid grid-cols-7 gap-x-8 gap-y-4 m-3 mt-4">
+        <!-- ── Summary Row — 7 cols on desktop, stacked on mobile ──── -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mt-4 px-1">
 
             <div class="flex flex-col">
-                <label>Cost Total</label>
+                <label class="font-medium mb-1 text-sm">Cost Total</label>
                 <input pInputText readonly type="number" tabindex="-1" formControlName="p_totalcost" />
             </div>
 
             <div class="flex flex-col">
-                <label>MRP Total</label>
+                <label class="font-medium mb-1 text-sm">MRP Total</label>
                 <input pInputText readonly type="number" tabindex="-1" formControlName="p_totalsale" />
             </div>
 
-            <!-- Discount % toggle + amount -->
-            <div class="grid grid-cols-2 gap-2">
+            <!-- Discount -->
+            <div class="grid grid-cols-3 gap-2 ">
                 <div class="flex flex-col">
                     <label class="font-medium mb-2">Disc(%)</label>
                     <p-checkbox binary="true" variant="filled" formControlName="p_disctype"></p-checkbox>
                 </div>
-                <div class="flex flex-col">
+                <div class="flex flex-col col-span-2">
                     <label class="font-medium">Discount</label>
                     <input pInputText type="number"
                            formControlName="p_overalldiscount"
@@ -325,32 +333,31 @@
             </div>
 
             <div class="flex flex-col">
-                <label>Round Off</label>
+                <label class="font-medium mb-1 text-sm">Round Off</label>
                 <input pInputText readonly type="number" tabindex="-1" formControlName="p_roundoff" />
             </div>
 
-            <!-- FIX: was duplicate of MRP Total — now correctly labelled Total Sale -->
             <div class="flex flex-col">
-                <label>Total Sale</label>
+                <label class="font-medium mb-1 text-sm">Total Sale</label>
                 <input pInputText readonly type="number" tabindex="-1" formControlName="p_totalsale" />
             </div>
 
             <div class="flex flex-col">
-                <label>Final Payable</label>
+                <label class="font-medium mb-1 text-sm">Final Payable</label>
                 <input pInputText readonly type="number" tabindex="-1" formControlName="p_totalpayable" />
-                <small class="text-red-500" *ngIf="salesForm.hasError('costNotGreater')">
+                <small class="text-red-500 text-xs" *ngIf="salesForm.hasError('costNotGreater')">
                     Final amount must be greater than total cost.
                 </small>
             </div>
 
             <div class="flex flex-col">
-                <label>Paid Amount</label>
+                <label class="font-medium mb-1 text-sm">Paid Amount</label>
                 <input pInputText type="number"
                        (keypress)="blockDecimal($event)"
                        min="1"
                        formControlName="p_paymentdue"
                        placeholder="0" />
-                <small class="text-red-500" *ngIf="salesForm.hasError('amountNotGreater')">
+                <small class="text-red-500 text-xs" *ngIf="salesForm.hasError('amountNotGreater')">
                     Paid amount cannot exceed final payable.
                 </small>
             </div>
@@ -362,16 +369,14 @@
 </div>
 
 <!-- ================================================================
-     PRINT SECTION (hidden in UI, opened in popup for printing)
+     PRINT SECTION
 ================================================================= -->
 <div id="invoicePrintSection" style="width:900px;margin:auto;font-family:Arial">
     <h3 style="text-align:center">TAX INVOICE</h3>
 
-    <!-- Header: company + buyer + invoice meta -->
     <table width="100%" border="1" cellspacing="0" cellpadding="0"
            style="border-collapse:collapse;font-size:10px">
         <tr>
-            <!-- Company & buyer -->
             <td width="60%" style="vertical-align:top;padding:6px">
                 <strong>{{ companyName }}</strong><br />
                 {{ companyAddress }},<br />
@@ -387,8 +392,6 @@
                 GSTIN/UIN: {{ salesForm.get('p_gstno')?.value || '-' }}<br />
                 State Name: {{ customerstate }}
             </td>
-
-            <!-- Invoice meta -->
             <td width="40%" style="vertical-align:top">
                 <table width="100%" border="1" cellpadding="6" cellspacing="0"
                        style="border-collapse:collapse">
@@ -416,7 +419,6 @@
         </tr>
     </table>
 
-    <!-- Item table -->
     <table width="100%" border="1" cellspacing="0" cellpadding="6"
            style="border-collapse:collapse;font-size:10px;margin-top:10px">
         <thead>
@@ -443,7 +445,6 @@
                 <td>{{ item.get('discount')?.value || '' }}</td>
                 <td>₹{{ item.get('totalPayable')?.value | number:'1.2-2' }}</td>
             </tr>
-
             <tr>
                 <td colspan="7" style="text-align:right;font-weight:bold">Total</td>
                 <td>₹{{ salesForm.get('p_totalsale')?.value | number:'1.2-2' }}</td>
@@ -451,9 +452,7 @@
             <tr>
                 <td colspan="7" style="text-align:right;font-weight:bold">
                     Discount
-                    {{ salesForm.get('p_disctype')?.value
-                       ? salesForm.get('p_overalldiscount')?.value + '%'
-                       : '' }}
+                    {{ salesForm.get('p_disctype')?.value ? salesForm.get('p_overalldiscount')?.value + '%' : '' }}
                 </td>
                 <td>
                     {{ !salesForm.get('p_disctype')?.value ? '₹' : '' }}
@@ -475,21 +474,15 @@
         </tfoot>
     </table>
 
-    <!-- Amount in words -->
     <div style="padding:10px;font-size:10px">
         <strong>Amount Chargeable (in words):</strong> -
     </div>
 
-    <!-- GST summary -->
     <table width="100%" border="1" cellspacing="0" cellpadding="6"
            style="border-collapse:collapse;font-size:10px;margin-top:10px">
         <tr style="font-weight:bold;text-align:center">
-            <td>Taxable Value</td>
-            <td>Rate</td>
-            <td>CGST Amount</td>
-            <td>Rate</td>
-            <td>SGST Amount</td>
-            <td>Total Tax Amount</td>
+            <td>Taxable Value</td><td>Rate</td><td>CGST Amount</td>
+            <td>Rate</td><td>SGST Amount</td><td>Total Tax Amount</td>
         </tr>
         <tr style="text-align:center">
             <td>₹{{ salesForm.get('amount_before_tax')?.value | number:'1.2-2' }}</td>
@@ -501,14 +494,11 @@
         </tr>
     </table>
 
-    <!-- Bank details & signature -->
     <table width="100%" cellspacing="0" cellpadding="0"
            style="border-collapse:collapse;font-size:10px;margin-top:5px;border:none">
         <tr>
             <td width="70%" style="vertical-align:top;border:none">
-                <div style="margin-bottom:10px">
-                    <strong>Tax Amount (in words):</strong> -
-                </div>
+                <div style="margin-bottom:10px"><strong>Tax Amount (in words):</strong> -</div>
                 <div>
                     <strong>Company's Bank Details</strong><br />
                     Bank Name: <b>{{ bankname }}</b><br />

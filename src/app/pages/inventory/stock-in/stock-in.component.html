@@ -24,6 +24,7 @@
                         optionValue="purchaseid"
                         (onChange)="purchaseIdDetails($event)"
                         [filter]="true"
+                        [showClear]="true"
                         filterPlaceholder="Search Transaction Id"
                         formControlName="p_tranpurchaseid"
                         placeholder="Auto Generated ID"
@@ -38,7 +39,7 @@
                 <div class="flex flex-col">
                     <label class="font-medium mb-1">Vendor Name <span class="text-red-500">*</span></label>
 
-                    <p-dropdown [options]="this.vendorOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search Vendor Name" formControlName="p_vendorid" placeholder="Vendor Name"> </p-dropdown>
+                    <p-dropdown [options]="this.vendorOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" [showClear]="true" filterPlaceholder="Search Vendor Name" formControlName="p_vendorid" placeholder="Vendor Name"> </p-dropdown>
                     <small class="text-red-500 ms-3 mt-1" *ngIf="productForm.get('p_vendorid')?.touched">
                         <span *ngIf="productForm.get('p_vendorid')?.errors?.['required']">Vendor Name is required</span>
                     </small>

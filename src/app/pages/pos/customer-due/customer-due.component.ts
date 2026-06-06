@@ -126,7 +126,7 @@ export class CustomerDueComponent {
     validateWriteoffAmount(row: any) {
         const due = parseFloat(row.due_amount) || 0;
         const writeoff = parseFloat(row.write_off) || 0;
-        if (writeoff > due) {
+        if (writeoff !== due ) {
             row.amountError = true;
             this.submitDisable = true;
         } else {
@@ -135,62 +135,52 @@ export class CustomerDueComponent {
         }
     }
 
-    Onreturndropdowndetails() {
-        const fromdate = this.customerForm.controls['fromDate'].value;
-        const todate = this.customerForm.controls['toDate'].value;
-        const cusName = this.customerForm.controls['p_cusname'].value;
-        const username = this.authService.isLogIntType()?.username;
-        const payload = {
-            p_startdate: this.datePipe.transform(fromdate, 'yyyy/MM/dd'),
-            p_enddate: this.datePipe.transform(todate, 'yyyy/MM/dd'),
-            p_customer: cusName || null,
-            p_username: username
-        };
-        this.showData = false;
-        this.inventoryService.getinvoicedetail(payload).subscribe({
-            next: (res: any) => {
-                const data = res?.data || [];
-                this.products = Object.values(
-                    data.reduce((acc: any, item: any) => {
-                        const key = item.customer;
-                        if (!acc[key]) {
-                            acc[key] = {
-                                invoice_no: item.invoice_no,
-                                customer: item.customer,
-                                customerphone: item.customerphone,
-                                due_amount: 0,
-                                status: item.approvalstatus ?? null,
-                                remarks: item.remarks,
-                                transactions: []
-                            };
-                        }
-                        acc[key].due_amount += Number(item.due_amount || 0);
+  Onreturndropdowndetails() {
+    const fromdate = this.customerForm.controls['fromDate'].value;
+    const todate = this.customerForm.controls['toDate'].value;
+    const cusName = this.customerForm.controls['p_cusname'].value;
+    const username = this.authService.isLogIntType()?.username;
+    const payload = {
+        p_startdate: this.datePipe.transform(fromdate, 'yyyy/MM/dd'),
+        p_enddate: this.datePipe.transform(todate, 'yyyy/MM/dd'),
+        p_customer: cusName || null,
+        p_username: username
+    };
+    this.showData = false;
+    this.inventoryService.getinvoicedetail(payload).subscribe({
+        next: (res: any) => {
+            const data = res?.data || [];
 
-                        acc[key].status = item.approvalstatus ?? acc[key].status;
-                        acc[key].remarks = item.remarks ?? acc[key].remarks;
-                        acc[key].transactions.push({
-                            transaction_id: item.transactionid,
-                            due_amount: Number(item.due_amount || 0)
-                        });
-                        return acc;
-                    }, {})
-                ).filter((item: any) => item.due_amount > 0 || item.status === 'APPROVED');
+            this.products = data
+                .map((item: any) => ({
+                    invoice_no: item.invoice_no,
+                    customer: item.customer,
+                    customerphone: item.customerphone,
+                    due_amount: Number(item.due_amount || 0),
+                    status: item.approvalstatus ?? null,
+                    remarks: item.remarks,
+                    transaction_id: item.transactionid
+                }))
+                .filter((item: any) => item.due_amount > 0 || item.status === 'APPROVED');
 
-                this.filteredProducts = this.selectedStatus ? this.products.filter((i) => i.status === this.selectedStatus) : [...this.products];
+            this.filteredProducts = this.selectedStatus
+                ? this.products.filter((i: any) => i.status === this.selectedStatus)
+                : [...this.products];
 
-                this.showData = true;
-                this.totalDueAmount();
-                if (this.products.length === 0) {
-                    this.showSuccess('No Data Available for the selected filters.');
-                }
-            },
-            error: (err) => {
-                console.error(err);
-                this.errorSuccess('Error loading data. Please try again.');
-                this.showData = false;
+            this.showData = true;
+            this.totalDueAmount();
+
+            if (this.products.length === 0) {
+                this.showSuccess('No Data Available for the selected filters.');
             }
-        });
-    }
+        },
+        error: (err) => {
+            console.error(err);
+            this.errorSuccess('Error loading data. Please try again.');
+            this.showData = false;
+        }
+    });
+}
 
     totalDueAmount(): void {
         if (!this.filteredProducts || this.filteredProducts.length === 0) {
@@ -243,63 +233,43 @@ export class CustomerDueComponent {
     }
 
     // 2. writeoff() — build payload and call API
-    writeoff() {
-        const rowsWithWriteOff = this.filteredProducts.filter((row) => row.write_off && parseFloat(row.write_off) > 0 && !row.amountError);
+  writeoff() {
+    const rowsWithWriteOff = this.filteredProducts.filter(
+        (row) => row.write_off && parseFloat(row.write_off) > 0 && !row.amountError
+    );
 
-        if (rowsWithWriteOff.length === 0) {
-            this.errorSuccess('Please enter a write-off amount for at least one customer.');
-            return;
-        }
-
-        // Build flat transaction-level array
-        const writeOffJson: { transaction_id: number; writeoff_amount: number }[] = [];
-
-        for (const row of rowsWithWriteOff) {
-            const totalDue = parseFloat(row.due_amount) || 0;
-            const totalWriteOff = parseFloat(row.write_off) || 0;
-            let remaining = totalWriteOff;
-
-            // Distribute write-off across transactions proportionally
-            for (let i = 0; i < row.transactions.length; i++) {
-                const txn = row.transactions[i];
-                const isLast = i === row.transactions.length - 1;
-
-                let txnWriteOff: number;
-                if (isLast) {
-                    txnWriteOff = parseFloat(remaining.toFixed(2));
-                } else {
-                    txnWriteOff = parseFloat(((txn.due_amount / totalDue) * totalWriteOff).toFixed(2));
-                    remaining -= txnWriteOff;
-                }
-
-                if (txnWriteOff > 0) {
-                    writeOffJson.push({
-                        transaction_id: txn.transaction_id,
-                        writeoff_amount: txnWriteOff
-                    });
-                }
-            }
-        }
-        const userid = this.authService.isLogIntType()?.userid.toString();
-        const payload = {
-            p_writeoff_json: writeOffJson,
-            p_username: userid
-        };
-
-        this.inventoryService.updatewriteoffamount(payload).subscribe({
-            next: (res: any) => {
-                this.showSuccess(res.data.message);
-                this.Onreturndropdowndetails();
-                this.selectedStatus = 'PENDING';
-                this.submitDisable = true;
-            },
-            error: (err) => {
-                console.error(err);
-                this.errorSuccess('Failed to update write-off. Please try again.');
-            }
-        });
+    if (rowsWithWriteOff.length === 0) {
+        this.errorSuccess('Please enter a write-off amount for at least one customer.');
+        return;
     }
 
+    // Build flat transaction-level array directly from each row
+    const writeOffJson: { transaction_id: number; writeoff_amount: number }[] = rowsWithWriteOff
+        .map((row) => ({
+            transaction_id: row.transaction_id,
+            writeoff_amount: parseFloat(parseFloat(row.write_off).toFixed(2))
+        }))
+        .filter((entry) => entry.writeoff_amount > 0);
+
+    const userid = this.authService.isLogIntType()?.userid.toString();
+    const payload = {
+        p_writeoff_json: writeOffJson,
+        p_username: userid
+    };
+
+    this.inventoryService.updatewriteoffamount(payload).subscribe({
+        next: (res: any) => {
+            this.showSuccess(res.data.message);
+            this.Onreturndropdowndetails();
+            this.selectedStatus = 'PENDING';
+            this.submitDisable = true;
+        },
+        error: (err) => {
+            console.error(err);
+            this.errorSuccess('Failed to update write-off. Please try again.');
+        }
+    });
+}
     downloadExcel() {
         if (!this.filteredProducts || this.filteredProducts.length === 0) {
             this.errorSuccess('No data available to download.');

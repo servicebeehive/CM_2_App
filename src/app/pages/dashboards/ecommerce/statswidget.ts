@@ -12,29 +12,39 @@ import { SkeletonModule } from 'primeng/skeleton';
     selector: 'app-stats-widget',
     imports: [CommonModule, KnobModule, FormsModule, RouterModule, SkeletonModule],
     template: `
-        <div class="col-span-12 md:col-span-6 xl:col-span-3" *ngFor="let card of loading ? skeletonItems : dashboardCards" [routerLink]="!loading ? card.routerLink : null">
-            <div class="card h-full">
-                <!-- Skeleton View -->
-                <ng-container *ngIf="loading; else cardContent">
-                    <p-skeleton height="22px" width="65%"></p-skeleton>
-                    <div class="mt-4">
-                        <p-skeleton height="38px" width="40%"></p-skeleton>
+        <div class="col-span-12">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+
+                <ng-container *ngFor="let card of loading ? skeletonItems : dashboardCards">
+                    <div class="col-span-1" [routerLink]="!loading ? card.routerLink : null">
+                        <div class="card h-full">
+
+                            <!-- Skeleton View -->
+                            <ng-container *ngIf="loading; else cardContent">
+                                <p-skeleton height="22px" width="65%"></p-skeleton>
+                                <div class="mt-4">
+                                    <p-skeleton height="38px" width="40%"></p-skeleton>
+                                </div>
+                            </ng-container>
+
+                            <!-- Actual Card Content -->
+                            <ng-template #cardContent>
+                                <span class="font-semibold text-lg flex items-center gap-2">
+                                    <i [class]="card.icon + ' text-2xl text-primary'"></i>
+                                    {{ card.label }}
+                                </span>
+                                <div class="mt-4">
+                                    <span class="text-4xl font-bold"
+                                          [ngClass]="(card.value ?? 0) < 0 ? 'text-red-600' : 'text-surface-900 dark:text-surface-0'">
+                                        ₹{{ (card.value ?? 0) | number:'1.0-0' }}
+                                    </span>
+                                </div>
+                            </ng-template>
+
+                        </div>
                     </div>
                 </ng-container>
 
-                <!-- Actual Card Content -->
-                <ng-template #cardContent>
-                    <span class="font-semibold text-lg flex items-center gap-2">
-                        <i [class]="card.icon + ' text-2xl text-primary'"></i>
-                        {{ card.label }}
-                    </span>
-
-                    <div class="flex justify-between items-start mt-4">
-                        <div class="w-6/12">
-                            <span class="text-4xl font-bold" [ngClass]="card.value < 0 ? 'text-red-600' : 'text-surface-900 dark:text-surface-0'"> ₹{{ card.value | number }} </span>
-                        </div>
-                    </div>
-                </ng-template>
             </div>
         </div>
     `,
@@ -46,8 +56,9 @@ export class StatsWidget implements OnInit, OnChanges {
     @Input() filerby: any;
     public authService = inject(AuthService);
     loading = true;
-    skeletonItems = [1, 2, 3, 4];
+    skeletonItems = [1, 2, 3, 4, 5];
     dashboardCards: any = [];
+
     constructor(private OnttopBarService: DashboardService) {}
 
     ngOnInit(): void {
@@ -62,8 +73,8 @@ export class StatsWidget implements OnInit, OnChanges {
     }
 
     OnGettopBarCard(filerby: string) {
-        this.loading = true; // Start Skeleton
-        let apibody = {
+        this.loading = true;
+        const apibody = {
             p_reporttype: 'CARDS',
             p_warehouse: '',
             p_period: filerby,
@@ -77,27 +88,31 @@ export class StatsWidget implements OnInit, OnChanges {
                     {
                         label: 'Total Cost',
                         icon: 'pi pi-box',
-                        value: data.totalpurchase
+                        value: data.totalpurchase ?? 0
                     },
                     {
                         label: 'Total Sale',
                         icon: 'pi pi-shopping-cart',
-                        value: data.totalsale
+                        value: data.totalsale ?? 0
                     },
                     {
                         label: 'Total Return',
                         icon: 'pi pi-arrow-down-left',
-                        value: data.totalreturn
+                        value: data.totalreturn ?? 0
+                    },
+                    {
+                        label: 'Misc / Write-off',
+                        icon: 'pi pi-file-edit',
+                        value: data.totalmiscwrite ?? 0
                     },
                     {
                         label: 'Total Profit',
                         icon: 'pi pi-arrow-up',
-                        value: data.profit
+                        value: data.profit ?? 0
                     }
                 ];
-                this.loading = false; // Stop Skeleton
+                this.loading = false;
             },
-
             error: () => {
                 this.loading = false;
             }

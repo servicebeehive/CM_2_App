@@ -24,6 +24,7 @@ export const API_ENDPOINTS = {
     inserttransactiondetails:'/inserttransactiondetails',
     gettransactiondetails:'/gettrasnactiondetails',
     gettransactionreport:'/gettrasnactionreport',
+    get_pnl:'/get_pnl',
     updatewriteoffamount:'/fnupdatewriteoffamount'
   },
   sales:{

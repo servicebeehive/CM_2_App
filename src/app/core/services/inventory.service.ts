@@ -181,6 +181,15 @@ gettransactionreportdetail(payload:any):Observable<any>{
   )
 }
 
+get_pnl(payload:any):Observable<any>{
+   let payloaddata=this.shareservice.GetApiBody(payload)
+  let url=`${this.baseUrl}${API_ENDPOINTS.inventory.get_pnl}`;
+  return this.http.post<any>(url,payloaddata).pipe(catchError(error=>{
+    return throwError(()=>error)
+  }),
+  )
+}
+
 updatestockadjustment(payload:any):Observable<any>{
     // console.log(payload)
      let payloaddata=this.shareservice.GetApiBody(payload)

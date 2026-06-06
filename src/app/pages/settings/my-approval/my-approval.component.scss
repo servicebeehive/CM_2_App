@@ -1,0 +1,80 @@
+:host {
+    display: block;
+    overflow-anchor: none;
+}
+
+::ng-deep .my-approval {
+    .p-datatable-wrapper {
+        max-height: 500px;
+        overflow: auto;
+        border-radius: 6px;
+        border: 1px solid var(--surface-border);
+        border-radius: 6px;
+        overflow-anchor: none;
+        scroll-behavior: auto;
+    }
+    .p-datatable-thead > tr > th:nth-child(1),
+    .p-datatable-tbody > tr > td:nth-child(1) {
+        min-width: 60px;
+        max-width: 80px;
+    }
+     .p-datatable-thead > tr > th:nth-child(2),
+    .p-datatable-tbody > tr > td:nth-child(2) {
+        min-width: 120px;
+        max-width: 150px;
+    }
+    .p-datatable-thead > tr > th:nth-child(3),
+    .p-datatable-tbody > tr > td:nth-child(3) {
+        min-width: 120px;
+        max-width: 150px;
+    }
+    .p-datatable-thead > tr > th:nth-child(6),
+    .p-datatable-tbody > tr > td:nth-child(6) {
+        min-width: 120px;
+        max-width: 150px;
+    }
+    .p-datatable-thead > tr > th:nth-child(5),
+    .p-datatable-tbody > tr > td:nth-child(5) {
+        min-width: 120px;
+        max-width: 150px;
+    }
+    //   .p-datatable-thead > tr > th:nth-child(3),
+    //   .p-datatable-tbody > tr > td:nth-child(3) {
+    //     min-width: 90px;
+    //     max-width: 120px;
+    //   }
+    .p-datatable-tbody > tr > td,
+    .p-datatable-thead > tr > th {
+        position: static !important;
+        left: auto !important;
+        right: auto !important;
+        box-shadow: none !important;
+    }
+    
+    @media (max-width: 640px) {
+        /* paginator layout */
+        ::ng-deep .p-paginator {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            flex-wrap: nowrap !important;
+            gap: 0px !important;
+            white-space: nowrap;
+            margin-top: 0px !important;
+        }
+        .p-paginator-pages {
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            white-space: nowrap !important;
+            flex-direction: row;
+            max-width: 120px;
+            overflow-x: auto;
+        }
+        /* hide total items OR move below */
+        ::ng-deep .total-items {
+            font-size: 12px;
+            flex-shrink: 0;
+            margin-left: -15px !important;
+        }
+    }
+}

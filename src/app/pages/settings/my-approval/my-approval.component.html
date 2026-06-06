@@ -35,7 +35,7 @@
 
         <!-- Product Table with Pagination -->
         <div>
-            <p-table [value]="filteredProducts" [tableStyle]="{ 'min-width': '50rem' }" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines mt-6 item-report">
+            <p-table [value]="filteredProducts" [tableStyle]="{ 'min-width': '50rem' }" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines mt-6 my-approval">
                 <ng-template pTemplate="header">
                     <tr class="bg-yellow-400">
                         <th>Id</th>
@@ -56,7 +56,7 @@
                         <td>{{ row.invoice_no }}</td>
                         <td>{{ row.request_type }}</td>
                         <td>{{ row.customer_name }}</td>
-                        <td>{{ row.mobile }}</td>
+                        <td>{{ row.mobileno }}</td>
                         <td>{{ row.request_date | date: 'dd/MM/yyyy' }}</td>
                         <td>{{ row.amount }}</td>
                         <td>{{ row.status }}</td>
