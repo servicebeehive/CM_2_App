@@ -38,12 +38,10 @@
             <p-table [value]="filteredProducts" [tableStyle]="{ 'min-width': '50rem' }" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines mt-6 item-report">
                 <ng-template pTemplate="header">
                     <tr class="bg-yellow-400">
-                        <th>Id</th>
-                        <th>Invoice No</th>
-                        <th>Type</th>
-                        <th>Requester</th>
-                        <th>Mobile</th>
-                        <th>Date</th>
+                        <th>Location</th>
+                        <th>Period</th>
+                        <th>PO No</th>
+                        <th>MF No</th>
                         <th>Amount</th>
                         <th>Status</th>
                         <th>Action</th>
@@ -54,10 +52,28 @@
                     <tr>
                         <td>{{ row.request_id }}</td>
                         <td>{{ row.invoice_no }}</td>
-                        <td>{{ row.request_type }}</td>
-                        <td>{{ row.customer_name }}</td>
-                        <td>{{ row.mobile }}</td>
-                        <td>{{ row.request_date | date: 'dd/MM/yyyy' }}</td>
+                        <td class="text-xs md:text-sm">
+    <div class="flex items-center justify-between gap-2">
+        {{ row.invoice_no }}
+        <i 
+            class="pi pi-eye text-primary cursor-pointe"
+            (click)="onViewPO(row.get('p_requisitionno')?.value)"
+            pTooltip="View PO"
+            tooltipPosition="top"
+        ></i>
+    </div>
+</td>
+                      <td class="text-xs md:text-sm">
+    <div class="flex items-center justify-between gap-2">
+        {{ row.request_type }}
+        <i 
+            class="pi pi-eye text-primary cursor-pointer"
+            (click)="onViewMF(row.get('p_mfno')?.value)"
+            pTooltip="View MF"
+            tooltipPosition="top"
+        ></i>
+    </div>
+</td>
                         <td>{{ row.amount }}</td>
                         <td>{{ row.status }}</td>
                         <td class="text-center w-[60px]">
@@ -76,56 +92,7 @@
             </p-table>
         </div>
     </form>
-    <p-dialog header="Approval Details" [(visible)]="viewdetails" [modal]="true" [style]="{ width: '1000px' }">
-        <p-card styleClass="shadow-2">
-            <!-- Top Details -->
-            <div class="grid">
-                <div class="col-6"><b>Request Type:</b> Sales Requisition</div>
-                <div class="col-6"><b>Requested By:</b> Amit</div>
-                <div class="col-6"><b>Request Date:</b> 20-Mar-2026</div>
-                <div class="col-6"><b>Amount:</b> ₹25,000</div>
-            </div>
-
-            <p-divider></p-divider>
-
-            <!-- Customer Details -->
-            <div class="grid">
-                <div class="col-12"><b>Customer:</b> ABC Enterprises</div>
-                <div class="col-12"><b>Product:</b> 100 Units - Laptops</div>
-                <div class="col-12"><b>Justification:</b> Discount offered to close the deal.</div>
-            </div>
-
-            <p-divider></p-divider>
-
-            <!-- Approval History -->
-            <h5><b>Approval History</b></h5>
-            <br />
-            <p-table [value]="approvalHistory" [tableStyle]="{ 'min-width': '100%' }">
-                <ng-template pTemplate="header">
-                    <tr>
-                        <th>Level</th>
-                        <th>Approver</th>
-                        <th>Status</th>
-                        <th>Date</th>
-                        <th>Comment</th>
-                    </tr>
-                </ng-template>
-
-                <ng-template pTemplate="body" let-row>
-                    <tr>
-                        <td>{{ row.level }}</td>
-                        <td>{{ row.approver }}</td>
-                        <td>
-                            <p-tag [value]="row.status"> </p-tag>
-                        </td>
-                        <td>{{ row.date }}</td>
-                        <td>{{ row.comment }}</td>
-                    </tr>
-                </ng-template>
-            </p-table>
-        </p-card>
-    </p-dialog>
-
+    
     <p-dialog header="Reject Approval" [(visible)]="rejectiondetails" [modal]="true" [style]="{ width: '600px' }" [closable]="true">
         <div class="p-fluid">
             <label class="mb-2 block"> Please provide a reason for rejection: </label>

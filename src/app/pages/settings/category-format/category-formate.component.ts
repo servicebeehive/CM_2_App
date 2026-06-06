@@ -736,10 +736,8 @@ onGetCityForEdit(stateId: any, cityName: string) {
     }
 
     /** 🔍 Global Filter **/
+   
     applyGlobalFilter() {
-        this.applyGlobalFilterManual();
-    }
-    applyGlobalFilterManual() {
         const value = this.globalFilter?.toLowerCase().trim();
         if (!value) {
             this.filterMaster = [...this.masterDetails];

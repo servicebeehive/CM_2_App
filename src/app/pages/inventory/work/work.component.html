@@ -1,0 +1,89 @@
+<div class="card p-3 md:p-6">
+    <form [formGroup]="salesForm" (ngSubmit)="onSubmit()" class="space-y-6 md:space-y-8">
+        <!-- HEADER + ACTION BUTTONS -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4 md:mb-6">
+            <span class="block text-surface-900 font-bold text-lg md:text-xl mb-2 md:mb-6">Work Listing</span>
+            <div class="flex flex-wrap gap-2 md:gap-4 w-full md:w-auto">
+                <button pButton type="button" label="Add" class="p-button-warning w-full md:w-auto" (click)="add()"></button>
+                <button pButton type="submit" label="Submit" class="p-button-warning w-full md:w-auto" [disabled]="salesForm.invalid"></button>
+                <button pButton type="button" label="Reset" class="p-button-secondary w-full md:w-auto" (click)="onReset()"></button>
+            </div>
+        </div>
+
+        <!-- 🔍 Compact Global Search Section -->
+        <div class="mb-3 w-full" *ngIf="showGlobalSearch">
+            <app-global-filter [(value)]="globalFilter" placeholder="Search Items..." (valueChange)="applyGlobalFilter()"></app-global-filter>
+        </div>
+
+        <!-- ITEM SELECT SECTION -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 md:gap-x-8 gap-y-3 md:gap-y-4 w-full">
+            <!-- Project -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1 text-sm md:text-base">Project</label>
+                <p-dropdown [options]="projectOptions" optionLabel="label" optionValue="value" placeholder="Project" formControlName="p_project" [filter]="true" filterPlaceholder="Search Project" [showClear]="true"> </p-dropdown>
+            </div>
+
+            <!-- Period -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1 text-sm md:text-base">Period</label>
+                <p-dropdown [options]="periodOptions" optionLabel="label" optionValue="value" placeholder="Period" formControlName="p_period" [filter]="true" filterPlaceholder="Search Period" [showClear]="true"> </p-dropdown>
+            </div>
+
+            <!-- Work Code -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1 text-sm md:text-base">Work Code</label>
+                <input pInputText formControlName="workcode" placeholder="Work Code" />
+            </div>
+
+            <!-- Work — filtered dropdown -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1 text-sm md:text-base">Work Description</label>
+                <input pInputText formControlName="p_work" placeholder="Work Description" />
+            </div>
+        </div>
+
+        <!-- SALES TABLE (FormArray) -->
+        <div class="mt-4 md:mt-6">
+            <p-table [value]="filterWorkList" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" appendTo="body" class="p-datatable-gridlines sale-report">
+                <!-- HEADER -->
+                <ng-template pTemplate="header">
+                    <tr class="bg-yellow-400">
+                        <th class="text-center">Complete</th>
+                        <th>Project</th>
+                        <th>Period</th>
+                        <th>Work</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                </ng-template>
+
+                <!-- ROWS -->
+                <ng-template pTemplate="body" let-row let-i="rowIndex">
+                    <tr [formGroup]="salesForm">
+                        <!-- COMPLETE CHECKBOX -->
+                        <td class="text-center">
+                            <p-checkbox [(ngModel)]="row.completed" [binary]="true" [ngModelOptions]="{standalone: true}" (onChange)="onCompletedChange(i)"> </p-checkbox>
+                        </td>
+                        <td>{{ row.project }}</td>
+                        <td>{{ row.period }}</td>
+                        <td>{{ row.work }}</td>
+
+                        <!-- DELETE -->
+                        <td class="text-center">
+                            <i class="pi pi-trash text-red-500 cursor-pointer text-sm md:text-base" (click)="removeItem(i)"></i>
+                        </td>
+                    </tr>
+                </ng-template>
+
+                <!-- FOOTER -->
+                <ng-template pTemplate="paginatorleft" appendTo="body">
+                    <div class="text-gray-600 ms-2 text-xs md:text-sm">Total Items: {{ filterWorkList.length }}</div>
+                </ng-template>
+            </p-table>
+        </div>
+
+        <!-- SUMMARY SECTION -->
+        <div class="grid grid-cols-7 gap-x-8 gap-y-4 m-3 mt-4"></div>
+    </form>
+
+    <p-confirmDialog></p-confirmDialog>
+</div>

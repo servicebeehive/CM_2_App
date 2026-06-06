@@ -68,7 +68,6 @@ export class MyApprovalComponent {
     first: number = 0;
     rowsPerPage: number = 5;
     globalFilter: string = '';
-    viewdetails: boolean = false;
     rejectiondetails: boolean = false;
     showData: boolean = false;
     rejectComment: string = '';
@@ -224,31 +223,18 @@ export class MyApprovalComponent {
         this.downloadExcel();
     }
 
-    view(id: number) {
-        console.log(id);
-        this.viewdetails = true;
-        const payload = {
-            p_username: 'admin',
-            p_returntype: 'CHILDUOM',
-            p_returnvalue: id.toString()
-        };
+onViewPO(poValue: string): void {
+    if (!poValue) return;
+    // Add your view/navigation logic here
+    console.log('View PO:', poValue);
+}
 
-        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-            next: (res: any) => {
-                if (!res.data || res.data.length === 0) {
-                    //  this.showError("No Child UOM Data Available");
-                    return;
-                }
+onViewMF(mfValue: string): void {
+    if (!mfValue) return;
+    // Add your view/navigation logic here
+    console.log('View MF:', mfValue);
+}
 
-                // this.childUOMList = res.data; // assign data
-                // this.childUomDialog = true; // open popup
-            },
-            error: (err) => {
-                // this.showError("Failed to load Child UOM Details");
-                console.error(err);
-            }
-        });
-    }
 
     approved(row: any) {
         this.confirmationService.confirm({
@@ -315,7 +301,7 @@ export class MyApprovalComponent {
             p_user_id: this.authService.isLogIntType()?.userid,
             p_usertype_id: this.authService.isLogIntType()?.usertypeid,
             p_action: 'REJECT',
-            p_remarks: ''
+            p_remarks: this.rejectComment
         };
 
         this.inventoryService.approverequest(payload).subscribe({

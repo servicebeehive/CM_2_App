@@ -6,12 +6,17 @@ import { InputText } from 'primeng/inputtext';
 @Component({
     selector: 'app-global-filter',
     imports: [FormsModule, InputText],
-    template: `
-        <div class="flex items-center gap-2 mb-4 w-full">
-            <i class="pi pi-search text-gray-600"></i>
-            <input type="text" pInputText [placeholder]="placeholder" [ngModel]="value" (input)="onInput($event)" class="w-full p-inputtext-sm" />
-        </div>
-    `,
+template: `
+    <div class="relative w-full mb-4">
+        <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10"></i>
+        <input type="text" pInputText
+               [placeholder]="placeholder"
+               [ngModel]="value"
+               (input)="onInput($event)"
+               class="w-full p-inputtext-sm"
+               style="padding-left: 2rem !important" />
+    </div>
+`,
     styleUrl: './global-filter.component.scss'
 })
 export class GlobalFilterComponent {
@@ -28,10 +33,9 @@ export class GlobalFilterComponent {
         });
     }
 
-    onInput(event: any) {
-        const inputValue = event.target.value;
-        this.value = inputValue;
-        this.inputSubject.next(inputValue);
-        this.valueChange.emit(this.value);
-    }
+    onInput(event: Event) {
+    const val = (event.target as HTMLInputElement).value;
+    this.value = val;
+    this.inputSubject.next(val);  
+}
 }

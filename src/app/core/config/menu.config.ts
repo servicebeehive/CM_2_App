@@ -38,9 +38,29 @@ export const ADMIN_MENU_MODEL: MenuItem[] = [
                        routerLink: ['/layout/inventory/indent']
                     },
                     {
+                       label: 'Material Forcasting',
+                       icon: 'pi pi-fw pi pi-sparkles',
+                       routerLink: ['/layout/inventory/material-forcasting']
+                    },
+                    {
+                       label: 'Work Listing',
+                       icon: 'pi pi-fw pi pi-sitemap',
+                       routerLink: ['/layout/inventory/work']
+                    },
+                    {
+                       label: 'Purchase Order',
+                       icon: 'pi pi-fw pi pi-send',
+                       routerLink: ['/layout/inventory/purchase-order']
+                    },
+                    {
                         label: 'Transactions',
                         icon: 'pi pi-fw pi-history',
                         routerLink: ['/layout/inventory/transaction']
+                    },
+                     {
+                        label: 'GRN',
+                        icon: 'pi pi-fw pi-inbox',
+                        routerLink: ['/layout/inventory/grn']
                     }
                 ]
             }
