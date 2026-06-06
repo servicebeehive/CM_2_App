@@ -244,11 +244,11 @@ private routeChange$ = new Subject<string>();
 this.masterForm.addControl('stateforall', this.fb.control('', Validators.required));
 this.masterForm.addControl('cityforall', this.fb.control('', Validators.required));
             this.masterForm.addControl('customerpincode', this.fb.control('', Validators.required));
-            this.masterForm.addControl('customerphone', this.fb.control('', Validators.required));
-           this.masterForm.addControl('customeremail', this.fb.control(''));
+            this.masterForm.addControl('customerphone', this.fb.control('', [Validators.required,Validators.pattern(/^[6-9]\d{9}$/)]));
+            this.masterForm.addControl('customeremail', this.fb.control(''));
             this.masterForm.addControl('customergstno', this.fb.control('', [gstNumberValidator]));
-            this.masterForm.addControl('customercontactperson', this.fb.control(''));
-            this.masterForm.addControl('customercontactphone', this.fb.control(''));
+            this.masterForm.addControl('customercontactname', this.fb.control(''));
+            this.masterForm.addControl('customercontactphone', this.fb.control('', Validators.pattern(/^[6-9]\d{9}$/)));
             this.masterForm.addControl('customercontactemail', this.fb.control('', [Validators.email]));
         }
         if (master === 'advance') {
@@ -263,11 +263,11 @@ this.masterForm.addControl('cityforall', this.fb.control('', Validators.required
 this.masterForm.addControl('stateforall', this.fb.control('', Validators.required));
 this.masterForm.addControl('cityforall', this.fb.control('', Validators.required));
             this.masterForm.addControl('supplierpincode', this.fb.control('', Validators.required));
-            this.masterForm.addControl('supplierphone', this.fb.control('', Validators.required));
+            this.masterForm.addControl('supplierphone', this.fb.control('', [Validators.required,Validators.pattern(/^[6-9]\d{9}$/)]));
             this.masterForm.addControl('supplieremail', this.fb.control('', [Validators.email]));
             this.masterForm.addControl('suppliergstno', this.fb.control('', [gstNumberValidator]));
             this.masterForm.addControl('suppliercontactname', this.fb.control(''));
-            this.masterForm.addControl('suppliercontactphone', this.fb.control(''));
+            this.masterForm.addControl('suppliercontactphone', this.fb.control('', Validators.pattern(/^[6-9]\d{9}$/)));
             this.masterForm.addControl('suppliercontactemail', this.fb.control('', [Validators.email]));
         }
         if (master === 'taxmaster') {

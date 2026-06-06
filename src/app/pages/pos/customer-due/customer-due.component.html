@@ -108,9 +108,9 @@
                                     placeholder="Amount"
                                     (keydown)="blockMinus($event)"
                                     [disabled]="row.status === 'PENDING'"
-    [ngClass]="{'opacity-50 cursor-not-allowed bg-gray-100': row.status === 'PENDING'}"
+                                    [ngClass]="{ 'opacity-50 cursor-not-allowed bg-gray-100': row.status === 'PENDING' }"
                                 />
-                                <small class="text-red-500" *ngIf="row.amountError"> This cannot be greater than {{ row.due_amount }} </small>
+                                <small class="text-red-500" *ngIf="row.amountError"> Write off should be equal to {{ row.due_amount }} </small>
                             </div>
                         </td>
                         <td>{{ row.status }}</td>

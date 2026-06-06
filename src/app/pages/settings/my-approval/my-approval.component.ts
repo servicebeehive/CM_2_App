@@ -27,6 +27,7 @@ import { Card } from 'primeng/card';
 import { Divider } from 'primeng/divider';
 import { Tag } from 'primeng/tag';
 import * as XLSX from 'xlsx';
+import { Router } from '@angular/router';
 
 @Component({
     selector: 'app-my-approval',
@@ -90,7 +91,8 @@ export class MyApprovalComponent {
         private authService: AuthService,
         private messageService: MessageService,
         private datePipe: DatePipe,
-        private confirmationService: ConfirmationService
+        private confirmationService: ConfirmationService,
+        private router:Router
     ) {}
 
     ngOnInit(): void {

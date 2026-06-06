@@ -57,7 +57,6 @@ import { RadioButtonModule } from 'primeng/radiobutton';
 })
 export class TransactionReportComponent {
     reportForm!: FormGroup;
-    visibleDialog = false;
     selectedRow: any = null;
     selection: boolean = true;
     first: number = 0;
@@ -71,12 +70,14 @@ export class TransactionReportComponent {
     itemOptions = [];
     products: StockIn[] = [];
     filteredProducts: any[] = [];
+    loginusername: string = '';
     reportTypeOptions: any[] = [
         { label: 'Sale', value: 'SALE' },
         { label: 'Return', value: 'RETURN' },
         { label: 'Replace', value: 'REPLACE' },
         { label: 'Purchase', value: 'PURCHASE' },
-        { label: 'Debit Note', value: 'DEBITNOTE' }
+        { label: 'Debit Note', value: 'DEBITNOTE' },
+        { label: 'Misc-Charge', value: 'MISCTRAN' }
     ];
 
     constructor(
@@ -123,7 +124,24 @@ export class TransactionReportComponent {
             } catch {}
             return dateValue;
         };
-        if (type === 'SALE' || type === 'REPLACE') {
+        if (type === 'SALE') {
+            this.columns = [
+                { fields: 'invoiceno', header: 'Invoice No' },
+                { fields: 'invoicedate', header: 'Invoice Date', formatter: formatDate },
+                { fields: 'category', header: 'Category', widthClass: 'fixed-category-col' },
+                { fields: 'item', header: 'Item', widthClass: 'fixed-item-col' },
+                { fields: 'uom', header: 'UOM' },
+                { fields: 'status', header: 'Status' },
+                { fields: 'gsttans', header: 'GST' },
+                { fields: 'mrp', header: 'MRP' },
+                { fields: 'qty', header: 'Quantity' },
+                { fields: 'amount', header: 'Amount' },
+                { fields: 'overalldiscount', header: 'Discount' },
+                { fields: 'writeoffamount', header: 'Write-off' },
+                { fields: 'grandtotal', header: 'Grand Total' }
+            ];
+        } 
+        if (type === 'REPLACE') {
             this.columns = [
                 { fields: 'invoiceno', header: 'Invoice No' },
                 { fields: 'invoicedate', header: 'Invoice Date', formatter: formatDate },
@@ -146,7 +164,7 @@ export class TransactionReportComponent {
                 { fields: 'category', header: 'Category', widthClass: 'fixed-category-col' },
                 { fields: 'item', header: 'Item', widthClass: 'fixed-item-col' },
                 { fields: 'uom', header: 'UOM' },
-                { fields: 'status', header: 'Status' },
+          { fields: 'status', header: 'Status' },
                 { fields: 'gsttans', header: 'GST' },
                 { fields: 'mrp', header: 'MRP' },
                 { fields: 'qty', header: 'Quantity' },
@@ -186,6 +204,16 @@ export class TransactionReportComponent {
                 { fields: 'overalldiscount', header: 'Discount' },
                 { fields: 'grandtotal', header: 'Grand Total' }
             ];
+        } else if (type === 'MISCTRAN') {
+            this.columns = [
+                { fields: 'transactionno', header: 'Transaction No' },
+                { fields: 'invoicedate', header: 'Invoice Date', formatter: formatDate },
+                { fields: 'request_type', header: 'Type' },
+                { fields: 'status', header: 'Status' },
+                { fields: 'amount', header: 'Amount' },
+                { fields: 'grandtotal', header: 'Grand Total' },
+                { fields: 'rejectionremarks', header: 'Remark' }
+            ];
         } else {
             this.columns = [];
         }
@@ -203,6 +231,7 @@ export class TransactionReportComponent {
             { validators: this.dateRangeValidator }
         );
 
+        this.loginusername = this.authService.isLogIntType()?.username;
         this.gstTransaction = 'all';
         this.reportForm.get('category')?.disable();
         this.reportForm.get('item')?.disable();
@@ -281,20 +310,20 @@ export class TransactionReportComponent {
             p_item: itemValue,
             p_fromdate: this.datepipe.transform(fromDate, 'yyyy/MM/dd'),
             p_todate: this.datepipe.transform(toDate, 'yyyy/MM/dd'),
-            p_username: 'admin',
+            p_username: this.loginusername,
             p_gsttran: reportType === 'DEBITNOTE' ? (gstType === 'none' ? null : gstType) : gstType === 'all' ? null : gstType,
             p_reporttype: reportType || 'SALE'
         };
 
         this.setTableColumns(reportType);
-        this.showData = false; // Hide previous data while loading
+        this.showData = false;
 
         this.inventoryService.gettransactionreportdetail(payload).subscribe({
             next: (res: any) => {
                 console.log('API RESULT:', res.data);
                 this.products = res?.data || [];
                 this.filteredProducts = [...this.products];
-                this.showData = true; // Show data after successful API call
+                this.showData = true;
 
                 if (this.products.length == 0) {
                     let message = 'No Data Available for the selected filters';
@@ -342,7 +371,7 @@ export class TransactionReportComponent {
     categoryRelavantItem(id: any) {
         this.itemOptions = [];
         const payload = {
-            p_username: 'admin',
+            p_username: this.loginusername,
             p_returntype: 'CATEGORY',
             p_returnvalue: id.toString()
         };
@@ -390,7 +419,7 @@ export class TransactionReportComponent {
 
     createDropdownPayload(returnType: string) {
         return {
-            p_username: 'admin',
+            p_username: this.loginusername,
             p_returntype: returnType
         };
     }

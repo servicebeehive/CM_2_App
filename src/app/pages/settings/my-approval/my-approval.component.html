@@ -35,7 +35,7 @@
 
         <!-- Product Table with Pagination -->
         <div>
-            <p-table [value]="filteredProducts" [tableStyle]="{ 'min-width': '50rem' }" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines mt-6 item-report">
+            <p-table [value]="filteredProducts" [tableStyle]="{ 'min-width': '50rem' }" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines mt-6 my-approval">
                 <ng-template pTemplate="header">
                     <tr class="bg-yellow-400">
                         <th>Location</th>
@@ -78,9 +78,11 @@
                         <td>{{ row.status }}</td>
                         <td class="text-center w-[60px]">
                             <div class="flex g-2">
-                                <!-- <button pButton type="button" icon="pi pi-eye" class="p-button-text p-button-sm p-button-info" (click)="view(row.id)"></button> -->
                                 <button pButton type="button" icon="pi pi-check-square" class="p-button-text p-button-sm p-button-success" (click)="approved(row)" [disabled]="row.status !== 'PENDING'"></button>
                                 <button pButton type="button" icon="pi pi-ban" class="p-button-text p-button-sm p-button-danger" (click)="reject(row)" [disabled]="row.status !== 'PENDING'"></button>
+                                 <ng-container *ngIf="row.request_type === 'Write-off'">
+                                <button pButton type="button" icon="pi pi-eye" class="p-button-text p-button-sm p-button-info" (click)="view(row)"></button>
+                                </ng-container>
                             </div>
                         </td>
                     </tr>

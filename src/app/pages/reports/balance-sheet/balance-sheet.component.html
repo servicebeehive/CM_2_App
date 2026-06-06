@@ -1,0 +1,174 @@
+<div class="card p-6">
+  <!-- Header Row -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+    <span class="block text-surface-900 font-bold text-2xl">P & L</span>
+    <div class="hidden md:flex gap-4">
+      <button pButton type="submit" label="Display" class="p-button-warning"
+        (click)="Onreturndropdowndetails()" [disabled]="reportForm.invalid">
+      </button>
+      <button pButton type="button" label="Download" icon="pi pi-download" iconPos="right"
+        class="p-button-warning" (click)="onDownloadClick()">
+      </button>
+      <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()">
+      </button>
+    </div>
+  </div>
+
+  <form [formGroup]="reportForm" class="space-y-8">
+
+    <!-- Date Range -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 w-full">
+      <div class="flex flex-col">
+        <label class="font-medium mb-1">From Date <span class="text-red-500">*</span></label>
+        <p-datepicker fluid formControlName="fromDate" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="From Date"></p-datepicker>
+        <small class="text-red-500 ms-3 mt-1" *ngIf="reportForm.get('fromDate')?.touched">
+          <span *ngIf="reportForm.get('fromDate')?.errors?.['required']">From Date is required</span>
+        </small>
+      </div>
+      <div class="flex flex-col">
+        <label class="font-medium mb-1">To Date <span class="text-red-500">*</span></label>
+        <p-datepicker fluid formControlName="toDate" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="To Date"></p-datepicker>
+        <small class="text-red-500 ms-3 mt-1" *ngIf="reportForm.get('toDate')?.touched">
+          <span *ngIf="reportForm.get('toDate')?.errors?.['required']">To Date is required</span>
+          <span *ngIf="reportForm.errors?.['dateRangeInvalid'] && reportForm.get('toDate')?.touched">To Date must be greater than or equal to From Date</span>
+        </small>
+      </div>
+    </div>
+
+    <!-- Radio Buttons -->
+    <!-- <div class="flex flex-col">
+      <label class="font-medium mb-2">Report Type <span class="text-red-500">*</span></label>
+      <div class="flex gap-6">
+        <div class="flex align-items-center gap-2">
+          <p-radioButton name="reportType" value="PNLSUMMARY" formControlName="reportType" inputId="summary"></p-radioButton>
+          <label for="summary" class="cursor-pointer font-medium">Summary</label>
+        </div>
+        <div class="flex align-items-center gap-2">
+          <p-radioButton name="reportType" value="PNLDETAIL" formControlName="reportType" inputId="detail"></p-radioButton>
+          <label for="detail" class="cursor-pointer font-medium">Detail</label>
+        </div>
+      </div>
+      <small class="text-red-500 ms-1 mt-1"
+        *ngIf="reportForm.get('reportType')?.touched && reportForm.get('reportType')?.errors?.['required']">
+        Report Type is required
+      </small>
+    </div> -->
+
+    <!-- Mobile Buttons -->
+    <div class="flex md:hidden justify-center gap-2 mt-6">
+      <button pButton type="submit" label="Display" class="p-button-warning flex-1"
+        (click)="Onreturndropdowndetails()" [disabled]="reportForm.invalid">
+      </button>
+      <button pButton type="button" label="Download" class="p-button-warning flex-1" (click)="onDownloadClick()"></button>
+      <button pButton type="button" label="Reset" class="p-button-secondary flex-1" (click)="reset()"></button>
+    </div>
+
+    <!-- ===== SUMMARY TABLE ===== -->
+    <!-- <div *ngIf="reportForm.get('reportType')?.value === 'PNLSUMMARY' && filteredProducts.length > 0"> -->
+      <div>
+      <p-table
+        [value]="filteredProducts"
+        dataKey="id"
+        [tableStyle]="{'min-width': '50rem'}"
+        [paginator]="true"
+        [rows]="10"
+        [rowsPerPageOptions]="[10, 20, 50]"
+        [responsiveLayout]="'scroll'"
+        class="p-datatable-gridlines mt-6"
+      >
+        <ng-template pTemplate="header">
+          <tr class="bg-yellow-400">
+            <th>Period</th>
+            <th class="text-right">Sale</th>
+            <th class="text-right">Return</th>
+            <th class="text-right">Purchase</th>
+            <th class="text-right">Misc Charge</th>
+            <th class="text-right">Write Off Amount</th>
+            <th class="text-right">Grand Total</th>
+            <th class="text-right">Profit</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-row>
+          <tr>
+            <td>{{ row.period }}</td>
+            <td class="text-right">{{ row.sale }}</td>
+            <td class="text-right">{{ row.return }}</td>
+            <td class="text-right">{{ row.purchase }}</td>
+            <td class="text-right">{{ row.misc_charge }}</td>
+            <td class="text-right">{{ row.writeoff_amount }}</td>
+            <td class="text-right">{{ row.grand_total }}</td>
+            <td class="text-right">{{ row.profit }}</td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="paginatorleft" appendTo="body">
+          <div class="total-items text-gray-600 ms-2">Total Items: {{ filteredProducts?.length || 0 }}</div>
+        </ng-template>
+      </p-table>
+
+      <!-- Grand Total bar below table -->
+      <div class="flex justify-end items-center gap-3 mt-3 pe-1">
+        <span class="font-semibold text-surface-700">Grand Total</span>
+        <input pInputText readonly
+          [value]="summaryTotal | number:'1.2-2'"
+          class="text-right w-40 bg-surface-100 font-semibold cursor-default"
+          style="pointer-events: none;" />
+      </div>
+    </div>
+
+    <!-- ===== DETAIL TABLE ===== -->
+    <!-- <div *ngIf="reportForm.get('reportType')?.value === 'PNLDETAIL' && filteredProducts.length > 0">
+      <p-table
+        [value]="filteredProducts"
+        dataKey="id"
+        [tableStyle]="{'min-width': '60rem'}"
+        [paginator]="true"
+        [rows]="10"
+        [rowsPerPageOptions]="[10, 20, 50]"
+        [responsiveLayout]="'scroll'"
+        class="p-datatable-gridlines mt-6"
+      >
+        <ng-template pTemplate="header">
+          <tr class="bg-yellow-400">
+            <th>Transaction Date</th>
+            <th>Trans Type</th>
+            <th>Inv No</th>
+            <th class="text-right">Total Amount</th>
+            <th class="text-right">Paid Amount</th>
+            <th class="text-right">Misc Amount</th>
+             <th class="text-right">Write-off Amount</th>
+            <th class="text-right">Grand Total</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-row>
+          <tr>
+            <td>{{ row.transaction_date | date:'dd/MM/yyyy' }}</td>
+            <td>{{ row.trans_type }}</td>
+            <td>{{ row.invoice_no }}</td>
+            <td class="text-right">{{ row.total_amount }}</td>
+            <td class="text-right">{{ row.paid_amount }}</td>
+            <td class="text-right">{{ row.misc_amount }}</td>
+            <td class="text-right">{{ row.writeoff_amount }}</td>
+            <td class="text-right font-semibold">{{ row.grandTotal }}</td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="paginatorleft" appendTo="body">
+          <div class="total-items text-gray-600 ms-2">Total Items: {{ filteredProducts?.length || 0 }}</div>
+        </ng-template>
+      </p-table> -->
+
+      <!-- Grand Total bar below table -->
+     <!-- <div class="flex justify-end items-center gap-3 mt-3 pe-1">
+        <span class="font-semibold text-surface-700">Grand Total</span>
+        <input pInputText readonly
+          [value]="detailTotal | number:'1.2-2'"
+          class="text-right w-40 bg-surface-100 font-semibold cursor-default"
+          style="pointer-events: none;" />
+      </div>
+    </div> -->
+
+  </form>
+</div>

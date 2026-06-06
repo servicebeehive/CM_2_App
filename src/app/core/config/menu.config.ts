@@ -150,6 +150,11 @@ export const ADMIN_MENU_MODEL: MenuItem[] = [
                         label: 'Transaction Report',
                         icon: 'pi pi-fw pi-chart-line',
                         routerLink: ['/layout/reports/transaction-report']
+                    },
+                    {
+                        label: 'P & L',
+                        icon: 'pi pi-fw pi-chart-scatter',
+                        routerLink: ['/layout/reports/balance-sheet']
                     }
                 ]
             }
@@ -439,6 +444,11 @@ export const STORE_OWNER_MENU_MODEL: MenuItem[] = [
                 icon: 'pi pi-fw pi-desktop',
                 routerLink: ['/layout/pos/overview'],
                 items: [
+                      {
+                        label: 'Sales',
+                        icon: 'pi pi-fw pi-dollar',
+                        routerLink: ['/layout/pos/sales']
+                    },
                     {
                         label: 'Invoice',
                         icon: 'pi pi-fw pi-file',
