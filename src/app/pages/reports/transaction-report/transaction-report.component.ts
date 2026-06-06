@@ -208,6 +208,7 @@ export class TransactionReportComponent {
             this.columns = [
                 { fields: 'transactionno', header: 'Transaction No' },
                 { fields: 'invoicedate', header: 'Invoice Date', formatter: formatDate },
+                { fields: 'request_type', header: 'Type' },
                 { fields: 'status', header: 'Status' },
                 { fields: 'amount', header: 'Amount' },
                 { fields: 'grandtotal', header: 'Grand Total' },

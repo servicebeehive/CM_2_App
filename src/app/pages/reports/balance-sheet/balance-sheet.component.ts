@@ -110,7 +110,7 @@ export class BalanceSheetComponent implements OnInit {
   calculateSummaryTotals() {
     this.summaryTotal = this.filteredProducts.reduce(
       (acc,row) =>
-      acc + (parseFloat(row.grand_total) || 0),0
+      acc + (parseFloat(row.profit) || 0),0
     )
   }
 
@@ -134,8 +134,8 @@ export class BalanceSheetComponent implements OnInit {
     'Purchase':         row.purchase,
     'Misc Charge':      row.misc_charge,
     'Write Off Amount': row.writeoff_amount,
-    'Profit':           row.profit,
-    'Grand Total':      row.grand_total
+    'Grand Total':      row.grand_total,
+     'Profit':           row.profit
   }));
 
    excelData.push({
@@ -145,8 +145,8 @@ export class BalanceSheetComponent implements OnInit {
     'Purchase':         '',
     'Misc Charge':      '',
     'Write Off Amount': '',
-    'Profit':           '',
-    'Grand Total':      this.summaryTotal
+    'Grand Total':      '',
+    'Profit':            this.summaryTotal
   });
 
    const worksheet  = XLSX.utils.json_to_sheet(excelData);
@@ -160,8 +160,8 @@ export class BalanceSheetComponent implements OnInit {
     { wch: 12 }, // Purchase
     { wch: 14 }, // Misc Charge
     { wch: 18 }, // Write Off Amount
-    { wch: 12 }, // Profit
     { wch: 14 }, // Grand Total
+    { wch: 12 }, // Profit 
   ];
 
   const fromDate = this.datepipe.transform(this.reportForm.get('fromDate')?.value, 'ddMMMyyyy');
