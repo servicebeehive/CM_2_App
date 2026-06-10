@@ -735,6 +735,13 @@ export class SalesComponent implements OnInit, AfterViewInit {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (res) => {
+                      if (!res.data?.length) {
+                    this.messageService.add({
+                        severity: 'warn', summary: 'Warning',
+                        detail: 'Saved but no bill number returned.',
+                    });
+                    return;
+                }
                     const billno = res.data[0]?.billno;
 
                     // Refresh dropdowns
