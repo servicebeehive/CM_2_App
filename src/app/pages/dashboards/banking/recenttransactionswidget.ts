@@ -17,7 +17,7 @@ import { Component } from '@angular/core';
                 >
                     <img
                         alt="brands"
-                        src="/demo/images/banking/airbnb.png"
+                        src="demo/images/banking/airbnb.png"
                         class="w-12 flex-shrink-0 mr-4"
                     />
                     <div class="flex flex-col">
@@ -37,7 +37,7 @@ import { Component } from '@angular/core';
                 >
                     <img
                         alt="brands"
-                        src="/demo/images/banking/amazon.png"
+                        src="demo/images/banking/amazon.png"
                         class="w-12 flex-shrink-0 mr-4"
                     />
                     <div class="flex flex-col">
@@ -57,7 +57,7 @@ import { Component } from '@angular/core';
                 >
                     <img
                         alt="brands"
-                        src="/demo/images/banking/nike.svg"
+                        src="demo/images/banking/nike.svg"
                         class="w-12 flex-shrink-0 mr-4 rounded-full"
                     />
                     <div class="flex flex-col">
@@ -77,7 +77,7 @@ import { Component } from '@angular/core';
                 >
                     <img
                         alt="brands"
-                        src="/demo/images/banking/starbucks.svg"
+                        src="demo/images/banking/starbucks.svg"
                         class="w-12 flex-shrink-0 mr-4"
                     />
                     <div class="flex flex-col">
@@ -95,7 +95,7 @@ import { Component } from '@angular/core';
                 <li class="flex items-center p-4 mb-4">
                     <img
                         alt="brands"
-                        src="/demo/images/banking/amazon.png"
+                        src="demo/images/banking/amazon.png"
                         class="w-12 flex-shrink-0 mr-4"
                     />
                     <div class="flex flex-col">

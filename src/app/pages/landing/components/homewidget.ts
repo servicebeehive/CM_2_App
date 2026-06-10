@@ -72,7 +72,7 @@ import { LayoutService } from '@/layout/service/layout.service';
             >
                 <img
                     animateEnter="moveinright"
-                    src="/demo/images/landing/{{
+                    src="demo/images/landing/{{
                         darkMode ? 'dashboard-dark' : 'dashboard-light'
                     }}.png"
                     alt=""

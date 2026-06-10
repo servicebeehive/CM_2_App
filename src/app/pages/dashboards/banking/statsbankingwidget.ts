@@ -31,7 +31,7 @@ import { Component } from '@angular/core';
             <div class="card h-full">
                 <div class="flex items-center justify-between mb-4">
                     <div class="text-surface-900 dark:text-surface-0 text-xl font-semibold">Credit Card</div>
-                    <img alt="avatar" src="/demo/images/banking/visa.svg" class="h-4" />
+                    <img alt="avatar" src="demo/images/banking/visa.svg" class="h-4" />
                 </div>
                 <div class="text-surface-600 dark:text-surface-200 mb-1 font-semibold">Debt</div>
                 <div class="text-2xl text-primary mb-8 font-bold">$1.500,00</div>

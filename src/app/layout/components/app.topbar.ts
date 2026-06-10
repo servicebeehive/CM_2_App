@@ -47,7 +47,7 @@ import { InventoryService } from '@/core/services/inventory.service';
                 </li>
                 <li class="topbar-profile">
                     <button type="button" class="p-link" (click)="onProfileButtonClick()">
-                        <img src="/layout/images/avatar.png" alt="Profile" />
+                        <img src="layout/images/avatar.png" alt="Profile" />
                     </button>
                 </li>
             </ul>

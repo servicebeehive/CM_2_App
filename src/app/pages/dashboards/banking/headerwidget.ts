@@ -11,7 +11,7 @@ import { TooltipModule } from 'primeng/tooltip';
             <div class="flex flex-col sm:flex-row items-center gap-4">
                 <img
                     alt="avatar"
-                    src="/demo/images/avatar/circle/avatar-f-1.png"
+                    src="demo/images/avatar/circle/avatar-f-1.png"
                     class="w-16 h-16 flex-shrink-0"
                 />
                 <div class="flex flex-col items-center sm:items-start">
