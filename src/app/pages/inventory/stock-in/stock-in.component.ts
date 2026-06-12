@@ -193,7 +193,7 @@ export class StockInComponent {
         window.removeEventListener('beforeunload', () => {});
     }
     populateStockForm(data: any, itemsData: any[]) {
-        console.log('data date:', data);
+        this.transationid=data.purchaseid;
         this.productForm.patchValue({
             p_tranpurchaseid: data.purchaseid || 0,
             p_invoiceno: data.invoicenumber || '',
@@ -209,7 +209,7 @@ export class StockInComponent {
             const transformedItems = itemsData.map((item: any) => {
                 console.log('Mapping item:', item);
                 return {
-                    p_tranpurchaseid: item.transactiondetailid || 0,
+                    p_tranpurchaseid: item.purchaseid || 0,
                     itemid: item.itemid || 0,
                     itemsku: item.itemsku || '',
                     itembarcode: item.itembarcode || 0,
@@ -229,7 +229,6 @@ export class StockInComponent {
                     categoryname: item.categoryname || item.category || '',
                     expirydate: item.expirydate || null,
                     isactive: 'Y',
-                    discount: item.discount || 0
                 };
             });
             this.itemOptionslist = transformedItems;
@@ -254,7 +253,6 @@ export class StockInComponent {
             uom: updatedData.parentUOM,
             childUOM: hasChildUOM ? 'Yes' : 'No',
             mrp: updatedData.mrp,
-            discount: updatedData.discount,
             minStock: updatedData.minStock,
             warPeriod: updatedData.warPeriod,
             p_expirydate: new Date(updatedData.expirydate),
@@ -536,7 +534,8 @@ export class StockInComponent {
             error: (err) => console.log(err)
         });
     }
-    OnGetPurcheseItem(id: any) {
+    OnGetPurcheseItem(id?: number | string) {
+        if(!id) return;
         const payload = {
             p_username: 'admin',
             p_returntype: 'PURCHASEDETAIL',

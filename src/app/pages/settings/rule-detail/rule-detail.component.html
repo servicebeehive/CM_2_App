@@ -1,0 +1,135 @@
+<div class="card p-6">
+    <div class="flex justify-between items-center mb-6">
+        <span class="block text-surface-900 font-bold text-xl mb-6">Rule Details</span>
+
+        <div class="flex gap-4">
+            <button pButton type="button" label="Create Rule" icon="pi pi-plus" class="p-button-warning" (click)="openUserDialog()"></button>
+        </div>
+    </div>
+
+    <!-- 🔍 Compact Global Search Section -->
+    <div class="mb-3 w-full" *ngIf="showGlobalSearch">
+        <app-global-filter [(value)]="globalFilter" placeholder="Rule i.e. Payment" (valueChange)="applyGlobalFilter()"></app-global-filter>
+    </div>
+
+    <!-- 📋 Rule Table -->
+    <p-table [value]="filteredUser" dataKey="id" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines mt-6">
+        <ng-template pTemplate="header">
+            <tr>
+                <th>Rule Creation Id</th>
+                  <th>Rule Name</th>
+                <th>Profile Name</th>     
+                <th>Creation Date</th>
+                <th class="flex gap-2"> <p-checkbox binary="true" [(ngModel)]="isActiveChecked" [ngModelOptions]="{standalone:true}" (change)="onChangeActive($event)"></p-checkbox> Active</th>
+                <th class="text-center">Action</th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-user>
+            <tr>
+                <td>{{ user.rule_creation_id }} <i 
+                *ngIf="getGroupCount(user.rule_creation_id) > 1"
+                class="pi cursor-pointer ml-2 text-green-600"
+                [ngClass]="isExpanded(user.rule_creation_id) ? 'pi-minus-circle' : 'pi-plus-circle'"
+                (click)="toggleExpand(user.rule_creation_id)"
+            ></i></td>
+                <td>{{ user.rule_name }}</td>
+                <td>{{ user.usertypename }}</td>
+                <td>{{ user.created_on | date:'dd/MM/yy'}}</td>
+                <td>{{ user.is_active }}</td>
+                <td>
+                    <div class="flex gap-2">
+                         <i class="pi pi-pencil cursor-pointer text-blue-500" (click)="openEditDialog(user)"> </i>
+                        <i class="pi pi-trash cursor-pointer text-red-500" (click)="deleteRow(user)"></i>
+                    </div>
+                </td>
+            </tr>
+             <ng-container *ngIf="isExpanded(user.rule_creation_id)">
+        <tr *ngFor="let subUser of getSubRows(user.rule_creation_id, user)" class="bg-blue-50">
+            <td class="pl-8 text-gray-400">↳ {{ subUser.rule_creation_id }}</td>
+               <td>{{ subUser.rule_name }}</td>
+            <td>{{ subUser.profilename }}</td>   
+            <td>{{ subUser.created_on | date:'dd/MM/yy' }}</td>
+            <td>{{ subUser.is_active }}</td>
+            <td>
+                <div class="flex gap-2">
+                    <i class="pi pi-trash cursor-pointer text-red-500" (click)="deleteRow(subUser)"></i>
+                    <i class="pi pi-pencil cursor-pointer text-blue-500" (click)="openEditDialog(subUser)"></i>
+                </div>
+            </td>
+        </tr>
+    </ng-container>
+        </ng-template>
+        <ng-template pTemplate="paginatorleft">
+            <div class="text-gray-600 ms-2">Total Rule: {{ filteredUser?.length || 0 }}</div>
+        </ng-template>
+    </p-table>
+
+    <!-- ✳️ Add/Edit User Dialog -->
+      <form [formGroup]="ruleForm" (ngSubmit)="onSubmit()" class="space-y-6">
+    <p-dialog header="{{ editMode ? 'Edit Rule' : 'Create Rule' }}" [(visible)]="visibleDialog" [modal]="true" [style]="{ width: '60vw' }" [draggable]="false" [resizable]="false">
+        
+            <div class="grid grid-cols-2 gap-x-6 gap-y-4">
+                <!-- User Role -->
+                <div class="flex flex-col">
+                    <label class="font-medium mb-1">Rule Name<span class="text-red-500">*</span></label>
+                    <p-dropdown [options]="ruleOptions" optionLabel="rule_name" optionValue="rule_id" formControlName="p_rule" placeholder="Select Rule"></p-dropdown>
+                    <small class="text-red-500 mt-1" *ngIf="ruleForm.get('p_rule')?.touched && ruleForm.get('p_rule')?.invalid"> Rule is required </small>
+                </div>
+
+                <!-- Active -->
+                <div class="flex gap-3 mt-9">
+                    <p-checkbox formControlName="checked" [binary]="true"></p-checkbox>
+                    <label class="font-medium">Active</label>
+                </div>
+            </div>
+
+            <!-- Level Table -->
+            <div class="flex flex-col mt-6">
+                <h3 class="text-lg font-semibold mb-3 text-gray-700 border-b pb-2">Level Details</h3>
+
+                <div class="flex gap-4 items-start">
+                    <div class="flex-1">
+                        <p-table [value]="levels" class="w-full">
+                            <ng-template #header>
+                                <tr>
+                                    <th>User Profile</th>
+                                    <th>Remove Level</th>
+                                </tr>
+                            </ng-template>
+                            <ng-template #body let-l let-i="rowIndex">
+                                <tr>
+                                    <td>
+                                        <p-dropdown
+                                            [options]="usernameOptions"
+                                            optionLabel="fieldname"
+                                            optionValue="fieldid"
+                                            [filter]="true"
+                                            filterPlaceholder="Search Profile User Name"
+                                            [(ngModel)]="l.pusername"
+                                            [ngModelOptions]="{ standalone: true }"
+                                            placeholder="Select Profile User Name"
+                                            appendTo="body"
+                                        ></p-dropdown>
+                                    </td>
+                                    <td>
+                                        <i class="pi pi-minus-circle cursor-pointer text-yellow-500" (click)="removeRow(i)"></i>
+                                    </td>
+                                </tr>
+                            </ng-template>
+                        </p-table>
+                    </div>
+
+                    <div class="flex flex-col gap-3">
+                        <button pButton type="button" label="Add Level" class="p-button-warning" (click)="addRow()"></button>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-end gap-4 mt-6">
+                <button pButton type="button" label="Cancel" class="p-button-secondary" (click)="closeDialog()"></button>
+                <button pButton type="submit" label="Submit" class="p-button-warning" [disabled]="ruleForm.invalid || isSubmitDisabled()"></button>
+            </div>
+    </p-dialog>
+    </form>
+
+    <p-confirmDialog></p-confirmDialog>
+</div>

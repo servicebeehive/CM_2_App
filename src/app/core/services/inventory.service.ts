@@ -181,6 +181,15 @@ gettransactionreportdetail(payload:any):Observable<any>{
   )
 }
 
+get_pnl(payload:any):Observable<any>{
+   let payloaddata=this.shareservice.GetApiBody(payload)
+  let url=`${this.baseUrl}${API_ENDPOINTS.inventory.get_pnl}`;
+  return this.http.post<any>(url,payloaddata).pipe(catchError(error=>{
+    return throwError(()=>error)
+  }),
+  )
+}
+
 updatestockadjustment(payload:any):Observable<any>{
     // console.log(payload)
      let payloaddata=this.shareservice.GetApiBody(payload)
@@ -192,6 +201,70 @@ updatestockadjustment(payload:any):Observable<any>{
 
 )
 
+}
+
+gettransactionmisc(payload:any):Observable<any>{
+  let payloaddata = this.shareservice.GetApiBody(payload)
+  let url = `${this.baseUrl}${API_ENDPOINTS.settings.gettransactionmisc}`;
+  return this.http.post<any>(url,payloaddata).pipe(catchError(error=>{
+    return throwError(()=>error)
+  }))
+}
+
+upserttransactionmisc(payload:any):Observable<any>{
+  let payloaddata = this.shareservice.GetApiBody(payload)
+  let url = `${this.baseUrl}${API_ENDPOINTS.settings.upserttransactionmisc}`;
+  return this.http.post<any>(url,payloaddata).pipe(catchError(error=>{
+    return throwError(()=>error)
+  }))
+}
+
+deletetransaction(payload:any):Observable<any>{
+  let payloaddata = this.shareservice.GetApiBody(payload)
+  let url = `${this.baseUrl}${API_ENDPOINTS.settings.deletetransaction}`;
+  return this.http.post<any>(url,payloaddata).pipe(catchError(error=>{
+    return throwError(()=>error)
+  }))
+}
+
+upsertcustomermaster(payload:any):Observable<any>{
+  let payloaddata = this.shareservice.GetApiBody(payload)
+  let url = `${this.baseUrl}${API_ENDPOINTS.settings.upsertcustomermaster}`;
+  return this.http.post<any>(url,payloaddata).pipe(catchError(error=>{
+    return throwError(()=>error)
+  }))
+}
+
+upsertsuppliermaster(payload:any):Observable<any>{
+  let payloaddata = this.shareservice.GetApiBody(payload)
+  let url = `${this.baseUrl}${API_ENDPOINTS.settings.upsertsuppliermaster}`;
+  return this.http.post<any>(url,payloaddata).pipe(catchError(error=>{
+    return throwError(()=>error)
+  }))
+}
+
+manageapprovalrulelevels(payload:any):Observable<any>{
+  let payloaddata = this.shareservice.GetApiBody(payload)
+  let url = `${this.baseUrl}${API_ENDPOINTS.settings.fnmanageapprovalrulelevels}`;
+  return this.http.post<any>(url,payloaddata).pipe(catchError(error=>{
+    return throwError(()=>error)
+  }))
+}
+
+updatewriteoffamount(payload:any):Observable<any>{
+  let payloaddata = this.shareservice.GetApiBody(payload)
+  let url = `${this.baseUrl}${API_ENDPOINTS.inventory.updatewriteoffamount}`;
+  return this.http.post<any>(url,payloaddata).pipe(catchError(error=>{
+    return throwError(()=>error)
+  }))
+}
+
+approverequest(payload:any):Observable<any>{
+  let payloaddata = this.shareservice.GetApiBody(payload)
+  let url = `${this.baseUrl}${API_ENDPOINTS.settings.approverequest}`;
+  return this.http.post<any>(url,payloaddata).pipe(catchError(error=>{
+    return throwError(()=>error)
+  }))
 }
 
   /** 🔹 Common error handler */

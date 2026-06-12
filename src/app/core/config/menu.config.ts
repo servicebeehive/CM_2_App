@@ -89,6 +89,11 @@ export const ADMIN_MENU_MODEL: MenuItem[] = [
                         routerLink: ['/layout/pos/invoice']
                     },
                     {
+                        label: 'Customer Due',
+                        icon: 'pi pi-fw pi-exclamation-circle',
+                        routerLink: ['/layout/pos/customer-due']
+                    },
+                    {
                         label: 'Debit/Credit Link',
                         icon: 'pi pi-fw pi-credit-card',
                         routerLink: ['/layout/pos/credit-note']
@@ -115,54 +120,64 @@ export const ADMIN_MENU_MODEL: MenuItem[] = [
                         label: 'Transaction Report',
                         icon: 'pi pi-fw pi-chart-line',
                         routerLink: ['/layout/reports/transaction-report']
+                    },
+                    {
+                        label: 'P & L',
+                        icon: 'pi pi-fw pi-chart-scatter',
+                        routerLink: ['/layout/reports/balance-sheet']
                     }
                 ]
             }
         ]
     },
-    {
-        label: 'SETTINGS',
-        icon: 'pi pi-cog',
-        items: [
-            {
-                label: 'System Settings',
-                icon: 'pi pi-fw pi-cog',
-                routerLink: ['/layout/settings/overview'],
-                items: [
-                    {
-                        label: 'Bulk Upload',
-                        icon: 'pi pi-fw pi-users',
-                        routerLink: ['/layout/settings/bulk-upload']
-                    },
-                    {
-                        label: 'Category Master',
-                        icon: 'pi pi-fw pi-file',
-                        routerLink: ['/layout/settings/category-formate', 'categorymaster']
-                    },
-                    {
-                        label: 'Customer Master',
-                        icon: 'pi pi-fw pi-file',
-                        routerLink: ['/layout/settings/category-formate', 'customermaster']
-                    },
-                    {
-                        label: 'Tax Master',
-                        icon: 'pi pi-fw pi-file',
-                        routerLink: ['/layout/settings/category-formate', 'taxmaster']
-                    },
-                    {
-                        label: 'Supplier Master',
-                        icon: 'pi pi-fw pi-file',
-                        routerLink: ['/layout/settings/category-formate', 'suppliermaster']
-                    },
-                    {
-                        label: 'UOM Master',
-                        icon: 'pi pi-fw pi-file',
-                        routerLink: ['/layout/settings/category-formate', 'uommaster']
-                    }
-                ]
-            }
-        ]
-    },
+    // {
+    //     label: 'SETTINGS',
+    //     icon: 'pi pi-cog',
+    //     items: [
+    //         {
+    //             label: 'System Settings',
+    //             icon: 'pi pi-fw pi-cog',
+    //             routerLink: ['/layout/settings/overview'],
+    //             items: [
+    //                 // {
+    //                 //     label: 'Access Control',
+    //                 //     icon: 'pi pi-fw pi-sliders-h',
+    //                 //     routerLink: ['/layout/settings/access-control']
+    //                 // },
+    //                 // {
+    //                 //     label: 'Bulk Upload',
+    //                 //     icon: 'pi pi-fw pi-users',
+    //                 //     routerLink: ['/layout/settings/bulk-upload']
+    //                 // },
+    //                 // {
+    //                 //     label: 'Category Master',
+    //                 //     icon: 'pi pi-fw pi-file',
+    //                 //     routerLink: ['/layout/settings/category-formate', 'categorymaster']
+    //                 // },
+    //                 {
+    //                     label: 'Customer Master',
+    //                     icon: 'pi pi-fw pi-file',
+    //                     routerLink: ['/layout/settings/category-formate', 'customermaster']
+    //                 },
+    //                 {
+    //                     label: 'Tax Master',
+    //                     icon: 'pi pi-fw pi-file',
+    //                     routerLink: ['/layout/settings/category-formate', 'taxmaster']
+    //                 },
+    //                 {
+    //                     label: 'Supplier Master',
+    //                     icon: 'pi pi-fw pi-file',
+    //                     routerLink: ['/layout/settings/category-formate', 'suppliermaster']
+    //                 },
+    //                 {
+    //                     label: 'UOM Master',
+    //                     icon: 'pi pi-fw pi-file',
+    //                     routerLink: ['/layout/settings/category-formate', 'uommaster']
+    //                 }
+    //             ]
+    //         }
+    //     ]
+    // },
     {
         label: 'SECURITY',
         icon: 'pi pi-cog',
@@ -173,20 +188,42 @@ export const ADMIN_MENU_MODEL: MenuItem[] = [
                 routerLink: ['/layout/security/overview'],
                 items: [
                    
-                    {
-                        label: 'Access-Control',
-                        icon: 'pi pi-fw pi-file',
-                        routerLink: ['/layout/security/access-control'] 
-                    },  
+                    // {
+                    //     label: 'Access-Control',
+                    //     icon: 'pi pi-fw pi-file',
+                    //     routerLink: ['/layout/security/access-control'] 
+                    // },  
                     {
                         label: 'User Management',
                         icon: 'pi pi-fw pi-users',
-                        routerLink: ['/layout/security/user-management']
+                        routerLink: ['/layout/settings/user-management']
+                    },
+                     {
+                        label: 'Customer Master',
+                        icon: 'pi pi-fw pi-user',
+                        routerLink: ['/layout/settings/category-formate', 'customermaster'],
+                        routerLinkActiveOptions:{exact: false}
                     },
                     {
-                        label: 'UserType',
-                        icon: 'pi pi-fw pi-file',
-                        routerLink: ['/layout/settings/category-formate', 'usertype']
+                        label: 'Supplier Master',
+                        icon: 'pi pi-fw pi-truck',
+                        routerLink: ['/layout/settings/category-formate', 'suppliermaster'],
+                        routerLinkActiveOptions:{exact:false}
+                    },
+                    {
+                        label: 'Rule Detail',
+                        icon: 'pi pi-exclamation-triangle',
+                        routerLink: ['/layout/settings/rule-detail']
+                    },
+                    //   {
+                    //     label: 'My Approval',
+                    //     icon: 'pi pi-fw pi-check-circle',
+                    //     routerLink: ['/layout/settings/my-approval']
+                    // },
+                      {
+                        label: 'Misc Charges',
+                        icon: 'pi pi-fw pi-wallet',
+                        routerLink: ['/layout/settings/misc-charges']
                     }
                 ]
             }
@@ -348,6 +385,24 @@ export const STORE_OWNER_MENU_MODEL: MenuItem[] = [
             }
         ]
     },
+     {
+        label: 'INVENTORY',
+        icon: 'pi pi-chart-bar',
+        items: [
+            {
+                label: 'Inventory Management',
+                icon: 'pi pi-fw pi-database',
+                routerLink: ['/layout/inventory/overview'],
+                items: [
+                    {
+                        label: 'Transactions',
+                        icon: 'pi pi-fw pi-history',
+                        routerLink: ['/layout/inventory/transaction']
+                    }
+                ]
+            }
+        ]
+    },
     {
         label: 'POS',
         icon: 'pi pi-shopping-cart',
@@ -357,6 +412,11 @@ export const STORE_OWNER_MENU_MODEL: MenuItem[] = [
                 icon: 'pi pi-fw pi-desktop',
                 routerLink: ['/layout/pos/overview'],
                 items: [
+                      {
+                        label: 'Sales',
+                        icon: 'pi pi-fw pi-dollar',
+                        routerLink: ['/layout/pos/sales']
+                    },
                     {
                         label: 'Invoice',
                         icon: 'pi pi-fw pi-file',
@@ -384,6 +444,34 @@ export const STORE_OWNER_MENU_MODEL: MenuItem[] = [
                         label: 'Transaction Report',
                         icon: 'pi pi-fw pi-chart-line',
                         routerLink: ['/layout/reports/transaction-report']
+                    }
+                ]
+            }
+        ]
+    },
+     {
+        label: 'SETTINGS',
+        icon: 'pi pi-cog',
+        items: [
+            {
+                label: 'System Settings',
+                icon: 'pi pi-fw pi-cog',
+                routerLink: ['/layout/settings/overview'],
+                items: [
+                    {
+                        label: 'Rule Detail',
+                        icon: 'pi pi-exclamation-triangle',
+                        routerLink: ['/layout/settings/rule-detail']
+                    },
+                      {
+                        label: 'My Approval',
+                        icon: 'pi pi-fw pi-check-circle',
+                        routerLink: ['/layout/settings/my-approval']
+                    },
+                      {
+                        label: 'Misc Charges',
+                        icon: 'pi pi-fw pi-wallet',
+                        routerLink: ['/layout/settings/misc-charges']
                     }
                 ]
             }

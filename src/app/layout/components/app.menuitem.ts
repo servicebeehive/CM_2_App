@@ -197,7 +197,8 @@ export class AppMenuitem implements OnInit, OnDestroy {
     }
 
     updateActiveStateFromRoute() {
-        let activeRoute = this.router.isActive(this.item.routerLink[0], {
+        const fullPath = Array.isArray(this.item.routerLink)? this.item.routerLink.join('/') : this.item.routerLink;
+        let activeRoute = this.router.isActive(fullPath, {
             paths: 'exact',
             queryParams: 'ignored',
             matrixParams: 'ignored',
