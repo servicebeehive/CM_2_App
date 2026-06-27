@@ -81,7 +81,7 @@
                                 <button pButton type="button" icon="pi pi-check-square" class="p-button-text p-button-sm p-button-success" (click)="approved(row)" [disabled]="row.status !== 'PENDING'"></button>
                                 <button pButton type="button" icon="pi pi-ban" class="p-button-text p-button-sm p-button-danger" (click)="reject(row)" [disabled]="row.status !== 'PENDING'"></button>
                                  <ng-container *ngIf="row.request_type === 'Write-off'">
-                                <button pButton type="button" icon="pi pi-eye" class="p-button-text p-button-sm p-button-info" (click)="view(row)"></button>
+                                <!-- <button pButton type="button" icon="pi pi-eye" class="p-button-text p-button-sm p-button-info" (click)="view(row)"></button> -->
                                 </ng-container>
                             </div>
                         </td>
