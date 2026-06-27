@@ -1,494 +1,522 @@
 <div class="card p-3 md:p-6">
     <!-- ================================
-       SALES FORM SECTION
+       HEADER + ACTION BUTTONS
   ================================= -->
-    <form [formGroup]="salesForm" (ngSubmit)="onSubmit()" class="space-y-6 md:space-y-8">
-        <!-- ================================
-         HEADER + ACTION BUTTONS
-    ================================= -->
+    <form [formGroup]="poForm" (ngSubmit)="onSubmit()">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4 md:mb-6">
-            <span class="block text-surface-900 font-bold text-lg md:text-xl mb-2 md:mb-6">Purchase Order</span>
+            <span class="block text-surface-900 font-bold text-lg md:text-xl">Purchase Order</span>
 
-            <div class="flex flex-wrap gap-2 md:gap-4 w-full md:w-auto">
-
-<label class="flex text-xl items-center">
-                    <b> Status &nbsp; &nbsp;</b>
-                    <span
-                        class="font-bold text-xl"
-                        [ngStyle]="{
-                            color: salesForm.get('status')?.value === 'Done' ? 'green' : salesForm.get('status')?.value === 'Partial Cancel' ? 'grey' : salesForm.get('status')?.value === 'Cancel' ? 'red' : 'black'
-                        }"
-                    >
-                        {{ salesForm.get('status')?.value }}
-                    </span></label
-                >
-
-               <p-dropdown
-                    [options]="requisitionOptions"
-                    optionLabel="billno"
-                    optionValue="billno"
-                    placeholder="Draft PO"
-                    formControlName="p_requisitionno"
+            <div class="flex flex-wrap gap-2 md:gap-3 w-full md:w-auto">
+                <!-- PO No Dropdown (submitted POs) -->
+                <p-dropdown
+                    [options]="poList"
+                    optionLabel="pono"
+                    optionValue="pono"
+                    placeholder="Draft PO No."
+                    formControlName="p_pono"
                     [filter]="true"
-                    filterPlaceholder="Search Draft PO"
+                    filterPlaceholder="Search PO No."
                     [showClear]="true"
-                    (onChange)="onBillDetails($event)"
-                    [loading]="isLoadingBills"
-                >
-               <ng-template let-item pTemplate="item">
-        <div class="flex justify-between items-center w-full">
-            <span>{{ item.billno }}</span>
+                    (onChange)="onPOSelect($event)"
+                ></p-dropdown>
 
-            <i
-                class="pi pi-trash text-red-500 cursor-pointer"
-                (click)="deleteBill(item, $event)">
-            </i>
-        </div>
-    </ng-template>
-                </p-dropdown>
+                <!-- Draft PO -->
+                <button pButton type="button" label="Draft PO" class="p-button-warning w-full md:w-auto" (click)="submitDraft()" [disabled]="poForm.invalid || isSubmitDisabled()"></button>
 
-                <!--DRAFT SUBMIT -->
-                <button
-                    pButton
-                    type="submit"
-                    label="Draft"
-                    class="p-button-warning w-full md:w-auto"
-                    (click)="submitDraft()"
-                    [disabled]="salesForm.invalid || isSubmitDisabled() || submitDisabledByBill || salesForm.hasError('costNotGreater') || salesForm.hasError('amountNotGreater')"
-                ></button>
+                <!-- Duplicate -->
+                <button pButton type="button" label="Duplicate" class="p-button-warning w-full md:w-auto" (click)="duplicatePO()" [disabled]="!submitted"></button>
 
-                <!-- SUBMIT -->
-                <button
-                    pButton
-                    type="submit"
-                    label="Submit"
-                    class="p-button-warning w-full md:w-auto"
-                    [disabled]="salesForm.invalid || isSubmitDisabled() || submitDisabledByBill || salesForm.hasError('costNotGreater') || salesForm.hasError('amountNotGreater')"
-                ></button>
-                
-                <!-- PRINT -->
-                <button pButton type="button" ngxPrint printSectionId="invoicePrintSection" label="Print" (click)="printInvoice()" class="p-button-primary w-full md:w-auto" [disabled]="!this.salesForm.get('p_requisitionno')?.value"></button>
+                <!-- Submit -->
+                <button pButton type="submit" label="Submit" class="p-button-primary w-full md:w-auto" [disabled]="poForm.invalid || isSubmitDisabled()"></button>
 
-                <!-- RESET -->
+                <!-- Print -->
+                <button pButton type="button" label="Print" class="p-button-secondary w-full md:w-auto" (click)="printPO()" [disabled]="!poForm.get('p_pono')?.value"></button>
+
+                <!-- Reset -->
                 <button pButton type="button" label="Reset" class="p-button-secondary w-full md:w-auto" (click)="onReset()"></button>
             </div>
         </div>
 
         <!-- ================================
-         ITEM SELECT SECTION
+         HEADER FIELDS GRID
     ================================= -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 md:gap-x-8 gap-y-3 md:gap-y-4 w-full">
-            <!-- PO NO -->
+            <!-- PO No (Auto Generated per vendor) -->
             <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">PO No</label>
-
-                <p-dropdown
-                    [options]="requisitionOptions"
-                    optionLabel="billno"
-                    optionValue="billno"
-                    placeholder="PO No."
-                    formControlName="p_requisitionno"
-                    [filter]="true"
-                    filterPlaceholder="Search PO No."
-                    [showClear]="true"
-                    (onChange)="onBillDetails($event)"
-                    [loading]="isLoadingBills"
-                >
-                </p-dropdown>
-
-                <small class="text-red-500 mt-1 text-xs" *ngIf="salesForm.get('p_requisitionno')?.touched">
-                    <span *ngIf="salesForm.get('p_requisitionno')?.errors?.['required']"> PO is required </span>
-                </small>
+                <label class="font-medium mb-1">PO No.</label>
+                <p-dropdown [options]="generatedPONos" optionLabel="label" optionValue="value" placeholder="Auto Generated" formControlName="p_pono" [showClear]="true"></p-dropdown>
             </div>
 
-             <!-- MF NO -->
+            <!-- PO Date -->
             <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">MF No</label>
-
-                <p-dropdown
-                    [options]="requisitionOptions"
-                    optionLabel="billno"
-                    optionValue="billno"
-                    placeholder="MF No."
-                    formControlName="p_requisitionno"
-                    [filter]="true"
-                    filterPlaceholder="Search MF No."
-                    [showClear]="true"
-                    (onChange)="onBillDetails($event)"
-                    [loading]="isLoadingBills"
-                >
-                </p-dropdown>
-
-                <small class="text-red-500 mt-1 text-xs" *ngIf="salesForm.get('p_requisitionno')?.touched">
-                    <span *ngIf="salesForm.get('p_requisitionno')?.errors?.['required']"> MF No is required </span>
-                </small>
+                <label class="font-medium mb-1">PO Date <span class="text-red-500">*</span></label>
+                <p-datePicker fluid formControlName="p_podate" placeholder="Select date" dateFormat="dd/mm/yy" [showIcon]="true" [showClear]="true"></p-datePicker>
+                <small class="text-red-500 mt-1 text-xs" *ngIf="poForm.get('p_podate')?.touched && poForm.get('p_podate')?.errors?.['required']"> PO date is required </small>
+                <small class="text-red-500 mt-1 text-xs" *ngIf="poForm.get('p_podate')?.touched && poForm.errors?.['poDatePast']"> PO date cannot be in the past </small>
+                <small class="text-red-500 mt-1 text-xs" *ngIf="poForm.get('p_podate')?.touched && poForm.get('p_deliverydate')?.touched && poForm.errors?.['poDateAfterDelivery']"> PO date cannot be after delivery date </small>
             </div>
 
-            <!-- Location -->
-             <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">Location</label>
-
+            <!-- Project -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Project <span class="text-red-500">*</span></label>
                 <p-dropdown
-                    [options]="locationOptions"
+                    [options]="projectOptions"
                     optionLabel="label"
                     optionValue="value"
-                    placeholder="Location"
-                    formControlName="p_location"
+                    placeholder="Select project"
+                    formControlName="p_project"
                     [filter]="true"
-                    filterPlaceholder="Search Location"
+                    filterPlaceholder="Search project"
                     [showClear]="true"
-                >
-                </p-dropdown>
+                    [loading]="isLoadingProjects"
+                ></p-dropdown>
+                <small class="text-red-500 mt-1 text-xs" *ngIf="poForm.get('p_project')?.touched && poForm.get('p_project')?.errors?.['required']"> Project is required </small>
             </div>
 
-            <!-- Period -->
-              <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">Period</label>
+            <!-- Remarks -->
+            <div class="flex flex-col">
+                <label class="font-medium">Remarks</label>
+                <input pInputText type="text" formControlName="p_remarks" placeholder="Optional remarks" />
+            </div>
 
+            <!-- Delivery Location -->
+            <div class="flex flex-col">
+                <label class="font-medium">Delivery Location</label>
                 <p-dropdown
-                    [options]="periodOptions"
+                    [options]="deliveryLocationOptions"
                     optionLabel="label"
                     optionValue="value"
-                    placeholder="Period"
-                    formControlName="p_period"
+                    placeholder="Select location"
+                    formControlName="p_deliverylocation"
                     [filter]="true"
-                    filterPlaceholder="Search Period"
+                    filterPlaceholder="Search location"
                     [showClear]="true"
-                >
-                </p-dropdown>
+                    [loading]="isLoadingLocations"
+                ></p-dropdown>
             </div>
 
+            <!-- Delivery Date -->
+            <div class="flex flex-col">
+                <label class="font-medium">Delivery Date</label>
+                <p-datePicker fluid formControlName="p_deliverydate" placeholder="Select date" dateFormat="dd/mm/yy" [showIcon]="true" [showClear]="true" [minDate]="today"></p-datePicker>
+                <small class="text-red-500 mt-1 text-xs" *ngIf="poForm.get('p_podate')?.touched && poForm.get('p_deliverydate')?.touched && poForm.errors?.['deliveryBeforePO']"> Delivery date cannot be before PO date </small>
+            </div>
+
+            <!-- Payment Terms -->
+            <div class="flex flex-col">
+                <label class="font-medium">Payment Terms</label>
+                <p-dropdown [options]="paymentTermsOptions" optionLabel="label" optionValue="value" placeholder="Select terms" formControlName="p_paymentterms" [filter]="true" filterPlaceholder="Search terms" [showClear]="true"></p-dropdown>
+            </div>
+
+            <!-- Vendor (auto-filled from item vendor selections) -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Vendor</label>
+                <p-multiSelect [options]="selectedVendorNames" formControlName="p_vendor" placeholder="Assigned via vendor icon ↓" [disabled]="true" display="chip" styleClass="w-full surface-100"></p-multiSelect>
+            </div>
+
+            <!-- Forecast Reference No (Add MF button + chips) -->
+            <div class="flex flex-col col-span-1 sm:col-span-2">
+                <label class="font-medium text-sm">Forecast Reference No.</label>
+                <div class="flex align-items-center justify-between mb-1 gap-2">
+                    <div class="w-full border-1 border-round px-3 py-2 flex flex-wrap gap-2 align-items-center" style="border-style: solid; border-width: 1px; border-radius: 6px">
+                        <span *ngIf="selectedMFNos.length === 0" class="text-400 text-sm" style="font-style: italic"> Click "Add MF" to select forecast references </span>
+                        <p-chip *ngFor="let mfno of selectedMFNos" [label]="mfno" styleClass="text-xs"></p-chip>
+                    </div>
+                    <button pButton type="button" label="Add MF" icon="pi pi-plus" class="p-button-warning p-button-sm" style="flex-shrink: 0; white-space: nowrap" (click)="openMFDialog()" [disabled]="submitted"></button>
+                </div>
+                <small class="text-red-500 mt-1 text-xs" *ngIf="showForecastError"> Please select at least one MF </small>
+            </div>
         </div>
 
         <!-- ================================
-         SALES TABLE (FormArray)
-    ================================= -->
+     ITEMS TABLE TAB (always visible)
+================================= -->
         <div class="mt-4 md:mt-6">
-            <input #barcodeInput type="text" class="absolute opacity-0 pointer-events-none" placeholder="Type barcode / SKU and press Enter" (keydown.enter)="onBarcodeScan($event)" />
+            <p-tabView>
+                <!-- ── TAB 0: ITEMS (always visible) ──────────────── -->
+                <p-tabPanel header="Items">
+                    <p-table [value]="poItemArray.controls" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" appendTo="body" class="p-datatable-gridlines p-datatable-sm purchase-order">
+                        <ng-template pTemplate="header">
+                            <tr class="bg-yellow-400">
+                                <th>Item Category</th>
+                                <th>Item</th>
+                                <th>UOM</th>
+                                <th class="text-right">Forecast Qty</th>
+                                <th class="text-right">Available Stock</th>
+                                <th class="text-right">Pending PO Qty</th>
+                                <th class="text-right">Required Qty</th>
+                                <th class="text-right">PO Qty</th>
+                                <th class="text-right">Rate</th>
+                                <th class="text-right">Amount</th>
+                                <th class="text-center">Action</th>
+                            </tr>
+                        </ng-template>
 
-            <div>
-                <p-table [value]="saleArray.controls" dataKey="ItemId" [totalRecords]="saleArray.controls.length" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" appendTo="body" class="p-datatable-gridlines sale-report">
-                    <!-- HEADER -->
-                    <ng-template pTemplate="header">
-                        <tr class="bg-yellow-400">
-                            <th>Category</th>
-                            <th>Item Code</th>
-                            <th>Item Name</th>
-                            <th>UOM</th>
-                            <th>Qty</th>
-                            <th>Cur Stock</th>
-                            <th>Remaining</th>
-                            <th>Vendor</th>
-                            <th>Rate</th>
-                        </tr>
-                    </ng-template>
+                        <ng-template pTemplate="body" let-row let-i="rowIndex">
+                            <tr [formGroup]="getRowGroup(i)">
+                                <td>{{ row.get('category')?.value }}</td>
+                                <td>{{ row.get('item')?.value }}</td>
+                                <td>{{ row.get('uom')?.value }}</td>
+                                <td>{{ row.get('forecastQty')?.value | number }}</td>
+                                <td>{{ row.get('availableStock')?.value | number }}</td>
+                                <td>{{ row.get('pendingPOQty')?.value | number }}</td>
+                                <td>{{ row.get('requiredQty')?.value | number }}</td>
+                                <td>
+                                    <p-inputNumber formControlName="poQty" [min]="0" [useGrouping]="false" [inputStyle]="{ width: '90px' }" (onInput)="onPoQtyChange(i)"></p-inputNumber>
+                                </td>
+                                <td style="padding: 4px">
+                                    <p-inputNumber formControlName="rate" [min]="0" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" [inputStyle]="{ width: '90px' }" (onInput)="onRateChange(i)"></p-inputNumber>
+                                </td>
+                                <td class="text-right text-sm font-semibold">
+                                    {{ row.get('amount')?.value ? '₹' + (row.get('amount')?.value | number: '1.2-2') : '' }}
+                                </td>
+                                <td class="text-center">
+                                    <button pButton type="button" icon="pi pi-building" class="p-button-text p-button-info p-button-sm" pTooltip="Vendor comparison" tooltipPosition="top" (click)="openVendorDialog(row, i)"></button>
+                                </td>
+                            </tr>
+                        </ng-template>
 
-                    <!-- ROWS -->
-                    <ng-template pTemplate="body" let-row let-i="rowIndex">
-                        <tr [formGroup]="row">
-                            <td class="text-xs md:text-sm">{{ row.get('categoryid')?.value }}</td>
-                            <td class="text-xs md:text-sm">{{ row.get('itemsku')?.value }}</td>
-                            <td class="text-xs md:text-sm">{{ row.get('ItemName')?.value }}</td>
-                            <td>
-                                <p-dropdown
-                                    #uomDropdown
-                                    [options]="uomlist[i]"
-                                    optionLabel="fieldname"
-                                    optionValue="fieldid"
-                                    placeholder="UOM"
-                                    formControlName="UOMId"
-                                    [filter]="true"
-                                    filterPlaceholder="Search Uom name"
-                                    appendTo="body"
-                                    (onChange)="UOMId($event, i)"
-                                    class="text-xs md:text-sm"
-                                >
-                                </p-dropdown>
-                            </td>
+                        <ng-template pTemplate="emptymessage">
+                            <tr>
+                                <td colspan="12" class="text-center text-400 italic py-6 text-sm">No items — click "Add MF" to load forecast items</td>
+                            </tr>
+                        </ng-template>
 
-                            <!-- QUANTITY INPUT -->
-                            <td>
+                        <ng-template pTemplate="paginatorleft">
+                            <div class="text-500 text-xs ms-2">Total items: {{ poItemArray.controls.length }}</div>
+                        </ng-template>
+
+                        <ng-template pTemplate="paginatorcenter" *ngIf="poItemArray.controls.length > 0">
+                            <div class="text-sm font-semibold">Grand Total: ₹{{ grandTotal | number: '1.2-2' }}</div>
+                        </ng-template>
+                    </p-table>
+                </p-tabPanel>
+
+                <!-- ── TAB 1: PERFORMA (only after submit) ─────────── -->
+                <p-tabPanel header="Performa" [disabled]="!submitted">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-4 p-3">
+                        <div class="col-span-1 sm:col-span-2 lg:col-span-4">
+                            <span class="font-semibold text-base text-surface-800">Performa Details</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="font-medium">Performa Invoice No.</label>
+                            <input pInputText type="text" formControlName="p_performainvoiceno" placeholder="Enter performa invoice no." />
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="font-medium">Performa Date</label>
+                            <p-datePicker fluid formControlName="p_performadate" placeholder="Select date" dateFormat="dd/mm/yy" [showIcon]="true" [showClear]="true"></p-datePicker>
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="font-medium">Performa Attachment<span class="ms-3 text-xs text-red-500 mt-1">PDF / JPG / PNG</span></label>
+                            <div class="flex align-items-center gap-2 px-3 py-2" style="border: 1px solid var(--surface-300); border-radius: 6px; background: var(--surface-0); min-height: 38px">
+                                <label for="performaFile" class="p-button p-button-sm p-button-outlined p-button-primary m-0" style="cursor: pointer; white-space: nowrap"> <i class="pi pi-upload mr-2"></i> Choose File </label>
+                                <input id="performaFile" type="file" accept=".pdf,.jpg,.jpeg,.png" style="display: none" (change)="onPerformaFileSelect($event)" />
+                                <span class="text-sm text-400 mt-2" style="font-style: italic">{{ performaFileName || 'No file chosen' }}</span>
+                            </div>
+                        </div>
+                        <div class="col-span-1 sm:col-span-2 lg:col-span-4 flex justify-end">
+                            <button pButton type="button" label="Save Performa" icon="pi pi-save" class="p-button-primary p-button-sm" (click)="savePerforma()"></button>
+                        </div>
+                    </div>
+                </p-tabPanel>
+
+                <!-- ── TAB 2: INVOICE (only after submit) ──────────── -->
+                <p-tabPanel header="Invoice" [disabled]="!submitted">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-4 p-3">
+                        <div class="col-span-1 sm:col-span-2 lg:col-span-4">
+                            <span class="font-semibold text-base text-surface-800">Invoice Details</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="font-medium">Invoice No.</label>
+                            <input pInputText type="text" formControlName="p_invoiceno" placeholder="Enter invoice no." />
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="font-medium">Invoice Date</label>
+                            <p-datePicker fluid formControlName="p_invoicedate" placeholder="Select date" dateFormat="dd/mm/yy" [showIcon]="true" [showClear]="true"></p-datePicker>
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="font-medium">Invoice Payment (₹)</label>
+                            <p-inputNumber formControlName="p_invoicepayment" placeholder="0.00" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" [min]="0" inputStyleClass="w-full" (onInput)="onInvoicePaymentChange()"></p-inputNumber>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-4 p-3">
+                        <div class="flex flex-col">
+                            <label class="font-medium">Freight (₹)</label>
+                            <p-inputNumber formControlName="p_freight" placeholder="0.00" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" [min]="0" inputStyleClass="w-full"></p-inputNumber>
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="font-medium">Loading Charge (₹)</label>
+                            <p-inputNumber formControlName="p_loadingcharge" placeholder="0.00" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" [min]="0" inputStyleClass="w-full"></p-inputNumber>
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="font-medium">GST</label>
+                            <input pInputText type="text" formControlName="p_gst" placeholder="Enter GST" />
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="font-medium">Invoice Transit</label>
+                            <input pInputText type="text" formControlName="p_transit" placeholder="Enter Invoice Transit" />
+                        </div>
+                        <div class="col-span-1 sm:col-span-2 lg:col-span-4 flex justify-end">
+                            <button pButton type="button" label="Save Invoice" icon="pi pi-save" class="p-button-primary p-button-sm" (click)="saveInvoice()"></button>
+                        </div>
+                    </div>
+                </p-tabPanel>
+
+                <p-tabPanel header="Payment" [disabled]="!submitted">
+                    <div class="p-3">
+                        <!-- ── Summary Cards ── -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                            <div class="flex flex-col">
+                                <label class="font-medium">Total Payment (₹)</label>
+                                <input pInputText type="text" formControlName="p_totalpayment" [readonly]="true" class="surface-100 text-500" placeholder="Auto calculated" />
+                            </div>
+
+                            <div class="flex flex-col">
+                                <label class="font-medium">Remaining Payment (₹)</label>
                                 <input
                                     pInputText
-                                    type="number"
-                                    formControlName="Quantity"
-                                    min="1"
-                                    step="1"
-                                    class="w-[60px] md:w-[70px] text-xs md:text-sm"
-                                    (keypress)="blockDecimal($event)"
-                                    (input)="updateTotal(i)"
-                                    (input)="OnQtyChange(i)"
-                                    [ngClass]="{ 'border-red-500': row.get('Quantity')?.errors?.['maxStock'] }"
+                                    type="text"
+                                    formControlName="p_remainingpayment"
+                                    [readonly]="true"
+                                    [ngClass]="{ 'text-red-500': getRemainingPayment() > 0, 'text-green-600': getRemainingPayment() <= 0 }"
+                                    class="surface-100"
+                                    placeholder="Auto calculated"
                                 />
-                            </td>
-                             <td class="text-xs md:text-sm">{{ row.get('curStock')?.value }}</td>
-                              <td class="text-xs md:text-sm">{{ row.get('remaining')?.value }}</td>
-                               <td class="text-xs md:text-sm">
-                                 <p-dropdown
-                                    #uomDropdown
-                                    [options]="vendorlist"
-                                    optionLabel="fieldname"
-                                    optionValue="fieldid"
-                                    placeholder="Vendor"
-                                    formControlName="UOMId"
-                                    [filter]="true"
-                                    filterPlaceholder="Search Vendor"
-                                    appendTo="body"
-                                    (onChange)="UOMId($event, i)"
-                                    class="text-xs md:text-sm"
-                                >
-                                </p-dropdown>
-                               </td>
-                            <td>
-                                <input
-                                    pInputText
-                                    type="number"
-                                    formControlName="Quantity"
-                                    min="1"
-                                    step="1"
-                                    class="w-[60px] md:w-[70px] text-xs md:text-sm"
-                                    (keypress)="blockDecimal($event)"
-                                    (input)="updateTotal(i)"
-                                    (input)="OnQtyChange(i)"
-                                    [ngClass]="{ 'border-red-500': row.get('Quantity')?.errors?.['maxStock'] }"
-                                />
-                            </td>
-                        </tr>
-                    </ng-template>
+                            </div>
 
-                    <!-- FOOTER TEXT -->
-                    <ng-template pTemplate="paginatorleft"  appendTo="body">
-                        <div class="text-gray-600 ms-2 text-xs md:text-sm">Total Items: {{ saleArray.controls.length }}</div>
-                    </ng-template>
-                </p-table>
-            </div>
-        </div>
+                            <div class="flex flex-col">
+                                <label class="font-medium">Payment(₹)</label>
+                                <input pInputText type="text" formControlName="p_payment" placeholder="Enter Payment" />
+                            </div>
+                        </div>
 
-        <!-- ================================
-         SUMMARY SECTION
-    ================================= -->
-        <div class="grid grid-cols-7 gap-x-8 gap-y-4 m-3 mt-4">
+                        <!-- ── Fully Paid Badge ── -->
+                        <div *ngIf="getRemainingPayment() <= 0 && paymentHistory.length > 0" class="flex align-items-center gap-2 px-3 py-2 border-round mb-3" style="border: 1px solid var(--green-300); background: var(--green-50)">
+                            <i class="pi pi-check-circle text-green-600"></i>
+                            <span class="text-green-700 font-semibold text-sm">Payment Completed — Fully Paid</span>
+                        </div>
+
+                        <!-- ── Transaction Table ── -->
+                        <p-table [value]="paymentHistory" class="p-datatable-gridlines p-datatable-sm" [responsiveLayout]="'scroll'">
+                            <ng-template pTemplate="header">
+                                <tr class="bg-yellow-400">
+                                    <th style="min-width: 150px">Reference No.</th>
+                                    <th style="min-width: 140px">Payment Date</th>
+                                    <th style="min-width: 130px">Mode</th>
+                                    <th style="min-width: 140px" class="text-right">Amount Paid (₹)</th>
+                                    <th style="width: 80px" class="text-center">Action</th>
+                                </tr>
+                            </ng-template>
+
+                            <ng-template pTemplate="body" let-pay let-i="rowIndex">
+                                <!-- ── Saved row ── -->
+                                <tr *ngIf="!pay.isEditing">
+                                    <td class="text-sm text-500">{{ pay.referenceNo || '—' }}</td>
+                                    <td class="text-sm">{{ pay.date | date: 'dd/MM/yyyy' }}</td>
+                                    <td>
+                                        <span
+                                            class="px-2 py-1 border-round text-xs font-semibold"
+                                            [ngClass]="{
+                                                'bg-blue-100 text-blue-700': pay.mode === 'Bank Transfer',
+                                                'bg-green-100 text-green-700': pay.mode === 'Cash',
+                                                'bg-orange-100 text-orange-700': pay.mode === 'Cheque',
+                                                'bg-purple-100 text-purple-700': pay.mode === 'UPI'
+                                            }"
+                                        >
+                                            {{ pay.mode || '—' }}
+                                        </span>
+                                    </td>
+                                    <td class="text-right text-sm font-semibold text-green-600">₹{{ pay.amount | number: '1.2-2' }}</td>
+                                    <td class="text-center">
+                                        <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm" pTooltip="Delete" tooltipPosition="top" (click)="removePayment(i)"></button>
+                                    </td>
+                                </tr>
+                            </ng-template>
+
+                            <!-- ── NEW INPUT ROW (always at bottom) ── -->
+                            <ng-template pTemplate="footer">
+                                <tr *ngIf="getRemainingPayment() > 0">
+                                    <td class="text-center text-400 text-sm">{{ paymentHistory.length + 1 }}</td>
+
+                                    <td>
+                                        <p-datePicker
+                                            [(ngModel)]="newPayment.date"
+                                            [ngModelOptions]="{ standalone: true }"
+                                            dateFormat="dd/mm/yy"
+                                            placeholder="dd/mm/yyyy"
+                                            [showIcon]="true"
+                                            [maxDate]="today"
+                                            inputStyleClass="w-full text-sm"
+                                            appendTo="body"
+                                        ></p-datePicker>
+                                    </td>
+
+                                    <td>
+                                        <p-dropdown
+                                            [options]="paymentModeOptions"
+                                            optionLabel="label"
+                                            optionValue="value"
+                                            placeholder="Select"
+                                            [(ngModel)]="newPayment.mode"
+                                            [ngModelOptions]="{ standalone: true }"
+                                            appendTo="body"
+                                            styleClass="w-full"
+                                        ></p-dropdown>
+                                    </td>
+
+                                    <td>
+                                        <input pInputText type="text" [(ngModel)]="newPayment.referenceNo" [ngModelOptions]="{ standalone: true }" placeholder="UTR / Cheque No." class="w-full text-sm" />
+                                    </td>
+
+                                    <td>
+                                        <p-inputNumber
+                                            [(ngModel)]="newPayment.amount"
+                                            [ngModelOptions]="{ standalone: true }"
+                                            placeholder="0.00"
+                                            mode="decimal"
+                                            [minFractionDigits]="2"
+                                            [maxFractionDigits]="2"
+                                            [min]="0"
+                                            [max]="getRemainingPayment()"
+                                            inputStyleClass="w-full text-right text-sm"
+                                        ></p-inputNumber>
+                                    </td>
+
+                                    <td class="text-right text-sm font-semibold" [ngClass]="getPreviewRemaining() > 0 ? 'text-red-500' : 'text-green-600'">
+                                        <span *ngIf="newPayment.amount && newPayment.amount > 0"> ₹{{ getPreviewRemaining() | number: '1.2-2' }} </span>
+                                        <span *ngIf="!newPayment.amount || newPayment.amount <= 0" class="text-400">—</span>
+                                    </td>
+
+                                    <td class="text-center">
+                                        <button
+                                            pButton
+                                            type="button"
+                                            icon="pi pi-check"
+                                            class="p-button-text p-button-success p-button-sm"
+                                            pTooltip="Add payment"
+                                            tooltipPosition="top"
+                                            [disabled]="!newPayment.date || !newPayment.amount || newPayment.amount <= 0"
+                                            (click)="addAdvancePayment()"
+                                        ></button>
+                                    </td>
+                                </tr>
+
+                                <!-- ── Footer summary row ── -->
+                                <tr *ngIf="paymentHistory.length > 0">
+                                    <td colspan="4" class="text-right font-bold text-sm">Total</td>
+                                    <td class="text-right font-bold text-green-600 text-sm">₹{{ totalPaid | number: '1.2-2' }}</td>
+                                    <td class="text-right font-bold text-sm" [ngClass]="getRemainingPayment() > 0 ? 'text-red-500' : 'text-green-600'">₹{{ getRemainingPayment() | number: '1.2-2' }}</td>
+                                    <td></td>
+                                </tr>
+                            </ng-template>
+                        </p-table>
+
+                        <!-- Save button -->
+                        <div class="flex justify-end mt-3">
+                            <button pButton type="button" label="Save Payment" icon="pi pi-save" class="p-button-primary p-button-sm" (click)="savePayment()" [disabled]="paymentHistory.length === 0"></button>
+                        </div>
+                    </div>
+                </p-tabPanel>
+            </p-tabView>
         </div>
     </form>
 
     <p-confirmDialog></p-confirmDialog>
 </div>
 
-<!-- ================================
-     PRINT SECTION (INVOICE)
-================================= -->
-<div id="invoicePrintSection" style="width: 900px; margin: auto; font-family: Arial">
-    <h3 style="text-align: center">TAX INVOICE</h3>
-
-    <!-- ================= HEADER SECTION ================= -->
-    <table width="100%" border="1" cellspacing="0" cellpadding="0" style="border-collapse: collapse; font-size: 10px">
-        <tr>
-            <!-- LEFT SIDE (COMPANY + BUYER INFO) -->
-            <td width="60%" style="vertical-align: top; padding: 6px">
-                <strong>{{ companyName }}</strong
-                ><br />
-                {{ companyAddress }},<br />
-                {{ companycity }}<br />
-                GSTIN/UIN: {{ companygstno }}<br />
-                State Name: {{ companystate }}, Code: {{ statecode }}<br />
-                E-Mail : {{ companyemail }}
-                <br />
-
-                <hr style="margin: 5px 0" />
-
-                <strong>Buyer (Bill to)</strong><br /><br />
-
-                <strong>{{ salesForm.get('p_customername')?.value }}</strong
-                ><br />
-                {{ salesForm.get('p_customeraddress')?.value }}<br />
-                Mobile: {{ salesForm.get('p_mobileno')?.value }}<br />
-                <br />
-
-                GSTIN/UIN : {{ salesForm.get('p_gstno')?.value || '-' }}<br />
-                State Name : {{customerstate}}
-            </td>
-
-            <!-- RIGHT SECTION (INVOICE DETAILS) -->
-            <td width="40%" style="vertical-align: top">
-                <table width="100%" border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse">
-                    <tr>
-                        <td><strong>Invoice No.</strong></td>
-                        <td>{{ salesForm.get('p_requisitionno')?.value }}</td>
-                    </tr>
-
-                    <tr>
-                        <td><strong>Dated</strong></td>
-                        <td>{{ salesForm.get('p_transactiondate')?.value | date: 'dd-MMM-yy' }}</td>
-                    </tr>
-
-                    <tr>
-                        <td>Delivery Note</td>
-                        <td>-</td>
-                    </tr>
-
-                    <tr>
-                        <td><strong>Mode of Payment</strong></td>
-                        <td>
-                            <strong>{{ salesForm.get('p_paymode')?.value }}</strong>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>Reference No. & Date</td>
-                        <td>{{ salesForm.get('p_transactionid')?.value }} dt. {{ salesForm.get('p_transactiondate')?.value | date: 'dd-MMM-yy' }}</td>
-                    </tr>
-
-                    <tr>
-                        <td>Buyer's Order No.</td>
-                        <td>-</td>
-                    </tr>
-
-                    <tr>
-                        <td>Dated</td>
-                        <td>-</td>
-                    </tr>
-
-                    <tr>
-                        <td>Dispatch Doc No.</td>
-                        <td>{{salesForm.get('chalanno')?.value}}</td>
-                    </tr>
-
-                    <tr>
-                        <td>Delivery Note Date</td>
-                        <td>-</td>
-                    </tr>
-
-                    <tr>
-                        <td>Dispatched through</td>
-                        <td>{{ salesForm.get('p_requestedby')?.value }}</td>
-                    </tr>
-
-                    <tr>
-                        <td>Destination</td>
-                        <td>-</td>
-                    </tr>
-
-                    <tr>
-                        <td>Terms of Delivery</td>
-                        <td>-</td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
-
-    <!-- ================= ITEM TABLE ================= -->
-    <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; font-size: 10px; margin-top: 10px">
-        <thead>
-            <tr style="text-align: center; font-weight: bold">
-                <td>Sl No.</td>
-                <td>Description of Goods</td>
-                <td>HSN/SAC</td>
-                <td>Quantity</td>
-                <td>Rate</td>
-                <td>per</td>
-                <td>Disc %</td>
-                <td>Amount</td>
-            </tr>
-        </thead>
-
-        <tbody>
-            <tr *ngFor="let item of saleRows; let i = index" style="text-align: center">
-                <td>{{ i + 1 }}</td>
-                <td>{{ item.get('ItemName')?.value }}</td>
-                <td>{{ item.get('hsncode')?.value }}</td>
-                <td>{{ item.get('Quantity')?.value }} {{ item.get('UomName')?.value || item.get('UOMName')?.value }}</td>
-                <td>₹{{ item.get('MRP')?.value | number: '1.2-2' }}</td>
-                <td>{{ item.get('UomName')?.value || item.get('UOMName')?.value }}</td>
-                <td>{{ item.get('discount')?.value || '' }}</td>
-                <td>₹{{ item.get('totalPayable')?.value | number: '1.2-2' }}</td>
-            </tr>
-
-            <!-- SUB TOTAL -->
+<!-- ================================================
+     MF SELECTION DIALOG
+================================================ -->
+<p-dialog header="Material Forecast Selection" [(visible)]="showMFDialog" [modal]="true" [style]="{ width: '950px' }" [draggable]="false" [resizable]="false" styleClass="mf-dialog">
+    <p-table [value]="mfList" [responsiveLayout]="'scroll'" styleClass="p-datatable-gridlines p-datatable-sm" selectionMode="multiple" [(selection)]="mfSelections" dataKey="mfno">
+        <ng-template pTemplate="header">
             <tr>
-                <td colspan="7" style="text-align: right; font-weight: bold">Total</td>
-                <td>₹{{ salesForm.get('p_totalsale')?.value | number: '1.2-2' }}</td>
+                <th style="width: 3rem"></th>
+                <th>MF No</th>
+                <th>Department</th>
+                <th>Requested By</th>
+                <th>Forecast Date</th>
+                <th class="text-center">Total Items</th>
+                <th>Status</th>
             </tr>
-            <tr>
-                <td colspan="7" style="text-align: right; font-weight: bold">Discount {{ salesForm.get('p_disctype')?.value ? salesForm.get('p_overalldiscount')?.value + '%' : '' }}</td>
+        </ng-template>
 
-                <td>{{ !salesForm.get('p_disctype')?.value ? '₹' : '' }}{{ !salesForm.get('p_disctype')?.value ? salesForm.get('p_overalldiscount')?.value : '₹' + salesForm.get('discountvalueper')?.value }}</td>
-            </tr>
-
-            <!-- ROUND OFF -->
-            <tr>
-                <td colspan="7" style="text-align: right"><b>ROUND OFF +/-</b></td>
-                <td>{{ salesForm.get('p_roundoff')?.value | number: '1.2-2' }}</td>
-            </tr>
-        </tbody>
-
-        <!-- GRAND TOTAL -->
-        <tfoot>
-            <tr style="font-weight: bold">
-                <td colspan="7" align="right" style="text-align: right; font-weight: bold">Grand Total</td>
-                <td style="font-weight: bold">₹{{ salesForm.get('p_totalpayable')?.value | number: '1.2-2' }}</td>
-            </tr>
-        </tfoot>
-    </table>
-
-    <!-- ================= AMOUNT IN WORDS ================= -->
-    <div style="padding: 10px; font-size: 10px">
-        <strong>Amount Chargeable (in words):</strong>
-        <!-- {{ amountInWords }} -->
-        -
-    </div>
-
-    <!-- ================= GST SUMMARY ================= -->
-    <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; font-size: 10px; margin-top: 10px">
-        <tr style="font-weight: bold; text-align: center">
-            <td>Taxable Value</td>
-            <td>Rate</td>
-            <td>CGST Amount</td>
-            <td>Rate</td>
-            <td>SGST Amount</td>
-            <td>Total Tax Amount</td>
-        </tr>
-
-        <tr style="text-align: center">
-            <td>₹{{ salesForm.get('amount_before_tax')?.value | number: '1.2-2' }}</td>
-            <td>9%</td>
-            <td>₹{{ salesForm.get('cgst_9')?.value | number: '1.2-2' }}</td>
-            <td>9%</td>
-            <td>₹{{ salesForm.get('sgst_9')?.value | number: '1.2-2' }}</td>
-            <td>₹{{ salesForm.get('tax_18')?.value | number: '1.2-2' }}</td>
-        </tr>
-    </table>
-
-    <!-- ================= BANK DETAILS ================= -->
-    <div>
-        <table width="100%" cellspacing="0" cellpadding="0" style="border-collapse: collapse; font-size: 10px; margin-top: 5px; border: none">
-            <tr>
-                <!-- LEFT COLUMN -->
-                <td width="70%" style="vertical-align: top; padding: 0; border: none">
-                    <div style="margin-bottom: 10px">
-                        <strong>Tax Amount (in words):</strong>
-                        <!-- {{ taxAmountInWords }} -->
-                        -
-                    </div>
-
-                    <div>
-                        <strong>Company's Bank Details</strong><br />
-                        Bank Name: <b>{{ bankname }}</b
-                        ><br />
-                        A/c No.: {{ accountno }}<br />
-                        Branch: {{ branchname }}<br />
-                        IFSC: {{ ifsc }}<br />
-                        PAN: <b>{{ pan }}</b>
-                    </div>
+        <ng-template pTemplate="body" let-mf let-rowIndex="rowIndex">
+            <tr [pSelectableRow]="mf" style="cursor: pointer">
+                <td>
+                    <p-tableCheckbox [value]="mf"></p-tableCheckbox>
+                </td>
+                <td class="font-semibold text-sm">{{ mf.mfno }}</td>
+                <td class="text-sm">{{ mf.department }}</td>
+                <td class="text-sm">{{ mf.requestedBy }}</td>
+                <td class="text-sm">{{ mf.forecastDate }}</td>
+                <td class="text-center text-sm">{{ mf.totalItems }}</td>
+                <td>
+                    <span class="text-green-600 font-semibold text-xs">{{ mf.status }}</span>
                 </td>
             </tr>
-            <tr>
-                <!-- RIGHT COLUMN (Signature) -->
-                <td width="30%" style="padding: 0; border: none; text-align: right">
-                    <div style="display: flex; flex-direction: column; justify-content: flex-end"><strong>Authorized Signatory</strong><br /></div>
-                </td>
-            </tr>
-        </table>
-        <div style="margin-top: 2px; font-size: 10px"><strong>Declaration:</strong> This invoice shows the actual price of goods and all particulars are true.</div>
+        </ng-template>
+    </p-table>
+
+    <ng-template pTemplate="footer">
+        <button pButton type="button" label="Cancel" class="p-button-secondary" (click)="showMFDialog = false"></button>
+        <button pButton type="button" label="Confirm Selection" class="p-button-primary" (click)="confirmMFSelection()" [disabled]="mfSelections.length === 0"></button>
+    </ng-template>
+</p-dialog>
+
+<!-- ================================================
+     VENDOR COMPARISON DIALOG
+================================================ -->
+<p-dialog header="Vendor Comparison" [(visible)]="showVendorDialog" [modal]="true" [style]="{ width: '850px' }" [draggable]="false" [resizable]="false">
+    <!-- Item label -->
+    <div class="mb-3 text-sm text-500" *ngIf="vendorDialogItem">
+        Item: <strong class="text-900">{{ vendorDialogItem.get('item')?.value }}</strong>
     </div>
-</div>
+
+    <!-- Filter radio buttons -->
+    <div class="flex gap-6 mb-3">
+        <label class="flex items-center gap-2 text-sm cursor-pointer">
+            <p-radioButton name="vendorFilter" value="lowest" [(ngModel)]="vendorFilter" (onClick)="sortVendors()"></p-radioButton>
+            Lowest Rate
+        </label>
+        <label class="flex items-center gap-2 text-sm cursor-pointer">
+            <p-radioButton name="vendorFilter" value="fastest" [(ngModel)]="vendorFilter" (onClick)="sortVendors()"></p-radioButton>
+            Fastest Delivery
+        </label>
+        <label class="flex items-center gap-2 text-sm cursor-pointer">
+            <p-radioButton name="vendorFilter" value="preferred" [(ngModel)]="vendorFilter" (onClick)="sortVendors()"></p-radioButton>
+            Preferred Vendor
+        </label>
+    </div>
+
+    <p-table [value]="filteredVendorList" selectionMode="single" [(selection)]="selectedVendor" dataKey="name" styleClass="p-datatable-gridlines p-datatable-sm" [responsiveLayout]="'scroll'">
+        <ng-template pTemplate="header">
+            <tr>
+                <th style="width: 3rem"></th>
+                <th>Vendor</th>
+                <th>Material / Last Order</th>
+                <th class="text-right">Last Rate (₹)</th>
+                <th>Payment Term</th>
+                <th class="text-center">Delivery Days</th>
+            </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-vendor let-i="rowIndex">
+            <tr [pSelectableRow]="vendor" style="cursor: pointer">
+                <td>
+                    <p-tableRadioButton [value]="vendor"></p-tableRadioButton>
+                </td>
+                <td class="font-semibold text-sm">{{ vendor.name }}</td>
+                <td class="text-sm text-500">{{ vendor.lastOrder }}</td>
+                <td class="text-right text-sm" [ngClass]="{ 'text-green-600 font-bold': vendorFilter === 'lowest' && i === 0 }">₹{{ vendor.lastRate | number: '1.2-2' }}</td>
+                <td class="text-sm">{{ vendor.paymentTerm }}</td>
+                <td class="text-center text-sm" [ngClass]="{ 'text-green-600 font-bold': vendorFilter === 'fastest' && i === 0 }">{{ vendor.deliveryDays }}d</td>
+            </tr>
+        </ng-template>
+    </p-table>
+
+    <ng-template pTemplate="footer">
+        <button pButton type="button" label="Cancel" class="p-button-secondary" (click)="showVendorDialog = false"></button>
+        <button pButton type="button" label="Confirm Vendor" class="p-button-primary" (click)="confirmVendor()" [disabled]="!selectedVendor"></button>
+    </ng-template>
+</p-dialog>

@@ -22,7 +22,27 @@ export const ADMIN_MENU_MODEL: MenuItem[] = [
                 icon: 'pi pi-fw pi-database',
                 routerLink: ['/layout/inventory/overview'],
                 items: [
+                    //  {
+                    //    label: 'Indent',
+                    //    icon: 'pi pi-fw pi-file-edit',
+                    //    routerLink: ['/layout/inventory/indent']
+                    // },
                     {
+                       label: 'Work Listing',
+                       icon: 'pi pi-fw pi pi-sitemap',
+                       routerLink: ['/layout/inventory/work']
+                    },
+                    {
+                       label: 'Material Forcasting',
+                       icon: 'pi pi-fw pi pi-sparkles',
+                       routerLink: ['/layout/inventory/material-forcasting']
+                    },    
+                    {
+                       label: 'Purchase Order',
+                       icon: 'pi pi-fw pi pi-send',
+                       routerLink: ['/layout/inventory/purchase-order']
+                    },
+                     {
                         label: 'Stock In',
                         icon: 'pi pi-fw pi-arrow-down-left',
                         routerLink: ['/layout/inventory/stock-in']
@@ -32,35 +52,10 @@ export const ADMIN_MENU_MODEL: MenuItem[] = [
                         icon: 'pi pi-fw pi-wrench',
                         routerLink: ['/layout/inventory/stock-adjustment']
                     },
-                     {
-                       label: 'Indent',
-                       icon: 'pi pi-fw pi-file-edit',
-                       routerLink: ['/layout/inventory/indent']
-                    },
-                    {
-                       label: 'Material Forcasting',
-                       icon: 'pi pi-fw pi pi-sparkles',
-                       routerLink: ['/layout/inventory/material-forcasting']
-                    },
-                    {
-                       label: 'Work Listing',
-                       icon: 'pi pi-fw pi pi-sitemap',
-                       routerLink: ['/layout/inventory/work']
-                    },
-                    {
-                       label: 'Purchase Order',
-                       icon: 'pi pi-fw pi pi-send',
-                       routerLink: ['/layout/inventory/purchase-order']
-                    },
                     {
                         label: 'Transactions',
                         icon: 'pi pi-fw pi-history',
                         routerLink: ['/layout/inventory/transaction']
-                    },
-                     {
-                        label: 'GRN',
-                        icon: 'pi pi-fw pi-inbox',
-                        routerLink: ['/layout/inventory/grn']
                     }
                 ]
             }
@@ -85,44 +80,77 @@ export const ADMIN_MENU_MODEL: MenuItem[] = [
         ]
     },
     {
-        label: 'POS',
+        label: 'DELIVERY',
+        icon: 'pi pi pi-truck',
+        items: [
+            {
+                label: 'Delivery Item',
+                icon: 'pi pi-fw pi pi-truck',
+                routerLink: ['/layout/products/overview'],
+                items: [
+                    {
+                        label: 'GRN',
+                        icon: 'pi pi-fw pi-inbox',
+                        routerLink: ['/layout/inventory/grn']
+                    },
+                    {
+                        label: 'Quality Inspection',
+                        icon: 'pi pi-fw pi pi-search',
+                        routerLink: ['/layout/inventory/quality-inspection']
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        label: 'Issue',
         icon: 'pi pi-shopping-cart',
         items: [
             {
-                label: 'Point of Sale',
+                label: 'Issue Item',
                 icon: 'pi pi-fw pi-desktop',
                 routerLink: ['/layout/pos/overview'],
                 items: [
-                    {
-                        label: 'Sales',
-                        icon: 'pi pi-fw pi-dollar',
-                        routerLink: ['/layout/pos/sales']
-                    },
-                    {
-                        label: 'Return',
-                        icon: 'pi pi-fw pi-arrow-left',
-                        routerLink: ['/layout/pos/return']
-                    },
-                    {
-                        label: 'Replace',
+                    // {
+                    //     label: 'Sales',
+                    //     icon: 'pi pi-fw pi-dollar',
+                    //     routerLink: ['/layout/pos/sales']
+                    // },
+                    // {
+                    //     label: 'Return',
+                    //     icon: 'pi pi-fw pi-arrow-left',
+                    //     routerLink: ['/layout/pos/return']
+                    // },
+                    // {
+                    //     label: 'Replace',
+                    //     icon: 'pi pi-fw pi-arrow-right-arrow-left',
+                    //     routerLink: ['/layout/pos/replace']
+                    // },
+                      {
+                        label: 'Material Issue',
                         icon: 'pi pi-fw pi-arrow-right-arrow-left',
-                        routerLink: ['/layout/pos/replace']
+                        routerLink: ['/layout/inventory/material-issue']
+                    },
+                    {
+                        label: 'Material Return',
+                        icon: 'pi pi-fw pi-arrow-left',
+                        routerLink: ['/layout/inventory/material-return']
                     },
                     {
                         label: 'Invoice',
                         icon: 'pi pi-fw pi-file',
                         routerLink: ['/layout/pos/invoice']
                     },
-                    {
-                        label:'Rent',
-                        icon:'pi pi-fw pi-file-edit',
-                        routerLink: ['/layout/pos/rented']
-                    },
-                    {
-                       label: 'Sales Requisition',
-                       icon: 'pi pi-fw pi-shopping-bag',
-                       routerLink: ['/layout/pos/sales-requisition']
-                    },
+                    // {
+                    //     label:'Rent',
+                    //     icon:'pi pi-fw pi-file-edit',
+                    //     routerLink: ['/layout/pos/rented']
+                    // },
+                    // {
+                    //    label: 'Sales Requisition',
+                    //    icon: 'pi pi-fw pi-shopping-bag',
+                    //    routerLink: ['/layout/pos/sales-requisition']
+                    // },
                     {
                         label: 'Debit/Credit Link',
                         icon: 'pi pi-fw pi-credit-card',
@@ -174,6 +202,11 @@ export const ADMIN_MENU_MODEL: MenuItem[] = [
                     //     icon: 'pi pi-fw pi-sliders-h',
                     //     routerLink: ['/layout/settings/access-control']
                     // },
+                     {
+                        label: 'UserType',
+                        icon: 'pi pi-fw pi-file',
+                        routerLink: ['/layout/settings/category-formate', 'usertype']
+                    },
                     {
                         label: 'Bulk Upload',
                         icon: 'pi pi-fw pi-upload',
@@ -231,11 +264,6 @@ export const ADMIN_MENU_MODEL: MenuItem[] = [
                         label: 'User Management',
                         icon: 'pi pi-fw pi-users',
                         routerLink: ['/layout/security/user-management']
-                    },
-                    {
-                        label: 'UserType',
-                        icon: 'pi pi-fw pi-file',
-                        routerLink: ['/layout/settings/category-formate', 'usertype']
                     },
                      {
                         label: 'Rule Detail',

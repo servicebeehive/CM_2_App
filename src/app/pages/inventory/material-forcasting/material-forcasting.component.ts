@@ -180,10 +180,14 @@ export class MaterialForcastingComponent {
     pan: string = '';
     
     locationOptions: { label: string; value: string }[] = [
-        { label: 'Main Warehouse', value: 'Main Warehouse' },
-        { label: 'Site A', value: 'Site A' },
-        { label: 'Site B', value: 'Site B' }
+        { label: 'Quality', value: 'Quality' },
+        { label: 'Planning', value: 'Planning' },
+        { label: 'Construction', value: 'Construction' }
     ];
+
+     projectOptions:any[]=[
+    {label:'Project A', value:'Project A'}
+  ];
 
     periodOptions: { label: string; value: string }[] = [
         { label: 'June 26', value: 'June 26' },
@@ -195,10 +199,22 @@ export class MaterialForcastingComponent {
         { label: 'Dec 26', value: 'Dec 26' }
     ];
 
-    workOptions: { label: string; value: string }[] = [
-        { label: 'Work C', value: 'Work C' },
-        { label: 'Work A', value: 'Work A' },
-        { label: 'Work B', value: 'Work B' }
+    towerOptions: { label: string; value: string }[] = [
+        { label: 'Tower/Block C', value: 'Tower/Block C' },
+        { label: 'Tower/Block A', value: 'Tower/Block A' },
+        { label: 'Tower/Block B', value: 'Tower/Block B' }
+    ];
+
+    levelOptions: { label: string; value: string }[] = [
+        { label: 'Level 1', value: 'Level 1' },
+        { label: 'Level 2', value: 'Level 2' },
+        { label: 'Level 3', value: 'Level 3' }
+    ];
+
+    pourOptions: { label: string; value: string }[] = [
+        { label: '1', value: '1' },
+        { label: '2', value: '2' },
+        { label: '3', value: '3' }
     ];
 
     @ViewChild(AddinventoryComponent) addInventoryComp!: AddinventoryComponent;
@@ -224,11 +240,13 @@ export class MaterialForcastingComponent {
 
         // Initialize form
         this.salesForm = this.fb.group(
-            {
+            { p_project: [null],
+                p_level:[null],
+                p_pour:[null],
                 p_itemdata: [null],
                 p_transactiontype: [''],
                 p_itemid: [null],
-                p_location:[],
+                p_department:[],
                 p_period:[],
                 p_requisitionno: [null],
                 p_transactionid: [0],

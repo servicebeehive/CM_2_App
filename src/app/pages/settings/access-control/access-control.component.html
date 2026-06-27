@@ -1,11 +1,23 @@
 <div class="card p-6">
-    <span class="block text-surface-900 font-bold text-xl mb-6">User Security</span>
+    <span class="block text-surface-900 font-bold text-xl mb-6">Access</span>
     <!-- Role -->
+     <div class="flex items-center gap-8">
     <div class="mb-4 flex items-center gap-3">
         <label class="font-semibold">User Role</label>
         <p-dropdown [options]="roleOptions" optionLabel="profilename" optionValue="profileid" [(ngModel)]="selectedRole" placeholder="Select Role" [filter]="true" filterPlaceholder="Search Role" (onChange)="onRoleChange()" styleClass="w-64"> </p-dropdown>
     </div>
 
+    <div class="flex items-center gap-4 mb-4">
+        <div class="flex items-center gap-2">
+            <p-radioButton name="access-type" value="M" [(ngModel)]="selectedAccess" inputId="mobileAccess" (onClick)="onAccessChange()"></p-radioButton>
+            <label for="mobileAccess" class="cursor-pointer">Mobile Access</label>
+        </div>
+        <div class="flex items-center gap-2">
+            <p-radioButton name="accessType" value="W" [(ngModel)]="selectedAccess" inputId="webAccess" (onClick)="onAccessChange()"></p-radioButton>
+            <label for="webAccess" class="cursor-pointer">Web Access</label>
+        </div>
+    </div>
+</div>
     <div class="flex gap-8 mt-4">
         <!-- LEFT BOX -->
         <div class="border rounded-md p-4 w-1/2">

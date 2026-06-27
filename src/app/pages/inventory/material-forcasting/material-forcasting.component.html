@@ -10,20 +10,16 @@
             <span class="block text-surface-900 font-bold text-lg md:text-xl mb-2 md:mb-6">Material Forcasting</span>
 
             <div class="flex flex-wrap gap-2 md:gap-4 w-full md:w-auto">
-
-<label class="flex text-xl items-center">
-                    <b> Status &nbsp; &nbsp;</b>
-                    <span
-                        class="font-bold text-xl"
-                        [ngStyle]="{
-                            color: salesForm.get('status')?.value === 'Done' ? 'green' : salesForm.get('status')?.value === 'Partial Cancel' ? 'grey' : salesForm.get('status')?.value === 'Cancel' ? 'red' : 'black'
-                        }"
-                    >
-                        {{ salesForm.get('status')?.value }}
-                    </span></label
+                <span class="text-xl font-bold mt-2">Status</span>
+                <span
+                    class="font-bold text-xl mt-2"
+                    [ngStyle]="{
+                        color: salesForm.get('status')?.value === 'Done' ? 'green' : salesForm.get('status')?.value === 'Partial Cancel' ? 'grey' : salesForm.get('status')?.value === 'Cancel' ? 'red' : 'black'
+                    }"
                 >
-
-               <p-dropdown
+                    {{ salesForm.get('status')?.value }}
+                </span>
+                <p-dropdown
                     [options]="requisitionOptions"
                     optionLabel="billno"
                     optionValue="billno"
@@ -35,22 +31,19 @@
                     (onChange)="onBillDetails($event)"
                     [loading]="isLoadingBills"
                 >
-               <ng-template let-item pTemplate="item">
-        <div class="flex justify-between items-center w-full">
-            <span>{{ item.billno }}</span>
+                    <ng-template let-item pTemplate="item">
+                        <div class="flex justify-between items-center w-full">
+                            <span>{{ item.billno }}</span>
 
-            <i
-                class="pi pi-trash text-red-500 cursor-pointer"
-                (click)="deleteBill(item, $event)">
-            </i>
-        </div>
-    </ng-template>
+                            <i class="pi pi-trash text-red-500 cursor-pointer" (click)="deleteBill(item, $event)"> </i>
+                        </div>
+                    </ng-template>
                 </p-dropdown>
 
                 <!--DRAFT SUBMIT -->
                 <button
                     pButton
-                    type="submit"
+                    type="button"
                     label="Draft"
                     class="p-button-warning w-full md:w-auto"
                     (click)="submitDraft()"
@@ -65,7 +58,7 @@
                     class="p-button-warning w-full md:w-auto"
                     [disabled]="salesForm.invalid || isSubmitDisabled() || submitDisabledByBill || salesForm.hasError('costNotGreater') || salesForm.hasError('amountNotGreater')"
                 ></button>
-                
+
                 <!-- PRINT -->
                 <button pButton type="button" ngxPrint printSectionId="invoicePrintSection" label="Print" (click)="printInvoice()" class="p-button-primary w-full md:w-auto" [disabled]="!this.salesForm.get('p_requisitionno')?.value"></button>
 
@@ -78,7 +71,7 @@
          ITEM SELECT SECTION
     ================================= -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 md:gap-x-8 gap-y-3 md:gap-y-4 w-full">
-            <!-- REQUISITION NO -->
+            <!-- MF NO -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1 text-sm md:text-base">MF No</label>
 
@@ -101,59 +94,55 @@
                 </small>
             </div>
 
-            <!-- Location -->
-             <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">Location</label>
-
-                <p-dropdown
-                    [options]="locationOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Location"
-                    formControlName="p_location"
-                    [filter]="true"
-                    filterPlaceholder="Search Location"
-                    [showClear]="true"
-                >
-                </p-dropdown>
-            </div>
-
-            <!-- Period -->
-              <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">Period</label>
-
-                <p-dropdown
-                    [options]="periodOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Period"
-                    formControlName="p_period"
-                    [filter]="true"
-                    filterPlaceholder="Search Period"
-                    [showClear]="true"
-                >
-                </p-dropdown>
-            </div>
-
-             <!-- Work -->
-              <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">Work</label>
-
-                <p-dropdown
-                    [options]="workOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Work"
-                    formControlName="p_work"
-                    [filter]="true"
-                    filterPlaceholder="Search Work"
-                    [showClear]="true"
-                >
-                </p-dropdown>
-            </div>
-
-              <!-- ITEM DROPDOWN -->
+            <!-- Department -->
             <div class="flex flex-col">
+                <label class="font-medium mb-1 text-sm md:text-base">Department</label>
+
+                <p-dropdown [options]="locationOptions" optionLabel="label" optionValue="value" placeholder="Department" formControlName="p_department" [filter]="true" filterPlaceholder="Search Department" [showClear]="true"> </p-dropdown>
+            </div>
+
+            <!-- Forecast month -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1 text-sm md:text-base">Forecast month</label>
+
+                <p-dropdown [options]="periodOptions" optionLabel="label" optionValue="value" placeholder="Forecast month" formControlName="p_period" [filter]="true" filterPlaceholder="Search Forecast month" [showClear]="true"> </p-dropdown>
+            </div>
+
+            <!-- Project -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1 text-sm md:text-base">Project</label>
+                <p-dropdown [options]="projectOptions" optionLabel="label" optionValue="value" placeholder="Project" formControlName="p_project" [filter]="true" filterPlaceholder="Search Project" [showClear]="true"> </p-dropdown>
+            </div>
+
+            <!-- Tower/Block -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1 text-sm md:text-base">Tower/Block</label>
+
+                <p-dropdown [options]="towerOptions" optionLabel="label" optionValue="value" placeholder="Tower/Block" formControlName="p_work" [filter]="true" filterPlaceholder="Search Tower/Block" [showClear]="true"> </p-dropdown>
+            </div>
+
+            <!-- Level -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1 text-sm md:text-base">Level</label>
+
+                <p-dropdown [options]="levelOptions" optionLabel="label" optionValue="value" placeholder="Level" formControlName="p_level" [filter]="true" filterPlaceholder="Search Level" [showClear]="true"> </p-dropdown>
+            </div>
+
+            <!-- Pour -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1 text-sm md:text-base">Pour</label>
+
+                <p-dropdown [options]="pourOptions" optionLabel="label" optionValue="value" placeholder="Pour" formControlName="p_pour" [filter]="true" filterPlaceholder="Search Pour" [showClear]="true"> </p-dropdown>
+            </div>
+
+            <!-- Remark -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Remark</label>
+                <input pInputText formControlName="p_remarks" placeholder="Remark" />
+            </div>
+
+            <!-- ITEM DROPDOWN -->
+            <div class="flex flex-col col-span-2">
                 <label class="font-medium mb-1 text-sm md:text-base">Item</label>
 
                 <p-select
@@ -187,14 +176,10 @@
                         </div>
                     </ng-template>
                 </p-select>
-            </div> 
-
-             <!-- Remark -->
-            <div class="flex flex-col col-span-2">
-                <label class="font-medium mb-1 text-sm md:text-base">Remark</label>
-                <input pInputText formControlName="Remark" placeholder="Remark">
             </div>
 
+            <!-- Status Badge -->
+            <div class="flex items-center gap-4 mt-5"></div>
         </div>
 
         <!-- ================================
@@ -204,17 +189,28 @@
             <input #barcodeInput type="text" class="absolute opacity-0 pointer-events-none" placeholder="Type barcode / SKU and press Enter" (keydown.enter)="onBarcodeScan($event)" />
 
             <div>
-                <p-table [value]="saleArray.controls" dataKey="ItemId" [totalRecords]="saleArray.controls.length" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" appendTo="body" class="p-datatable-gridlines sale-report">
+                <p-table
+                    [value]="saleArray.controls"
+                    dataKey="ItemId"
+                    [totalRecords]="saleArray.controls.length"
+                    [responsiveLayout]="'scroll'"
+                    [paginator]="true"
+                    [rows]="10"
+                    [rowsPerPageOptions]="[10, 20, 50]"
+                    appendTo="body"
+                    class="p-datatable-gridlines sale-report"
+                >
                     <!-- HEADER -->
                     <ng-template pTemplate="header">
                         <tr class="bg-yellow-400">
-                            <th>Work</th>
-                            <th>Category</th>
-                            <th>Item Code</th>
-                            <th>Item Name</th>
-                            <th>Cur Stock</th>
+                            <th>Item Category</th>
+                            <th>Item</th>
                             <th>UOM</th>
-                            <th>Qty</th>
+                            <th>Buffer Stock</th>
+                            <th>Available Stock</th>
+                            <th>Pending Qty</th>
+                            <th>Forecast Qty</th>
+                            <th>Procure Qty</th>
                             <th>Action</th>
                         </tr>
                     </ng-template>
@@ -222,11 +218,8 @@
                     <!-- ROWS -->
                     <ng-template pTemplate="body" let-row let-i="rowIndex">
                         <tr [formGroup]="row">
-                             <td></td>
-                              <td></td>
-                            <td class="text-xs md:text-sm">{{ row.get('itemsku')?.value }}</td>
-                            <td class="text-xs md:text-sm">{{ row.get('ItemName')?.value }}</td>
                             <td></td>
+                            <td class="text-xs md:text-sm">{{ row.get('ItemName')?.value }}</td>
                             <td>
                                 <p-dropdown
                                     #uomDropdown
@@ -244,21 +237,11 @@
                                 </p-dropdown>
                             </td>
 
-                            <!-- QUANTITY INPUT -->
-                            <td>
-                                <input
-                                    pInputText
-                                    type="number"
-                                    formControlName="Quantity"
-                                    min="1"
-                                    step="1"
-                                    class="w-[60px] md:w-[70px] text-xs md:text-sm"
-                                    (keypress)="blockDecimal($event)"
-                                    (input)="updateTotal(i)"
-                                    (input)="OnQtyChange(i)"
-                                    [ngClass]="{ 'border-red-500': row.get('Quantity')?.errors?.['maxStock'] }"
-                                />
-                            </td>
+                            <td class="text-xs md:text-sm">{{ row.get('curStock')?.value }}</td>
+                            <td class="text-xs md:text-sm">{{ row.get('itemsku')?.value }}</td>
+                            <td class="text-xs md:text-sm">{{ row.get('itemsku')?.value }}</td>
+                            <td class="text-xs md:text-sm">{{ row.get('itemsku')?.value }}</td>
+                            <td class="text-xs md:text-sm">{{ row.get('itemsku')?.value }}</td>
                             <!-- DELETE -->
                             <td class="text-center">
                                 <i class="pi pi-trash text-red-500 cursor-pointer text-sm md:text-base" (click)="removeItem(i)"> </i>
@@ -267,7 +250,7 @@
                     </ng-template>
 
                     <!-- FOOTER TEXT -->
-                    <ng-template pTemplate="paginatorleft"  appendTo="body">
+                    <ng-template pTemplate="paginatorleft" appendTo="body">
                         <div class="text-gray-600 ms-2 text-xs md:text-sm">Total Items: {{ saleArray.controls.length }}</div>
                     </ng-template>
                 </p-table>
@@ -277,8 +260,7 @@
         <!-- ================================
          SUMMARY SECTION
     ================================= -->
-        <div class="grid grid-cols-7 gap-x-8 gap-y-4 m-3 mt-4">
-        </div>
+        <div class="grid grid-cols-7 gap-x-8 gap-y-4 m-3 mt-4"></div>
     </form>
 
     <p-confirmDialog></p-confirmDialog>
@@ -315,7 +297,7 @@
                 <br />
 
                 GSTIN/UIN : {{ salesForm.get('p_gstno')?.value || '-' }}<br />
-                State Name : {{customerstate}}
+                State Name : {{ customerstate }}
             </td>
 
             <!-- RIGHT SECTION (INVOICE DETAILS) -->
@@ -360,7 +342,7 @@
 
                     <tr>
                         <td>Dispatch Doc No.</td>
-                        <td>{{salesForm.get('chalanno')?.value}}</td>
+                        <td>{{ salesForm.get('chalanno')?.value }}</td>
                     </tr>
 
                     <tr>

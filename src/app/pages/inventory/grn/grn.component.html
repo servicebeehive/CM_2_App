@@ -1,238 +1,284 @@
-<div class="card p-6">
-    <!-- Header Row: Stock In + Buttons -->
+<div class="card p-3 md:p-6">
+    <!-- Header Row -->
     <div class="flex justify-between items-center mb-6">
-        <span class="block text-surface-900 font-bold text-2xl">GRN</span>
-        <div class="flex gap-4">
-            <button pButton type="button" class="p-button-secondary" (click)="reset()">Reset</button>
+        <span class="block text-surface-900 font-bold text-2xl">Good Received Note - GRN</span>
+        <div class="flex gap-3">
+            <span class="text-xl font-bold mt-2">Status</span>
+            <span
+                class="font-bold text-xl mt-2"
+                [ngStyle]="{
+                    color: productForm.get('status')?.value === 'Done' ? 'green' : productForm.get('status')?.value === 'Partial Cancel' ? 'grey' : productForm.get('status')?.value === 'Cancel' ? 'red' : 'black'
+                }"
+            >
+                {{ productForm.get('status')?.value }}
+            </span>
+            <button pButton type="button" label="Submit" class="p-button-warning" [disabled]="productForm.invalid || !poSelected" (click)="onSubmit()"></button>
+            <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
             @if (backshow) {
                 <button pButton type="button" label="Back" class="p-button-secondary" (click)="back()"></button>
             }
         </div>
     </div>
 
-    <form [formGroup]="productForm" (ngSubmit)="onSubmit()" class="space-y-8">
-        <!-- 🏷 Product Info Section -->
-        <div>
-            <!-- Two-column grid layout -->
-            <div class="grid grid-cols-4 gap-x-8 gap-y-4 w-full">
-                <!-- GRN No -->
-                <div class="flex flex-col">
-                    <label class="font-medium mb-1">GRN No</label>
-                    <p-dropdown
-                        [options]="purchaseIdOptions"
-                        optionLabel="purchaseid"
-                        optionValue="purchaseid"
-                        (onChange)="purchaseIdDetails($event)"
-                        [filter]="true"
-                        filterPlaceholder="Search GRN No"
-                        formControlName="p_tranpurchaseid"
-                        placeholder="Auto Generated ID"
-                    >
-                    </p-dropdown>
-                </div>
-
-                <!-- PO No -->
-                <div class="flex flex-col">
-                    <label class="font-medium mb-1">PO No <span class="text-red-500">*</span></label>
-
-                    <p-dropdown [options]="this.vendorOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search PO No" formControlName="p_vendorid" placeholder="PO No"> </p-dropdown>
-                    <small class="text-red-500 ms-3 mt-1" *ngIf="productForm.get('p_vendorid')?.touched">
-                        <span *ngIf="productForm.get('p_vendorid')?.errors?.['required']">PO No is required</span>
-                    </small>
-                </div>
-
-                <!-- Invoice No -->
-                <div class="flex flex-col">
-                    <label class="font-medium mb-1">Invoice No <span class="text-red-500">*</span></label>
-                    <input pInputText formControlName="p_invoiceno" placeholder="Invoice No" />
-                    <small class="text-red-500 ms-3 mt-1" *ngIf="productForm.get('p_invoiceno')?.touched">
-                        <span *ngIf="productForm.get('p_invoiceno')?.errors?.['required']">Invoice No is required</span>
-                    </small>
-                    <small class="text-red-500 ms-3 mt-1" *ngIf="productForm.get('p_invoiceno')?.errors">
-                        <span *ngIf="productForm.get('p_invoiceno')?.errors?.['maxlength']">Invoice No must have atleast 50 characters</span>
-                    </small>
-                </div>
-
-                <!-- Invoice Date -->
-                <div class="flex flex-col">
-                    <label class="font-medium mb-1">Invoice Date <span class="text-red-500">*</span></label>
-                    <p-datepicker fluid formControlName="p_invoicedate" dateFormat="dd/mm/yy" [maxDate]="dateTime" [showIcon]="true" placeholder="Invoice Date"></p-datepicker>
-                    <small class="text-red-500 ms-3 mt-1" *ngIf="productForm.get('p_invoicedate')?.touched">
-                        <span *ngIf="productForm.get('p_invoicedate')?.errors?.['required']">Invoice Date is required</span>
-                    </small>
-                </div>
-
-                 <!-- Chalan No. -->
+    <form [formGroup]="productForm">
+        <!-- ================================
+         TOP 3 FIELDS (always visible)
+    ================================= -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-4 mb-6">
+            <!-- GRN No -->
             <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">Chalan No</label>
-                <input pInputText formControlName="chalanno" placeholder="Chalan No" (keypress)="allowOnlyNumbers($event)" />
-            </div>
-
-            <!-- Challan Date -->
-                <div class="flex flex-col">
-                    <label class="font-medium mb-1">Challan Date <span class="text-red-500">*</span></label>
-                    <p-datepicker fluid formControlName="p_invoicedate" dateFormat="dd/mm/yy" [maxDate]="dateTime" [showIcon]="true" placeholder="Challan Date"></p-datepicker>
-                    <small class="text-red-500 ms-3 mt-1" *ngIf="productForm.get('p_invoicedate')?.touched">
-                        <span *ngIf="productForm.get('p_invoicedate')?.errors?.['required']">Challan Date is required</span>
-                    </small>
-                </div>
-
-                  <!-- Vehicle No. -->
-            <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">Vehicle No</label>
-                <input pInputText formControlName="chalanno" placeholder="Vehicle No" />
-            </div>
-
-                <!-- Amount Paid -->
-                <!-- <div class="flex flex-col">
-                    <label class="font-medium mb-1">Paid Amount</label>
-                    <input pInputText type="number" minlength="8" formControlName="p_amountpaid" placeholder="Paid Amount" />
-                    <small class="text-red-500" *ngIf="productForm.hasError('amountNotGreater')"> Paid Amount cannot be greater than Final Payable. </small>
-                </div> -->
-
-                <!-- Received By -->
-                <div class="flex flex-col">
-                 <label class="font-medium mb-1 text-sm md:text-base">Received By</label>
+                <label class="font-medium mb-1">GRN No</label>
                 <p-dropdown
-                    [options]="indentNoOptions"
-                    optionLabel="billno"
-                    optionValue="billno"
-                    placeholder="Received By"
-                    formControlName="p_indentno"
+                    [options]="purchaseIdOptions"
+                    optionLabel="purchaseid"
+                    optionValue="purchaseid"
+                    (onChange)="purchaseIdDetails($event)"
                     [filter]="true"
-                    filterPlaceholder="Search Received By"
-                    [showClear]="true"         
-                >
-                </p-dropdown>
+                    filterPlaceholder="Search GRN No"
+                    formControlName="p_tranpurchaseid"
+                    placeholder="Auto Generated"
+                ></p-dropdown>
+            </div>
 
-                <small class="text-red-500 mt-1 text-xs" *ngIf="productForm.get('p_indentno')?.touched">
-                    <span *ngIf="productForm.get('p_indentno')?.errors?.['required']">Received By is required </span>
-                </small>
-                </div>
-
-                  <!-- Gate Entry No. -->
+            <!-- GRN Date -->
             <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">Gate Entry No</label>
-                <input pInputText formControlName="chalanno" placeholder="Gate Entry No" />
+                <label class="font-medium mb-1">GRN Date <span class="text-red-500">*</span></label>
+                <p-datepicker fluid formControlName="p_grndate" dateFormat="dd/mm/yy" [maxDate]="dateTime" [showIcon]="true" placeholder="GRN Date"></p-datepicker>
+                <small class="text-red-500 mt-1 text-xs" *ngIf="productForm.get('p_grndate')?.touched && productForm.get('p_grndate')?.errors?.['required']"> GRN Date is required </small>
             </div>
 
-            <!-- Remark -->
-                <div class="col-span-2 flex flex-col">
-                    <label class="font-medium mb-1">Remark</label>
-                    <input pInputText formControlName="p_remarks" placeholder="Remark" />
-                    <small class="text-red-500 ms-3 mt-1" *ngIf="productForm.get('p_remarks')?.errors">
-                        <span *ngIf="productForm.get('p_remarks')?.errors?.['maxlength']">Remark must have atleast 500 characters</span>
-                    </small>
-                </div>
-
-            </div>
-
-            <!-- Add and Display Buttons -->
-            <div class="flex mt-6 gap-4">
-                <button pButton type="submit" label="Sumbit" class="p-button-warning" [disabled]="productForm.invalid"></button>
-                <button pButton type="button" label="Add Item" class="p-button-warning" [disabled]="!addItemEnabled" (click)="openAddDialog()"></button>
-                <p class="text-red-500 flex items-center">To Add Item, Press submit to save the header information even if header informations are blank</p>
+            <!-- PO Number -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">PO Number <span class="text-red-500">*</span></label>
+                <p-dropdown [options]="vendorOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search PO No" formControlName="p_vendorid" placeholder="Select PO No" (onChange)="onPOChange($event)"></p-dropdown>
+                <small class="text-red-500 mt-1 text-xs" *ngIf="productForm.get('p_vendorid')?.touched && productForm.get('p_vendorid')?.errors?.['required']"> PO Number is required </small>
             </div>
         </div>
 
-        <!-- Product Table with Pagination -->
-        <div>
-            <p-table
-                [value]="itemOptionslist"
-                dataKey="purchasedetailid"
-                [tableStyle]="{ 'min-width': '60rem' }"
-                [paginator]="true"
-                [rows]="10"
-                [rowsPerPageOptions]="[10, 20, 50]"
-                [responsiveLayout]="'scroll'"
-                class="p-datatable-gridlines mt-6 stock"
-            >
-                <!-- HEADER -->
+        <!-- hint when no PO selected -->
+        <div *ngIf="!poSelected" class="mb-4 px-3 py-2 border-round surface-100 text-500 text-sm flex align-items-center gap-2">
+            <i class="pi pi-info-circle text-blue-400"></i>
+            Select a PO Number above to enable the tabs below.
+        </div>
+
+        <!-- ================================
+         TABS (enabled after PO selected)
+    ================================= -->
+        <p-tabView>
+            <!-- ── TAB 1: PURCHASE ORDER ─────────────────────── -->
+            <p-tabPanel [disabled]="!poSelected">
+                <ng-template pTemplate="header">
+                    <span [ngClass]="{ 'text-400 cursor-not-allowed': !poSelected }"> <i class="pi pi-file-edit mr-2"></i>Purchase Order </span>
+                </ng-template>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4 p-3">
+                    <!-- PO Date (readonly, past dates only) -->
+                    <div class="flex flex-col">
+                        <label class="font-medium mb-1">PO Date</label>
+                        <p-datepicker fluid formControlName="p_podate" dateFormat="dd/mm/yy" [maxDate]="dateTime" [showIcon]="true" placeholder="Auto from PO"></p-datepicker>
+                    </div>
+
+                    <!-- Project (auto from PO, readonly) -->
+                    <div class="flex flex-col">
+                        <label class="font-medium mb-1">Project <span class="text-red-500">*</span></label>
+                        <input pInputText formControlName="p_project" placeholder="Auto from PO" [readonly]="true" class="surface-100 text-500" />
+                    </div>
+
+                    <!-- Vendor -->
+                    <div class="flex flex-col">
+                        <label class="font-medium mb-1">Vendor <span class="text-red-500">*</span></label>
+                        <p-dropdown [options]="vendorNameOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search Vendor" formControlName="p_vendor" placeholder="Select Vendor"></p-dropdown>
+                        <small class="text-red-500 mt-1 text-xs" *ngIf="productForm.get('p_vendor')?.touched && productForm.get('p_vendor')?.errors?.['required']"> Vendor is required </small>
+                    </div>
+
+                    <!-- Store Location -->
+                    <div class="flex flex-col">
+                        <label class="font-medium mb-1">Store Location <span class="text-red-500">*</span></label>
+                        <p-dropdown [options]="storeLocationOptions" optionLabel="label" optionValue="value" [filter]="true" filterPlaceholder="Search Location" formControlName="p_storelocation" placeholder="Select Location"></p-dropdown>
+                        <small class="text-red-500 mt-1 text-xs" *ngIf="productForm.get('p_storelocation')?.touched && productForm.get('p_storelocation')?.errors?.['required']"> Store Location is required </small>
+                    </div>
+                </div>
+            </p-tabPanel>
+
+            <!-- ── TAB 2: DELIVERY ───────────────────────────── -->
+            <p-tabPanel [disabled]="!poSelected">
+                <ng-template pTemplate="header">
+                    <span [ngClass]="{ 'text-400 cursor-not-allowed': !poSelected }"> <i class="pi pi-truck mr-2"></i>Delivery </span>
+                </ng-template>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4 p-3">
+                    <!-- Delivery Challan No -->
+                    <div class="flex flex-col">
+                        <label class="font-medium mb-1">Delivery Challan No <span class="text-red-500">*</span></label>
+                        <input pInputText formControlName="p_challanno" placeholder="Delivery Challan No" (keypress)="allowOnlyNumbers($event)" />
+                        <small class="text-red-500 mt-1 text-xs" *ngIf="productForm.get('p_challanno')?.touched && productForm.get('p_challanno')?.errors?.['required']"> Challan No is required </small>
+                    </div>
+
+                    <!-- Delivery Challan Date -->
+                    <div class="flex flex-col">
+                        <label class="font-medium mb-1">Delivery Challan Date <span class="text-red-500">*</span></label>
+                        <p-datepicker fluid formControlName="p_challandate" dateFormat="dd/mm/yy" [maxDate]="dateTime" [showIcon]="true" placeholder="Challan Date"> </p-datepicker>
+                        <small class="text-red-500 mt-1 text-xs" *ngIf="productForm.get('p_challandate')?.touched && productForm.get('p_challandate')?.errors?.['required']"> Challan Date is required </small>
+                    </div>
+
+                    <!-- Vehicle Number -->
+                    <div class="flex flex-col">
+                        <label class="font-medium mb-1">Vehicle Number</label>
+                        <input pInputText formControlName="p_vehicleno" placeholder="Vehicle Number" />
+                    </div>
+
+                    <!-- Driver Name -->
+                    <div class="flex flex-col">
+                        <label class="font-medium mb-1">Driver Name</label>
+                        <input pInputText formControlName="p_drivername" placeholder="Driver Name" />
+                    </div>
+
+                    <!-- Driver Mobile -->
+                    <div class="flex flex-col">
+                        <label class="font-medium mb-1">Driver Mobile</label>
+                        <input pInputText formControlName="p_drivermobile" placeholder="Driver Mobile" (keypress)="allowOnlyNumbers($event)" maxlength="10" />
+                        <small class="text-red-500 mt-1 text-xs" *ngIf="productForm.get('p_drivermobile')?.touched && productForm.get('p_drivermobile')?.errors?.['pattern']"> Enter valid 10-digit mobile number </small>
+                    </div>
+                </div>
+            </p-tabPanel>
+
+            <!-- ── TAB 3: REMARKS ────────────────────────────── -->
+            <p-tabPanel [disabled]="!poSelected">
+                <ng-template pTemplate="header">
+                    <span [ngClass]="{ 'text-400 cursor-not-allowed': !poSelected }"> <i class="pi pi-comment mr-2"></i>Remarks </span>
+                </ng-template>
+
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-x-6 gap-y-4 p-3">
+                    <!-- Received By -->
+                    <div class="flex flex-col">
+                        <label class="font-medium mb-1">Received By <span class="text-red-500">*</span></label>
+                        <p-dropdown [options]="indentNoOptions" optionLabel="billno" optionValue="billno" placeholder="Received By" formControlName="p_indentno" [filter]="true" filterPlaceholder="Search" [showClear]="true"></p-dropdown>
+                        <small class="text-red-500 mt-1 text-xs" *ngIf="productForm.get('p_indentno')?.touched && productForm.get('p_indentno')?.errors?.['required']"> Received By is required </small>
+                    </div>
+
+                    <!-- Remarks -->
+                    <div class="flex flex-col">
+                        <label class="font-medium mb-1">Remarks</label>
+                        <input pInputText formControlName="p_remarks" placeholder="Enter remarks" rows="3" class="w-full" />
+                        <small class="text-red-500 mt-1 text-xs" *ngIf="productForm.get('p_remarks')?.errors?.['maxlength']"> Remarks must not exceed 500 characters </small>
+                    </div>
+                </div>
+            </p-tabPanel>
+
+            <!-- ── TAB 4: DOCUMENTS ──────────────────────────── -->
+            <p-tabPanel [disabled]="!poSelected">
+                <ng-template pTemplate="header">
+                    <span [ngClass]="{ 'text-400 cursor-not-allowed': !poSelected }"> <i class="pi pi-paperclip mr-2"></i>Documents </span>
+                </ng-template>
+
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 p-3">
+                    <!-- Delivery Challan Upload -->
+                    <div class="flex flex-col">
+                        <label class="font-medium mb-1">Delivery Challan <span class="text-red-500">*</span><span class="ms-3 text-xs text-red-500 mt-1">PDF / JPG / PNG</span></label>
+                        <div class="flex align-items-center gap-2 px-3 py-2" style="border: 1px solid var(--surface-300); border-radius: 6px; background: var(--surface-0); min-height: 38px">
+                            <label for="challanFile" class="p-button p-button-sm p-button-outlined p-button-primary m-0" style="cursor: pointer; white-space: nowrap"> <i class="pi pi-upload mr-1"></i> Upload </label>
+                            <input id="challanFile" type="file" accept=".pdf,.jpg,.jpeg,.png" style="display: none" (change)="onFileSelect($event, 'challan')" />
+                            <span class="text-xs text-400 italic mt-2">{{ fileNames.challan || 'No file chosen' }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Material Photos Upload -->
+                    <div class="flex flex-col">
+                        <label class="font-medium mb-1">Material Photos <span class="text-red-500">*</span><span class="ms-3 text-xs text-red-500 mt-1">JPG / PNG (multiple allowed)</span></label>
+                        <div class="flex align-items-center gap-2 px-3 py-2" style="border: 1px solid var(--surface-300); border-radius: 6px; background: var(--surface-0); min-height: 38px">
+                            <label for="materialPhotoFile" class="p-button p-button-sm p-button-outlined p-button-primary m-0" style="cursor: pointer; white-space: nowrap"> <i class="pi pi-upload mr-1"></i> Upload </label>
+                            <input id="materialPhotoFile" type="file" accept=".jpg,.jpeg,.png" style="display: none" (change)="onFileSelect($event, 'material')" multiple />
+                            <span class="text-xs text-400 mt-2 italic">{{ fileNames.material || 'No file chosen' }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Other Documents Upload -->
+                    <div class="flex flex-col">
+                        <label class="font-medium mb-1">Other Documents<span class="ms-3 text-xs text-red-500 mt-1">PDF / JPG / PNG / DOC (multiple)</span></label>
+                        <div class="flex align-items-center gap-2 px-3 py-2" style="border: 1px solid var(--surface-300); border-radius: 6px; background: var(--surface-0); min-height: 38px">
+                            <label for="otherDocFile" class="p-button p-button-sm p-button-outlined p-button-primary m-0" style="cursor: pointer; white-space: nowrap"> <i class="pi pi-upload mr-1"></i> Upload </label>
+                            <input id="otherDocFile" type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="display: none" (change)="onFileSelect($event, 'other')" multiple />
+                            <span class="text-xs text-400 mt-2 italic">{{ fileNames.other || 'No file chosen' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </p-tabPanel>
+        </p-tabView>
+
+        <!-- ================================
+         ITEMS TABLE (visible after PO selected)
+    ================================= -->
+        <div class="mt-6" *ngIf="poSelected">
+            <p-table [value]="itemOptionslist" dataKey="purchasedetailid" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" [responsiveLayout]="'scroll'" styleClass="p-datatable-gridlines p-datatable-sm">
                 <ng-template pTemplate="header">
                     <tr class="bg-yellow-400">
-                        <!-- <th><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th> -->
-                        <th>Category</th>
-                        <th>Item Code</th>
-                        <th>Item Name</th>
+                        <th>Material</th>
                         <th>UOM</th>
-                        <th>Qty</th>
-                        <th>Current Stock</th>
-                        <th>Remaining</th>
-                        <th>Vendor</th>
-                        <th>Rate</th>
+                        <th class="text-right">Ordered Qty</th>
+                        <th class="text-right">Previously Received</th>
+                        <th class="text-right">Pending Qty</th>
+                        <th class="text-right">Received Qty</th>
+                        <th class="text-right">Accepted Qty</th>
+                        <th class="text-right">Rejected Qty</th>
+                        <th class="text-center">Action</th>
                     </tr>
                 </ng-template>
 
-                <!-- BODY -->
                 <ng-template pTemplate="body" let-product>
                     <tr>
-                        <!-- <td class="text-center">
-                            <p-tableCheckbox [value]="product"></p-tableCheckbox>
-                        </td> -->
-                        <td>{{ product.categoryname }}</td>
-                        <td>{{ product.itemsku }}</td>
-                        <td>{{ product.itemname }}</td>
-                        <td>{{ product.uomname }}</td>
-                        <td>{{ product.quantity }}</td>
-                        <td>{{ product.currentstock }}</td>
-                        <td>{{ product.costprice }}</td>
-                        <td>{{ (product.quantity * product.costprice).toFixed(2) }}</td>
+                        <td class="text-sm font-medium">{{ product.itemname }}</td>
+                        <td class="text-sm">{{ product.uomname }}</td>
+                        <td class="text-right text-sm">{{ product.orderedqty | number }}</td>
+                        <td class="text-right text-sm">{{ product.previouslyreceived | number }}</td>
+                        <td class="text-right text-sm font-semibold">{{ product.pendingqty | number }}</td>
+                        <td class="text-right">
+                            <p-inputNumber
+                                [(ngModel)]="product.receivedqty"
+                                [ngModelOptions]="{ standalone: true }"
+                                [min]="0"
+                                [max]="product.pendingqty"
+                                [useGrouping]="false"
+                                [inputStyle]="{ width: '90px' }"
+                                (onInput)="onReceivedQtyChange(product)"
+                            >
+                            </p-inputNumber>
+                        </td>
+                        <td class="text-right">
+                             <span class="text-sm" [ngClass]="{ 'text-red-500 font-semibold': product.rejectedqty > 0 }">
+                                {{ product.acceptedqty|| 0 }}
+                            </span>
+                        </td>
+                        <td class="text-right">
+                            <span class="text-sm" [ngClass]="{ 'text-red-500 font-semibold': product.rejectedqty > 0 }">
+                                {{ product.rejectedqty || 0 }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm" pTooltip="Delete" tooltipPosition="top" (click)="deleteItem(product)"></button>
+                        </td>
                     </tr>
                 </ng-template>
+
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td colspan="9" class="text-center text-400 italic py-6 text-sm">No items — select a PO No. to load materials</td>
+                    </tr>
+                </ng-template>
+
                 <ng-template pTemplate="paginatorleft">
-                    <div class="text-gray-600 ms-2">Total Items: {{ itemOptionslist?.length || 0 }}</div>
+                    <div class="text-500 text-xs ms-2">Total Items: {{ itemOptionslist?.length || 0 }}</div>
                 </ng-template>
             </p-table>
-        </div>
 
-        <div class="flex justify-end border-t pt-4 gap-4">
             <!-- Grand Total -->
-            <div class="flex items-center gap-4 mt-6">
-                <label class="font-medium">Grand Total</label>
-                <input pInputText type="text" [value]="grandTotal | number: '1.2-2'" readonly placeholder="Total" class="w-40 text-right" />
+            <div class="flex justify-end border-t pt-4 mt-2">
+                <div class="flex items-center gap-4">
+                    <label class="font-medium text-sm">Grand Total</label>
+                    <input pInputText type="text" [value]="grandTotal | number: '1.2-2'" readonly class="w-40 text-right surface-100 text-500" />
+                </div>
             </div>
         </div>
     </form>
 
-    <p-dialog header="Child UOM" [(visible)]="visibleDialog" [modal]="true" [style]="{ width: '80vw' }"> </p-dialog>
-
-    <!-- Dialog -->
-    <p-dialog header="{{ mode === 'add' ? 'Add Item' : 'Edit Item' }}" [(visible)]="visibleDialog" [modal]="true" [style]="{ width: '80vw' }">
-        <app-addinventory
-            [mode]="mode"
-            [editData]="selectedRow"
-            (close)="closeDialog($event)"
-            (save)="onSave($event)"
-            [transationid]="transationid"
-            [itemOptions]="itemOptions"
-            [categoryOptions]="categoryOptions"
-            [uomOptions]="uomOptions"
-            [vendorOptions]="vendorOptions"
-            [purchaseIdOptions]="purchaseIdOptions"
-            (childUom)="onChildUom($event)"
-        >
-        </app-addinventory>
-    </p-dialog>
-
-    <!-- Confirm Dialog -->
     <p-confirmDialog></p-confirmDialog>
 </div>
-<p-dialog header="Child UOM Details" [(visible)]="childUomDialog" [modal]="true" [style]="{ width: '450px' }">
-    <p-table [value]="childUOMList" [responsiveLayout]="'scroll'" class="p-datatable-gridlines">
-        <ng-template pTemplate="header">
-            <tr class="bg-yellow-400">
-                <th>Child UOM</th>
-                <th>Conversion</th>
-                <th>Child MRP</th>
-            </tr>
-        </ng-template>
-
-        <ng-template pTemplate="body" let-row>
-            <tr>
-                <td>{{ row.uomname }}</td>
-                <td>{{ row.uomconversion }}</td>
-                <td>{{ row.childmrp }}</td>
-            </tr>
-        </ng-template>
-    </p-table>
-</p-dialog>
