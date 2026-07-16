@@ -96,7 +96,7 @@ private routeChange$ = new Subject<string>();
         })
     ).subscribe({
         next: (res:any) => {
-            this.masterDetails = res.data || [];
+            this.masterDetails = res.message || [];
             this.filterMaster = [...this.masterDetails];
         }
     });
@@ -443,7 +443,7 @@ removeItem(row: any) {
                 }
                 api$.subscribe({
                     next: (res) => {
-                        this.showSuccess(res.data.message);
+                        this.showSuccess(res.message.message);
                         this.onGetDataList();
                     }
                 });
@@ -464,7 +464,7 @@ removeItem(row: any) {
         const payload = this.createDropdownPayload(payloadType);
         this.inventoryService.getdropdowndetails(payload).subscribe({
             next: (res) => {
-                this.masterDetails = res.data || [];
+                this.masterDetails = res.message || [];
                 this.filterMaster = [...this.masterDetails];
             },
             error: (err) => console.log(err)
@@ -522,7 +522,7 @@ removeItem(row: any) {
         apicall$.subscribe({
             next: (res) => {
                 this.visibleDialog = false;
-                this.showSuccess(res.data.message);
+                this.showSuccess(res.message.message);
                 this.onGetDataList();
             },
             error: (err) => {
@@ -549,7 +549,7 @@ removeItem(row: any) {
         }
         apicall$.subscribe({
             next: (res) => {
-                this.masterDetails = res.data || [];
+                this.masterDetails = res.message || [];
                 this.filterMaster=[...this.masterDetails];
             },
             error: (err) => console.log(err)
@@ -560,7 +560,7 @@ removeItem(row: any) {
         const payload = this.createDropdownPayload('COUNTRY');
         this.inventoryService.getdropdowndetails(payload).subscribe({
             next: (res) => {
-                this.countries = res.data || [];
+                this.countries = res.message || [];
             },
             error: (err) => console.log(err)
         });
@@ -573,7 +573,7 @@ onGetStateForEdit(countryId: any, stateName: string, cityName: string) {
     };
     this.inventoryService.Getreturndropdowndetails(payload).subscribe({
         next: (res) => {
-            this.states = res.data || [];
+            this.states = res.message || [];
 
             // ✅ Match state by name
             const state = this.states.find(s =>
@@ -597,7 +597,7 @@ onGetCityForEdit(stateId: any, cityName: string) {
     };
     this.inventoryService.Getreturndropdowndetails(payload).subscribe({
         next: (res) => {
-            this.cities = res.data || [];
+            this.cities = res.message || [];
 
             // ✅ Match city by name
             const city = this.cities.find(c =>
@@ -632,10 +632,10 @@ onGetCityForEdit(stateId: any, cityName: string) {
 
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res) => {
-                if (res.data && res.data.length > 0) {
-                    this.cities = res.data;
+                if (res.message && res.message.length > 0) {
+                    this.cities = res.message;
                     this.masterForm.patchValue({
-                        cityforall: res.data[0].city_id
+                        cityforall: res.message[0].city_id
                     });
                 }
             },
@@ -651,8 +651,8 @@ onGetCityForEdit(stateId: any, cityName: string) {
         };
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res) => {
-                if (res.data && res.data.length > 0) {
-                    this.states = res.data;
+                if (res.message && res.message.length > 0) {
+                    this.states = res.message;
                 }
             }
         })
@@ -675,9 +675,9 @@ onGetCityForEdit(stateId: any, cityName: string) {
 //   const payload = { p_returntype: 'CITY', p_returnvalue: stateId };
 //   this.inventoryService.Getreturndropdowndetails(payload).subscribe({
 //     next: (res) => {
-//       if (res.data?.length > 0) {
-//         this.cities = res.data;
-//         this.masterForm.patchValue({ customercity: res.data[0].city_id });
+//       if (res.message?.length > 0) {
+//         this.cities = res.message;
+//         this.masterForm.patchValue({ customercity: res.message[0].city_id });
 //       }
 //     },
 //     error: (err) => console.log(err)

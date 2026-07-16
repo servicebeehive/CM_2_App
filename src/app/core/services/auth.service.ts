@@ -33,34 +33,26 @@ isLogIn():boolean{
 isLogIntType(){
   const usertypedata:any=localStorage.getItem('user_info');
   const userDetails=JSON.parse(usertypedata)
-  
- // const usertype=JSON.stringify(usertypedata)
   return userDetails
 }
 
 getUserRole():string|null{
 return localStorage.getItem('username');
 }
-  // ✅ Login API and store data in localStorage using ShareService
   isLoggedIn(loginBody: authLogin): Observable<authLogin> {
     const url = `${this.baseUrl}${API_ENDPOINTS.auth.login}`;
     return this.httpclient.post<authLogin>(url, loginBody).pipe(
       tap((res: any) => {
-        if (res?.success && res?.data) {
-          // Save token separately (optional)
+        if (res?.status ==='success' && res?.data) {
           const token = res.data.usertoken;
           if (token) {
             this.setToken(token);
           }
 
-          // ✅ Save full user info in localStorage
           this.shareService.setUserData(res.data);
-
-          console.log('Login success! Token and user data saved ✅');
         }
       }),
       catchError(error => {
-        console.error('Login failed ❌', error);
         return throwError(() => error);
       })
     );

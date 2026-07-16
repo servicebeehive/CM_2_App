@@ -1,75 +1,101 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, ElementRef, HostListener, QueryList, ViewChild, ViewChildren, inject} from '@angular/core';
-import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { Component, ElementRef, ViewChild, ViewChildren, QueryList, inject } from '@angular/core';
+import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
-import { ChipModule } from 'primeng/chip';
-import { EditorModule } from 'primeng/editor';
-import { FileUploadModule } from 'primeng/fileupload';
-import { FluidModule } from 'primeng/fluid';
-import { InputTextModule } from 'primeng/inputtext';
-import { RippleModule } from 'primeng/ripple';
-import { SelectModule } from 'primeng/select';
 import { Dropdown, DropdownModule } from 'primeng/dropdown';
+import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
+import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
-import { MessageModule } from 'primeng/message';
 import { DatePickerModule } from 'primeng/datepicker';
-import { DialogModule } from 'primeng/dialog';
-import { StockIn } from '@/types/stockin.model';
-import { InventoryService } from '@/core/services/inventory.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { CheckboxModule } from 'primeng/checkbox';
-import { AddinventoryComponent } from '@/pages/inventory/addinventory/addinventory.component';
+import { InventoryService } from '@/core/services/inventory.service';
 import { AuthService } from '@/core/services/auth.service';
-import { OrderService } from '@/core/services/order.service';
-import { ShareService } from '@/core/services/shared.service';
-import { Router } from '@angular/router';
+import { WorkService } from '@/core/services/work.service';
+import { MaterialForecastPayload } from '@/core/models/authmodel/work.model';
 
 @Component({
     selector: 'app-material-forcasting',
-    imports: [
-        CommonModule,
-        EditorModule,
-        ReactiveFormsModule,
-        TextareaModule,
-        TableModule,
-        InputTextModule,
-        FormsModule,
-        FileUploadModule,
-        ButtonModule,
-        SelectModule,
-        DropdownModule,
-        RippleModule,
-        ChipModule,
-        FluidModule,
-        MessageModule,
-        DatePickerModule,
-        DialogModule,
-        ConfirmDialogModule,
-        CheckboxModule
-    ],
+    imports: [CommonModule, ReactiveFormsModule, FormsModule, TableModule, InputTextModule, TextareaModule, ButtonModule, SelectModule, DropdownModule, DatePickerModule, ConfirmDialogModule],
     templateUrl: './material-forcasting.component.html',
     styleUrl: './material-forcasting.component.scss',
     providers: [ConfirmationService, DatePipe]
 })
 export class MaterialForcastingComponent {
-    isBarcodeScan = false;
-    isAutoSelect = false; 
-
-    @ViewChild('barcodeInput') barcodeInput!: ElementRef<HTMLInputElement>;
     @ViewChildren('uomDropdown') uomDropdown!: QueryList<Dropdown>;
-    @ViewChild('deliveryperson') deliveryperson!: Dropdown;
-    ngAfterViewInit() {
-        setTimeout(() => {
-            this.focusBarcode();
+    @ViewChild('barcodeInput') barcodeInput!: ElementRef<HTMLInputElement>;
+    isBarcodeScan = false;
+    isAutoSelect = false;
+    forecastForm!: FormGroup;
+    today: Date = new Date();
+    isLoadingBills = false;
+    itemOptions: any[] = [];
+    uomlist: any[] = [];
+    requisitionOptions: any[] = [];
+    draftRequisitionOptions: any[] = [];
+    projectOptions: { label: string; value: any }[] = [{ label: 'Project A', value: 'Project A' }];
+    departmentOptions: any[] = [];
+    periodOptions: any[] = [];
+    towerOptions: any[] = [];
+    levelOptions: any[] = [];
+    pourOptions: any[] = [];
+    itemDetailOptions: any[] = [];
+    workList: any[] = [];
+    userId = '';
+    companyId = '';
+
+    constructor(
+        private fb: FormBuilder,
+        private inventoryService: InventoryService,
+        private confirmationService: ConfirmationService,
+        private messageService: MessageService,
+        private authService: AuthService,
+        private workService: WorkService
+    ) {}
+
+    ngOnInit(): void {
+        this.companyId = this.authService.isLogIntType().companyid.toString();
+        this.userId = this.authService.isLogIntType().userid.toString();
+        this.loadAllDropdowns();
+
+        this.forecastForm = this.fb.group({
+            p_mf_id: [null],
+            p_requisitionno: [null],
+            p_draft_requisitionno:[null],
+            p_project: [null, Validators.required],
+            p_department: [null],
+            p_work: [null, Validators.required], 
+            p_level: [null, Validators.required],
+            p_pour: [null],
+            p_period: [null, Validators.required],
+            p_remarks: [''],
+            p_itemdata: [null],
+            status: [''],
+            p_items: this.fb.array([])
         });
     }
+
+    get itemArray(): FormArray {
+        return this.forecastForm.get('p_items') as FormArray;
+    }
+    get itemRows(): FormGroup[] {
+        return this.itemArray.controls as FormGroup[];
+    }
+
     focusBarcode() {
         if (this.barcodeInput?.nativeElement) {
             this.barcodeInput.nativeElement.focus();
         }
     }
+
+    clearBarcodeInput() {
+        if (this.barcodeInput?.nativeElement) {
+            this.barcodeInput.nativeElement.value = '';
+            this.barcodeInput.nativeElement.focus();
+        }
+    }
+
     onBarcodeScan(event: Event) {
         this.isBarcodeScan = true;
         const input = event.target as HTMLInputElement;
@@ -89,959 +115,559 @@ export class MaterialForcastingComponent {
             return;
         }
 
-        // 🔹 mark barcode flow
         this.isAutoSelect = true;
-        this.salesForm.get('p_itemdata')?.setValue(matchedItem.itemid);
+        this.forecastForm.get('p_itemdata')?.setValue(matchedItem.itemid);
         this.OnItemChange({ value: matchedItem.itemid });
         this.clearBarcodeInput();
-        this.isBarcodeScan = false; // 🔑 reset after scan
-    }
-
-    focusLastRowUOM() {
-        setTimeout(() => {
-            const dropdowns = this.uomDropdown.toArray();
-            const lastDropdown = dropdowns[dropdowns.length - 1];
-            if (lastDropdown) {
-                lastDropdown.focus();
-            }
-        });
-    }
-    simulateScan(barcode: string) {
-        this.onBarcodeScan({
-            target: { value: barcode }
-        } as unknown as Event);
-    }
-
-    clearBarcodeInput() {
-        if (this.barcodeInput?.nativeElement) {
-            this.barcodeInput.nativeElement.value = '';
-            this.barcodeInput.nativeElement.focus();
-        }
+        this.isBarcodeScan = false;
     }
 
     keepBarcodeFocus(event: MouseEvent) {
         const target = event.target as HTMLElement;
-
-        // If user clicked on an input or textarea → DO NOTHING
         if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
             return;
         }
-
-        // Otherwise keep barcode focused
         this.barcodeInput?.nativeElement?.focus();
     }
 
-    @HostListener('window:keydown', ['$event'])
-    handleKeyboardSubmit(event: KeyboardEvent) {
-        // Ctrl + Enter
-        if (event.ctrlKey && event.key === 'Enter') {
-            event.preventDefault();
-            this.onSubmit();
-        }
-    }
-
-    @ViewChild('itemSel') itemSel!: any;
-    public transactionid: any;
-    salesForm!: FormGroup;
-    visibleDialog = false;
-    selectedRow: any = null;
-    pagedProducts: StockIn[] = [];
-    first: number = 0;
-    rowsPerPage: number = 10;
-    products: StockIn[] = [];
-    today: Date = new Date();
-    submitDisabledByBill: boolean = false;
-    public authService = inject(AuthService);
-    public getUserDetails = {};
-    itemOptions: any[] = [];
-    cusMobileOptions: any[] = [];
-    profileOptions: any = {};
-    public itemOptionslist: [] = [];
-    public uomlist: any[] = [];
-     requestedByOptions :any[]= [];
-      requisitionOptions: any[] = [];
-    filteredDeliveryText = '';
-    Uomid: string = '';
-    mobilePlaceholder: string = 'Mobile No';
-    isLoadingBills: boolean = false;
-    billValue: any = null;
-    customerstate:string='';
-    companyName: string = '';
-    companyAddress: string = '';
-    companycity: string = '';
-    companystate: string = '';
-    statecode: string = '';
-    companyemail: string = '';
-    companygstno: string = '';
-    bankname: string = '';
-    accountno: string = '';
-    branchname: string = '';
-    ifsc: string = '';
-    pan: string = '';
-    
-    locationOptions: { label: string; value: string }[] = [
-        { label: 'Quality', value: 'Quality' },
-        { label: 'Planning', value: 'Planning' },
-        { label: 'Construction', value: 'Construction' }
-    ];
-
-     projectOptions:any[]=[
-    {label:'Project A', value:'Project A'}
-  ];
-
-    periodOptions: { label: string; value: string }[] = [
-        { label: 'June 26', value: 'June 26' },
-        { label: 'July 26', value: 'July 26' },
-         { label: 'Aug 26', value: 'Aug 26' },
-        { label: 'Sept 26', value: 'Sept 26' },
-        { label: 'Oct 26', value: 'Oct 26' },
-        { label: 'Nov 26', value: 'Nov 26' },
-        { label: 'Dec 26', value: 'Dec 26' }
-    ];
-
-    towerOptions: { label: string; value: string }[] = [
-        { label: 'Tower/Block C', value: 'Tower/Block C' },
-        { label: 'Tower/Block A', value: 'Tower/Block A' },
-        { label: 'Tower/Block B', value: 'Tower/Block B' }
-    ];
-
-    levelOptions: { label: string; value: string }[] = [
-        { label: 'Level 1', value: 'Level 1' },
-        { label: 'Level 2', value: 'Level 2' },
-        { label: 'Level 3', value: 'Level 3' }
-    ];
-
-    pourOptions: { label: string; value: string }[] = [
-        { label: '1', value: '1' },
-        { label: '2', value: '2' },
-        { label: '3', value: '3' }
-    ];
-
-    @ViewChild(AddinventoryComponent) addInventoryComp!: AddinventoryComponent;
-
-    // Dropdowns / lists
-   
-   
-    constructor(
-        private fb: FormBuilder,
-        private stockInService: InventoryService,
-        private confirmationService: ConfirmationService,
-        private salesService: InventoryService,
-        private messageService: MessageService,
-        private orderService: OrderService,
-        public datepipe: DatePipe,
-        private sharedService: ShareService,
-        private route: Router
-    ) {}
-
-    ngOnInit(): void {
-        this.OnGetDropdown();
-        this.loadAllDropdowns();
-
-        // Initialize form
-        this.salesForm = this.fb.group(
-            { p_project: [null],
-                p_level:[null],
-                p_pour:[null],
-                p_itemdata: [null],
-                p_transactiontype: [''],
-                p_itemid: [null],
-                p_department:[],
-                p_period:[],
-                p_requisitionno: [null],
-                p_transactionid: [0],
-                p_transactiondate: [this.today, [Validators.required]],
-                p_customername: ['', [Validators.required, Validators.maxLength(100)]],
-                p_mobileno: ['', [Validators.required, Validators.pattern(/^[6-9]\d{9}$/)]],
-                searchMobileNo: [''],           
-                p_totalsale: [0],
-                p_requestedby: ['', Validators.maxLength(100)],
-                p_currencyid: [0],
-                status: [''],
-                p_status: [''],
-                p_isactive: [''],
-                p_loginuser: [''],
-                p_linktransactionid: [0],
-                p_replacesimilir: [''],
-                p_creditnoteno: [''],
-                p_paymentmode: [''],
-                UomName: [''],
-                sgst_9: [''],
-                tax_18: [''],
-                cgst_9: [''],
-                discountvalueper: [],
-                amount_before_tax: [''],
-                // FormArray for sale rows
-                p_sale: this.fb.array([])
-            }
-        );
-        this.salesForm.get('p_requisitionno')?.valueChanges.subscribe((value) => {
-            if (value) {
-                this.disableItemSearchSubmit();
-            } else {
-                this.enableItemSearchAndSubmit();
-            }
-        });
-    }
-
-    get saleArray(): FormArray {
-        return this.salesForm.get('p_sale') as FormArray;
-    }
-
-    // Return FormArray rows as FormGroup[] for template binding (fixes typing issue)
-    get saleRows(): FormGroup[] {
-        return this.saleArray.controls as FormGroup[];
-    }
-    disableItemSearchSubmit() {
-        this.salesForm.get('itemSearch')?.disable();
-        this.submitDisabledByBill = true;
-    }
-    enableItemSearchAndSubmit() {
-        this.salesForm.get('itemSearch')?.enable();
-        this.submitDisabledByBill = false;
-    }
-    get isPrintDisabled(): boolean {
-        const billNo = this.salesForm.get('p_requisitionno')?.value;
-        const hasItem = this.saleArray.length > 0;
-
-        // Disable print if BOTH are empty
-        return !(billNo || hasItem);
-    }
-  
-    createSaleItem(data?: any): FormGroup {
-        return this.fb.group({
-            TransactiondetailId: this.salesForm.controls['p_transactionid'].value || 0,
-            ItemId: [data?.itemid || 0],
-            ItemName: [data?.itemname || ''],
-            UOMId: [data?.uomid || 0],
-            UomName: [data?.uomname || ''],
-            Quantity: [1],
-            itemcost: [data?.pruchaseprice || 0],
-            MRP: [data?.saleprice || 0],
-            totalPayable: [data ? data.saleprice : 0],
-            curStock: [data?.currentstock || 0],
-            itemsku: [data?.itemsku || ''],
-            hsncode: [data?.hsncode],
-            apiCost: [0] // ⭐ IMPORTANT ⭐
-        });
-    }
-
-    // Map API sale items (array) into the FormArray
-    mapSaleItems(apiItems: any[]) {
-        this.saleArray.clear(); // Remove old rows if any
-        this.uomlist = [];
-        apiItems.forEach((item, index) => {
-            this.saleArray.push(
-                this.fb.group({
-                    TransactiondetailId: item.transactiondetailid || 0,
-                    ItemId: item.itemid || 0, // use itemsku when itemid not present
-                    ItemName: item.itemname || '',
-                    UOMId: item.uomname || 0,
-                    UomName: [item.uomname || ''],
-                    Quantity: item.quantity || 1,
-                    itemcost: item.itemcost || 0,
-                    MRP: (item.mrp || 0).toFixed(2),
-                    totalPayable: ((item.quantity || 1) * (item.mrp || 0)).toFixed(2),
-                    curStock: item.current_stock || 0,
-                    hsncode: item.hsncode,
-                    itemsku: item.itemsku || ''
-                })
-            );
-            console.log('uomvalue', this.saleArray.at(index).get('UOMId')?.value);
-            const uomValue = this.saleArray.at(index).get('UOMId')?.value;
-            this.OnUMO(item.itemid || item.itemsku, index, uomValue);
-        });
-
-        // If items were added, update totals for the last row and overall summary
-        const index = this.saleArray.length - 1;
-
-        this.updateTotal(index);
-        this.calculateSummary();
-    }
-    allowOnlyNumbers(event: any) {
-        const input = event.target as HTMLInputElement;
-
-        // Block if length is already 10
-        if (input.value.length >= 10) {
-            event.preventDefault();
-            return;
-        }
-
-        const char = String.fromCharCode(event.which);
-
-        // Block if not a number (0-9)
-        if (!/^[0-9]$/.test(char)) {
-            event.preventDefault();
-        }
-    }
-
-    onMobileFilter(event: any) {
-        const typedValue = event.filter;
-        this.mobilePlaceholder = typedValue || 'Mobile No';
-
-        // Only update form control if typed value is 10 digits
-        if (typedValue && /^[6-9]\d{9}$/.test(typedValue)) {
-            this.salesForm.patchValue({
-                p_mobileno: typedValue,
-                p_customername: ''
-            });
-            this.mobilePlaceholder = 'Mobile No';
-        } else {
-            this.mobilePlaceholder = 'Mobile No';
-        }
-    }
-    onMobileSelect(event: any) {
-        const mobileSelection = this.cusMobileOptions.find((mobileNo) => mobileNo.fieldid === event.value);
-        const mobileMatch = mobileSelection.fieldvalue.match(/\d{10}/);
-        
-        if (mobileSelection) {
-            this.salesForm.patchValue({
-                p_mobileno: mobileMatch ? mobileMatch[0] : '',
-                p_customername: mobileSelection.fieldname,
-                p_gstno: mobileSelection.customergstno
-            });
-        }
-    }
-
-    createDropdownPayload(returnType: string) {
-        return {
-            p_returntype: returnType
-        };
-    }
-
-    // Load items used in dropdowns
-    OnGetItem() {
-        const payload = this.createDropdownPayload('ITEM');
-        this.stockInService.getdropdowndetails(payload).subscribe({
-            next: (res) => (this.itemOptions = res.data),
-            error: (err) => console.log(err)
-        });
-    }
-    OnGetCusMobile() {
-        const payload = this.createDropdownPayload('CUSTOMER');
-        this.stockInService.getdropdowndetails(payload).subscribe({
-            next: (res) => (this.cusMobileOptions = res.data),
-            error: (err) => console.log(err)
-        });
-    }
-    OnGetRequestedBy() {
-        const payload = this.createDropdownPayload('DELIVERY');
-        this.stockInService.getdropdowndetails(payload).subscribe({
-            next: (res) => (this.requestedByOptions = res.data),
-            error: (err) => console.log(err)
-        });
-    }
-    OnGetProfile() {
-        const payload = this.createDropdownPayload('PROFILE');
-        this.stockInService.getdropdowndetails(payload).subscribe({
-            next: (res) => {
-                if (res.data && res.data.length > 0) {
-                    this.profileOptions = res.data;
-                    const profile = res.data[0];
-                    ((this.companyName = profile.companyname),
-                        (this.companyAddress = profile.companyaddress),
-                        (this.companystate = profile.state_name),
-                        (this.companycity = profile.city_name),
-                        (this.companyemail = profile.companyemail),
-                        (this.companygstno = profile.companygstno),
-                        (this.statecode = profile.statecode),
-                        (this.bankname = profile.bankname),
-                        (this.accountno = profile.accountno),
-                        (this.branchname = profile.branch),
-                        (this.ifsc = profile.ifsc),
-                        (this.pan = profile.pan));
-                }
-            },
-            error: (err) => console.log(err)
-        });
-    }
-
-    // Load initial dropdowns (items, bill no)this.OngetcalculatedMRP
-    loadAllDropdowns() {
+    loadAllDropdowns(): void {
+         this.onGetMFNumberist();
+        this.OnGetDraftList();
         this.OnGetItem();
-        this.OnGetBillNo();
-        this.OnGetCusMobile();
-        this.OnGetRequestedBy();
-        this.OnGetProfile();
+        this.OnGetDepartment();
+        this.onGetProject();
+        this.onGetPeriod();
     }
 
-    onRequestedByFilter(event: any) {
-        this.filteredDeliveryText = event.filter.trim();
+    onProjectChange(data: any) {
+        this.OnGetWorkList(data);
     }
-    addDeliveryPerson() {
-        if (!this.filteredDeliveryText) return;
-        const exists = this.requestedByOptions.some((x) => x.fieldname.toLowerCase() === this.filteredDeliveryText.toLowerCase());
-        if (exists) return;
-        const newItem = {
-            fieldid: Date.now(),
-            fieldname: this.filteredDeliveryText
+
+    OnGetItem(): void {
+        const paylaod = {
+            p_returntype: 'ITEMALL',
+            p_returnvalue: this.companyId,
+            username: this.userId
         };
-        this.requestedByOptions = [...this.requestedByOptions, newItem];
-        this.salesForm.get('p_requestedby')?.setValue(newItem.fieldname);
-        this.deliveryperson.hide();
-        this.filteredDeliveryText = '';
-    }
-    // Load dropdown via older endpoint (Getreturndropdowndetails)
-    OnGetDropdown() {
-        const payload = {
-            ...this.getUserDetails,
-            p_returntype: 'ITEM'
-        };
-        this.salesService.Getreturndropdowndetails(payload).subscribe({
-            next: (res) => {
-                console.log('result:', res);
-                this.itemOptionslist = res.data;
-            },
-            error: (err) => console.log(err)
+        this.inventoryService.Getreturndropdowndetails(paylaod).subscribe({
+            next: (res) => (this.itemOptions = res.message),
+            error: (err) => console.error(err)
         });
     }
 
-    // Load Bill No dropdown
-    OnGetBillNo() {
-        const loginusername = this.authService.isLogIntType().username;
-        const payload = {
-            p_returntype: 'NEWTRANSACTIONID',
-            p_username: loginusername
+    OnGetItemDetail(data: any): void {
+        const paylaod = {
+            p_returntype: 'ITEMDETAILS',
+            p_returnvalue: data.value.toString(),
+            username: this.userId
         };
-        this.salesService.getdropdowndetails(payload).subscribe({
+        this.inventoryService.Getreturndropdowndetails(paylaod).subscribe({
             next: (res) => {
-                const billdata: any = res.data;
-                this.requisitionOptions = billdata.filter((item: { billno: null }) => item.billno != null);
-                this.billValue = this.requisitionOptions;
+                const detail = Array.isArray(res.message) ? res.message[0] : res.message;
+                if (!detail) return;
+                this.itemArray.push(this.createItemRow(detail));
             },
-            error: (err) => console.log(err)
+            error: (err) => console.error(err)
         });
     }
 
-    OnItemChange(event: any) {
-        const latetData = this.itemOptions.find((item) => item.itemid == event.value);
-        if (!latetData) return;
+    OnGetWorkList(data: any): void {
+        const paylaod = { p_returntype: 'WORKLISTDD', p_returnvalue: data.value.toString(), username: this.userId };
+        this.inventoryService.Getreturndropdowndetails(paylaod).subscribe({
+            next: (res) => {
+                this.workList = res.message || [];
+                this.buildTowerOptions();
+                this.levelOptions = [];
+                this.pourOptions = [];
+                this.forecastForm.patchValue({ p_work: null, p_level: null, p_pour: null }, { emitEvent: false });
+            },
+            error: (err) => console.error(err)
+        });
+    }
 
-        // Prevent duplicate item
-        const alreadyExists = this.saleArray.controls.some((row) => row.get('ItemId')?.value === latetData.itemid);
+    onGetMFNumberist() {
+        const payload = {
+            p_returntype: 'MFNUMBER',
+            p_returnvalue: this.companyId,
+            username: this.userId
+        };
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res) => {
+                this.requisitionOptions = res.message;
+            },
+            error: (err) => console.error(err)
+        });
+    }
 
+    OnGetDraftList() {
+        const userId = this.authService.isLogIntType().userid.toString();
+        const payload = {
+            p_returntype: 'MFDRAFT',
+            p_returnvalue: this.companyId,
+            username: userId
+        };
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res) => {
+                this.draftRequisitionOptions = res.message;
+            },
+            error: (err) => console.error(err)
+        });
+    }
+
+    OnGetDepartment(): void {
+        const userId = this.authService.isLogIntType().userid.toString();
+        const payload = {
+            p_returntype: 'DEPARTMENT',
+            p_returnvalue: '',
+            username: userId
+        };
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res) => {
+                this.departmentOptions = res.message;
+            },
+            error: (err) => console.error(err)
+        });
+    }
+
+    onGetProject(): void {
+        const companyId = this.authService.isLogIntType().companyid.toString();
+        const payload = {
+            returnType: 'ACTIVEPROJECT',
+            returnValue: '',
+            username: '',
+            option1: companyId,
+            option2: null
+        };
+        this.inventoryService.getparameterbased(payload).subscribe({
+            next: (res) => {
+                this.projectOptions = res.data;
+            },
+            error: (err) => console.error(err)
+        });
+    }
+
+   onGetPeriod(): void {
+    const payload = {
+        returnType: 'PERIOD',
+        returnValue: '',
+        username: '',
+        option1: null,
+        option2: null
+    };
+    this.inventoryService.getparameterbased(payload).subscribe({
+        next: (res) => {
+            const allPeriods: any[] = res.data || [];
+            this.periodOptions = allPeriods.filter((p) => this.isCurrentOrFuturePeriod(p.period_name));
+        },
+        error: (err) => console.error(err)
+    });
+}
+
+private isCurrentOrFuturePeriod(periodName: string): boolean {
+    // periodName format: "JAN-26", "APR-26", etc.
+    const monthMap: Record<string, number> = {
+        JAN: 0, FEB: 1, MAR: 2, APR: 3, MAY: 4, JUN: 5,
+        JUL: 6, AUG: 7, SEP: 8, OCT: 9, NOV: 10, DEC: 11
+    };
+
+    const [monStr, yyStr] = periodName.split('-');
+    const month = monthMap[monStr.toUpperCase()];
+    if (month === undefined) return true; // unrecognized format — don't accidentally hide it
+
+    const year = 2000 + parseInt(yyStr, 10);
+    const periodDate = new Date(year, month, 1);
+
+    const now = new Date();
+    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    return periodDate >= currentMonthStart;
+}
+
+    private buildTowerOptions(): void {
+        const seen = new Map<number, any>();
+        for (const w of this.workList) {
+            if (!seen.has(w.tower_block_id)) {
+                seen.set(w.tower_block_id, { tower_id: w.tower_block_id, tower_name: w.tower_name });
+            }
+        }
+        this.towerOptions = Array.from(seen.values());
+    }
+
+    onTowerChange(event: any): void {
+        const towerId = event.value;
+        this.levelOptions = this.workList
+            .filter((w) => w.tower_block_id === towerId)
+            .reduce((acc: any[], w) => {
+                if (!acc.some((l) => l.value === w.level_name)) acc.push({ label: w.level_name, value: w.level_name });
+                return acc;
+            }, []);
+        this.pourOptions = [];
+        this.forecastForm.patchValue({ p_level: null, p_pour: null }, { emitEvent: false });
+    }
+
+    onLevelChange(event: any): void {
+        const towerId = this.forecastForm.get('p_work')?.value;
+        const levelName = event.value;
+        this.pourOptions = this.workList
+            .filter((w) => w.tower_block_id === towerId && w.level_name === levelName)
+            .reduce((acc: any[], w) => {
+                if (!acc.some((p) => p.value === w.pour_name)) acc.push({ label: w.pour_name, value: w.pour_name });
+                return acc;
+            }, []);
+        this.forecastForm.patchValue({ p_pour: null }, { emitEvent: false });
+    }
+
+ onDraftChange(data: any): void {
+    const fromRequisition = this.requisitionOptions.find((m: any) => m.mf_id === data.value );
+    const fromDraft = this.draftRequisitionOptions.find((m: any) => m.mf_no === data.value );
+    const matched = fromRequisition ?? fromDraft;
+
+    if (!matched) {
+        console.warn('No matching MF found for value:', data.value);
+        return;
+    }
+
+    const paylaod = { p_returntype: 'MFDETAILS', p_returnvalue: matched.mf_no, username: this.userId };
+    this.inventoryService.Getreturndropdowndetails(paylaod).subscribe({
+        next: (res) => {
+            const rows: any[] = Array.isArray(res?.message) ? res.message : [];
+            if (!rows.length) return;
+            const header = rows[0];
+
+            const applyDraft = () => {
+                this.buildTowerOptions();
+
+                this.levelOptions = this.workList
+                    .filter((w) => w.tower_block_id === header.tower_block_id)
+                    .reduce((acc: any[], w) => {
+                        if (!acc.some((l) => l.value === w.level_name)) acc.push({ label: w.level_name, value: w.level_name });
+                        return acc;
+                    }, []);
+
+               this.pourOptions = this.workList
+    .filter((w) => w.tower_block_id === header.tower_block_id && w.level_name === header.level_name)
+    .reduce((acc: any[], w) => {
+        if (!acc.some((p) => p.value === w.pour_name)) acc.push({ label: w.pour_name, value: w.pour_name });
+        return acc;
+    }, []);
+
+const resolvedPour = header.pour_name ?? (this.pourOptions.length === 1 ? this.pourOptions[0].value : null);
+
+this.forecastForm.patchValue(
+    {
+        p_mf_id: header.mf_id,
+        p_draft_requisitionno: header.mf_no,
+        p_project: header.project_id,
+        p_department: header.department_id,
+        p_work: header.tower_block_id,
+        p_level: header.level_name,
+        p_pour: resolvedPour,
+        p_period: header.forecast_month,
+        p_remarks: header.remarks ?? '',
+        status: header.status
+    },
+    { emitEvent: false }
+);
+
+                this.itemArray.clear();
+                rows.forEach((row: any) => {
+                    const master = this.itemOptions.find((i) => i.itemid === row.item_id);
+                    this.itemArray.push(
+                        this.createItemRow({
+                            mfdetailid: row.mfdetailid,
+                            categoryid: row.item_category_id,
+                            item_category: row.categoryname ?? '',
+                            itemid: row.item_id,
+                            itemname: master?.itemname ?? '',
+                            uomid: row.uom_id,
+                            uomname: row.uomname ?? '',
+                            buffer_stock: row.buffer_stock,
+                            currentstock: row.available_stock,
+                            pending_qty: row.pending_qty,
+                            forecast_qty: row.forecast_qty,
+                            remarks: row.itemremark ?? ''
+                        })
+                    );
+                });
+            };
+
+            const hasTower = this.workList.some((w) => w.tower_block_id === header.tower_block_id);
+            if (!hasTower) {
+                // workList wasn't loaded for this draft's project yet — fetch it first
+                const wlPayload = { p_returntype: 'WORKLISTDD', p_returnvalue: header.project_id.toString(), username: this.userId };
+                this.inventoryService.Getreturndropdowndetails(wlPayload).subscribe({
+                    next: (res2) => {
+                        this.workList = res2.message || [];
+                        applyDraft();
+                    },
+                    error: (err) => console.error(err)
+                });
+            } else {
+                applyDraft();
+            }
+        },
+        error: (err) => {
+            console.error(err);
+            const detail = err?.error?.message || 'Failed to load forecast';
+            this.messageService.add({ severity: 'error', summary: detail, life: 2500 });
+        }
+    });
+}
+
+get isReadOnlyView(): boolean {
+    return this.forecastForm.get('status')?.value === 'SUBMITTED';
+}
+    createItemRow(data?: any): FormGroup {
+        const row = this.fb.group({
+            item_category_id: [data?.categoryid ?? null],
+            item_category: [data?.item_category ?? ''],
+            item_id: [data?.itemid ?? null],
+            item_name: [data?.itemname ?? ''],
+            uom_id: [data?.uomid ?? null],
+            uom_name: [data?.uomname ?? ''],
+            buffer_stock: [data?.buffer_stock ?? 0],
+            available_stock: [data?.currentstock ?? 0],
+            pending_qty: [data?.pending_qty ?? 0],
+            forecast_qty: [data?.forecast_qty ?? 0, Validators.min(0)],
+            procure_qty: [{ value: 0, disabled: true }],
+            remarks: [data?.remarks ?? null]
+        });
+
+        this.wireProcureQtyCalc(row);
+        this.recalculateProcureQty(row);
+
+        return row;
+    }
+
+    private wireProcureQtyCalc(row: FormGroup): void {
+        row.get('forecast_qty')?.valueChanges.subscribe(() => this.recalculateProcureQty(row));
+        row.get('pending_qty')?.valueChanges.subscribe(() => this.recalculateProcureQty(row));
+    }
+
+    private recalculateProcureQty(row: FormGroup): void {
+        const forecastQty = Number(row.get('forecast_qty')?.value) || 0;
+        const pendingQty = Number(row.get('pending_qty')?.value) || 0;
+        const availableQty = Number(row.get('available_stock')?.value) || 0;
+
+        const procureQty = Math.max(forecastQty - pendingQty - availableQty, 0);
+        row.get('procure_qty')?.setValue(procureQty, { emitEvent: false });
+    }
+
+    OnItemChange(event: any): void {
+        const item = this.itemOptions.find((i) => i.itemid == event.value);
+        if (!item) return;
+
+        const alreadyExists = this.itemArray.controls.some((row) => row.get('item_id')?.value === item.itemid);
         if (alreadyExists) {
-            this.messageService.add({
-                severity: 'warn',
-                summary: 'Duplicate Item',
-                detail: `${latetData.itemname} is already added.`,
-                life: 2000
-            });
-
-            // Clear dropdown on duplicate
-            this.salesForm.get('p_itemdata')?.setValue(null, { emitEvent: false });
+            this.messageService.add({ severity: 'warn', summary: 'Duplicate Item', detail: `${item.itemname} is already added.`, life: 2000 });
+            this.forecastForm.get('p_itemdata')?.setValue(null, { emitEvent: false });
             this.isAutoSelect = false;
             return;
         }
 
-        // Add new row
-        this.saleArray.push(this.createSaleItem(latetData));
-        this.focusLastRowUOM();
-        const index = this.saleArray.length - 1;
-
-        // Load UOM list
-        this.OnUMO(event.value, index);
-
-        // Calculate MRP
-        this.calculateMRP(index);
-
+        this.OnGetItemDetail({ value: item.itemid });
         if (!this.isAutoSelect) {
-            this.salesForm.get('p_itemdata')?.setValue(null, { emitEvent: false });
+            this.forecastForm.get('p_itemdata')?.setValue(null, { emitEvent: false });
         }
-
-        this.isAutoSelect = false; // reset after use
-        this.calculateSummary();
+        this.isAutoSelect = false;
     }
 
-deleteBill(item: any, event: Event) {
-  event.stopPropagation(); // Prevent dropdown selection
-
-  this.requisitionOptions = this.requisitionOptions.filter(
-    x => x.billno !== item.billno
-  );
-
-  // Clear selected value if deleted
-  if (this.salesForm.get('p_requisitionno')?.value === item.billno) {
-    this.salesForm.get('p_requisitionno')?.setValue(null);
-  }
-}
-
-    // Called when bill dropdown value changes
-    onBillDetails(event: any) {
-        const billDetails = this.requisitionOptions.find((billitem) => billitem.billno === event.value);
-        if (billDetails) {
-            this.SaleDetails(billDetails);
-            this.customerstate = billDetails.customerstate
-            this.salesForm.patchValue({
-                p_transactionid: billDetails.transactionid,
-                p_customername: billDetails.customername,
-                p_transactiondate: billDetails.transactiondate ? new Date(billDetails.transactiondate) : null,
-                p_mobileno: billDetails.mobileno,
-                status: billDetails.status,
-                p_totalsale: billDetails.totalsale.toFixed(2),
-                p_requestedby: billDetails.deliveryboy,
-                sgst_9: billDetails.sgst_9,
-                tax_18: billDetails.tax_18,
-                cgst_9: billDetails.cgst_9,
-                amount_before_tax: billDetails.amount_before_tax
-            });
-        }
-    }
-
-    // SaleDetails → fetch sale detail and map items
-    SaleDetails(data: any) {
-        const apibody = {
-            ...this.getUserDetails,
-            p_returntype: 'SALEDETAIL',
-            p_returnvalue: data.transactionid
-        };
-
-        this.stockInService.Getreturndropdowndetails(apibody).subscribe({
+    OnUMO(itemId: any, index: number): void {
+        this.inventoryService.getdropdowndetails({ p_returntype: 'SALEUOM', p_returnvalue: itemId }).subscribe({
             next: (res) => {
-                if (res.data && res.data.length > 0) {
-                    this.salesForm.patchValue({
-                        status: res.data[0].status || ''
-                    });
+                if (!res?.data?.length) return;
+                this.uomlist[index] = res.data;
+                const row = this.itemArray.at(index);
+                if (!row.get('uom_id')?.value) {
+                    const first = res.data[0];
+                    row.patchValue({ uom_id: first.fieldid, uom_name: first.fieldname });
                 }
-                this.mapSaleItems(res.data);
+            },
+            error: (err) => console.error(err)
+        });
+    }
+
+    UOMId(event: any, index: number): void {
+        const row = this.itemArray.at(index);
+        const selectedUom = this.uomlist[index]?.find((u: any) => u.fieldid === event.value);
+        if (!selectedUom) return;
+        row.patchValue({ uom_id: selectedUom.fieldid, uom_name: selectedUom.fieldname });
+    }
+
+    deleteBill(item: any, event: Event) {
+        event.stopPropagation();
+        this.requisitionOptions = this.requisitionOptions.filter((x) => x.billno !== item.billno);
+        if (this.forecastForm.get('p_draft_requisitionno')?.value === item.billno) {
+            this.forecastForm.get('p_draft_requisitionno')?.setValue(null);
+        }
+    }
+
+    removeItem(i: number): void {
+        this.confirmationService.confirm({
+            message: 'Remove this item from the forecast?',
+            header: 'Confirm Delete',
+            acceptLabel: 'Yes',
+            rejectLabel: 'Cancel',
+            acceptButtonStyleClass: 'p-button-danger',
+            rejectButtonStyleClass: 'p-button-secondary',
+            accept: () => {
+                this.itemArray.removeAt(i);
+                if (this.uomlist?.[i]) this.uomlist.splice(i, 1);
             }
         });
     }
 
-    removeItem(i: number) {
-        this.saleArray.removeAt(i);
-
-        if (this.uomlist && Array.isArray(this.uomlist)) {
-            this.uomlist.splice(i, 1);
-        }
-        this.updateTotalCostSummary();
-        if (this.saleArray.length === 0) {
-            this.calculateSummary();
-            return;
-        }
-
-        const index = this.saleArray.length - 1;
-        this.updateTotal(index);
-    }
-
-    blockDecimal(event: KeyboardEvent) {
-        if (event.key === '.' || event.key === ',' || event.key === 'e' || event.key === 'E' || event.key === '-') {
-            event.preventDefault(); // block decimal
-        }
-    }
-
     isSubmitDisabled(): boolean {
-        if (this.saleArray.length === 0) return true;
-        for (let row of this.saleArray.controls) {
-            if (row.get('Quantity')?.errors?.['maxStock']) return true;
-        }
-        if (!this.salesForm.get('p_transactiondate')?.value) return true;
-        for (let row of this.saleArray.controls) {
-            const qty = Number(row.get('Quantity')?.value || 0);
-            const stock = Number(row.get('curStock')?.value || 0);
-            if (qty === 0) return true;
-            if (qty > stock) return true;
-        }
-        return false;
+        return this.itemArray.length === 0 || !!this.forecastForm.get('p_project')?.invalid || !!this.forecastForm.get('p_work')?.invalid || !!this.forecastForm.get('p_level')?.invalid || !!this.forecastForm.get('p_period')?.invalid;
     }
 
-submitDraft(){
+    private buildPayload(action: 'DRAFT' | 'SUBMIT', operation?: 'INSERT' | 'EDIT' | 'DELETE'): MaterialForecastPayload {
+        const v = this.forecastForm.value;
+        return {
+            p_action: action,
+            p_operation:operation ?? (v.p_mf_id ? 'EDIT' : 'INSERT'),
+            p_mf_id: v.p_mf_id ?? null,
+            p_project_id: v.p_project,
+            p_department_id: v.p_department,
+            p_tower_block_id: v.p_work,
+            p_level_name: v.p_level,
+            p_forecast_month: v.p_period,
+            p_pour_name: v.p_pour,
+            p_remarks: v.p_remarks || '',
+            p_items: this.itemArray.controls.map((row: any) => ({
+                item_category_id: row.get('item_category_id')?.value ?? null,
+                item_id: row.get('item_id')?.value,
+                item_name: row.get('item_name')?.value,
+                uom_id: row.get('uom_id')?.value ?? null,
+                uom_name: row.get('uom_name')?.value,
+                buffer_stock: row.get('buffer_stock')?.value ?? 0,
+                available_stock: row.get('available_stock')?.value ?? 0,
+                pending_qty: row.get('pending_qty')?.value ?? 0,
+                forecast_qty: row.get('forecast_qty')?.value ?? 0,
+                procure_qty: row.get('procure_qty')?.value ?? 0,
+                remarks: row.get('remarks')?.value || ''
+            })),
+            p_loginuser: this.authService.isLogIntType()?.userid
+        };
+    }
 
+   submitDraft(): void {
+      const v = this.forecastForm.value;
+    const operation = v.p_mf_id ? 'EDIT' : 'INSERT';
+    this.workService.upsertMaterialForecast(this.buildPayload('DRAFT', operation)).subscribe({
+        next: (res) => {
+            this.messageService.add({ severity: 'success', summary: res.message.message, life: 2000 });
+
+            if (res.message.status === 'success') {
+                const newEntry = { mf_id: res.message.mf_id, mf_no: res.message.mf_no };
+
+                if (!this.draftRequisitionOptions.some((r) => r.mf_id === newEntry.mf_id)) {
+                    this.draftRequisitionOptions = [...this.draftRequisitionOptions, newEntry];
+                }
+
+                this.forecastForm.patchValue({
+                    p_mf_id: res.message.mf_id,
+                    p_draft_requisitionno: res.message.mf_id,  
+                    status: 'Draft'
+                });
+            }
+        },
+        error: (err) => {
+            console.error(err);
+            const detail = err?.error?.message || 'Failed to save draft';
+            this.messageService.add({ severity: 'error', summary: detail, life: 2500 });
+        }
+    });
 }
 
-    onSubmit() {
-        if (this.isBarcodeScan) {
-            return;
-        }
+    onSubmit(): void {
         if (this.isSubmitDisabled()) {
-            this.messageService.add({
-                severity: 'error',
-                summary: 'Validation Failed',
-                detail: 'Please correct all errors before submitting.',
-                life: 2500
-            });
+            this.messageService.add({ severity: 'error', summary: 'Validation Failed', detail: 'Fill all required fields and add at least one item.', life: 2500 });
             return;
         }
 
         this.confirmationService.confirm({
-            message: 'Are you sure you want to submit?',
+            message: 'Are you sure you want to submit this forecast?',
             header: 'Confirm',
             acceptLabel: 'Yes',
             rejectLabel: 'Cancel',
             acceptButtonStyleClass: 'p-button-primary',
             rejectButtonStyleClass: 'p-button-secondary',
             accept: () => {
-                this.OnSalesHeaderCreate(this.salesForm.value);
-            }
-        });
-    }
+                this.workService.upsertMaterialForecast(this.buildPayload('SUBMIT')).subscribe({
+                    next: (res) => {
+                        if (res.message.status === 'success') {
+                             this.messageService.add({ severity: 'success', summary: res.message.message , life: 2000 });
+                            const newEntry = { mf_id: res.message.mf_id, mf_no: res.message.mf_no };
 
-    onReset() {
-        this.salesForm.reset();
-        this.saleArray.clear();
-        this.salesForm.get('p_transactiondate')?.setValue(this.today);
-    }
+                            if (!this.requisitionOptions.some((r) => r.mf_id === newEntry.mf_id)) {
+                                this.requisitionOptions = [...this.requisitionOptions, newEntry];
+                            }
 
-    calculateSummary() {
-        let totalMRP = 0;
-
-        this.saleArray.controls.forEach((row: AbstractControl) => {
-            const qty = Number(row.get('Quantity')?.value || 0);
-            const mrp = Number(row.get('MRP')?.value || 0);
-
-            totalMRP += qty * mrp;
-        });
-
-        this.salesForm.patchValue({
-            p_totalsale: totalMRP.toFixed(2)
-        });
-    }
-
-    // Update a specific row total, ensure stock constraints
-    updateTotal(i: number) {
-        const row = this.saleArray.at(i);
-
-        const qty = Number(row.get('Quantity')?.value || 0);
-        const stock = Number(row.get('curStock')?.value || 0);
-        const mrp = Number(row.get('MRP')?.value || 0);
-
-        if (qty > stock) {
-            row.get('Quantity')?.setErrors({ maxStock: true });
-            this.messageService.add({
-                severity: 'warn',
-                summary: 'Stock Limit Exceeded',
-                detail: `Only ${stock} units available.`,
-                life: 2000
-            });
-            return;
-        } else {
-            row.get('Quantity')?.setErrors(null);
-        }
-
-        this.calculateSummary();
-        this.salesForm.updateValueAndValidity();
-    }
-
-    cleanRequestBody(body: any) {
-        const formattedDate = this.datepipe.transform(body.p_transactiondate, 'dd/MM/yyyy');
-        return {
-            ...this.getUserDetails,
-            p_transactiontype: 'SALE',
-            p_transactionid: body.p_transactionid ?? 0,
-            p_transactiondate: formattedDate || '',
-            p_customername: body.p_customername || '',
-            p_mobileno: body.p_mobileno || '',
-            p_totalcost:0,
-            p_totalsale: Number(body.p_totalsale) || 0,
-            p_overalldiscount:0,
-            p_roundoff: '0.00',
-            p_totalpayable: 0,
-            p_currencyid: Number(body.p_currencyid) || 0,
-            p_custgstno: '',
-            p_gsttran: '',
-            p_status: body.p_status || 'Done',
-            p_isactive: 'Y',
-            p_linktransactionid: 0,
-            p_creditnoteno: body.p_requestedby || '',
-            p_replacesimilir: 'N',
-            p_discounttype: 'N',
-            p_paymentmode: '',
-            p_paymentdue: 0,
-            p_sale: (body.p_sale || []).map((x: any) => ({
-                TransactiondetailId: x.TransactiondetailId || 0,
-                ItemId: x.ItemId,
-                ItemName: x.ItemName,
-                UOMId: x.UOMId,
-                Quantity: x.Quantity,
-                itemcost: x.itemcost,
-                warrenty: x.warPeriod,
-                MRP: x.MRP,
-                hsncode: x.hsncode,
-                totalPayable: x.totalPayable,
-                currentstock: x.curStock
-            }))
-        };
-    }
-
-    OnSalesHeaderCreate(data: any) {
-        const apibody = this.cleanRequestBody(this.salesForm.value);
-
-        this.stockInService.OninsertSalesDetails(apibody).subscribe({
-            next: (res) => {
-                const billno = res.data[0]?.billno;
-                this.OnGetBillNo();
-                this.OnGetItem();
-                this.OnGetCusMobile();
-                this.salesForm.controls['p_requisitionno'].setValue(billno);
-                if (res.data && res.data.length > 0) {
-                    this.salesForm.patchValue({
-                        status: 'Done'
-                    });
-                }
-                console.log('uom', this.salesForm.get('p_sale')?.value);
-                setTimeout(() => {
-                    if (this.billValue) {
-                        const currentBill = this.billValue.find((bill: any) => bill.billno === billno);
-                        if (currentBill) {
-                            this.patchPrintValues(currentBill);
+                            this.forecastForm.patchValue({
+                                p_mf_id: res.message.mf_id,
+                                p_requisitionno: res.message.mf_id,
+                                status: 'Submitted'
+                            });
                         }
-                    }
-                }, 500);
-                console.log('mobile option:', this.cusMobileOptions);
-                console.log('res', res);
-                this.messageService.add({
-                    severity: 'success',
-                    summary: 'Success',
-                    detail: 'Sales saved successfully!',
-                    life: 3000
-                });
-                this.confirmationService.confirm({
-                    header: 'Print Invoice',
-                    message: 'Are you sure you want to print this invoice?',
-
-                    acceptLabel: 'Print Now',
-                    rejectLabel: 'Cancel',
-
-                    icon: 'pi pi-print',
-                    acceptButtonStyleClass: 'p-button-primary',
-                    rejectButtonStyleClass: 'p-button-secondary',
-                    accept: () => {
-                        this.printInvoice();
+                    },
+                    error: (res) => {
+                        console.error(res);
+                        const detail = res?.error?.message || res?.message || 'Something went wrong';
+                        this.messageService.add({ severity: 'error', summary: detail, life: 2500 });
                     }
                 });
-            },
-            error: (err) => {
-                console.error(err);
-                this.messageService.add({
-                    severity: 'error',
-                    summary: 'Error',
-                    detail: 'Failed to save sales. Please try again.',
-                    life: 3000
-                });
-            }
-        });
-    }
-    patchPrintValues(apiData: any) {
-        const patchData: any = {};
-        patchData.p_transactionid = apiData.transactionid;
-        patchData.discountvalueper = apiData.discountvalueper;
-        patchData.sgst_9 = apiData.sgst_9;
-        patchData.cgst_9 = apiData.cgst_9;
-        patchData.tax_18 = apiData.tax_18;
-        patchData.amount_before_tax = apiData.amount_before_tax;
-        this.salesForm.patchValue(patchData);
-        this.salesForm.updateValueAndValidity();
-    }
-    
-    showSuccess(message: string) {
-        this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
-    }
-
-    OnUMO(value: any, index: number, uomValue?: string) {
-        const apibody = {
-            ...this.getUserDetails,
-            p_returntype: 'SALEUOM',
-            p_returnvalue: value
-        };
-
-        this.salesService.Getreturndropdowndetails(apibody).subscribe({
-            next: (res) => {
-                if (!res?.data || res.data.length === 0) {
-                    return;
-                }
-
-                this.uomlist[index] = [...res.data];
-
-                const row = this.saleArray.at(index);
-
-                let selectedUom = null;
-
-                if (uomValue) {
-                    selectedUom = this.uomlist[index].find((u: any) => u.fieldid == uomValue || u.fieldname == uomValue);
-                }
-
-                if (!selectedUom && !row.get('UOMId')?.value) {
-                    selectedUom = this.uomlist[index][0];
-                }
-
-                if (!selectedUom) return;
-
-                row.patchValue({
-                    UOMId: selectedUom.fieldid,
-                    UomName: selectedUom.fieldname
-                });
-
-                this.calculateMRP(index);
             }
         });
     }
 
-    OngetcalculatedMRP(data: any, index: number) {
-        const row = this.saleArray.at(index);
+    private buildDeletePayload(mfId: number): MaterialForecastPayload {
+    return {
+        p_action: 'DRAFT',
+        p_operation: 'DELETE',
+        p_mf_id: mfId,
+        p_project_id: null,
+        p_department_id: null,
+        p_tower_block_id: null,
+        p_level_name: null,
+        p_forecast_month: null,
+        p_pour_name: null,
+        p_remarks: null,
+        p_items: [],
+        p_loginuser: this.authService.isLogIntType()?.userid
+    };
+}
 
-        const qty = Number(row.get('Quantity')?.value || 1);
+  deleteDraftItem(item: any, event: Event): void {
+    event.stopPropagation();
 
-        let apibody = {
-            ...this.getUserDetails,
-            p_itemid: data.ItemId,
-            p_qty: qty,
-            p_uomid: data.UOMId
-        };
-
-        delete (apibody as any).p_loginuser;
-
-        this.orderService.getcalculatedMRP(apibody).subscribe({
-            next: (res: any) => {
-                const mrp = Number(res.data.totalmrp || 0);
-                const cost = Number(res.data.totalcost || 0);
-                const conversion = Number(res.data.conversion || 1);
-
-                // 🔹 Base stock (store once)
-                const row = this.saleArray.at(index) as FormGroup;
-
-                if (!row.contains('baseStock')) {
-                    row.addControl('baseStock', new FormControl(Number(row.get('curStock')?.value || 0)));
+    this.confirmationService.confirm({
+        message: `Delete draft ${item.mf_no}? This cannot be undone.`,
+        header: 'Confirm Delete',
+        acceptLabel: 'Yes',
+        rejectLabel: 'Cancel',
+        acceptButtonStyleClass: 'p-button-danger',
+        rejectButtonStyleClass: 'p-button-secondary',
+        accept: () => {
+            this.workService.upsertMaterialForecast(this.buildDeletePayload(item.mf_id)).subscribe({
+                next: (res) => {
+                    this.messageService.add({ severity: 'success', summary: res.message.message , life: 2000 });
+                    this.draftRequisitionOptions = this.draftRequisitionOptions.filter((x) => x.mf_id !== item.mf_id);
+                },
+                error: (err) => {
+                    console.error(err);
+                    const detail = err?.error?.message || 'Failed to delete draft';
+                    this.messageService.add({ severity: 'error', summary: detail, life: 2500 });
                 }
-
-                const baseStock = Number(row.get('baseStock')?.value || 0);
-
-                // 🔹 Converted stock based on UOM
-                const convertedStock = baseStock * conversion;
-
-                // 🔹 Patch values
-                row.patchValue({
-                    MRP:mrp,
-                    itemcost: cost,
-                    totalPayable:qty*mrp,
-                    apiCost: qty * cost,
-                    curStock: convertedStock
-                });
-
-                this.updateTotalCostSummary();
-                this.calculateSummary();
-            }
-        });
-    }
-
-    UOMId(event: any, index: number) {
-        const row = this.saleArray.at(index);
-
-        const selectedUom = this.uomlist[index]?.find((u: any) => u.fieldid === event.value);
-
-        if (!selectedUom) return;
-
-        row.patchValue({
-            UOMId: selectedUom.fieldid,
-            UomName: selectedUom.fieldname
-        });
-
-        this.OngetcalculatedMRP(
-            {
-                ItemId: row.get('ItemId')?.value,
-                UOMId: selectedUom.fieldid
-            },
-            index
-        );
-    }
-    calculateMRP(index: number) {
-        const row = this.saleArray.at(index);
-
-        const qty = Number(row.get('Quantity')?.value || 1);
-        const uomid = row.get('UOMId')?.value;
-        const itemId = row.get('ItemId')?.value;
-
-        if (!uomid || qty <= 0) return;
-
-        let apibody = {
-            ...this.getUserDetails,
-            p_itemid: itemId,
-            p_qty: qty,
-            p_uomid: uomid
-        };
-
-        delete (apibody as any).p_loginuser;
-
-        this.orderService.getcalculatedMRP(apibody).subscribe({
-            next: (res: any) => {
-                if (res.success) {
-                    const mrp = Number(res?.data.totalmrp || 0);
-                    const cost = Number(res?.data.totalcost || 0);
-
-                    // ⭐ IMPORTANT — Update purchase price also
-                    row.patchValue({
-                        MRP:mrp,
-                        totalPayable:qty*mrp,
-                        itemcost: cost, // <-- FIXED
-                        apiCost: qty * cost // <-- used for cost summary
-                    });
-                }
-
-                this.updateTotalCostSummary();
-                this.calculateSummary();
-            }
-        });
-    }
-
-    OnQtyChange(index: number) {
-        this.calculateMRP(index);
-    }
-    calculateItemCost(row: AbstractControl, apiCost: number | null | undefined): number {
-        const qty = Number(row.get('Quantity')?.value || 0);
-        const itemcost = Number(row.get('itemcost')?.value || 0);
-
-        // If API sent cost AND it is a valid number → use it
-        if (apiCost !== null && apiCost !== undefined && !isNaN(apiCost)) {
-            return Number(apiCost);
+            });
         }
-
-        // Otherwise fallback → qty × itemcost
-        return qty * itemcost;
-    }
-    updateTotalCostSummary() {
-        let finalCost = 0;
-
-        this.saleArray.controls.forEach((row: AbstractControl) => {
-            const qty = Number(row.get('Quantity')?.value || 0);
-            const cost = Number(row.get('itemcost')?.value || 0);
-
-            finalCost += qty * cost; // ⭐ UOM adjusted cost
-        });
-
-    }
-
-    printInvoice() {
-        const printContents = document.getElementById('invoicePrintSection')?.innerHTML;
-        if (!printContents) return;
-        const popupWindow = window.open('', '_blank', 'width=900,height=1500');
-        popupWindow!.document.open();
-        popupWindow!.document.write(`
-     <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <style>
-                           @page {
-                        margin: 0;
-                        size: auto;
-                    }
-                            /* Your print styles here */
-                            body { font-family: Arial, sans-serif; }
-                            /* Add more styles as needed */
-                        </style>
-                    </head>
-                    <body>
-                        ${printContents}
-                        <script>
-                            window.onload = function() {
-                                window.print();
-                                window.onafterprint = function() {
-                                    window.close();
-                                };
-                            };
-                        </script>
-                    </body>
-                    </html>
-  `);
-
-        popupWindow!.document.close();
+    });
+}
+    onReset(): void {
+        this.forecastForm.reset();
+        this.itemArray.clear();
+        this.uomlist = [];
+        this.draftRequisitionOptions=[];
+        this.forecastForm.get('p_period')?.setValue(null);
     }
 }

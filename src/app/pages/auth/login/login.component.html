@@ -15,7 +15,8 @@
     <path [attr.fill]="isDarkTheme() ? 'var(--p-primary-500)' : 'var(--p-primary-100)'" d="M1397.5 154.8c47.2-10.6 93.6-25.3 138.6-43.8c21.7-8.9 43-18.8 63.9-29.5V0H643.4c62.9 41.7 129.7 78.2 202.1 107.4C1020.4 178.1 1214.2 196.1 1397.5 154.8z" />
 </svg>
 
-<div class="px-8 min-h-screen flex justify-center flex-col  items-center">
+<div *ngIf="!isCheckingExternalAuth; else loadingBlock">
+    <div class="px-8 min-h-screen flex justify-center flex-col  items-center">
 
  <div class="mb-2 relative">
 
@@ -34,18 +35,22 @@
             <div class="flex flex-col">
                 <p-iconfield class="w-full">
                     <p-inputicon class="pi pi-address-book" />
-                    <input
+                     <input
                         type="text"
                         pInputText
-                        formControlName="clientcode"
+                        maxlength="10"
+                        (keypress)="allowOnlyDigits($event)"
+                        formControlName="usercode"
                         class="w-full md:w-[25rem]"
-                        placeholder="Client ID"
-                        aria-label="clientcode"
-                        [ngClass]="{ 'ng-invalid': loginForm.get('clientcode')?.invalid && loginForm.get('clientcode')?.touched }"
+                        placeholder="Mobile Number"
+                        aria-label="usercode"
+                        [ngClass]="{ 'ng-invalid': loginForm.get('usercode')?.invalid && loginForm.get('usercode')?.touched }"
                     />
                 </p-iconfield>
-                <p-message *ngIf="loginForm.get('clientcode')?.hasError('required') && loginForm.get('clientcode')?.touched" severity="error" variant="simple" size="small"> Client code is required </p-message>
-                <p-iconfield class="w-full mt-6">
+               <p-message *ngIf="loginForm.get('usercode')?.hasError('required') && loginForm.get('usercode')?.touched" severity="error" variant="simple" size="small"> Mobile No is required </p-message>
+                <p-message class="mt-1 ms-3" *ngIf="loginForm.get('usercode')?.hasError('pattern') && loginForm.get('usercode')?.touched" severity="error" variant="simple" size="small">Enter a valid 10-digit mobile number</p-message>
+
+                <!-- <p-iconfield class="w-full mt-6">
                     <p-inputicon class="pi pi-address-book" />
                     <input
                         type="text"
@@ -58,11 +63,12 @@
                     />
                 </p-iconfield>
                 <p-message *ngIf="loginForm.get('usercode')?.hasError('required') && loginForm.get('usercode')?.touched" severity="error" variant="simple" size="small"> User ID is required </p-message>
-                                <p-message class="mt-1 ms-3" *ngIf="loginForm.get('usercode')?.hasError('minlength') && loginForm.get('usercode')?.touched" severity="error" variant="simple" size="small"> User Code must be atleast 4 characters</p-message>
+                                <p-message class="mt-1 ms-3" *ngIf="loginForm.get('usercode')?.hasError('minlength') && loginForm.get('usercode')?.touched" severity="error" variant="simple" size="small"> User Code must be atleast 4 characters</p-message> -->
 
                 <p-iconfield class="w-full mt-6">
                     <p-inputicon class="pi pi-lock" />
-                    <input formControlName="pwd" type="password" pInputText class="w-full md:w-[25rem]" placeholder="Password" />
+                    <input formControlName="pwd" [type]="showPassword ? 'text' :'password'" pInputText class="w-full md:w-[25rem]" placeholder="Password" />
+                    <p-inputicon [class]="showPassword ? 'pi pi-eye-slash' : 'pi pi-eye'" (click)="togglePassword()" style="cursor: pointer;"></p-inputicon>
                 </p-iconfield>
                 <p-message class="mt-1 ms-3" *ngIf="loginForm.get('pwd')?.hasError('required') && loginForm.get('pwd')?.touched" severity="error" variant="simple" size="small"> Password is required </p-message>
                 <p-message class="mt-1 ms-3" *ngIf="loginForm.get('pwd')?.hasError('minlength') && loginForm.get('pwd')?.touched" severity="error" variant="simple" size="small"> Password must be atleast 4 characters</p-message>
@@ -87,5 +93,12 @@
     </div>
 
 </div>
+</div>
+<ng-template #loadingBlock>
+    <div class="flex items-center justify-center h-screen">
+    <p-progressSpinner></p-progressSpinner>
+  </div>
+</ng-template>
+
 
 <app-configurator [simple]="true" />

@@ -10,6 +10,7 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { UserService } from '@/core/services/user.service';
 import { InventoryService } from '@/core/services/inventory.service';
+import { AuthService } from '@/core/services/auth.service';
 
 @Component({
     selector: '[app-topbar]',
@@ -61,10 +62,11 @@ export class AppTopbar {
     public imageUrl: string = '';
     constructor(
         public layoutService: LayoutService,
-        private inventoryService: InventoryService
+        private inventoryService: InventoryService,
+        private authService: AuthService
     ) {}
     ngOnInit() {
-        this.onGetData();
+        this.onGetCompanyProfile();
     }
     onMenuButtonClick() {
         this.layoutService.onMenuToggle();
@@ -77,23 +79,25 @@ export class AppTopbar {
     onConfigButtonClick() {
         this.layoutService.showConfigSidebar();
     }
-    createDropdownPayload(returnType: string) {
-        return {
-            uname: 'admin',
-            p_username: 'admin',
-            p_returntype: returnType
+    
+     onGetCompanyProfile(): void {
+        const companyId = this.authService.isLogIntType().companyid.toString();
+        const userid = this.authService.isLogIntType().userid.toString();
+        const payload = {
+            returnType: 'COMPANYPROFILE',
+            returnValue: companyId,
+            username: userid,
+            option1: '',
+            option2: null
         };
-    }
-    onGetData() {
-        const payload = this.createDropdownPayload('PROFILE');
-        this.inventoryService.getdropdowndetails(payload).subscribe({
+        this.inventoryService.getparameterbased(payload).subscribe({
             next: (res) => {
-                if (res.data) {
-                    this.companyName = res.data[0].companyname;
+                  if (res.data) {
+                   this.companyName = res.data[0].companyname;
                     this.companyLogo = res.data[0].companylogo;
                 }
             },
-            error: (err) => console.log(err)
+            error: (err) => console.error(err)
         });
     }
 }

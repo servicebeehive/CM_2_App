@@ -3,7 +3,7 @@ import { LayoutService } from '@/layout/service/layout.service';
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { CheckboxModule } from 'primeng/checkbox';
@@ -16,7 +16,9 @@ import { MessageModule } from 'primeng/message';
 import { AuthService } from '@/core/services/auth.service';
 import { ShareService } from '@/core/services/shared.service';
 import { MessageService } from 'primeng/api';
-
+import { act } from '@ngrx/effects';
+import { authLogin } from '@/core/models/authmodel/auth.model';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
@@ -36,86 +38,114 @@ import { MessageService } from 'primeng/api';
     DividerModule,
     IconFieldModule,
     InputIconModule,
-    MessageModule
+    MessageModule,
+    ProgressSpinnerModule
   ]
 })
 export class LoginComponent implements OnInit {
-  public loginTypes = [
-    { label: 'Admin', value: 'admin' },
-    { label: 'Employee', value: 'employee' },
-    { label: 'Manager', value: 'manager' },
-  ];
-
   LayoutService = inject(LayoutService);
   isDarkTheme = computed(() => this.LayoutService.isDarkTheme());
   loginForm!: FormGroup;
+  showPassword: boolean = false;
+  isCheckingExternalAuth = true;
 
   constructor(
     private fb: FormBuilder,
     private route: Router,
+    private activatedRoute: ActivatedRoute,
     private authservice: AuthService,
     private sharedService: ShareService,
     private messageService: MessageService
   ) { }
 
   ngOnInit() {
-    // First create the form with default values
-    this.loginForm = this.fb.group({
-      usercode: [null, [Validators.required, Validators.minLength(4)]],
-      pwd: [null, [Validators.required, Validators.minLength(4)]],
-      logintype: [null],
-      clientcode: [null, [Validators.required]],
-      rememberMe: [false]
+     this.loginForm = this.fb.group({
+      pwd: [null, [Validators.required, Validators.minLength(6)]],
+      usercode: [null, [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
+      rememberMe: [false],
     });
 
-    // Then try to load remembered credentials
+    this.activatedRoute.queryParams.subscribe(params=>{
+    const incomingClientcode = params['clientcode'];
+    const incomingPwd = params['pwd'];
+  
+     if (incomingClientcode && incomingPwd) {
+      this.handleExternalCredentials(incomingClientcode, incomingPwd);
+      return;
+    }
+    this.isCheckingExternalAuth = false;
+    });
+
     this.loadRememberedCredentials();
   }
+
+allowOnlyDigits(event: KeyboardEvent) {
+        const char = event.key;
+        if (!/[0-9]/.test(char)) {
+            event.preventDefault();
+        }
+    }
 
   forgetPassword() {
     this.route.navigate(['/forgotpassword']);
   }
 
+handleExternalCredentials(clientcode: string, pwd: string) {
+  this.sharedService.setClientCode(clientcode);
+const loginBody = { usercode: clientcode, pwd } as authLogin;
+
+  this.authservice.isLoggedIn(loginBody).subscribe({
+    next: (res: any) => {
+      if (res.status === 'success') {
+        this.authservice.setToken(res.data?.usertoken);
+        this.route.navigate(['/layout']);
+      } else {
+        this.errorSuccess(res.data.msg);
+      }
+    },
+    error: () => {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Could not verify session.'
+      });
+    }
+  });
+}
+  
   loadRememberedCredentials() {
     try {
       const remembered = localStorage.getItem('rememberMe');
-      
       if (remembered === 'true') {
-        const savedClientCode = localStorage.getItem('savedClientCode');
-        const savedUserCode = localStorage.getItem('savedUserCode');
+        const savedMobileno = localStorage.getItem('savedMobileno');
+        const savedPassword = localStorage.getItem('savedPassword');
         // const savedPassword = localStorage.getItem('savedPassword');
 
-        if (savedClientCode && savedUserCode) {
+        if (savedMobileno && savedPassword) {
           this.loginForm.patchValue({
-            usercode: savedUserCode,
-            // pwd: savedPassword || '',
-            clientcode: savedClientCode,
+            usercode: savedMobileno,
+            pwd: savedPassword || '',
             rememberMe: true
           });
         }
       }
     } catch (error) {
-      console.error('Error loading remembered credentials:', error);
       this.clearSavedCredentials();
     }
   }
 
-  saveCredentials(clientcode: string, usercode: string, password: string) {
+  saveCredentials(usercode: string, pwd: string) {
     try {
       const rememberMe = this.loginForm.get('rememberMe')?.value;
 
       if (rememberMe) {
         localStorage.setItem('rememberMe', 'true');
-        localStorage.setItem('savedClientCode', clientcode);
-        localStorage.setItem('savedUserCode', usercode);
-        // localStorage.setItem('savedPassword', password);
-
-        console.log('✅ Credentials saved to localStorage');
+        localStorage.setItem('savedMobileno', usercode);
+        localStorage.setItem('savedPassword', pwd);
       } else {
         this.clearSavedCredentials();
       }
     } catch (error) {
-      console.error('Error saving credentials:', error);
       this.messageService.add({
         severity: 'warn',
         summary: 'Warning',
@@ -127,10 +157,8 @@ export class LoginComponent implements OnInit {
   clearSavedCredentials() {
     try {
       localStorage.removeItem('rememberMe');
-      localStorage.removeItem('savedClientCode');
-      localStorage.removeItem('savedUserCode');
-      // localStorage.removeItem('savedPassword');
-      console.log('Credentials cleared from localStorage');
+      localStorage.removeItem('savedMobileno');
+      localStorage.removeItem('savedPassword');
     } catch (error) {
       console.error('Error clearing credentials:', error);
     }
@@ -138,51 +166,42 @@ export class LoginComponent implements OnInit {
 
   onSubmit() {
     if (this.loginForm.valid) {
-      const { clientcode, usercode, pwd, rememberMe } = this.loginForm.value;
+      const { usercode, pwd, rememberMe } = this.loginForm.value;
+      this.sharedService.setClientCode(usercode);
       
-      console.log('Submitting form with:', { clientcode, usercode, rememberMe });
-
-      this.sharedService.setClientCode(clientcode);
-      this.loginForm.controls['logintype'].setValue(usercode);
-
-      // Save credentials BEFORE API call
-      this.saveCredentials(clientcode, usercode, pwd);
+      this.saveCredentials(usercode, pwd);
 
       this.authservice.isLoggedIn(this.loginForm.value).subscribe({
         next: (res: any) => {
-          if (res.success == true) {
+          if (res.status === 'success' && res.data.userid) {
             this.authservice.setToken(res.data?.usertoken);
-            
-            // Additional save for session management (optional)
             if (rememberMe) {
-              // Store in sessionStorage for current session
               sessionStorage.setItem('currentUser', JSON.stringify({
-                clientcode,
-                usercode
+                usercode,pwd
               }));
             }
             
             this.route.navigate(['/layout']);
           } else {
-            let message = 'Wrong UserId Or Password!!';
-            this.errorSuccess(message);
+            this.errorSuccess(res.data.msg);
           }
         },
         error: (res) => {
-          console.error('Login API error:', res);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Login failed. Please try again.'
-          });
+          this.errorSuccess(res.error.message);
         }
       });
-
-      console.log('Form Submitted:', this.loginForm.value);
     } else {
       this.loginForm.markAllAsTouched()
     }
   }
+
+   togglePassword() {
+        this.showPassword = !this.showPassword;
+    }
+
+    showSuccess(message: string) {
+        this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
+    }
 
   errorSuccess(message: string) {
     this.messageService.add({ severity: 'error', summary: 'Error', detail: message });

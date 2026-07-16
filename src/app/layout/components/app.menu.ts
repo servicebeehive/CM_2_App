@@ -33,9 +33,8 @@ export class AppMenu {
 
        const userType:any = this.userservice.isLogIntType();  
       this.role=userType.usertypecode
-  console.log("User Type:", userType);
 
-  if (this.role === 'Admin') {
+  if (this.role === 'administrator') {
     this.model = ADMIN_MENU_MODEL;
   } 
   else if (this.role === 'SalesManager') {

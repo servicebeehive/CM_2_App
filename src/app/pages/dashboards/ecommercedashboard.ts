@@ -79,8 +79,6 @@ export class EcommerceDashboard implements OnInit {
     onFilterChange(e: any) {}
     ngOnInit(): void {
         const isUserRoleType: any = this.authservice.isLogIntType();
-
         this.role = isUserRoleType?.usertypecode;
-        console.log('Selected Filter:', isUserRoleType?.usertypecode);
     }
 }

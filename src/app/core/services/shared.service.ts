@@ -17,9 +17,6 @@ export class ShareService {
     try {
       const jsonData:any = JSON.stringify(data);
       localStorage.setItem(this.STORAGE_KEY, jsonData);
-      
-       
-      console.log('User data saved to localStorage ✅');
     } catch (error) {
       console.error('Error saving user data:', error);
     }
@@ -59,11 +56,11 @@ export class ShareService {
         delete payload[key];
       }
     });
-
+    
     // 🔥 Now safely merge extra fields + payload
     const apiBody: any = {
-      uname:headerApiBody?.username, //-Arushi 11 dec 2025 , 1pm -username will go into uname as per CD
-      p_loginuser: headerApiBody?.username,//-Arushi 11 dec 2025 , 1pm - admin will not go if username is blank it should show error
+      uname:headerApiBody?.userid.toString(), //-Arushi 11 dec 2025 , 1pm -username will go into uname as per CD
+      p_loginuser: headerApiBody?.userid.toString(),//-Arushi 11 dec 2025 , 1pm - admin will not go if username is blank it should show error
       clientcode: this.clientcode,//-Arushi 11 dec 2025 , 1pm - CG01-SE will not go if is blank it should show error
       "x-access-token":headerApiBody?.usertoken,
     // "x-access-token" :'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyY29kZSI6ImFkbWluIiwiaWF0IjoxNzY1MjY2MDQ0LCJleHAiOjE3NjUzNTI0NDR9.ytWhv1-hYx2kbS1Ov2BkpZdgwaTsQhIw7HvjQoRdNVs',
@@ -74,7 +71,6 @@ export class ShareService {
     return apiBody;
 
   } catch (error) {
-    console.error("API Body Error:", error);
     return null;
   }
 }
@@ -96,7 +92,6 @@ export class ShareService {
   // ✅ Clear all stored user data (on logout)
   clearUserData(): void {
     localStorage.removeItem(this.STORAGE_KEY);
-    console.log('User data cleared ❌');
   }
 
   private invoiceState = new BehaviorSubject<{

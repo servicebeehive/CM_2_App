@@ -1,8 +1,12 @@
+import { UpserWorkList } from '@/core/models/authmodel/work.model';
+import { AuthService } from '@/core/services/auth.service';
+import { InventoryService } from '@/core/services/inventory.service';
+import { WorkService } from '@/core/services/work.service';
 import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ConfirmationService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -12,198 +16,205 @@ import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
 import { TooltipModule } from 'primeng/tooltip';
-
-export interface WorkRow {
-    project:   string;
-    tower:     string;
-    level:     string;
-    pour:      string;
-    completed: boolean;
-}
-
+import { ToastModule } from 'primeng/toast';
 @Component({
     selector: 'app-work',
-    imports: [
-        CommonModule,
-        ReactiveFormsModule,
-        FormsModule,
-        TableModule,
-        InputTextModule,
-        ButtonModule,
-        DropdownModule,
-        DialogModule,
-        ConfirmDialogModule,
-        CheckboxModule,
-        TooltipModule,
-        GlobalFilterComponent
-    ],
+    imports: [CommonModule, ReactiveFormsModule, FormsModule, TableModule, InputTextModule, ButtonModule, DropdownModule, DialogModule, ConfirmDialogModule, CheckboxModule, TooltipModule, GlobalFilterComponent, ToastModule],
     templateUrl: './work.component.html',
     styleUrls: ['./work.component.scss'],
     providers: [ConfirmationService]
 })
 export class WorkComponent implements OnInit {
-
     showGlobalSearch = true;
-    globalFilter     = '';
-
-    workList:       WorkRow[] = [];
-    filterWorkList: WorkRow[] = [];
-
-    // Index of row being edited (-1 = none)
+    globalFilter = '';
+    workList: any[] = [];
+    filterWorkList: any[] = [];
     editingIndex = -1;
+    editingWorkerId:number = 0;
 
     salesForm!: FormGroup;
-    editForm!:  FormGroup;
-
-    projectOptions = [
-        { label: 'Project A', value: 'Project A' },
-        { label: 'Project B', value: 'Project B' },
-        { label: 'Project C', value: 'Project C' }
-    ];
-
-    towerOptions = [
-        { label: 'Tower A', value: 'Tower A' },
-        { label: 'Tower B', value: 'Tower B' },
-        { label: 'Block C', value: 'Block C' }
-    ];
+    towerOptions = [];
+    projectOptions = [];
 
     constructor(
         private fb: FormBuilder,
-        private confirmationService: ConfirmationService
+        private confirmationService: ConfirmationService,
+        private workService: WorkService,
+        private authService: AuthService,
+        private inventoryService: InventoryService,
+        private messageService: MessageService
     ) {}
 
     ngOnInit(): void {
         this.salesForm = this.fb.group({
             p_project: [null, Validators.required],
-            p_tower:   [null, Validators.required],
-            p_level:   [null, Validators.required],
-            p_pour:    [null, Validators.required]
+            p_tower: [null, Validators.required],
+            p_level: [null, Validators.required],
+            p_pour: [null, Validators.required]
         });
+        this.loadAllDropdown();
+    }
 
-        this.editForm = this.fb.group({
-            p_project: [null, Validators.required],
-            p_tower:   [null, Validators.required],
-            p_level:   [null, Validators.required],
-            p_pour:    [null, Validators.required]
+    loadAllDropdown(): void {
+        this.loadWorkList();
+        this.loadProject();
+    }
+
+    loadWorkList(): void {
+        const companyId = this.authService.isLogIntType().companyid.toString();
+        const userId = this.authService.isLogIntType().userid.toString();
+        const payload = {
+           p_returntype: 'WORKLIST',
+           p_returnvalue: companyId,
+           username: userId
+        };
+       
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res) => {
+                this.filterWorkList = res.message;
+                this.workList = res.message;
+            },
+            error: (err) => console.error(err)
         });
+    }
 
-        this.filterWorkList = [...this.workList];
+    loadProject(): void {
+        const companyId = this.authService.isLogIntType().companyid.toString();
+        const payload = {
+            returnType : 'ACTIVEPROJECT',
+            returnValue : '',
+            username: '',
+            option1: companyId,
+            option2: null
+        }
+        this.inventoryService.getparameterbased(payload).subscribe({
+            next: (res) => {
+                this.projectOptions = res.data;
+            },
+            error: (err) => console.error(err)
+        });
+    }
+
+    loadTower(data:any, patchTowerId?: any): void {
+        const companyId = this.authService.isLogIntType().companyid.toString();
+
+        const payload = {
+            returnType : 'ALLTOWER',
+            returnValue : data.value,
+            username: '',
+            option1: companyId,
+            option2: null
+        }
+        this.inventoryService.getparameterbased(payload).subscribe({
+            next: (res) => {
+                this.towerOptions = res.data;
+                 if (patchTowerId != null) {
+                this.salesForm.patchValue({ p_tower: patchTowerId });
+            }
+            },
+            error: (err) => console.error(err)
+        });
+    }
+
+    get isEditing(): boolean {
+        return this.editingIndex !== -1;
     }
 
     // ── Add ────────────────────────────────────────────────────────────────
-   add(): void {
-    this.salesForm.markAllAsTouched();
-    if (this.salesForm.invalid) return;
+    add(): void {
+        this.salesForm.markAllAsTouched();
+        if (this.salesForm.invalid) return;
+        const userid = this.authService.isLogIntType().userid;
+        const v = this.salesForm.value;
+        
+        const payload: UpserWorkList = {
+            p_work_id: this.isEditing ? this.editingWorkerId : 0,
+            p_project_id: v.p_project,
+            p_tower_block_id: v.p_tower,
+            p_level_name: v.p_level,
+            p_pour_name: v.p_pour,
+            p_user_id: userid,
+            p_isactive: 'Y',
+            p_status: ''
+        };
 
-    const v = this.salesForm.value;
-    this.workList.push({
-        project:   v.p_project,
-        tower:     v.p_tower,
-        level:     v.p_level,
-        pour:      v.p_pour,
-        completed: false
-    });
-    this.filterWorkList = [...this.workList];
-
-    this.salesForm.patchValue({
-        p_project: null,
-        p_tower:   null,
-        p_level:   null,
-        p_pour:    null
-    });
-    // Reset touched state so validation clears
-    this.salesForm.markAsUntouched();
-    this.salesForm.markAsPristine();
-}
-
-    get allCompleted(): boolean {
-    return this.workList.length > 0 && this.workList.every(r => r.completed);
-}
-
-get someCompleted(): boolean {
-    return this.workList.some(r => r.completed);
-}
-
-    // ── Edit ───────────────────────────────────────────────────────────────
-    startEdit(index: number): void {
-        this.editingIndex = index;
-        const row = this.workList[index];
-        this.editForm.patchValue({
-            p_project: row.project,
-            p_tower:   row.tower,
-            p_level:   row.level,
-            p_pour:    row.pour
+        this.workService.upsertWorkListing(payload).subscribe({
+            next: (res) => {
+                if(res.status === 'success'){
+                     this.showSuccess( 'success', "Success", res.message.message)
+                }else{
+                    this.showSuccess(  'success', "Failed", res.message.message )
+                }
+               
+                this.loadWorkList();
+                this.editingIndex=-1;
+                this.editingWorkerId = 0;
+                this.resetForm();
+            },
+            error: (err) => {
+                console.error('Upsert failed', err);
+            }
         });
+
+        this.resetForm();
+    }
+    get allCompleted(): boolean {
+        return this.workList.length > 0 && this.workList.every((r) => r.completed);
     }
 
-    saveEdit(index: number): void {
-        if (this.editForm.invalid) {
-            this.editForm.markAllAsTouched();
-            return;
-        }
-        const v = this.editForm.value;
-        this.workList[index] = {
-            project: v.p_project,
-            tower:   v.p_tower,
-            level:   v.p_level,
-            pour:    v.p_pour,
-            completed: v.completed
-        };
-        this.filterWorkList = [...this.workList];
-        this.editingIndex   = -1;
+    get someCompleted(): boolean {
+        return this.workList.some((r) => r.completed);
+    }
+
+    // ── Edit (loads into top form) ───────────────────────────────────────
+      startEdit(index: number): void {
+    this.editingIndex = index;
+    const row = this.workList[index];
+    if (!row) return;
+    this.editingWorkerId = row.work_id;
+    this.salesForm.patchValue({
+        p_project: row.project_id,
+        p_level: row.level_name,
+        p_pour: row.pour_name
+    });
+this.loadTower({ value: row.project_id }, row.tower_block_id);
     }
 
     cancelEdit(): void {
         this.editingIndex = -1;
+        this.resetForm();
     }
 
     // ── Delete ─────────────────────────────────────────────────────────────
-    removeItem(index: number): void {
-        this.confirmationService.confirm({
-            message:                'Are you sure you want to delete this row?',
-            header:                 'Confirm Delete',
-            acceptLabel:            'Yes',
-            rejectLabel:            'Cancel',
-            acceptButtonStyleClass: 'p-button-danger',
-            rejectButtonStyleClass: 'p-button-secondary',
-            accept: () => {
-                this.workList.splice(index, 1);
-                this.filterWorkList = [...this.workList];
-                if (this.editingIndex === index) this.editingIndex = -1;
-            }
-        });
-    }
-
-    // ── Submit ─────────────────────────────────────────────────────────────
-   onSubmit(): void {
-    if (this.workList.length === 0) {
-        // optionally show a message
-        return;
-    }
+   removeItem(index: number): void {
     this.confirmationService.confirm({
-        message:                'Are you sure you want to submit?',
-        header:                 'Confirm',
-        acceptLabel:            'Yes',
-        rejectLabel:            'Cancel',
-        acceptButtonStyleClass: 'p-button-primary',
+        message: 'Are you sure you want to delete this row?',
+        header: 'Confirm Delete',
+        acceptLabel: 'Yes',
+        rejectLabel: 'Cancel',
+        acceptButtonStyleClass: 'p-button-danger',
         rejectButtonStyleClass: 'p-button-secondary',
         accept: () => {
-            console.log('Submitted:', this.workList);
+            this.workList.splice(index, 1);
+            this.filterWorkList = [...this.workList];
+            if (this.editingIndex === index) {
+                this.editingIndex = -1;
+                this.resetForm();
+            }
         }
     });
 }
 
-// Toggle all checkboxes
-toggleAll(checked: boolean): void {
-    this.workList.forEach(r => r.completed = checked);
-    this.filterWorkList = [...this.workList];
-}
+    // Toggle all checkboxes
+    toggleAll(checked: boolean): void {
+        this.workList.forEach((r) => (r.completed = checked));
+        this.filterWorkList = [...this.workList];
+    }
 
-// Single row toggle
-onCompletedChange(index: number): void {
-    // triggers re-evaluation of allCompleted getter
-    this.filterWorkList = [...this.workList];
-}
+    // Single row toggle
+    onCompletedChange(index: number): void {
+        this.filterWorkList = [...this.workList];
+    }
 
     // ── Filter ─────────────────────────────────────────────────────────────
     applyGlobalFilter(): void {
@@ -212,20 +223,24 @@ onCompletedChange(index: number): void {
             this.filterWorkList = [...this.workList];
             return;
         }
-        this.filterWorkList = this.workList.filter(row =>
-            Object.values(row).some(v => String(v).toLowerCase().includes(val))
-        );
+        this.filterWorkList = this.workList.filter((row) => Object.values(row).some((v) => String(v).toLowerCase().includes(val)));
     }
 
     // ── Reset ──────────────────────────────────────────────────────────────
     onReset(): void {
-        this.salesForm.patchValue({
-            p_project: null,
-            p_tower:   null,
-            p_level:   null,
-            p_pour:    null
-        });
-        this.editingIndex   = -1;
+        this.resetForm();
         this.filterWorkList = [...this.workList];
+    }
+
+    private resetForm(): void {
+      this.salesForm.reset();
+    this.editingIndex = -1;
+    this.editingWorkerId = 0;
+        this.salesForm.markAsUntouched();
+        this.salesForm.markAsPristine();
+    }
+
+    showSuccess(severity: string, summary: string, message: string) {
+        this.messageService.add({ severity: severity , summary: summary, detail: message });
     }
 }

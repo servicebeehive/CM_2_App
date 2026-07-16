@@ -60,50 +60,51 @@ export class RuleDetailComponent {
         });
     }
 
-     createDropdownPayload(returnType: string) {
+    createDropdownPayload(returnType: string, username:string) {
         return {
-            p_username: this.authService.isLogIntType()?.username,
-            p_returntype: returnType
+            // p_username: this.authService.isLogIntType()?.username,
+            p_username: username,
+            p_returntype: returnType,
         };
     }
 
-    onGetDropdown(){
+    onGetDropdown() {
         this.onGetRuleName();
         this.onGetUserProfile();
         this.onGetApproval();
     }
 
-    onGetApproval(){        
-const payload = {
-p_returntype:'APPROVALLEVEL',
-p_returnvalue:''
-};
-this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-    next:(res)=> {
-        this.user = res.data || [];
-         this.filteredUser = [...this.user];
-    },
-    error:(err)=> console.log(err)
-});
-    }
-
- onGetRuleName(){
-         const payload = this.createDropdownPayload('RULENAME');
-        this.inventoryService.getdropdowndetails(payload).subscribe({
-            next: (res) => (this.ruleOptions = res.data || []),
+    onGetApproval() {
+        const payload = {
+            p_returntype: 'APPROVALLEVEL'    
+        };
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res) => {
+                this.user = res.message || [];
+                this.filteredUser = [...this.user];
+            },
             error: (err) => console.log(err)
         });
     }
 
-    onGetUserProfile(){
-         const payload = this.createDropdownPayload('USERTYPEAPPROVAL');
+    onGetRuleName() {
+        const industrytype = this.authService.isLogIntType().industrytype;
+        const payload = this.createDropdownPayload('RULENAME', industrytype);
         this.inventoryService.getdropdowndetails(payload).subscribe({
-            next: (res) => (this.usernameOptions = res.data || []),
+            next: (res) => (this.ruleOptions = res.message || []),
             error: (err) => console.log(err)
         });
     }
 
-    loadDropdown(type: string, key:  'user' | 'selectedUser', value: string) {
+    onGetUserProfile() {
+        const payload = this.createDropdownPayload('USERTYPEAPPROVAL', '');
+        this.inventoryService.getdropdowndetails(payload).subscribe({
+            next: (res) => (this.usernameOptions = res.message || []),
+            error: (err) => console.log(err)
+        });
+    }
+
+    loadDropdown(type: string, key: 'user' | 'selectedUser', value: string) {
         const loggedInUserName = this.authService.isLogIntType().usertype;
         const payload = {
             returnType: type,
@@ -112,28 +113,26 @@ this.inventoryService.Getreturndropdowndetails(payload).subscribe({
         };
     }
 
-   onChangeActive(event: any) {
-    if (this.isActiveChecked) {
-        this.filteredUser = this.user.filter((item: any) => item.is_active === 'Y');
-    } else {
-        this.filteredUser = [...this.user];
+    onChangeActive(event: any) {
+        if (this.isActiveChecked) {
+            this.filteredUser = this.user.filter((item: any) => item.is_active === 'Y');
+        } else {
+            this.filteredUser = [...this.user];
+        }
     }
-}
-
-
 
     /** ✳️ Add User Dialog **/
     openUserDialog() {
         this.visibleDialog = true;
         this.editMode = false;
-        this.levels=[];
+        this.levels = [];
         this.ruleForm.reset({
             checked: true
         });
     }
 
     openEditDialog(user: any) {
-        console.log('dd',user)
+        console.log('dd', user);
         this.selectedUserRow = user;
         this.visibleDialog = true;
         this.editMode = true;
@@ -143,25 +142,25 @@ this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             p_rule: ruleObj?.rule_id ?? null,
             checked: user.is_active === 'Y'
         });
-        console.log('da',ruleObj)
+        console.log('da', ruleObj);
         this.ruleForm.updateValueAndValidity();
 
         const payload = {
-        p_returntype: 'GETAPPROVALLEVEL',
-        p_returnvalue: user.rule_creation_id
-    };
+            p_returntype: 'GETAPPROVALLEVEL',
+            p_returnvalue: user.rule_creation_id
+        };
 
-    this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-        next: (res) => {
-            const data = res.data || [];
-            this.levels = data.map((l: any) => ({
-                level_no: l.level_no,
-                pusername: l.profile_id 
-            }));
-        },
-        error: (err) => console.log(err)
-    });
-    this.onGetApproval();
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res) => {
+                const data = res.data || [];
+                this.levels = data.map((l: any) => ({
+                    level_no: l.level_no,
+                    pusername: l.profile_id
+                }));
+            },
+            error: (err) => console.log(err)
+        });
+        this.onGetApproval();
     }
 
     closeDialog() {
@@ -169,7 +168,7 @@ this.inventoryService.Getreturndropdowndetails(payload).subscribe({
     }
 
     onUserCreation(data: any) {
-        console.log(data)
+        console.log(data);
         const loggedInUserId = this.authService.isLogIntType().userid;
         const ruleCreationId = this.editMode ? this.selectedUserRow?.rule_creation_id : 0;
         const payload: any = {
@@ -183,7 +182,7 @@ this.inventoryService.Getreturndropdowndetails(payload).subscribe({
                 })),
             p_created_by: loggedInUserId
         };
-      
+
         this.inventoryService.manageapprovalrulelevels(payload).subscribe({
             next: (res: any) => {
                 const ruleObj = this.ruleOptions.find((r) => r.rule_id === data.p_rule);
@@ -207,14 +206,14 @@ this.inventoryService.Getreturndropdowndetails(payload).subscribe({
                     this.user.push(newRule);
                 }
                 let severity, summary;
-                        if (res.data.status) {
-                            severity = 'success';
-                            summary = 'Success';
-                        } else {
-                             severity = 'error';
-                            summary = 'Failed';
-                        }
-                            this.showMessage(severity, summary, res.data.message);
+                if (res.data.status) {
+                    severity = 'success';
+                    summary = 'Success';
+                } else {
+                    severity = 'error';
+                    summary = 'Failed';
+                }
+                this.showMessage(severity, summary, res.data.message);
                 this.buildDisplayRows();
                 this.visibleDialog = false;
                 this.selectedUserRow = null;
@@ -233,10 +232,10 @@ this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             message: 'Are you sure you want to delete this profile?',
             accept: () => {
                 const username = this.authService.isLogIntType().userid;
-                const payload:any = {
-                  returnType:'REMOVERULE',
-                  returnValue:data.rule_creation_id,
-                  username: username
+                const payload: any = {
+                    returnType: 'REMOVERULE',
+                    returnValue: data.rule_creation_id,
+                    username: username
                 };
                 // this.setupService.onDeleteData(payload).subscribe({
                 //     next:(res)=>{
@@ -252,7 +251,7 @@ this.inventoryService.Getreturndropdowndetails(payload).subscribe({
                 //              this.user = this.user.filter(
                 //             (row) => row.rule_creation_id !== data.rule_creation_id
                 //         );
-                //         }     
+                //         }
                 //         this.buildDisplayRows();
                 //     }
                 // });
@@ -340,7 +339,7 @@ this.inventoryService.Getreturndropdowndetails(payload).subscribe({
         return group.filter((r) => r !== primaryRow);
     }
 
-     showMessage(severity: string, summary: string, message: string) {
+    showMessage(severity: string, summary: string, message: string) {
         this.messageService.add({ severity: severity, summary: summary, detail: message });
     }
 }

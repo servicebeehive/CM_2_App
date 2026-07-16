@@ -3,7 +3,7 @@
         <span class="block text-surface-900 font-bold text-xl mb-6">User Management</span>
 
         <div class="flex gap-4">
-            <button pButton *ngIf="loggedInUserRole === 'Admin'" type="button" label="Add User" icon="pi pi-plus" class="p-button-warning" (click)="openUserDialog()"></button>
+            <button pButton *ngIf="loggedInUserRole === 'administrator'" type="button" label="Add User" icon="pi pi-plus" class="p-button-warning" (click)="openUserDialog()"></button>
         </div>
     </div>
 
@@ -30,8 +30,8 @@
                 <td>{{ user.usertypename }}</td>
                 <td>{{ user.username }}</td>
                 <td>{{ user.fullname }}</td>
-                <td>{{ user.phone }}</td>
-                <td>{{ user.email }}</td>
+                <td>{{ user.username }}</td>
+                <td>{{ user.emailid }}</td>
                 <td>{{ user.isactive }}</td>
                 <td class="text-center">
                     <i class="pi pi-pencil cursor-pointer text-blue-500" (click)="openEditDialog(user)"></i>

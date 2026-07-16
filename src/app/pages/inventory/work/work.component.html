@@ -3,17 +3,18 @@
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <span class="block text-surface-900 font-bold text-lg md:text-xl">Work Listing</span>
         <div class="flex flex-wrap gap-2 md:gap-4 w-full md:w-auto">
-            <button pButton type="button" label="Add"
+            <button pButton type="button" [label]="isEditing ? 'Save' : 'Add'"
                 class="p-button-warning w-full md:w-auto"
                 (click)="add()">
             </button>
-            <button pButton type="button" label="Submit"
-                class="p-button-warning w-full md:w-auto"
-                (click)="onSubmit()"
-                [disabled]="workList.length === 0">
+            <button pButton type="button" label="Cancel"
+                class="p-button-secondary w-full md:w-auto"
+                *ngIf="isEditing"
+                (click)="cancelEdit()">
             </button>
             <button pButton type="button" label="Reset"
                 class="p-button-secondary w-full md:w-auto"
+                *ngIf="!isEditing"
                 (click)="onReset()">
             </button>
         </div>
@@ -36,10 +37,11 @@
                 <label class="font-medium mb-1">Project <span class="text-red-500">*</span></label>
                 <p-dropdown
                     [options]="projectOptions"
-                    optionLabel="label"
-                    optionValue="value"
+                    optionLabel="project_name"
+                    optionValue="project_id"
                     placeholder="Select Project"
                     formControlName="p_project"
+                    (onChange)="loadTower($event)"
                     [filter]="true"
                     [showClear]="true"
                     [ngClass]="{'ng-invalid ng-dirty': salesForm.get('p_project')?.touched && salesForm.get('p_project')?.invalid}"
@@ -55,8 +57,8 @@
                 <label class="font-medium mb-1">Tower / Block <span class="text-red-500">*</span></label>
                 <p-dropdown
                     [options]="towerOptions"
-                    optionLabel="label"
-                    optionValue="value"
+                    optionLabel="tower_name"
+                    optionValue="tower_id"
                     placeholder="Select Tower/Block"
                     formControlName="p_tower"
                     [filter]="true"
@@ -108,13 +110,13 @@
                 <th>Tower / Block</th>
                 <th>Level</th>
                 <th>Pour</th>
+                <th>Active</th>
                 <th class="text-center">Action</th>
             </tr>
         </ng-template>
 
         <ng-template pTemplate="body" let-row let-i="rowIndex">
-            <!-- VIEW MODE -->
-            <tr *ngIf="editingIndex !== i">
+            <tr [ngClass]="{'bg-amber-50': editingIndex === i}">
                 <td class="text-center">
                     <p-checkbox
                         [(ngModel)]="row.completed"
@@ -123,59 +125,21 @@
                         (onChange)="onCompletedChange(i)"
                     ></p-checkbox>
                 </td>
-                <td>{{ row.project }}</td>
-                <td>{{ row.tower }}</td>
-                <td>{{ row.level }}</td>
-                <td>{{ row.pour }}</td>
+                <td>{{ row.project_name }}</td>
+                <td>{{ row.tower_name }}</td>
+                <td>{{ row.level_name }}</td>
+                <td>{{ row.pour_name }}</td>
+                <td>{{ row.is_active }}</td>
                 <td class="text-center">
                     <button pButton type="button" icon="pi pi-pencil"
                         class="p-button-text p-button-info p-button-sm mr-1"
-                        pTooltip="Edit" tooltipPosition="top"
+                        [disabled]="isEditing && editingIndex !== i" 
                         (click)="startEdit(i)">
                     </button>
                     <button pButton type="button" icon="pi pi-trash"
                         class="p-button-text p-button-danger p-button-sm"
-                        pTooltip="Delete" tooltipPosition="top"
+                        [disabled]="isEditing"
                         (click)="removeItem(i)">
-                    </button>
-                </td>
-            </tr>
-
-            <!-- EDIT MODE -->
-            <tr *ngIf="editingIndex === i" [formGroup]="editForm">
-                <td class="text-center">
-                    <p-checkbox
-                        [(ngModel)]="row.completed"
-                        [binary]="true"
-                        [ngModelOptions]="{standalone: true}"
-                    ></p-checkbox>
-                </td>
-                <td>
-                    <p-dropdown [options]="projectOptions" optionLabel="label" optionValue="value"
-                        formControlName="p_project" [showClear]="true" [style]="{'width':'100%'}">
-                    </p-dropdown>
-                </td>
-                <td>
-                    <p-dropdown [options]="towerOptions" optionLabel="label" optionValue="value"
-                        formControlName="p_tower" [showClear]="true" [style]="{'width':'100%'}">
-                    </p-dropdown>
-                </td>
-                <td>
-                    <input pInputText formControlName="p_level" placeholder="Level" />
-                </td>
-                <td>
-                     <input pInputText formControlName="p_pour" placeholder="Pour" />
-                </td>
-                <td class="text-center">
-                    <button pButton type="button" icon="pi pi-check"
-                        class="p-button-text p-button-success p-button-sm mr-1"
-                        pTooltip="Save" tooltipPosition="top"
-                        (click)="saveEdit(i)">
-                    </button>
-                    <button pButton type="button" icon="pi pi-times"
-                        class="p-button-text p-button-secondary p-button-sm"
-                        pTooltip="Cancel" tooltipPosition="top"
-                        (click)="cancelEdit()">
                     </button>
                 </td>
             </tr>
@@ -195,4 +159,5 @@
     </p-table>
 
     <p-confirmDialog></p-confirmDialog>
+    <p-toast></p-toast>
 </div>

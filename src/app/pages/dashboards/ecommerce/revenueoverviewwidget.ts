@@ -102,10 +102,8 @@ export class RevenueOverViewWidget implements OnInit {
         };
         this.OnttopBarService.GettopBarCard(apibody).subscribe({
             next: (res) => {
-                console.log(res);
                 const data = res.data;
                 this.products = data;
-                console.log(this.products);
             }
         });
     }

@@ -114,6 +114,17 @@ Oninsertitemdetails(payload:any):Observable<any>{
 
 )
   }
+
+   getparameterbased(payload:any):Observable<any>{
+   let payloaddata=this.shareservice.GetApiBody(payload)
+    let url=`${this.baseUrl}${API_ENDPOINTS.inventory.getparameterbased}`;
+    return this.http.post<any>(url,payloaddata).pipe(catchError(error=>{
+        return throwError(()=>error)
+    }),
+
+)
+  }
+
   Getreturndropdowndetails(payload:any):Observable<any>{
     let payloaddata=this.shareservice.GetApiBody(payload)
     let url=`${this.baseUrl}${API_ENDPOINTS.inventory.returndropdowndetails}`;

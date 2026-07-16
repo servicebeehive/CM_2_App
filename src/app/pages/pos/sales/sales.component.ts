@@ -355,7 +355,7 @@ export class SalesComponent implements OnInit, AfterViewInit {
     }
 
     private loadBillNumbers(): void {
-        const username = this.authService.isLogIntType().username;
+        const username = this.authService.isLogIntType().userid;
         this.inventoryService
             .getdropdowndetails({ p_returntype: 'NEWTRANSACTIONID', p_username: username })
             .pipe(takeUntilDestroyed(this.destroyRef))

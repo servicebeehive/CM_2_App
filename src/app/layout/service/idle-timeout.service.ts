@@ -22,6 +22,6 @@ clearTimeout(this.timeoutId);
 }
 logout(){
     localStorage.clear();
-    this.router.navigate(['/login']);
+   window.location.href = 'http://13.201.136.123:8081/';
 }
 }

@@ -1,7 +1,7 @@
 export const API_ENDPOINTS = {
   auth: {
-    login: '/login',
-    register: '/auth/register',
+    login: '/beeware/login',
+    register: '/beeware/auth/register',
     profile: '/auth/me'
   },
   users: {
@@ -11,47 +11,52 @@ export const API_ENDPOINTS = {
   },
   inventory: {
     base: '/inventory',
-    item: (id: number) => `/inventory/${id}`,
-    insertpurchaseheader:'/insertpurchaseheader',
-    insertitemdetails:'/insertitemdetails',
-    getdropdowndetails:'/getdropdowndetails',
-    returndropdowndetails:'/returndropdowndetails',
-    adjustmentlist:'/getstockadjustment',
-    updateitemlist:'/getitemdetails',
-    getinvoicedetail:'/getinvoicedetails',
-    deletepurchasedetails:'/deletepurchasedetails',
-    updatestockadjustment:'/updatestockadjustment',
-    inserttransactiondetails:'/inserttransactiondetails',
-    gettransactiondetails:'/gettrasnactiondetails',
-    gettransactionreport:'/gettrasnactionreport',
-    get_pnl:'/get_pnl',
-    updatewriteoffamount:'/fnupdatewriteoffamount'
+    item: (id: number) => `/beeware/inventory/${id}`,
+    insertpurchaseheader:'/beeware/insertpurchaseheader',
+    insertitemdetails:'/beeware/insertitemdetails',
+    getdropdowndetails:'/public/getdropdowndetails',
+    getparameterbased:'/public/get-data-parameter',
+    returndropdowndetails:'/beeware/returndropdowndetails',
+    adjustmentlist:'/beeware/getstockadjustment',
+    updateitemlist:'/beeware/getitemdetails',
+    getinvoicedetail:'/beeware/getinvoicedetails',
+    deletepurchasedetails:'/beeware/deletepurchasedetails',
+    updatestockadjustment:'/beeware/updatestockadjustment',
+    inserttransactiondetails:'/beeware/inserttransactiondetails',
+    gettransactiondetails:'/beeware/gettrasnactiondetails',
+    gettransactionreport:'/beeware/gettrasnactionreport',
+    get_pnl:'/beeware/get_pnl',
+    updatewriteoffamount:'/beeware/fnupdatewriteoffamount'
+  },
+  work:{
+    upsertworklisting:'/beeware/upsert_work_listing',
+    upsertmaterialforecast:'/beeware/upsert_material_forecast'
   },
   sales:{
-    getcalculatedMRP:'/getcalculatedMRP'
+    getcalculatedMRP:'/beeware/getcalculatedMRP'
   },
   orders: {
     base: '/orders',
     byId: (id: number) => `/orders/${id}`
   },
   suppliers: {
-    base: '/suppliers'
+    base: '/beeware/suppliers'
   },
   dashboardservice: {
-    topbar: '/getdashboardreport'
+    topbar: '/beeware/getdashboardreport'
   },
   user:{
-    getuserdetails:'/getuserdetails',
-     updateprofie:'/updateprofile'
+    getuserdetails:'/beeware/getuserdetails',
+     updateprofie:'/beeware/updateprofile'
   },
   settings:{
-    gettransactionmisc:'/tbltransactionmisc',
-    upserttransactionmisc:'/fnupserttransactionmisc',
-    deletetransaction:'/fndeletetransaction',
-    upsertcustomermaster:'/fnupsertcustomermaster',
-    upsertsuppliermaster:'/fnupsertsuppliermaster',
-    fnmanageapprovalrulelevels:'/fnmanageapprovalrulelevels',
-    approverequest:'/fnapproverequest'
+    gettransactionmisc:'/beeware/tbltransactionmisc',
+    upserttransactionmisc:'/beeware/fnupserttransactionmisc',
+    deletetransaction:'/beeware/fndeletetransaction',
+    upsertcustomermaster:'/beeware/fnupsertcustomermaster',
+    upsertsuppliermaster:'/beeware/fnupsertsuppliermaster',
+    fnmanageapprovalrulelevels:'/beeware/fnmanageapprovalrulelevels',
+    approverequest:'/beeware/fnapproverequest'
   }
 };
 

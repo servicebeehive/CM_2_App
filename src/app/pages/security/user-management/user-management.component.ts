@@ -111,16 +111,16 @@ export class UserManagementComponent {
             checked: user.isactive === 'Y'
         });
 
-        if (user.username === 'admin') {
+        if (user.username === 'administrator') {
             this.userForm.get('p_utypeid')?.disable();
             this.userForm.get('checked')?.disable();
-        } else if (user.username !== 'admin' && user.usertypename === 'Admin') {
+        } else if (user.username !== 'administrator' && user.usertypename === 'administrator') {
             this.userForm.get('p_utypeid')?.enable();
             this.userForm.get('checked')?.enable();
-        } else if (this.loggedInUserRole == 'Admin' && user.username !== 'admin') {
+        } else if (this.loggedInUserRole == 'administrator' && user.username !== 'administrator') {
             this.userForm.get('p_utypeid')?.enable();
             this.userForm.get('checked')?.enable();
-        } else if (user.usertypename !== 'Admin') {
+        } else if (user.usertypename !== 'administrator') {
             this.userForm.get('p_utypeid')?.disable();
             this.userForm.get('checked')?.disable();
         }
@@ -136,9 +136,11 @@ export class UserManagementComponent {
         this.visibleDialog = false;
     }
     onGetUserList() {
+        const username= this.authService.isLogIntType().username.toString();
+       
         const payload: any = {
             p_ufullname: '',
-            p_uname: 'admin',
+            p_uname: username,
             p_pwd: '',
             p_active: '',
             p_operationtype: 'GETUSER',
@@ -149,9 +151,8 @@ export class UserManagementComponent {
         };
         this.userService.OnUserHeaderCreate(payload).subscribe({
             next: (res) => {
-                console.log('res:', res);
                 this.user = res.data || [];
-                if (this.loggedInUserRole === 'Admin' || this.loggedInUserRole === 'admin') {
+                if (this.loggedInUserRole === 'administrator' || this.loggedInUserRole === 'administrator') {
                     this.filteredUser = [...this.user];
                 } else {
                     this.filteredUser = this.user.filter((u) => u.username === this.loggedInUserName);
@@ -230,15 +231,16 @@ export class UserManagementComponent {
     }
 
     createDropdownPayload(returnType: string) {
+        const username = this.authService.isLogIntType().username;
         return {
-            p_username: 'admin',
+            p_username: '',
             p_returntype: returnType
         };
     }
     onGetUserRole() {
         const payload = this.createDropdownPayload('USERTYPE');
         this.inventoryService.getdropdowndetails(payload).subscribe({
-            next: (res) => (this.userRoleOptions = res.data),
+            next: (res) => (this.userRoleOptions = res.message),
             error: (err) => console.log(err)
         });
     }
