@@ -69,19 +69,21 @@ export class RuleDetailComponent {
     }
 
     onGetDropdown() {
+         this.onGetApproval();
         this.onGetRuleName();
         this.onGetUserProfile();
-        this.onGetApproval();
     }
 
     onGetApproval() {
         const payload = {
-            p_returntype: 'APPROVALLEVEL'    
+            p_returntype: 'APPROVALLEVEL' ,
+            p_returnvalue: this.authService.isLogIntType()?.companyid.toString(),
+            p_username: this.authService.isLogIntType()?.userid.toString()
         };
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res) => {
                 this.user = res.message || [];
-                this.filteredUser = [...this.user];
+                this.buildDisplayRows();
             },
             error: (err) => console.log(err)
         });
@@ -90,14 +92,15 @@ export class RuleDetailComponent {
     onGetRuleName() {
         const industrytype = this.authService.isLogIntType().industrytype;
         const payload = this.createDropdownPayload('RULENAME', industrytype);
-        this.inventoryService.getdropdowndetails(payload).subscribe({
+        this.inventoryService.getdropdowndetailsPublic(payload).subscribe({
             next: (res) => (this.ruleOptions = res.message || []),
             error: (err) => console.log(err)
         });
     }
 
     onGetUserProfile() {
-        const payload = this.createDropdownPayload('USERTYPEAPPROVAL', '');
+        const industrytype = this.authService.isLogIntType().industrytype;
+        const payload = this.createDropdownPayload('APPUSERTYPE',industrytype );
         this.inventoryService.getdropdowndetails(payload).subscribe({
             next: (res) => (this.usernameOptions = res.message || []),
             error: (err) => console.log(err)
@@ -113,13 +116,13 @@ export class RuleDetailComponent {
         };
     }
 
-    onChangeActive(event: any) {
-        if (this.isActiveChecked) {
-            this.filteredUser = this.user.filter((item: any) => item.is_active === 'Y');
-        } else {
-            this.filteredUser = [...this.user];
-        }
-    }
+    // onChangeActive(event: any) {
+    //     if (this.isActiveChecked) {
+    //         this.filteredUser = this.user.filter((item: any) => item.is_active === 'Y');
+    //     } else {
+    //         this.filteredUser = [...this.user];
+    //     }
+    // }
 
     /** ✳️ Add User Dialog **/
     openUserDialog() {
@@ -152,15 +155,16 @@ export class RuleDetailComponent {
 
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res) => {
-                const data = res.data || [];
+                const data = res.message || [];
                 this.levels = data.map((l: any) => ({
                     level_no: l.level_no,
                     pusername: l.profile_id
                 }));
+                 this.onGetApproval();
             },
             error: (err) => console.log(err)
         });
-        this.onGetApproval();
+       
     }
 
     closeDialog() {
@@ -189,7 +193,7 @@ export class RuleDetailComponent {
                 const firstLevel = this.levels?.[0];
                 const profileObj = this.usernameOptions.find((u: any) => u.fieldid === firstLevel?.pusername);
                 const newRule = {
-                    profilename: profileObj?.profilename ?? '',
+                    profilename: profileObj?.fieldname ?? '',
                     rule_name: ruleObj?.rule_name,
                     is_active: data.checked ? 'Y' : 'N',
                     levels: [...this.levels]
@@ -218,12 +222,12 @@ export class RuleDetailComponent {
                 this.visibleDialog = false;
                 this.selectedUserRow = null;
                 this.selectedUser = null;
+                 this.onGetApproval();
             },
             error: (err) => {
                 console.log('Error', err);
             }
         });
-        this.onGetApproval();
     }
 
     deleteRow(data: any) {
@@ -298,25 +302,29 @@ export class RuleDetailComponent {
         this.levels.splice(index, 1);
     }
 
-    buildDisplayRows() {
-        // Group all rows by rule_creation_id
-        this.allGroupedRows = new Map();
-        for (const row of this.user) {
-            const id = row.rule_creation_id;
-            if (!this.allGroupedRows.has(id)) {
-                this.allGroupedRows.set(id, []);
-            }
-            this.allGroupedRows.get(id)!.push(row);
-        }
+  buildDisplayRows(activeOnly: boolean = false) {
+    const source = activeOnly ? this.user.filter(r => r.is_active === 'Y') : this.user;
 
-        // Keep only first occurrence of each rule_creation_id for display
-        const seen = new Set();
-        this.filteredUser = this.user.filter((row) => {
-            if (seen.has(row.rule_creation_id)) return false;
-            seen.add(row.rule_creation_id);
-            return true;
-        });
+    this.allGroupedRows = new Map();
+    for (const row of source) {
+        const id = row.rule_creation_id;
+        if (!this.allGroupedRows.has(id)) {
+            this.allGroupedRows.set(id, []);
+        }
+        this.allGroupedRows.get(id)!.push(row);
     }
+
+    const seen = new Set();
+    this.filteredUser = source.filter((row) => {
+        if (seen.has(row.rule_creation_id)) return false;
+        seen.add(row.rule_creation_id);
+        return true;
+    });
+}
+
+onChangeActive(event: any) {
+    this.buildDisplayRows(this.isActiveChecked);
+}
 
     getGroupCount(id: number): number {
         return this.allGroupedRows.get(id)?.length ?? 0;

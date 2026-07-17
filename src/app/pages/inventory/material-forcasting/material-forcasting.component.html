@@ -150,7 +150,7 @@
                         <td class="text-xs md:text-sm">{{ row.get('pending_qty')?.value }}</td>
 
                         <td>
-                            <input *ngIf="!isReadOnlyView" pInputText type="number" formControlName="forecast_qty" />
+                            <input *ngIf="!isReadOnlyView" pInputText type="number" formControlName="forecast_qty" placeholder="0" />
                             <span *ngIf="isReadOnlyView" class="text-xs md:text-sm">{{ row.get('forecast_qty')?.value }}</span>
                         </td>
 

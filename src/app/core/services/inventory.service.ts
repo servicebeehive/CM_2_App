@@ -107,7 +107,17 @@ Oninsertitemdetails(payload:any):Observable<any>{
   }
   getdropdowndetails(payload:any):Observable<any>{
    let payloaddata=this.shareservice.GetApiBody(payload)
-    let url=`${this.baseUrl}${API_ENDPOINTS.inventory.getdropdowndetails}`;
+    let url=`${this.baseUrl}${API_ENDPOINTS.inventory.getdropdowndetailsbeeware}`;
+    return this.http.post<any>(url,payloaddata).pipe(catchError(error=>{
+        return throwError(()=>error)
+    }),
+
+)
+  }
+
+  getdropdowndetailsPublic(payload:any):Observable<any>{
+   let payloaddata=this.shareservice.GetApiBody(payload)
+    let url=`${this.baseUrl}${API_ENDPOINTS.inventory.getdropdowndetailspublic}`;
     return this.http.post<any>(url,payloaddata).pipe(catchError(error=>{
         return throwError(()=>error)
     }),

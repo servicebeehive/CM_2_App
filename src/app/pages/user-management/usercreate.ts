@@ -17,6 +17,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { DropdownModule } from 'primeng/dropdown';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
+
 export function gstNumberValidator(control: AbstractControl): ValidationErrors | null {
     if (!control.value) return null;
 
@@ -24,6 +25,7 @@ export function gstNumberValidator(control: AbstractControl): ValidationErrors |
 
     return gstRegex.test(control.value.toUpperCase()) ? null : { invalidGst: true };
 }
+
 @Component({
     selector: 'user-create',
     standalone: true,
@@ -36,15 +38,9 @@ export function gstNumberValidator(control: AbstractControl): ValidationErrors |
                     <div class="flex items-center gap-4">
                         <!-- LEFT : LOGO (SQUARE) -->
                         <img
-                            [src]="imageUrl || '/layout/images/logo.png'"
+                            [src]="imageUrl"
                             alt="logo"
-                            class="w-[140px] h-[80px]
-         object-contain
-         border
-         rounded-md
-         bg-white
-         p-2"
-                        />
+                            class="w-[140px] h-[80px] object-contain border rounded-md bg-white p-2" />
 
                         <!-- RIGHT : UPLOAD BUTTON -->
                         <div class="flex flex-col gap-1">
@@ -207,7 +203,7 @@ export function gstNumberValidator(control: AbstractControl): ValidationErrors |
                     </div>
                 </div>
                 <div class="grid grid-cols-12 gap-4">
-                    @if (loggedInUserRole === 'administrator') {
+                    @if (loggedInRole === 'ADMINISTRATOR') {
                         <div class="flex flex-col">
                             <button pButton pRipple type="submit" label="Submit" [disabled]="profileForm.invalid"></button>
                         </div>
@@ -227,12 +223,12 @@ export class UserCreate {
     selectedFile: File | null = null;
     logoBase64: string | null = null;
     fb = inject(FormBuilder);
-    userList: any[] = [];
+    loggedInRole : string = '';
     countries: any[] = [];
     states: any[] = [];
     cities: any[] = [];
+    companyId = '';
     public getUserDetails = {};
-    loggedInUserRole: string = '';
     public imageUrl: string | null = '';
     profileForm: FormGroup = this.fb.group({
         companyname: ['', [Validators.required, Validators.maxLength(100)]],
@@ -240,12 +236,12 @@ export class UserCreate {
         companygstno: ['', [Validators.required, gstNumberValidator]],
         companycontactperson: ['', Validators.maxLength(100)],
         companyaddress: ['', [Validators.required, Validators.maxLength(500)]],
-        companycontactphone: ['', Validators.pattern(/^[0-9]{10}$/)],
+        companycontactphone: ['', Validators.pattern(/[6-9]\d{9}$/)],
         companycontactemail: ['', [Validators.email, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/), Validators.maxLength(100)]],
         companycountry: ['', [Validators.required, Validators.required]],
         companystate: ['', [Validators.required, Validators.maxLength(50)]],
         companycity: ['', [Validators.required, Validators.maxLength(50)]],
-        companyphone: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
+        companyphone: ['', [Validators.required, Validators.pattern(/[6-9]\d{9}$/)]],
         companypincode: ['', [Validators.required, Validators.maxLength(6)]],
         p_warehouse: ['', [Validators.required, Validators.maxLength(100)]],
         statecode: ['', [Validators.required, Validators.maxLength(5)]],
@@ -257,19 +253,17 @@ export class UserCreate {
     });
 
     constructor(
-        private inventoryService: InventoryService,
         private userService: UserService,
         private authservice: AuthService,
         private messageService: MessageService,
-        private confirmationService: ConfirmationService
+        private confirmationService: ConfirmationService,
+        private inventoryService: InventoryService
     ) {}
     ngOnInit() {
-        this.loggedInUserRole = this.authservice.isLogIntType().usertypename;
+        this.companyId = this.authservice.isLogIntType()?.companyid.toString();
+       this.loggedInRole= this.authservice.isLogIntType()?.usertypecode;
         this.onGetCompanyProfile();
-        this.onGetCountry();
-        // this.onGetData();
     }
-
     allowOnlyDigits(event: KeyboardEvent) {
         const char = event.key;
         if (!/[0-9]/.test(char)) {
@@ -277,33 +271,33 @@ export class UserCreate {
         }
     }
 
- onGetCompanyProfile(): void {
-        const companyId = this.authservice.isLogIntType().companyid.toString();
-        const userid = this.authservice.isLogIntType().userid.toString();
-        const payload = {
-            returnType: 'COMPANYPROFILE',
-            returnValue: companyId,
-            username: userid,
-            option1: '',
-            option2: null
-        };
-        this.inventoryService.getparameterbased(payload).subscribe({
-            next: (res) => {
-                  if (res.data) {
-                    this.patchFromData(res.data[0]);
-                    if (this.loggedInUserRole !== 'administrator') {
-                        this.profileForm.disable();
-                    } else {
-                        this.profileForm.enable();
-                    }
-                }
-            },
-            error: (err) => console.error(err)
-        });
-    }
+  loadDropdown(type: string, value:string, key: 'countries'|'states'|'cities',callback?:()=>void) {
+    const userId = this.authservice.isLogIntType()?.userid;
+          const payload = {
+              returnType: type,
+              returnValue: value,
+              username: userId,
+             option1: this.companyId, 
+            option2:''
+          };
+  
+          this.inventoryService.getparameterbased(payload).subscribe({
+              next: (res) => {
+                  this[key] = res.data;
+                  if(key === 'states'){
+                    this.states = res.data;
+                  }
+                  callback?.();
+              }
+          });
+      }
 
     submitValue(form: any) {
+        let loggedIn = this.authservice.isLogIntType()?.userid.toString();
+        let companyid = this.authservice.isLogIntType()?.companyid;
+        console.log(form)
         const payload = {
+            p_companyid: companyid,
             p_companyname: form.companyname,
             p_companyaddress: form.companyaddress,
             p_companycity: form.companycity,
@@ -323,18 +317,20 @@ export class UserCreate {
             p_accountno: form.accountno,
             p_pan: form.pan,
             p_warehouse: form.p_warehouse,
-            p_companylogo: this.logoBase64 || null
+            p_companyLogo: this.logoBase64 || null,
+            p_loginuser: loggedIn
         };
+
         this.userService.OnUserListHeaderCreate(payload).subscribe({
             next: (res: any) => {
-                console.log('API RESULT:', res.data);
-                this.showSuccess('Profile details saved successfully');
+                this.showSuccess(res.data[0].msg);
             },
             error: (err) => {
                 console.error(err);
             }
         });
     }
+    
     onSubmit() {
         if (this.profileForm.invalid) {
             this.profileForm.markAllAsTouched();
@@ -365,8 +361,16 @@ export class UserCreate {
             });
             return;
         }
-        this.selectedFile = file;
-        this.convertToBase64(file);
+        if (file.size > 2 * 1024 * 1024) { 
+        this.messageService.add({
+            severity: 'warn',
+            summary: 'Large File',
+            detail: 'Image is large and will be compressed automatically'
+        });
+    }
+
+    this.selectedFile = file;
+    this.convertToBase64(file);
     }
 
     onFileClear() {
@@ -374,174 +378,157 @@ export class UserCreate {
         this.logoBase64 = null;
     }
 
-    convertToBase64(file: File) {
-        const reader = new FileReader();
-        reader.onload = () => {
-            this.logoBase64 = reader.result as string;
-            console.log('Base64 ready');
-            this.imageUrl = this.base64ToBlobUrl(this.logoBase64);
-        };
-        reader.onerror = () => {
-            console.error('Error converting file to Base64');
-        };
-        reader.readAsDataURL(file);
-    }
-    createDropdownPayload(returnType: string, username:string) {
+  convertToBase64(file: File) {
+    const maxWidth = 300;
+    const maxHeight = 200;
+    const quality = 0.7; // 70% quality
+
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+
+        // Calculate scaled dimensions
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth || height > maxHeight) {
+            const ratio = Math.min(maxWidth / width, maxHeight / height);
+            width = Math.round(width * ratio);
+            height = Math.round(height * ratio);
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Compress to JPEG
+        this.logoBase64 = canvas.toDataURL('image/jpeg', quality);
+        this.imageUrl = this.base64ToBlobUrl(this.logoBase64);
+        console.log('Compressed Base64 ready, size:', Math.round(this.logoBase64.length / 1024), 'KB');
+    };
+
+    img.onerror = () => console.error('Image load error');
+    img.src = objectUrl;
+}
+
+    createDropdownPayload(returnType: string) {
         return {
             uname: 'admin',
-            p_username: username,
+            p_username: 'admin',
             p_returntype: returnType
         };
     }
 
-    // onGetData() {
-    //     const username = this.authservice.isLogIntType().username.toString();
-    //     const payload = this.createDropdownPayload('PROFILE',username);
-    //     this.inventoryService.getdropdowndetails(payload).subscribe({
-    //         next: (res) => {
-    //             if (res.data) {
-    //                 this.patchFromData(res.data[0]);
-    //                 if (this.loggedInUserRole !== 'administrator') {
-    //                     this.profileForm.disable();
-    //                 } else {
-    //                     this.profileForm.enable();
-    //                 }
-    //             }
-    //         },
-    //         error: (err) => console.log(err)
-    //     });
-    // }
-
-    onGetCountry() {
-         const username = this.authservice.isLogIntType().username.toString();
-        const payload = this.createDropdownPayload('COUNTRY','');
-        this.inventoryService.getdropdowndetails(payload).subscribe({
+    onGetCompanyProfile(): void {
+        const companyId = this.authservice.isLogIntType().companyid.toString();
+        const userid = this.authservice.isLogIntType().userid.toString();
+        const payload = {
+            returnType: 'COMPANYPROFILE',
+            returnValue: companyId,
+            username: userid,
+            option1: '',
+            option2: null
+        };
+        this.inventoryService.getparameterbased(payload).subscribe({
             next: (res) => {
-                this.countries = res.message || [];
+                if (res.data) {
+                    this.patchFromData(res.data[0]);
+                    if (this.loggedInRole !== 'ADMINISTRATOR') {
+                        this.profileForm.disable();
+                    } else {
+                        this.profileForm.enable();
+                    }
+                }
             },
-            error: (err) => console.log(err)
+            error: (err) => console.error(err)
         });
     }
 
-  onGetStateChange(data: any) {
-    const stateId = data.value;
-    this.profileForm.patchValue({ companycity: '' });
-    this.cities = [];
-    if (!stateId) return;
-
-    // pull GST state code from the already-loaded states list — no extra call needed
-    const selectedState = this.states.find((s) => s.state_id === stateId);
-    if (selectedState) {
-        this.profileForm.patchValue({ statecode: selectedState.stategstcode });
+    onGetState(countryId: string, stateName: string, statecode: string, cityName: string) {
+        this.loadDropdown('STATE',countryId,'states',()=>{
+                const state = this.states.filter((s) => s.state_id === Number(stateName));
+                const statename = state[0].state_id;
+                if (statename) {
+                    this.profileForm.patchValue({
+                        companystate: statename,
+                        statecode: state[0].state_code
+                    });
+                    this.onGetCity(statename, cityName);
+                }
+        });
     }
 
-    const payload = { p_returntype: 'CITY', p_returnvalue: stateId };
-    this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-        next: (res) => {
-            this.cities = res.message || [];
-        },
-        error: (err) => console.log(err)
-    });
-}
-
-   onCountryChange(event: any) {
-    const countryId = event.value;
-    this.profileForm.patchValue({ companystate: '', companycity: '', statecode: '' });
-    this.states = [];
-    this.cities = [];
-    if (!countryId) return;
-
-    const payload = { p_returntype: 'STATE', p_returnvalue: countryId };
-    this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-        next: (res) => {
-            this.states = res.message || [];
-        },
-        error: (err) => console.log(err)
-    });
-}
-
-   patchFromData(data: any) {
-    if (!data) {
-        console.warn('No data provided to patchFromData');
-        return;
+    onGetCity(statename: string, cityName: string) {
+        this.loadDropdown('CITY',statename,'cities',()=>{
+                const city = this.cities.filter((c) => c.city_id === cityName);
+                const cityname = city[0].city_id;
+                if (city) {
+                    this.profileForm.patchValue({
+                        companycity: cityname
+                    });
+                }
+            });
     }
-    if (this.countries.length === 0) {
-        console.warn('Countries not loaded yet, delaying patchFromData');
-        setTimeout(() => this.patchFromData(data), 100);
-        return;
+    onGetStateChange(data: any) {
+        const stateId = data.value;
+        this.profileForm.patchValue({
+            companycity: ''
+        });
+        this.cities = [];
+
+        if (!stateId) {
+            return;
+        }
+        
+        this.loadDropdown('STATE','1','states')
+
+        this.loadDropdown('CITY',stateId,'cities');
+                    const stateCode = this.states.filter((s) => s.state_id === data.value);
+                    this.profileForm.patchValue({
+                        statecode: stateCode[0].state_code
+        });
+    }
+    onCountryChange(event: any) {
+        const countryId = event.value;
+        this.loadDropdown('STATE',countryId,'states')
     }
 
-    const country = this.countries.find(
-        (c) => c.country_name?.toLowerCase() === data.companycountry?.toLowerCase()
-    );
-    const countryId = country ? country.country_id : '';
-console.log('country',country,country)
-    this.profileForm.patchValue({
-        companyname: data.companyname,
-        companyemail: data.companyemail,
-        companygstno: data.companygstno,
-        companycontactperson: data.companycontactperson,
-        companyaddress: data.companyaddress,
-        companycontactphone: data.companycontactphone,
-        companycontactemail: data.companycontactemail,
-        companycountry: countryId,
-        companyphone: data.companyphone,
-        bankname: data.bankname,
-        ifsc: data.ifsc,
-        branch: data.branch,
-        pan: data.pan,
-        companypincode: data.companypincode,
-        p_warehouse: data.warehouse,
-        accountno: data.accountno
-    });
-
-    this.imageUrl = this.base64ToBlobUrl(data.companylogo);
-
-    if (countryId) {
-        this.onGetStateForEdit(countryId, data.companystate, data.companycity);
+    patchFromData(data: any) {
+        if (!data) {
+            console.warn('No data provided to patchFromData');
+            return;
+        }
+         this.loadDropdown('COUNTRY','null','countries')
+        const country = this.countries.find((c) => c.country_id === data.companycountry || c.company_id?.toLowerCase() === data.companycountry?.toLowerCase());
+        const countryId = country ? country.country_id : data.companycountry;
+        this.profileForm.patchValue({
+            companyname: data.companyname,
+            companyemail: data.companyemail,
+            companygstno: data.companygstno,
+            companycontactperson: data.companycontactperson,
+            companyaddress: data.companyaddress,
+            companycontactphone: data.companycontactphone,
+            companycontactemail: data.companycontactemail,
+            companycountry: countryId || '',
+            companyphone: data.companyphone,
+            bankname: data.bankname,
+            ifsc: data.ifsc,
+            branch: data.branch,
+            pan: data.pan,
+            companypincode: data.companypincode,
+            p_warehouse: data.warehouse,
+            accountno: data.accountno
+        });
+        this.imageUrl = this.base64ToBlobUrl(data.companylogo);
+        if (countryId) {
+            this.onGetState(countryId, data.companystate, data.statecode, data.companycity);
+        }
     }
-}
-
-onGetStateForEdit(countryId: any, stateName: string, cityName: string) {
-    const payload = { p_returntype: 'STATE', p_returnvalue: countryId };
-    this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-        next: (res) => {
-            this.states = res.message || [];
-            const state = this.states.find(
-                (s) => s.state_name?.toLowerCase() === stateName?.toLowerCase()
-            );
-            if (state) {
-                this.profileForm.patchValue({
-                    companystate: state.state_id,
-                    statecode: state.stategstcode
-                });
-                this.onGetCityForEdit(state.state_id, cityName);
-            } else {
-                console.log('State not found for:', stateName);
-            }
-        },
-        error: (err) => console.log(err)
-    });
-}
-
-onGetCityForEdit(stateId: any, cityName: string) {
-    const payload = { p_returntype: 'CITY', p_returnvalue: stateId };
-    this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-        next: (res) => {
-            this.cities = res.message || [];
-            const city = this.cities.find(
-                (c) => c.city_name?.toLowerCase() === cityName?.toLowerCase()
-            );
-            if (city) {
-                this.profileForm.patchValue({ companycity: city.city_id });
-            } else {
-                console.log('City not found for:', cityName);
-            }
-        },
-        error: (err) => console.log(err)
-    });
-}
-
     showSuccess(message: string) {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
     }

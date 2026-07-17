@@ -69,6 +69,7 @@ export interface UserHeader {
   p_loginuser?: string;
   p_oldpwd?: string;
   clientcode?: string;
+  p_companyid:number;
   p_companyname: string;
   p_companyaddress: string;
   p_companycity: string;

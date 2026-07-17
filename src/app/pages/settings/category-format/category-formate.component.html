@@ -5,7 +5,7 @@
     <div class="flex gap-4">
       <button
         pButton
-        *ngIf="loggedInUserRole==='Admin'"
+        *ngIf="loggedInUserRole==='Administrator'"
         type="button"
         label="{{addButtonLabel}}"
         icon="pi pi-plus"
@@ -524,62 +524,9 @@
          <div class="grid grid-cols-2 gap-x-6 gap-y-4">
                 <!-- User Name -->
                 <div class="flex flex-col">
-                    <label class="font-medium mb-1">User Name <span class="text-red-500">*</span></label>
-                    <input pInputText formControlName="p_uname" placeholder="User Name" />
-                    <small class="text-red-500 mt-1" *ngIf="masterForm.get('p_uname')?.touched && masterForm.get('p_uname')?.invalid"> User Name is required </small>
-                </div>
-
-                <!-- User Role -->
-                <div class="flex flex-col">
-                    <label class="font-medium mb-1">User Role <span class="text-red-500">*</span></label>
-                    <p-dropdown [options]="userRoleOptions" optionLabel="fieldname" optionValue="fieldid" formControlName="p_utypeid" placeholder="Select Role"></p-dropdown>
-                    <small class="text-red-500 mt-1" *ngIf="masterForm.get('p_utypeid')?.touched && masterForm.get('p_utypeid')?.invalid"> User Role is required </small>
-                </div>
-
-                <!-- Password -->
-                <div class="flex flex-col relative">
-                    <label class="font-medium mb-1">Password <span class="text-red-500">*</span></label>
-                    <div class="relative">
-                        <input pInputText [type]="showPassword ? 'text' : 'password'" formControlName="p_pwd" placeholder="Password" class="w-full pr-10" />
-                        <i class="pi" [ngClass]="showPassword ? 'pi-eye-slash' : 'pi-eye'" (click)="showPassword = !showPassword" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer"></i>
-                    </div>
-                    <small class="text-red-500 mt-1" *ngIf="masterForm.get('p_pwd')?.touched && masterForm.get('p_pwd')?.invalid"> Password must contain uppercase, lowercase, number, and special character </small>
-                </div>
-
-                <!-- Confirm Password -->
-                <div class="flex flex-col relative">
-                    <label class="font-medium mb-1">Confirm Password <span class="text-red-500">*</span></label>
-                    <div class="relative">
-                        <input pInputText [type]="showConfirmPassword ? 'text' : 'password'" formControlName="conPassword" placeholder="Confirm Password" class="w-full pr-10" />
-                        <i
-                            class="pi"
-                            [ngClass]="showConfirmPassword ? 'pi-eye-slash' : 'pi-eye'"
-                            (click)="showConfirmPassword = !showConfirmPassword"
-                            style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer"
-                        ></i>
-                    </div>
-                    <small class="text-red-500 mt-1" *ngIf="masterForm.hasError('passwordMismatch')"> Passwords do not match </small>
-                </div>
-
-                <!-- User Full Name -->
-                <div class="flex flex-col">
-                    <label class="font-medium mb-1">Full Name <span class="text-red-500">*</span></label>
-                    <input pInputText formControlName="p_ufullname" placeholder="Full Name" />
-                    <small class="text-red-500 mt-1" *ngIf="masterForm.get('p_ufullname')?.touched && masterForm.get('p_ufullname')?.invalid"> User Full Name is required </small>
-                </div>
-
-                <!-- Mobile -->
-                <div class="flex flex-col">
-                    <label class="font-medium mb-1">Mobile <span class="text-red-500">*</span></label>
-                    <input pInputText type="text" formControlName="p_phone" maxlength="10" placeholder="mobile" (keypress)="allowOnlyDigits($event)" />
-                    <small class="text-red-500 mt-1" *ngIf="masterForm.get('p_phone')?.touched && masterForm.get('p_phone')?.invalid"> Enter a valid 10-digit mobile number </small>
-                </div>
-
-                <!-- Email -->
-                <div class="flex flex-col">
-                    <label class="font-medium mb-1">Email <span class="text-red-500">*</span></label>
-                    <input pInputText type="email" formControlName="p_email" placeholder="Email" />
-                    <small class="text-red-500 mt-1" *ngIf="masterForm.get('p_email')?.touched && masterForm.get('p_email')?.invalid"> Enter a valid email address </small>
+                    <label class="font-medium mb-1">User Type <span class="text-red-500">*</span></label>
+                    <input pInputText formControlName="p_usertype" placeholder="User Type" />
+                    <small class="text-red-500 mt-1" *ngIf="masterForm.get('p_usertype')?.touched && masterForm.get('p_usertype')?.invalid"> User Type is required </small>
                 </div>
 
                 <!-- Active -->

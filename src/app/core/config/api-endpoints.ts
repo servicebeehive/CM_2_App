@@ -14,7 +14,8 @@ export const API_ENDPOINTS = {
     item: (id: number) => `/beeware/inventory/${id}`,
     insertpurchaseheader:'/beeware/insertpurchaseheader',
     insertitemdetails:'/beeware/insertitemdetails',
-    getdropdowndetails:'/public/getdropdowndetails',
+    getdropdowndetailsbeeware:'/beeware/getdropdowndetails',
+    getdropdowndetailspublic:'/public/getdropdowndetails',
     getparameterbased:'/public/get-data-parameter',
     returndropdowndetails:'/beeware/returndropdowndetails',
     adjustmentlist:'/beeware/getstockadjustment',
@@ -47,7 +48,7 @@ export const API_ENDPOINTS = {
   },
   user:{
     getuserdetails:'/beeware/getuserdetails',
-     updateprofie:'/beeware/updateprofile'
+     updateprofie:'/public/companydetail/upsert'
   },
   settings:{
     gettransactionmisc:'/beeware/tbltransactionmisc',

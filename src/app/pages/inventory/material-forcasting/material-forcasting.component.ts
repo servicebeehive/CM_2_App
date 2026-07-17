@@ -428,7 +428,7 @@ get isReadOnlyView(): boolean {
             buffer_stock: [data?.buffer_stock ?? 0],
             available_stock: [data?.currentstock ?? 0],
             pending_qty: [data?.pending_qty ?? 0],
-            forecast_qty: [data?.forecast_qty ?? 0, Validators.min(0)],
+            forecast_qty: [data?.forecast_qty ?? '', Validators.min(0)],
             procure_qty: [{ value: 0, disabled: true }],
             remarks: [data?.remarks ?? null]
         });
@@ -609,6 +609,9 @@ get isReadOnlyView(): boolean {
                                 p_requisitionno: res.message.mf_id,
                                 status: 'Submitted'
                             });
+                        }
+                        else{
+                             this.messageService.add({ severity: 'error', summary: res.message.message , life: 2000 });
                         }
                     },
                     error: (res) => {

@@ -47,7 +47,7 @@
         <tr *ngFor="let subUser of getSubRows(user.rule_creation_id, user)" class="bg-blue-50">
             <td class="pl-8 text-gray-400">↳ {{ subUser.rule_creation_id }}</td>
                <td>{{ subUser.rule_name }}</td>
-            <td>{{ subUser.profilename }}</td>   
+            <td>{{ subUser.usertypename }}</td>   
             <td>{{ subUser.created_on | date:'dd/MM/yy' }}</td>
             <td>{{ subUser.is_active }}</td>
             <td>

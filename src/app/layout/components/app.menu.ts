@@ -32,21 +32,21 @@ export class AppMenu {
     ngOnInit() {
 
        const userType:any = this.userservice.isLogIntType();  
-      this.role=userType.usertypecode
+    //   this.role=userType.usertypecode
 
-  if (this.role === 'administrator') {
+//   if (this.role === 'ADMINISTRATOR') {
     this.model = ADMIN_MENU_MODEL;
-  } 
-  else if (this.role === 'SalesManager') {
-    this.model = SALES_MANAGER_MENU_MODEL;
-  } 
-  else if(this.role === 'StoreOwner'){
-     this.model= STORE_OWNER_MENU_MODEL;
-  }
-  else {
-    // default fallback
-    this.model = SALES_REP_MENU_MODEL;
-  }
+//   } 
+//   else if (this.role === 'SalesManager') {
+//     this.model = SALES_MANAGER_MENU_MODEL;
+//   } 
+//   else if(this.role === 'StoreOwner'){
+//      this.model= STORE_OWNER_MENU_MODEL;
+//   }
+//   else {
+//     // default fallback
+//     this.model = SALES_REP_MENU_MODEL;
+//   }
     
 
 

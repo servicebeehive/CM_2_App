@@ -141,15 +141,15 @@ export class MyApprovalComponent {
 
     createDropdownPayload(returnType: string) {
         return {
-            p_username: 'admin',
+            p_username: this.authService.isLogIntType().industrytype,
             p_returntype: returnType
         };
     }
 
     OnGetType() {
         const payload = this.createDropdownPayload('RULENAME');
-        this.inventoryService.getdropdowndetails(payload).subscribe({
-            next: (res) => (this.typeOptions = res.data),
+        this.inventoryService.getdropdowndetailsPublic(payload).subscribe({
+            next: (res) => (this.typeOptions = res.message),
             error: (err) => console.log(err)
         });
     }

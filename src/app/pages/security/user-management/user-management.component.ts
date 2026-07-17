@@ -14,13 +14,14 @@ import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.comp
 import { AuthService } from '@/core/services/auth.service';
 import { InventoryService } from '@/core/services/inventory.service';
 import { UserService } from '@/core/services/user.service';
+import { MultiSelectModule } from 'primeng/multiselect';
 
 @Component({
     selector: 'app-user-management',
     standalone: true,
     templateUrl: './user-management.component.html',
     styleUrls: ['./user-management.component.scss'],
-    imports: [CommonModule, FormsModule, ReactiveFormsModule, ButtonModule, DropdownModule, InputTextModule, TableModule, CheckboxModule, DialogModule, ConfirmDialogModule, RippleModule, GlobalFilterComponent],
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, ButtonModule, DropdownModule, InputTextModule, TableModule, CheckboxModule, DialogModule, ConfirmDialogModule, RippleModule, GlobalFilterComponent, MultiSelectModule],
     providers: [ConfirmationService]
 })
 export class UserManagementComponent {
@@ -30,6 +31,7 @@ export class UserManagementComponent {
     showConfirmPassword = false;
     user: any[] = [];
     filteredUser: any[] = [];
+    projectOptions:any[]=[];
     editMode = false;
     selectedUser: any = null;
     globalFilter: string = '';
@@ -50,21 +52,23 @@ export class UserManagementComponent {
     ngOnInit() {
         this.initForm();
         this.onGetUserRole();
+        this.onGetProjectList();
         this.filteredUser = [...this.user];
         this.onGetUserList();
         this.loggedInUserName = this.authService.isLogIntType().username;
-        this.loggedInUserRole = this.authService.isLogIntType().usertypename;
+        this.loggedInUserRole = this.authService.isLogIntType().usertypecode;
     }
 
     initForm() {
         this.userForm = this.fb.group(
             {
                 p_utypeid: ['', Validators.required],
-                p_uname: ['', [Validators.required, Validators.maxLength(20)]],
+                p_uname: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
                 p_ufullname: ['', [Validators.required, Validators.maxLength(50)]],
                 p_pwd: ['', [Validators.required, Validators.minLength(4), Validators.pattern('^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@$!%*?&#])[A-Za-z\\d@$!%*?&#]{4,}$')]],
                 conPassword: ['', Validators.required],
-                p_phone: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
+                // p_phone: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
+                p_projectid: [[], Validators.required],
                 p_email: ['', [Validators.required, Validators.email, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/), Validators.maxLength(50)]],
                 checked: [true]
             },
@@ -78,7 +82,23 @@ export class UserManagementComponent {
         return password === confirm ? null : { passwordMismatch: true };
     };
 
-    /** ✳️ Add User Dialog **/
+onGetProjectList() {
+     const companyId = this.authService.isLogIntType().companyid.toString();
+        const payload = {
+            returnType : 'ACTIVEPROJECT',
+            returnValue : '',
+            username: '',
+            option1: companyId,
+            option2: null
+        }
+        this.inventoryService.getparameterbased(payload).subscribe({
+            next: (res) => {
+                this.projectOptions = res.data || [];
+            },
+            error: (err) => console.error(err)
+        });
+}
+
     openUserDialog() {
         this.visibleDialog = true;
         this.editMode = false;
@@ -106,21 +126,22 @@ export class UserManagementComponent {
             p_utypeid: user.usertypeid,
             p_uname: user.username,
             p_ufullname: user.fullname,
-            p_phone: user.phone,
+            // p_phone: user.phone,
+            p_projectid: user.projectids || [],
             p_email: user.email,
             checked: user.isactive === 'Y'
         });
 
-        if (user.username === 'administrator') {
+        if (user.username === 'ADMINISTRATOR') {
             this.userForm.get('p_utypeid')?.disable();
             this.userForm.get('checked')?.disable();
-        } else if (user.username !== 'administrator' && user.usertypename === 'administrator') {
+        } else if (user.username !== 'ADMINISTRATOR' && user.usertypename === 'ADMINISTRATOR') {
             this.userForm.get('p_utypeid')?.enable();
             this.userForm.get('checked')?.enable();
-        } else if (this.loggedInUserRole == 'administrator' && user.username !== 'administrator') {
+        } else if (this.loggedInUserRole == 'ADMINISTRATOR' && user.username !== 'ADMINISTRATOR') {
             this.userForm.get('p_utypeid')?.enable();
             this.userForm.get('checked')?.enable();
-        } else if (user.usertypename !== 'administrator') {
+        } else if (user.usertypename !== 'ADMINISTRATOR') {
             this.userForm.get('p_utypeid')?.disable();
             this.userForm.get('checked')?.disable();
         }
@@ -144,7 +165,7 @@ export class UserManagementComponent {
             p_pwd: '',
             p_active: '',
             p_operationtype: 'GETUSER',
-            p_phone: '',
+            // p_phone: '',
             p_utypeid: '',
             p_email: '',
             p_oldpwd: ''
@@ -152,7 +173,7 @@ export class UserManagementComponent {
         this.userService.OnUserHeaderCreate(payload).subscribe({
             next: (res) => {
                 this.user = res.data || [];
-                if (this.loggedInUserRole === 'administrator' || this.loggedInUserRole === 'administrator') {
+                if (this.loggedInUserRole === 'ADMINISTRATOR' || this.loggedInUserRole === 'ADMINISTRATOR') {
                     this.filteredUser = [...this.user];
                 } else {
                     this.filteredUser = this.user.filter((u) => u.username === this.loggedInUserName);
@@ -164,16 +185,19 @@ export class UserManagementComponent {
         });
     }
     onUserCreation(data: any) {
+        const companyId = this.authService.isLogIntType().companyid.toString;
         const payload: any = {
             p_operationtype: this.editMode ? 'UPDATE' : 'INSERT',
             p_ufullname: data.p_ufullname,
             p_uname: data.p_uname,
             p_pwd: data.p_pwd,
             p_active: data.checked ? 'Y' : 'N',
-            p_phone: data.p_phone,
+            // p_phone: data.p_phone,
             p_utypeid: data.p_utypeid.toString(),
             p_email: data.p_email,
-            p_oldpwd: ''
+            p_oldpwd: '',
+            p_projectid: (data.p_projectid || []).join(','),
+             p_companyid: companyId
         };
 
         this.userService.OnUserHeaderCreate(payload).subscribe({
@@ -231,9 +255,9 @@ export class UserManagementComponent {
     }
 
     createDropdownPayload(returnType: string) {
-        const username = this.authService.isLogIntType().username;
+        const username = this.authService.isLogIntType().industrytype;
         return {
-            p_username: '',
+            p_username: username,
             p_returntype: returnType
         };
     }

@@ -16,7 +16,7 @@ import { InventoryService } from '@/core/services/inventory.service';
 import { UserService } from '@/core/services/user.service';
 import { ActivatedRoute } from '@angular/router';
 import { state } from '@angular/animations';
-import { Subject, switchMap } from 'rxjs';
+import { Subject, switchMap ,of} from 'rxjs';
 
 export function gstNumberValidator(control: AbstractControl): ValidationErrors | null {
     if (!control.value) return null;
@@ -83,23 +83,22 @@ private routeChange$ = new Subject<string>();
             this.tableColumns = this.tableConfig[master];
             this.loadMasterData(master);
             this.onGetDataList();
-    //     });
-    //     this.filterMaster = [...this.masterDetails];
-    //     this.loggedInUserName = this.authService.isLogIntType().username;
-    //     this.loggedInUserRole = this.authService.isLogIntType().usertypename;
-    //     this.onGetCountry();
-    // }
 
+             if (master === 'customermaster' || master === 'suppliermaster') {
             const payloadType = master === 'customermaster' ? 'CUSTOMERALL' : 'VENDORALL';
             const payload = this.createDropdownPayload(payloadType);
             return this.inventoryService.getdropdowndetails(payload);
-        })
-    ).subscribe({
-        next: (res:any) => {
+        }
+        return of(null);
+    })
+).subscribe({
+    next: (res: any) => {
+        if (res) {
             this.masterDetails = res.message || [];
             this.filterMaster = [...this.masterDetails];
         }
-    });
+    }
+});
 
     this.route.paramMap.subscribe((params) => {
         const master = params.get('master') || 'categorymaster';
@@ -145,7 +144,7 @@ private routeChange$ = new Subject<string>();
 
             case 'usertype':
                 this.pageTitle = 'User Type';
-                this.addButtonLabel = 'Add User';
+                this.addButtonLabel = 'Add User Type';
                 break;
 
             case 'taxmaster':
@@ -164,15 +163,15 @@ private routeChange$ = new Subject<string>();
         }
     }
 
-    masterPayloadMap: Record<string, string> = {
-        advance: 'ADVANCE',
-        categorymaster: 'CATEGORYMASTER',
-        customermaster: 'CUSTOMERMASTER',
-        taxmaster: 'TAXMASTER',
-        uommaster: 'UOMMASTER',
-        usertype: 'USERTYPE',
-        suppliermaster: 'SUPPLIERMASTER'
-    };
+   masterPayloadMap: Record<string, string> = {
+    advance: 'ADVANCE',
+    categorymaster: 'CATEGORYMASTER',
+    customermaster: 'CUSTOMERMASTER',
+    taxmaster: 'TAXMASTER',
+    uommaster: 'UOMMASTER',
+    usertype: 'USERTYPE',
+    suppliermaster: 'SUPPLIERMASTER'
+};
 
     commonMasterColumns = [
         { field: 'fieldname', header: 'Name', width:'300px' },
@@ -204,7 +203,10 @@ private routeChange$ = new Subject<string>();
         ],
         taxmaster: this.commonMasterColumns,
         uommaster: this.commonMasterColumns,
-        usertype: this.commonMasterColumns
+        usertype: [
+        { field: 'fieldname', header: 'Name', width:'300px' },
+        { field: 'isactive', header: 'Active', width:'80px' }
+    ]
     };
     /** ✳️ Add User Dialog **/
     openUserDialog() {
@@ -219,7 +221,7 @@ private routeChange$ = new Subject<string>();
             customermaster: 'Add Customer',
             taxmaster: 'Add Tax',
             uommaster: 'Add UOM',
-            usertype: 'Add User',
+            usertype: 'Add User Type',
             suppliermaster: 'Add Supplier'
         };
         this.dialogTitle = dialogTitleMap[this.selectedMaster] ?? 'Add';
@@ -282,13 +284,7 @@ this.masterForm.addControl('cityforall', this.fb.control('', Validators.required
             this.masterForm.addControl('childuomname', this.fb.control('', Validators.required));
         }
         if(master==='usertype'){
-            this.masterForm.addControl('p_uname', this.fb.control('', Validators.required));
-            this.masterForm.addControl('p_utypeid', this.fb.control('', [Validators.required,Validators.maxLength(20)]));
-            this.masterForm.addControl('p_ufullname', this.fb.control('', Validators.required));
-            this.masterForm.addControl('p_pwd', this.fb.control('', Validators.required));
-            this.masterForm.addControl('conPassword', this.fb.control('', Validators.required));
-            this.masterForm.addControl('p_phone', this.fb.control('', Validators.required));
-            this.masterForm.addControl('p_email', this.fb.control('', Validators.required));
+            this.masterForm.addControl('p_usertype', this.fb.control('', Validators.required));
         }
     }
     resetFormByMaster(master: string) {
@@ -375,11 +371,7 @@ this.masterForm.addControl('cityforall', this.fb.control('', Validators.required
       checked: row.isactive === 'Y'
     },
     usertype: {
-      p_uname: row.username,
-      p_utypeid: row.usertypeid,
-      p_ufullname: row.fullname,
-      p_phone: row.phone,
-      p_email: row.email,
+      p_usertype: row.fieldname,
       checked: row.isactive === 'Y'
     },
     advance: {
@@ -459,9 +451,18 @@ removeItem(row: any) {
     }
    
     loadMasterData(masterKey: string) {
-        const payloadType = this.masterPayloadMap[masterKey];
-        if (!payloadType) return;
-        const payload = this.createDropdownPayload(payloadType);
+      const payloadType = this.masterPayloadMap[masterKey];
+    if (!payloadType) return;
+
+    const returnValue = masterKey === 'usertype'
+        ? (this.authService.isLogIntType()?.industrytype ?? '')
+        : '';
+
+    const payload = {
+        p_returntype: payloadType,
+        p_username: returnValue
+    };
+    // const payloaddata  = this.createDropdownPayload(payloadType, returnValue)
         this.inventoryService.getdropdowndetails(payload).subscribe({
             next: (res) => {
                 this.masterDetails = res.message || [];
@@ -709,12 +710,7 @@ onGetCityForEdit(stateId: any, cityName: string) {
         },
         usertype: {
             p_operationtype: this.editMode ? 'UPDATE' : 'INSERT',
-            p_uname: data.p_uname,
-            p_utypeid: data.p_utypeid,
-            p_ufullname: data.p_ufullname,
-            p_pwd: data.p_pwd,
-            p_phone: data.p_phone,
-            p_email: data.p_email,
+            p_usertype: data.p_usertype,
             p_active: data.checked ? 'Y' : 'N'
         }
     };
@@ -728,13 +724,13 @@ onGetCityForEdit(stateId: any, cityName: string) {
     });
 }
 
-    createDropdownPayload(returnType: string) {
-        return {
-            p_username: 'admin',
-            p_returntype: returnType
-        };
-    }
-
+   createDropdownPayload(returnType: string, returnvalue: string = '') {
+    return {
+        p_username: this.authService.isLogIntType()?.userid,
+        p_returntype: returnType,
+        // p_returnvalue: returnvalue
+    };
+}
     /** 🔍 Global Filter **/
    
     applyGlobalFilter() {
