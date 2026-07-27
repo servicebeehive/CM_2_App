@@ -385,6 +385,7 @@ export class UserCreate {
 
     const img = new Image();
     const objectUrl = URL.createObjectURL(file);
+    const isPng = file.type === 'image/png';
 
     img.onload = () => {
         URL.revokeObjectURL(objectUrl);
@@ -404,12 +405,18 @@ export class UserCreate {
         canvas.height = height;
 
         const ctx = canvas.getContext('2d')!;
+
+        if(!isPng){
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, width, height);
+        }
         ctx.drawImage(img, 0, 0, width, height);
 
         // Compress to JPEG
-        this.logoBase64 = canvas.toDataURL('image/jpeg', quality);
+       this.logoBase64 = isPng
+            ? canvas.toDataURL('image/png')
+            : canvas.toDataURL('image/jpeg', quality);
         this.imageUrl = this.base64ToBlobUrl(this.logoBase64);
-        console.log('Compressed Base64 ready, size:', Math.round(this.logoBase64.length / 1024), 'KB');
     };
 
     img.onerror = () => console.error('Image load error');

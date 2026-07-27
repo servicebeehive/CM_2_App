@@ -149,7 +149,7 @@ export class MyApprovalComponent {
     OnGetType() {
         const payload = this.createDropdownPayload('RULENAME');
         this.inventoryService.getdropdowndetailsPublic(payload).subscribe({
-            next: (res) => (this.typeOptions = res.message),
+            next: (res) => (this.typeOptions = res.data),
             error: (err) => console.log(err)
         });
     }

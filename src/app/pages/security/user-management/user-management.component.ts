@@ -15,6 +15,7 @@ import { AuthService } from '@/core/services/auth.service';
 import { InventoryService } from '@/core/services/inventory.service';
 import { UserService } from '@/core/services/user.service';
 import { MultiSelectModule } from 'primeng/multiselect';
+import { GetUserDetail, RemovedParamterBased } from '@/core/models/inventory.model';
 
 @Component({
     selector: 'app-user-management',
@@ -31,12 +32,12 @@ export class UserManagementComponent {
     showConfirmPassword = false;
     user: any[] = [];
     filteredUser: any[] = [];
-    projectOptions:any[]=[];
+    projectOptions: any[] = [];
     editMode = false;
     selectedUser: any = null;
     globalFilter: string = '';
     showGlobalSearch: boolean = true;
-    userRoleOptions = [];
+    userRoleOptions: any[] = [];
     loggedInUserName: string = '';
     loggedInUserRole: string = '';
 
@@ -82,22 +83,22 @@ export class UserManagementComponent {
         return password === confirm ? null : { passwordMismatch: true };
     };
 
-onGetProjectList() {
-     const companyId = this.authService.isLogIntType().companyid.toString();
+    onGetProjectList() {
+        const companyId = this.authService.isLogIntType().companyid.toString();
         const payload = {
-            returnType : 'ACTIVEPROJECT',
-            returnValue : '',
+            returnType: 'ACTIVEPROJECT',
+            returnValue: '',
             username: '',
             option1: companyId,
             option2: null
-        }
+        };
         this.inventoryService.getparameterbased(payload).subscribe({
             next: (res) => {
                 this.projectOptions = res.data || [];
             },
             error: (err) => console.error(err)
         });
-}
+    }
 
     openUserDialog() {
         this.visibleDialog = true;
@@ -116,19 +117,19 @@ onGetProjectList() {
         this.editMode = true;
         this.selectedUser = user;
 
-        // Clear password validators for edit mode
         this.userForm.get('p_pwd')?.disable();
         this.userForm.get('conPassword')?.disable();
         this.userForm.get('p_uname')?.disable();
+        const matchedType = this.userRoleOptions.find((u) => u.fieldname === user.usertypename);
+        const utypeidValue = matchedType ? matchedType.fieldid : user.usertypeid;
 
-        console.log('user role', user.usertypename);
         this.userForm.patchValue({
-            p_utypeid: user.usertypeid,
+            p_utypeid: utypeidValue,
             p_uname: user.username,
             p_ufullname: user.fullname,
-            // p_phone: user.phone,
-            p_projectid: user.projectids || [],
-            p_email: user.email,
+            p_phone: user.phone,
+           p_projectid: (user.projects || []).map((p: any) => p.project_id),
+            p_email: user.emailid,
             checked: user.isactive === 'Y'
         });
 
@@ -157,18 +158,20 @@ onGetProjectList() {
         this.visibleDialog = false;
     }
     onGetUserList() {
-        const username= this.authService.isLogIntType().username.toString();
-       
-        const payload: any = {
+        const username = this.authService.isLogIntType().username.toString();
+
+        const payload: GetUserDetail = {
             p_ufullname: '',
             p_uname: username,
             p_pwd: '',
             p_active: '',
             p_operationtype: 'GETUSER',
-            // p_phone: '',
+            p_phone: '',
             p_utypeid: '',
             p_email: '',
-            p_oldpwd: ''
+            p_oldpwd: '',
+            p_companyid: this.authService.isLogIntType()?.companyid,
+            p_projects: []
         };
         this.userService.OnUserHeaderCreate(payload).subscribe({
             next: (res) => {
@@ -185,24 +188,25 @@ onGetProjectList() {
         });
     }
     onUserCreation(data: any) {
-        const companyId = this.authService.isLogIntType().companyid.toString;
-        const payload: any = {
+        console.log(data);
+        const companyId = this.authService.isLogIntType().companyid;
+        const payload: GetUserDetail = {
             p_operationtype: this.editMode ? 'UPDATE' : 'INSERT',
             p_ufullname: data.p_ufullname,
             p_uname: data.p_uname,
             p_pwd: data.p_pwd,
             p_active: data.checked ? 'Y' : 'N',
-            // p_phone: data.p_phone,
+            p_phone: '',
             p_utypeid: data.p_utypeid.toString(),
             p_email: data.p_email,
             p_oldpwd: '',
-            p_projectid: (data.p_projectid || []).join(','),
-             p_companyid: companyId
+            p_companyid: companyId,
+            p_projects: (data.p_projectid || []).map((id:number)=>({project_id:id}))
         };
 
         this.userService.OnUserHeaderCreate(payload).subscribe({
             next: (res) => {
-                this.showSuccess(res.message);
+                this.showSuccess(res.data.msg);
                 this.visibleDialog = false;
                 this.onGetUserList();
             },
@@ -220,13 +224,13 @@ onGetProjectList() {
             acceptLabel: 'Yes',
             rejectLabel: 'Cancel',
             accept: () => {
-                const username = this.authService.isLogIntType().username;
-                const payload = {
-                    p_type: "USER",
-                    p_transaction_id: row.userid,
-                    p_username: username
+                const payload: RemovedParamterBased = {
+                    p_returntype: 'USER',
+                    p_returnvalue: row.userid,
+                    p_username: '',
+                    p_companyid: this.authService.isLogIntType().companyid.toString()
                 };
-                this.inventoryService.deletetransaction(payload).subscribe({
+                this.userService.removeDataParameter(payload).subscribe({
                     next: (res) => {
                         this.showSuccess(res.data.message);
                         this.onGetUserList();
@@ -264,7 +268,7 @@ onGetProjectList() {
     onGetUserRole() {
         const payload = this.createDropdownPayload('USERTYPE');
         this.inventoryService.getdropdowndetails(payload).subscribe({
-            next: (res) => (this.userRoleOptions = res.message),
+            next: (res) => (this.userRoleOptions = res.data),
             error: (err) => console.log(err)
         });
     }
@@ -287,8 +291,7 @@ onGetProjectList() {
         this.globalFilter = '';
     }
 
-     showSuccess(message: string) {
+    showSuccess(message: string) {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
     }
-
 }

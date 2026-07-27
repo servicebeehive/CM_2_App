@@ -16,7 +16,8 @@ import { InventoryService } from '@/core/services/inventory.service';
 import { UserService } from '@/core/services/user.service';
 import { ActivatedRoute } from '@angular/router';
 import { state } from '@angular/animations';
-import { Subject, switchMap ,of} from 'rxjs';
+import { Subject, switchMap, of } from 'rxjs';
+import { RemovedParamterBased } from '@/core/models/inventory.model';
 
 export function gstNumberValidator(control: AbstractControl): ValidationErrors | null {
     if (!control.value) return null;
@@ -57,6 +58,13 @@ export class CategoryFormateComponent {
     tableColumns: any[] = [];
     selectedMaster!: string;
     dialogTitle = '';
+    paymentOptions:any[]=[
+        {label:'15 Days',value:'15 Days'},
+        {label:'30 Days',value:'30 Days'},
+        {label:'45 Days',value:'45 Days'},
+        {label:'60 Days',value:'60 Days'},
+        {label:'90 Days',value:'90 Days'}
+    ]
 
     constructor(
         private fb: FormBuilder,
@@ -68,43 +76,45 @@ export class CategoryFormateComponent {
         private messageService: MessageService
     ) {}
 
-private routeChange$ = new Subject<string>();
+    private routeChange$ = new Subject<string>();
 
-   ngOnInit() {
-    this.initForm();
-    this.onGetCountry();
-    this.loggedInUserRole = this.authService.isLogIntType().usertypename;
-    this.routeChange$.pipe(
-        switchMap((master:any) => {
-            this.masterDetails = [];
-            this.filterMaster = [];
-            this.masterForm.get('master')?.setValue(master);
-            this.updateTitleMaster(master);
-            this.tableColumns = this.tableConfig[master];
-            this.loadMasterData(master);
-            this.onGetDataList();
+    ngOnInit() {
+        this.initForm();
+        this.onGetCountry();
+        this.loggedInUserRole = this.authService.isLogIntType().usertypename;
+        this.routeChange$
+            .pipe(
+                switchMap((master: any) => {
+                    this.masterDetails = [];
+                    this.filterMaster = [];
+                    this.masterForm.get('master')?.setValue(master);
+                    this.updateTitleMaster(master);
+                    this.tableColumns = this.tableConfig[master];
+                    this.loadMasterData(master);
+                    this.onGetDataList();
 
-             if (master === 'customermaster' || master === 'suppliermaster') {
-            const payloadType = master === 'customermaster' ? 'CUSTOMERALL' : 'VENDORALL';
-            const payload = this.createDropdownPayload(payloadType);
-            return this.inventoryService.getdropdowndetails(payload);
-        }
-        return of(null);
-    })
-).subscribe({
-    next: (res: any) => {
-        if (res) {
-            this.masterDetails = res.message || [];
-            this.filterMaster = [...this.masterDetails];
-        }
+                    if (master === 'customermaster' || master === 'suppliermaster') {
+                        const payloadType = master === 'customermaster' ? 'CUSTOMERALL' : 'VENDORALL';
+                        const payload = this.createDropdownPayload(payloadType);
+                        return this.inventoryService.getdropdowndetails(payload);
+                    }
+                    return of(null);
+                })
+            )
+            .subscribe({
+                next: (res: any) => {
+                    if (res) {
+                        this.masterDetails = res.data || [];
+                        this.filterMaster = [...this.masterDetails];
+                    }
+                }
+            });
+
+        this.route.paramMap.subscribe((params) => {
+            const master = params.get('master') || 'categorymaster';
+            this.routeChange$.next(master);
+        });
     }
-});
-
-    this.route.paramMap.subscribe((params) => {
-        const master = params.get('master') || 'categorymaster';
-        this.routeChange$.next(master);
-    });
-}
 
     initForm() {
         this.masterForm = this.fb.group({
@@ -163,28 +173,28 @@ private routeChange$ = new Subject<string>();
         }
     }
 
-   masterPayloadMap: Record<string, string> = {
-    advance: 'ADVANCE',
-    categorymaster: 'CATEGORYMASTER',
-    customermaster: 'CUSTOMERMASTER',
-    taxmaster: 'TAXMASTER',
-    uommaster: 'UOMMASTER',
-    usertype: 'USERTYPE',
-    suppliermaster: 'SUPPLIERMASTER'
-};
+    masterPayloadMap: Record<string, string> = {
+        advance: 'ADVANCE',
+        categorymaster: 'CATEGORYMASTER',
+        customermaster: 'CUSTOMERMASTER',
+        taxmaster: 'TAXMASTER',
+        uommaster: 'UOMMASTER',
+        usertype: 'USERTYPEALL',
+        suppliermaster: 'SUPPLIERMASTER'
+    };
 
     commonMasterColumns = [
-        { field: 'fieldname', header: 'Name', width:'300px' },
-        { field: 'fielddesc', header: 'Description'},
-        { field: 'isactive', header: 'Active', width:'80px' }
+        { field: 'fieldname', header: 'Name', width: '300px' },
+        { field: 'fielddesc', header: 'Description' },
+        { field: 'isactive', header: 'Active', width: '80px' }
     ];
 
     tableConfig: Record<string, any[]> = {
         advance: [
-            { field: 'fieldname', header: 'Name',width:'300px' },
-            { field: 'fielddesc', header: 'Description',width:'500px' },
+            { field: 'fieldname', header: 'Name', width: '300px' },
+            { field: 'fielddesc', header: 'Description', width: '500px' },
             { field: 'fieldvalue', header: 'Value' },
-            { field: 'isactive', header: 'Active', width:'80px' }
+            { field: 'isactive', header: 'Active', width: '80px' }
         ],
         categorymaster: this.commonMasterColumns,
         customermaster: [
@@ -197,16 +207,19 @@ private routeChange$ = new Subject<string>();
         suppliermaster: [
             { field: 'suppliername', header: 'Name', width: '300px' },
             { field: 'supplierphone', header: 'Phone' },
-           { field: 'suppliergstno', header: 'Gst No' },
+            { field: 'suppliergstno', header: 'Gst No' },
             { field: 'suppliercity', header: 'City' },
+            { field: 'paymentterms', header: 'Payment Terms' },
+            { field: 'prefferedvendor', header: 'Preferred' },
             { field: 'isactive', header: 'Active', width: '80px' }
         ],
         taxmaster: this.commonMasterColumns,
         uommaster: this.commonMasterColumns,
         usertype: [
-        { field: 'fieldname', header: 'Name', width:'300px' },
-        { field: 'isactive', header: 'Active', width:'80px' }
-    ]
+            { field: 'usertypename', header: 'Name', width: '300px' },
+            { field: 'web_access', header: 'Web Access', width: '80px' },
+            { field: 'isactive', header: 'Active', width: '80px' }
+        ]
     };
     /** ✳️ Add User Dialog **/
     openUserDialog() {
@@ -242,11 +255,11 @@ private routeChange$ = new Subject<string>();
         if (master === 'customermaster') {
             this.masterForm.addControl('customername', this.fb.control('', Validators.required));
             this.masterForm.addControl('customeraddress', this.fb.control('', Validators.required));
-           this.masterForm.addControl('countryforall', this.fb.control('', Validators.required));
-this.masterForm.addControl('stateforall', this.fb.control('', Validators.required));
-this.masterForm.addControl('cityforall', this.fb.control('', Validators.required));
+            this.masterForm.addControl('countryforall', this.fb.control('', Validators.required));
+            this.masterForm.addControl('stateforall', this.fb.control('', Validators.required));
+            this.masterForm.addControl('cityforall', this.fb.control('', Validators.required));
             this.masterForm.addControl('customerpincode', this.fb.control('', Validators.required));
-            this.masterForm.addControl('customerphone', this.fb.control('', [Validators.required,Validators.pattern(/^[6-9]\d{9}$/)]));
+            this.masterForm.addControl('customerphone', this.fb.control('', [Validators.required, Validators.pattern(/^[6-9]\d{9}$/)]));
             this.masterForm.addControl('customeremail', this.fb.control(''));
             this.masterForm.addControl('customergstno', this.fb.control('', [gstNumberValidator]));
             this.masterForm.addControl('customercontactname', this.fb.control(''));
@@ -262,15 +275,17 @@ this.masterForm.addControl('cityforall', this.fb.control('', Validators.required
             this.masterForm.addControl('suppliername', this.fb.control('', Validators.required));
             this.masterForm.addControl('supplieraddress', this.fb.control('', Validators.required));
             this.masterForm.addControl('countryforall', this.fb.control('', Validators.required));
-this.masterForm.addControl('stateforall', this.fb.control('', Validators.required));
-this.masterForm.addControl('cityforall', this.fb.control('', Validators.required));
+            this.masterForm.addControl('stateforall', this.fb.control('', Validators.required));
+            this.masterForm.addControl('cityforall', this.fb.control('', Validators.required));
             this.masterForm.addControl('supplierpincode', this.fb.control('', Validators.required));
-            this.masterForm.addControl('supplierphone', this.fb.control('', [Validators.required,Validators.pattern(/^[6-9]\d{9}$/)]));
+            this.masterForm.addControl('supplierphone', this.fb.control('', [Validators.required, Validators.pattern(/^[6-9]\d{9}$/)]));
             this.masterForm.addControl('supplieremail', this.fb.control('', [Validators.email]));
-            this.masterForm.addControl('suppliergstno', this.fb.control('', [gstNumberValidator]));
+            this.masterForm.addControl('suppliergst', this.fb.control('', [gstNumberValidator]));
             this.masterForm.addControl('suppliercontactname', this.fb.control(''));
             this.masterForm.addControl('suppliercontactphone', this.fb.control('', Validators.pattern(/^[6-9]\d{9}$/)));
             this.masterForm.addControl('suppliercontactemail', this.fb.control('', [Validators.email]));
+            this.masterForm.addControl('payment_term', this.fb.control('', Validators.required));
+            this.masterForm.addControl('preferred_vendor', this.fb.control(true, Validators.required));
         }
         if (master === 'taxmaster') {
             this.masterForm.addControl('taxname', this.fb.control('', Validators.required));
@@ -283,8 +298,10 @@ this.masterForm.addControl('cityforall', this.fb.control('', Validators.required
             this.masterForm.addControl('uomdesc', this.fb.control('', Validators.required));
             this.masterForm.addControl('childuomname', this.fb.control('', Validators.required));
         }
-        if(master==='usertype'){
+        if (master === 'usertype') {
             this.masterForm.addControl('p_usertype', this.fb.control('', Validators.required));
+            this.masterForm.addControl('is_approval', this.fb.control(true));
+            this.masterForm.addControl('web_access', this.fb.control(true));
         }
     }
     resetFormByMaster(master: string) {
@@ -320,95 +337,123 @@ this.masterForm.addControl('cityforall', this.fb.control('', Validators.required
         this.visibleDialog = true;
         this.editMode = true;
         this.selectedUser = row;
-
+        console.log(row);
         const patchMap: Record<string, any> = {
-    categorymaster: {
-      p_categoryname: row.fieldname,
-      p_categorydesc: row.fielddesc,
-      checked: row.isactive === 'Y'
-    },
-    customermaster: {
-      customername: row.customername,
-      customeraddress: row.customeraddress,
-      customercountry: row.customercountry,
-      customerstate: row.customerstate,
-      customercity: row.customercity,
-      customerpincode: row.customerpincode,
-      customerphone: row.customerphone,
-      customeremail: row.customeremail,
-      customergstno: row.customergstno,
-      customercontactperson: row.customercontactperson,
-      customercontactphone: row.customercontactphone,
-      customercontactemail: row.customercontactemail,
-      checked: row.isactive === 'Y'
-    },
-    suppliermaster: {
-      suppliername: row.suppliername,
-      supplieraddress: row.supplieraddress,
-      suppliercountry: row.suppliercountry,
-      supplierstate: row.supplierstate,
-      suppliercity: row.suppliercity,
-      supplierpincode: row.supplierpincode,
-      supplierphone: row.supplierphone,
-      supplieremail: row.supplieremail,
-      suppliergst: row.suppliergst,      
-      suppliercontactname: row.suppliercontactname,
-      suppliercontactphone: row.suppliercontactphone,
-      suppliercontactemail: row.suppliercontactemail,
-      checked: row.isactive === 'Y'
-    },
-    taxmaster: {
-      taxname: row.fieldname,
-      taxdesc: row.fielddesc,
-      taxtype: row.taxtype,
-      taxpercentage: row.taxpercentage,
-      checked: row.isactive === 'Y'
-    },
-    uommaster: {
-      uomname: row.fieldname,
-      uomdesc: row.fielddesc,
-      childuomname: row.childuomname,
-      checked: row.isactive === 'Y'
-    },
-    usertype: {
-      p_usertype: row.fieldname,
-      checked: row.isactive === 'Y'
-    },
-    advance: {
-      rulename: row.fieldname,
-      ruledesc: row.fielddesc,
-      rulevalue: row.fieldvalue,
-      checked: row.isactive === 'Y'
-    }
-  };
+            categorymaster: {
+                p_categoryname: row.fieldname,
+                p_categorydesc: row.fielddesc,
+                checked: row.isactive === 'Y'
+            },
+            customermaster: {
+                customername: row.customername,
+                customeraddress: row.customeraddress,
+                countryforall: row.customercountry,
+                stateforall: row.customerstate,
+                cityforall: row.customercity,
+                customerpincode: row.customerpincode,
+                customerphone: row.customerphone,
+                customeremail: row.customeremail,
+                customergstno: row.customergstno,
+                customercontactperson: row.customercontactperson,
+                customercontactphone: row.customercontactphone,
+                customercontactemail: row.customercontactemail,
+                checked: row.isactive === 'Y'
+            },
+            suppliermaster: {
+                suppliername: row.suppliername,
+                supplieraddress: row.supplieraddress,
+                countryforall: row.suppliercountry,
+                stateforall: row.supplierstate,
+                cityforall: row.suppliercity,
+                supplierpincode: row.supplierpincode,
+                supplierphone: row.supplierphone,
+                supplieremail: row.supplieremail,
+                suppliergst: row.suppliergstno,
+                suppliercontactname: row.suppliercontactperson,
+                suppliercontactphone: row.suppliercontactphone,
+                suppliercontactemail: row.suppliercontactemail,
+                payment_term: row.paymentterm,
+                preferred_vendor: row.prefferedvendor === 'Y',
+                checked: row.isactive === 'Y'
+            },
+            taxmaster: {
+                taxname: row.fieldname,
+                taxdesc: row.fielddesc,
+                taxtype: row.taxtype,
+                taxpercentage: row.taxpercentage,
+                checked: row.isactive === 'Y'
+            },
+            uommaster: {
+                uomname: row.fieldname,
+                uomdesc: row.fielddesc,
+                childuomname: row.childuomname,
+                checked: row.isactive === 'Y'
+            },
+            usertype: {
+                p_usertype: row.usertypename,
+                checked: row.isactive === 'Y',
+                web_access: row.web_access === 'Y',
+                is_approval: row.is_approval === 'Y'
+            },
+            advance: {
+                rulename: row.fieldname,
+                ruledesc: row.fielddesc,
+                rulevalue: row.fieldvalue,
+                checked: row.isactive === 'Y'
+            }
+        };
 
-const patch = patchMap[this.selectedMaster];
-if (patch) {
-    this.masterForm.patchValue(patch);
+        const patch = patchMap[this.selectedMaster];
+        if (patch) {
+            this.masterForm.patchValue(patch);
 
-    // Handle country/state/city dropdowns
-    if (master === 'customermaster') {
-        const country = this.countries.find(c =>
-            c.country_name?.toLowerCase() === row.customercountry?.toLowerCase()
-        );
-        if (country) {
-            this.masterForm.patchValue({ countryforall: country.country_id });
-            this.onGetStateForEdit(country.country_id, row.customerstate, row.customercity);
-        }
-    } else if (master === 'suppliermaster') {
-        const country = this.countries.find(c =>
-            c.country_name?.toLowerCase() === row.suppliercountry?.toLowerCase()
-        );
-        if (country) {
-            this.masterForm.patchValue({ countryforall: country.country_id });
-            this.onGetStateForEdit(country.country_id, row.supplierstate, row.suppliercity);
-        }
-    }
+           if (master === 'customermaster' || master === 'suppliermaster') {
+    const countryName = master === 'customermaster' ? row.customercountry : row.suppliercountry;
+    const stateName = master === 'customermaster' ? row.customerstate : row.supplierstate;
+    const cityName = master === 'customermaster' ? row.customercity : row.suppliercity;
+    this.patchLocationDropdowns(countryName, stateName, cityName);
 }
+        }
     }
 
-removeItem(row: any) {
-        console.log('row', row);  
+    private patchLocationDropdowns(countryName: string, stateName: string, cityName: string) {
+    const country = this.countries.find((c) => c.country_name?.toLowerCase() === countryName?.toLowerCase());
+    if (!country) return;
+    this.masterForm.patchValue({ countryforall: country.country_id });
+
+    const statePayload = this.createParameterBased('STATE', country.country_id);
+    this.inventoryService.getparameterbased(statePayload).subscribe({
+        next: (res) => {
+            this.states = res.data || [];
+            const state = this.states.find((s: any) => s.state_name?.toLowerCase() === stateName?.toLowerCase());
+            if (!state) return;
+            this.masterForm.patchValue({ stateforall: state.state_id });
+
+            const cityPayload = this.createParameterBased('CITY', state.state_id);
+            this.inventoryService.getparameterbased(cityPayload).subscribe({
+                next: (cres) => {
+                    this.cities = cres.data || [];
+                    const city = this.cities.find((c: any) => c.city_name?.toLowerCase() === cityName?.toLowerCase());
+                    if (city) {
+                        this.masterForm.patchValue({ cityforall: city.city_id });
+                    }
+                }
+            });
+        }
+    });
+}
+
+    createPayloadRemoved(returnType: string, returnValue: string) {
+        return {
+            p_returntype: returnType,
+            p_returnvalue: returnValue,
+            p_username: '',
+            p_companyid: this.authService.isLogIntType()?.companyid.toString()
+        };
+    }
+
+    removeItem(row: any) {
+        console.log('row', row);
         this.confirmationService.confirm({
             message: 'Are you sure you want to delete this?',
             header: 'Confirm',
@@ -416,27 +461,27 @@ removeItem(row: any) {
             rejectLabel: 'Cancel',
             accept: () => {
                 const master = this.masterForm.get('master')?.value;
-                const username = this.authService.isLogIntType().username;
-                let api$;
-                if(master === 'customermaster'){
-                     const payload = {
-                    p_type: "CUSTOMER",
-                    p_transaction_id: row.customerid,
-                    p_username: username
-                };
-                api$ = this.inventoryService.deletetransaction(payload);
-                }else{
-                    const payload = {
-                    p_type: "SUPPLIER",
-                    p_transaction_id: row.supplierid,
-                    p_username: username
-                };
-                api$ = this.inventoryService.deletetransaction(payload);
+                let payload: any;
+                let returnType = '';
+                let returnValue = '';
+                if (master === 'customermaster') {
+                    returnType = 'CUSTOMER';
+                    returnValue = row.customerid;
+                } else if (master === 'usertype') {
+                    returnType = 'REMOVEUSERTYPE';
+                    returnValue = row.usertypeid;
+                } else {
+                    returnType = 'ADVANCE';
+                    returnValue = row.id; 
                 }
+                payload = this.createPayloadRemoved(returnType, returnValue);
+
+                const api$ = this.userService.removeDataParameter(payload);
+
                 api$.subscribe({
                     next: (res) => {
-                        this.showSuccess(res.message.message);
-                        this.onGetDataList();
+                        this.showSuccess(res.data.message);
+                        this.loadMasterData(master);
                     }
                 });
             },
@@ -449,34 +494,41 @@ removeItem(row: any) {
         this.editMode = false;
         this.selectedUser = null;
     }
-   
+
     loadMasterData(masterKey: string) {
-      const payloadType = this.masterPayloadMap[masterKey];
-    if (!payloadType) return;
+        const payloadType = this.masterPayloadMap[masterKey];
+        if (!payloadType) return;
 
-    const returnValue = masterKey === 'usertype'
-        ? (this.authService.isLogIntType()?.industrytype ?? '')
-        : '';
+        if (masterKey === 'usertype') {
+            const payload = {
+                p_returntype: 'USERTYPEALL',
+                p_returnvalue: this.authService.isLogIntType()?.industrytype,
+                p_username: this.authService.isLogIntType()?.companyid.toString()
+            };
 
-    const payload = {
-        p_returntype: payloadType,
-        p_username: returnValue
-    };
-    // const payloaddata  = this.createDropdownPayload(payloadType, returnValue)
-        this.inventoryService.getdropdowndetails(payload).subscribe({
-            next: (res) => {
-                this.masterDetails = res.message || [];
-                this.filterMaster = [...this.masterDetails];
-            },
-            error: (err) => console.log(err)
-        });
+            this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+                next: (res) => {
+                    this.masterDetails = res.data || [];
+                    this.filterMaster = [...this.masterDetails];
+                },
+                error: (err) => console.log(err)
+            });
+        } else {
+            this.inventoryService.getdropdowndetails(payloadType).subscribe({
+                next: (res) => {
+                    this.masterDetails = res.data || [];
+                    this.filterMaster = [...this.masterDetails];
+                },
+                error: (err) => console.log(err)
+            });
+        }
     }
     onUserCreation(data: any) {
         const username = this.authService.isLogIntType().username;
         const master = this.masterForm.get('master')?.value;
-        const countryName = this.countries.find(c=> c.country_id === data.countryforall)?.country_name ?? '';
-        const stateName = this.states.find(s=> s.state_id === data.stateforall)?.state_name ?? '';
-        const cityName = this.cities.find(c=> c.city_id === data.cityforall)?.city_name ?? '';
+        const countryName = this.countries.find((c) => c.country_id === data.countryforall)?.country_name ?? '';
+        const stateName = this.states.find((s) => s.state_id === data.stateforall)?.state_name ?? '';
+        const cityName = this.cities.find((c) => c.city_id === data.cityforall)?.city_name ?? '';
 
         let apicall$;
         if (master === 'customermaster') {
@@ -509,12 +561,14 @@ removeItem(row: any) {
                 p_supplierpincode: data.supplierpincode,
                 p_supplierphone: data.supplierphone,
                 p_supplieremail: data.supplieremail,
-                p_suppliergstno: data.suppliergstno,
+                p_suppliergstno: data.suppliergst,
                 p_suppliercontactperson: data.suppliercontactname,
                 p_suppliercontactphone: data.suppliercontactphone,
                 p_suppliercontactemail: data.suppliercontactemail,
                 p_isactive: data.checked ? 'Y' : 'N',
-                p_username: username
+                p_username: username,
+                p_paymentterm: data.payment_term,
+                p_prefferedvendor:data.preferred_vendor ? 'Y':'N',
             };
             apicall$ = this.inventoryService.upsertsuppliermaster(payload);
         } else {
@@ -523,7 +577,7 @@ removeItem(row: any) {
         apicall$.subscribe({
             next: (res) => {
                 this.visibleDialog = false;
-                this.showSuccess(res.message.message);
+                this.showSuccess(res.data.message);
                 this.onGetDataList();
             },
             error: (err) => {
@@ -534,9 +588,9 @@ removeItem(row: any) {
 
     onGetDataList() {
         const master = this.masterForm.get('master')?.value;
-        
-         this.masterDetails = [];
-    this.filterMaster = [];
+
+        this.masterDetails = [];
+        this.filterMaster = [];
 
         let apicall$;
         if (master === 'customermaster') {
@@ -550,189 +604,230 @@ removeItem(row: any) {
         }
         apicall$.subscribe({
             next: (res) => {
-                this.masterDetails = res.message || [];
-                this.filterMaster=[...this.masterDetails];
+                this.masterDetails = res.data || [];
+                this.filterMaster = [...this.masterDetails];
             },
             error: (err) => console.log(err)
         });
     }
 
     onGetCountry() {
-        const payload = this.createDropdownPayload('COUNTRY');
-        this.inventoryService.getdropdowndetails(payload).subscribe({
+        const payload = this.createParameterBased('COUNTRY','');
+        this.inventoryService.getparameterbased(payload).subscribe({
             next: (res) => {
-                this.countries = res.message || [];
+                this.countries = res.data || [];
             },
             error: (err) => console.log(err)
         });
     }
 
-onGetStateForEdit(countryId: any, stateName: string, cityName: string) {
-    const payload = {
-        p_returntype: 'STATE',
-        p_returnvalue: countryId
-    };
-    this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-        next: (res) => {
-            this.states = res.message || [];
+    // onGetStateForEdit(countryId: any, stateName: string, cityName: string) {
+    //     const payload = {
+    //         p_returntype: 'STATE',
+    //         p_returnvalue: countryId
+    //     };
+    //     this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+    //         next: (res) => {
+    //             this.states = res.data || [];
 
-            // ✅ Match state by name
-            const state = this.states.find(s =>
-                s.state_name?.toLowerCase() === stateName?.toLowerCase()
-            );
-            if (state) {
-                this.masterForm.patchValue({ stateforall: state.state_id });
-                this.onGetCityForEdit(state.state_id, cityName);
-            } else {
-                console.log('State not found for:', stateName);
-            }
-        },
-        error: (err) => console.log(err)
-    });
-}
+    //             // ✅ Match state by name
+    //             const state = this.states.find((s) => s.state_name?.toLowerCase() === stateName?.toLowerCase());
+    //             if (state) {
+    //                 this.masterForm.patchValue({ stateforall: state.state_id });
+    //                 this.onGetCityForEdit(state.state_id, cityName);
+    //             } else {
+    //                 console.log('State not found for:', stateName);
+    //             }
+    //         },
+    //         error: (err) => console.log(err)
+    //     });
+    // }
 
-onGetCityForEdit(stateId: any, cityName: string) {
-    const payload = {
-        p_returntype: 'CITY',
-        p_returnvalue: stateId
-    };
-    this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-        next: (res) => {
-            this.cities = res.message || [];
+    // onGetCityForEdit(stateId: any, cityName: string) {
+    //     const payload = {
+    //         p_returntype: 'CITY',
+    //         p_returnvalue: stateId
+    //     };
+    //     this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+    //         next: (res) => {
+    //             this.cities = res.data || [];
 
-            // ✅ Match city by name
-            const city = this.cities.find(c =>
-                c.city_name?.toLowerCase() === cityName?.toLowerCase()
-            );
-            if (city) {
-                this.masterForm.patchValue({ cityforall: city.city_id });
-            } else {
-                console.log('City not found for:', cityName);
-            }
-        },
-        error: (err) => console.log(err)
-    });
-}
+    //             // ✅ Match city by name
+    //             const city = this.cities.find((c) => c.city_name?.toLowerCase() === cityName?.toLowerCase());
+    //             if (city) {
+    //                 this.masterForm.patchValue({ cityforall: city.city_id });
+    //             } else {
+    //                 console.log('City not found for:', cityName);
+    //             }
+    //         },
+    //         error: (err) => console.log(err)
+    //     });
+    // }
 
     onGetStateChange(data: any) {
-        const stateId = data.value;
-        this.masterForm.patchValue({
-            cityforall: ''
-        });
-        this.cities = [];
+        // const stateId = data.value;
+        // this.masterForm.patchValue({
+        //     cityforall: ''
+        // });
+        // this.cities = [];
 
-        if (!stateId) {
-            return;
-        }
+        // if (!stateId) {
+        //     return;
+        // }
 
-        const payload = {
-            ...this.getUserDetails,
-            p_returntype: 'CITY',
-            p_returnvalue: stateId
-        };
+        // const payload = {
+        //     ...this.getUserDetails,
+        //     p_returntype: 'CITY',
+        //     p_returnvalue: stateId
+        // };
 
-        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-            next: (res) => {
-                if (res.message && res.message.length > 0) {
-                    this.cities = res.message;
-                    this.masterForm.patchValue({
-                        cityforall: res.message[0].city_id
-                    });
-                }
-            },
-            error: (err) => console.log(err)
-        });
-    }
-
-    onCountryChange(event: any) {
-        const countryId = event.value;
-        const payload = {
-            p_returntype: 'STATE',
-            p_returnvalue: countryId
-        };
-        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-            next: (res) => {
-                if (res.message && res.message.length > 0) {
-                    this.states = res.message;
-                }
+        // this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+        //     next: (res) => {
+        //         if (res.data && res.data.length > 0) {
+        //             this.cities = res.data;
+        //             this.masterForm.patchValue({
+        //                 cityforall: res.data[0].city_id
+        //             });
+        //         }
+        //     },
+        //     error: (err) => console.log(err)
+        // });
+        const payload = this.createParameterBased('CITY', data.value);
+        this.inventoryService.getparameterbased(payload).subscribe({
+            next:(res)=>{
+              if (res.data && res.data.length > 0) {
+                    this.cities = res.data;
+                }   
             }
         })
     }
 
-//     onGetStateChange(data: any) {
-//   const stateId = data.value;
-//   this.masterForm.patchValue({ suppliercity: '', customercity: '' });
-//   this.cities = [];
-//   if (!stateId) return;
-
-//   const stateCode = this.states.find(s => s.state_id === stateId);
-//   if (stateCode) {
-//     this.masterForm.patchValue({
-//       customerstate: stateCode.state_id,
-//       supplierstate: stateCode.state_id
-//     });
-//   }
-
-//   const payload = { p_returntype: 'CITY', p_returnvalue: stateId };
-//   this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-//     next: (res) => {
-//       if (res.message?.length > 0) {
-//         this.cities = res.message;
-//         this.masterForm.patchValue({ customercity: res.message[0].city_id });
-//       }
-//     },
-//     error: (err) => console.log(err)
-//   });
-// }
-
-  onSubmit() {
-    if (this.masterForm.invalid) {
-        this.masterForm.markAllAsTouched();
-        return;
+    onCountryChange(event: any) {
+        const payload = this.createParameterBased('STATE',event.value)
+        this.inventoryService.getparameterbased(payload).subscribe({
+            next: (res) => {
+                if (res.data && res.data.length > 0) {
+                    this.states = res.data;
+                }
+            }
+        });
     }
 
-    const master = this.selectedMaster;
+    //     onGetStateChange(data: any) {
+    //   const stateId = data.value;
+    //   this.masterForm.patchValue({ suppliercity: '', customercity: '' });
+    //   this.cities = [];
+    //   if (!stateId) return;
 
-    // Customer & Supplier use their own method
-    if (master === 'customermaster' || master === 'suppliermaster') {
-        this.onUserCreation(this.masterForm.getRawValue());
-        return;
-    }
+    //   const stateCode = this.states.find(s => s.state_id === stateId);
+    //   if (stateCode) {
+    //     this.masterForm.patchValue({
+    //       customerstate: stateCode.state_id,
+    //       supplierstate: stateCode.state_id
+    //     });
+    //   }
 
-    // All other masters
-    const data = this.masterForm.getRawValue();
-    const payloadMap: Record<string, any> = {
-        categorymaster: {
-            p_operationtype: this.editMode ? 'UPDATE' : 'INSERT',
-            p_categoryname: data.p_categoryname,
-            p_categorydesc: data.p_categorydesc,
-            p_active: data.checked ? 'Y' : 'N'
-        },
-        usertype: {
-            p_operationtype: this.editMode ? 'UPDATE' : 'INSERT',
-            p_usertype: data.p_usertype,
-            p_active: data.checked ? 'Y' : 'N'
+    //   const payload = { p_returntype: 'CITY', p_returnvalue: stateId };
+    //   this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+    //     next: (res) => {
+    //       if (res.data?.length > 0) {
+    //         this.cities = res.data;
+    //         this.masterForm.patchValue({ customercity: res.data[0].city_id });
+    //       }
+    //     },
+    //     error: (err) => console.log(err)
+    //   });
+    // }
+
+    onSubmit() {
+        if (this.masterForm.invalid) {
+            this.masterForm.markAllAsTouched();
+            return;
         }
-    };
 
-    const payload = payloadMap[master];
-    if (!payload) return;
+        const master = this.selectedMaster;
 
-    this.userService.OnUserHeaderCreate(payload).subscribe({
-        next: () => { this.visibleDialog = false; this.loadMasterData(master); },
-        error: (err) => console.error(err)
-    });
-}
+        // Customer & Supplier use their own method
+        if (master === 'customermaster' || master === 'suppliermaster') {
+            this.onUserCreation(this.masterForm.getRawValue());
+            return;
+        }
 
-   createDropdownPayload(returnType: string, returnvalue: string = '') {
-    return {
-        p_username: this.authService.isLogIntType()?.userid,
-        p_returntype: returnType,
-        // p_returnvalue: returnvalue
-    };
-}
+        // All other masters
+        const data = this.masterForm.getRawValue();
+        const payloadMap: Record<string, any> = {
+            categorymaster: {
+                p_operationtype: this.editMode ? 'UPDATE' : 'INSERT',
+                p_categoryname: data.p_categoryname,
+                p_categorydesc: data.p_categorydesc,
+                p_active: data.checked ? 'Y' : 'N'
+            },
+            usertype: {
+                p_usertypeid: this.editMode ? this.selectedUser?.usertypeid : 0,
+                p_usertypename: data.p_usertype,
+                p_isactive: data.checked ? 'Y' : 'N',
+                p_loginuser: this.authService.isLogIntType()?.userid.toString(),
+                p_companyid: this.authService.isLogIntType()?.companyid,
+                p_industrytype: this.authService.isLogIntType()?.industrytype,
+                p_isapproval: data.is_approval ? 'Y' : 'N',
+                p_webaccess: data.web_access ? 'Y' : 'N'
+            },
+            supplier: {
+                 p_supplierid: this.editMode? this.selectedUser?.supplierid : 0,
+      p_suppliername: data.suppliername,
+      p_supplieraddress: data.supplieraddress,
+      p_suppliercountry: data.countryforall,
+      p_supplierstate: data.stateforall,
+      p_suppliercity: data.cityforall,
+      p_supplierpincode: data.supplierpincode,
+      p_supplierphone: data.supplierphone,
+      p_supplieremail: data.supplieremail,
+      p_suppliergstno: data.suppliergst,
+      p_suppliercontactperson: data.suppliercontactname,
+      p_suppliercontactphone: data.suppliercontactphone,
+      p_suppliercontactemail: data.suppliercontactemail,
+      p_isactive:data.checked ? 'Y' : 'N',
+      p_username: this.authService.isLogIntType()?.userid.toString(),
+      p_prefferedvendor: data.preferred_vendor ? 'Y':'N',
+      p_paymentterm : data.payment_term
+            }
+        };
+
+        const payload = payloadMap[master];
+        console.log(payload, payload.usertypeid);
+        if (!payload) return;
+        const api$ = master === 'usertype' ? this.userService.upsertUserType(payload) : this.userService.upsertSupplierMaster(payload);
+        api$.subscribe({
+            next: (res: any) => {
+                this.visibleDialog = false;
+                this.loadMasterData(master);
+                this.showSuccess(res.data.msg);
+            },
+            error: (err) => console.error(err)
+        });
+    }
+
+    createDropdownPayload(returnType: string, returnvalue: string = '') {
+        return {
+            p_username: this.authService.isLogIntType()?.userid,
+            p_returntype: returnType
+            // p_returnvalue: returnvalue
+        };
+    }
+
+    createParameterBased(type:string, value: string){
+         const userId = this.authService.isLogIntType()?.userid;
+         const companyId= this.authService.isLogIntType()?.companyid;
+       return{ 
+        returnType: type,
+        returnValue: value,
+        username: userId,
+        option1: companyId,
+        option2: ''
+       }
+    }
     /** 🔍 Global Filter **/
-   
+
     applyGlobalFilter() {
         const value = this.globalFilter?.toLowerCase().trim();
         if (!value) {
@@ -756,4 +851,3 @@ onGetCityForEdit(stateId: any, cityName: string) {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: message });
     }
 }
-

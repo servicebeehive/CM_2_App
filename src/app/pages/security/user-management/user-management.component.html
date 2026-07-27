@@ -13,7 +13,7 @@
     </div>
 
     <!-- 📋 User Table -->
-    <p-table [value]="filteredUser" dataKey="id" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[ 10, 20]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines mt-6">
+    <p-table [value]="filteredUser" dataKey="id" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines mt-6">
         <ng-template pTemplate="header">
             <tr>
                 <th>User Role</th>
@@ -35,7 +35,7 @@
                 <td>{{ user.isactive }}</td>
                 <td class="text-center">
                     <i class="pi pi-pencil cursor-pointer text-blue-500" (click)="openEditDialog(user)"></i>
-                     <i class="pi pi-trash ms-2 text-red-500 cursor-pointer text-sm md:text-base" (click)="removeItem(user)"> </i>
+                    <i class="pi pi-trash ms-2 text-red-500 cursor-pointer text-sm md:text-base" (click)="removeItem(user)"> </i>
                 </td>
             </tr>
         </ng-template>
@@ -48,7 +48,6 @@
     <p-dialog header="{{ editMode ? 'Edit User' : 'Add User' }}" [(visible)]="visibleDialog" [modal]="true" [style]="{ width: '60vw' }" [draggable]="false" [resizable]="false">
         <form [formGroup]="userForm" (ngSubmit)="onSubmit()" class="space-y-6">
             <div class="grid grid-cols-2 gap-x-6 gap-y-4">
-
                 <!-- User Full Name -->
                 <div class="flex flex-col">
                     <label class="font-medium mb-1">Full Name <span class="text-red-500">*</span></label>
@@ -57,7 +56,7 @@
                 </div>
 
                 <!-- User Name -->
-               <div class="flex flex-col">
+                <div class="flex flex-col">
                     <label class="font-medium mb-1">Mobile <span class="text-red-500">*</span></label>
                     <input pInputText type="text" formControlName="p_uname" maxlength="10" placeholder="Mobile" (keypress)="allowOnlyDigits($event)" />
                     <small class="text-red-500 mt-1" *ngIf="userForm.get('p_uname')?.touched && userForm.get('p_uname')?.invalid"> Enter a valid 10-digit mobile number </small>
@@ -70,30 +69,21 @@
                     <small class="text-red-500 mt-1" *ngIf="userForm.get('p_utypeid')?.touched && userForm.get('p_utypeid')?.invalid"> User Role is required </small>
                 </div>
 
-                <!-- Project (Multi Select) -->
-<div class="flex flex-col">
-    <label class="font-medium mb-1">Project <span class="text-red-500">*</span></label>
-    <p-multiSelect
-        [options]="projectOptions"
-        optionLabel="project_name"
-        optionValue="project_id"
-        formControlName="p_projectid"
-        placeholder="Select Projects"
-        display="chip"
-        [filter]="true"
-        filterPlaceHolder="Search Project"
-        appendTo="body"
-    ></p-multiSelect>
-    <small class="text-red-500 mt-1" *ngIf="userForm.get('p_projectid')?.touched && userForm.get('p_projectid')?.invalid">
-        At least one project is required
-    </small>
-</div>
-
-                 <!-- Email -->
+                <!-- Site (Multi Select) -->
                 <div class="flex flex-col">
-                    <label class="font-medium mb-1">Email <span class="text-red-500">*</span></label>
-                    <input pInputText type="email" formControlName="p_email" placeholder="Email" />
-                    <small class="text-red-500 mt-1" *ngIf="userForm.get('p_email')?.touched && userForm.get('p_email')?.invalid"> Enter a valid email address </small>
+                    <label class="font-medium mb-1">Site <span class="text-red-500">*</span></label>
+                    <p-multiSelect
+                        [options]="projectOptions"
+                        optionLabel="project_name"
+                        optionValue="project_id"
+                        formControlName="p_projectid"
+                        placeholder="Select Sites"
+                        display="chip"
+                        [filter]="true"
+                        filterPlaceHolder="Search Site"
+                        appendTo="body"
+                    ></p-multiSelect>
+                    <small class="text-red-500 mt-1" *ngIf="userForm.get('p_projectid')?.touched && userForm.get('p_projectid')?.invalid"> At least one site is required </small>
                 </div>
 
                 <!-- Password -->
@@ -121,6 +111,13 @@
                     <small class="text-red-500 mt-1" *ngIf="userForm.hasError('passwordMismatch')"> Passwords do not match </small>
                 </div>
 
+                <!-- Email -->
+                <div class="flex flex-col">
+                    <label class="font-medium mb-1">Email <span class="text-red-500">*</span></label>
+                    <input pInputText type="email" formControlName="p_email" placeholder="Email" />
+                    <small class="text-red-500 mt-1" *ngIf="userForm.get('p_email')?.touched && userForm.get('p_email')?.invalid"> Enter a valid email address </small>
+                </div>
+
                 <!-- Mobile -->
                 <!-- <div class="flex flex-col">
                     <label class="font-medium mb-1">Mobile <span class="text-red-500">*</span></label>
@@ -129,7 +126,7 @@
                 </div> -->
 
                 <!-- Active -->
-                <div class="flex gap-3 mt-3">
+                <div class="flex gap-3 mt-9">
                     <p-checkbox formControlName="checked" [binary]="true"></p-checkbox>
                     <label class="font-medium">Active</label>
                 </div>

@@ -10,6 +10,9 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TooltipModule } from 'primeng/tooltip';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { AuthService } from '@/core/services/auth.service';
+import { InventoryService } from '@/core/services/inventory.service';
+import { UserService } from '@/core/services/user.service';
+import { UpsertPermission } from '@/core/models/inventory.model';
 
 @Component({
     selector: 'app-access-control',
@@ -22,7 +25,9 @@ export class AccessControlComponent {
     constructor(
         private confirmationService: ConfirmationService,
         private messageService: MessageService,
-        private authService: AuthService
+        private authService: AuthService,
+        private inventoryService: InventoryService,
+        private userService: UserService
     ) {}
     roleOptions: any[] = [];
     selectedRole: any = null;
@@ -31,11 +36,13 @@ export class AccessControlComponent {
     restrictPermissions: any[] = [];
     selectedAccess: string = 'M';
     companyId = '';
+    industryType = '';
 
     ngOnInit() {
         this.companyId = this.authService.isLogIntType()?.companyid.toString();
+        this.industryType = this.authService.isLogIntType()?.industry_type_id.toString();
         this.loadDropdown('ACCESSPERMISSION', 'allPermissions', this.selectedAccess);
-        this.loadDropdown('ACCESSUSERPROFILE', 'roleOptions', '');
+        this.loadDropdown('USERTYPEALL', 'roleOptions', this.industryType);
         this.availablePermissions = JSON.parse(JSON.stringify(this.allPermissions));
     }
 
@@ -47,38 +54,37 @@ export class AccessControlComponent {
     }
     loadDropdown(type: string, key: 'roleOptions' | 'allPermissions' | 'restrictPermissions', value: string) {
         const payload: any = {
-            returnType: type,
-            returnValue: value,
-            username: '',
-            option1: this.companyId,
-            option2: ''
+            p_returntype: type,
+            p_returnvalue: value,
+            p_username: this.industryType,
         };
 
-        // this.setupService.onDropdownDetails(payload).subscribe({
-        //     next: (res) => {
-        //         this[key] = res.data;
-        //         if (type === 'ACCESSPERMISSION') {
-        //             this.availablePermissions = this.clonePermissions(this.allPermissions);
-        //             if (this.selectedRole) {
-        //                 const selectedUser = this.roleOptions.find((r) => r.profileid === this.selectedRole);
-        //                 const value = selectedUser?.profilename ?? '';
-        //                 this.loadDropdown('ACCESSCONTROL', 'restrictPermissions', value);
-        //             }
-        //         }
-        //         if (type === 'ACCESSCONTROL') {
-        //             this.restrictPermissions = this.allPermissions.filter((p) => res.data.some((a: any) => a.access_name === p.access_name)).map((p) => ({ ...p, selected: false }));
-        //             this.availablePermissions = this.allPermissions.filter((p) => !this.restrictPermissions.some((r) => r.access_name === p.access_name)).map((p) => ({ ...p, selected: false }));
-        //         }
-        //     }
-        // });
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res) => {
+                this[key] = res.data;
+                if (type === 'ACCESSPERMISSION') {
+                    this.availablePermissions = this.clonePermissions(this.allPermissions);
+                    if (this.selectedRole) {
+                        const selectedUser = this.roleOptions.find((r) => r.usertypeid === this.selectedRole);
+                        const value = selectedUser.usertypecode;
+                        this.loadDropdown('ACCESSCONTROL', 'restrictPermissions', value);
+                    }
+                }
+                if (type === 'ACCESSCONTROL') {
+                    this.restrictPermissions = this.allPermissions.filter((p) => res.data.some((a: any) => a.access_name === p.access_name)).map((p) => ({ ...p, selected: false }));
+                    this.availablePermissions = this.allPermissions.filter((p) => !this.restrictPermissions.some((r) => r.permissionid === p.permissionid)).map((p) => ({ ...p, selected: false }));
+                }
+            }
+        });
     }
 
     onRoleChange() {
-        const selectedUser = this.roleOptions.find((r) => r.profileid === this.selectedRole);
-        const value = selectedUser?.profilename ?? '';
+        const selectedUser = this.roleOptions.find((r) => r.usertypeid === this.selectedRole);
+        const value = selectedUser.usertypecode;
         this.restrictPermissions = [];
         this.availablePermissions = this.clonePermissions(this.allPermissions);
         this.loadDropdown('ACCESSCONTROL', 'restrictPermissions', value);
+        console.log('rest',this.restrictPermissions, this.allPermissions)
     }
 
     private clonePermissions(permissions: any[]): any[] {
@@ -109,27 +115,27 @@ export class AccessControlComponent {
 
     onSecuirtyPermission() {
         const userid = this.authService.isLogIntType()?.userid;
-        const payload: any = {
-            companyId: this.companyId,
-            profileId: this.selectedRole,
-            permission: this.restrictPermissions.map((p) => p.permissionid),
-            pType: this.selectedAccess,
-            created: userid
+        const payload: UpsertPermission = {
+            p_companyid: this.companyId,
+            p_profileid: this.selectedRole,
+            p_permissions: this.restrictPermissions.map((p) => p.permissionid),
+            p_type: this.selectedAccess,
+            p_created_by: userid
         };
 
-        // this.setupService.onSubmitSecurity(payload).subscribe({
-        //     next: (res) => {
-        //         let severity, summary;
-        //         if (res.data.status) {
-        //             severity = 'success';
-        //             summary = 'Success';
-        //         } else {
-        //             severity = 'error';
-        //             summary = 'failed';
-        //         }
-        //         this.showSuccess(severity, summary, res.data.message);
-        //     }
-        // });
+        this.userService.upsertPofilepermission(payload).subscribe({
+            next: (res) => {
+                let severity, summary;
+                if (res.data.status) {
+                    severity = res.data.status;
+                    summary = 'Success';
+                } else {
+                    severity = res.data.status;
+                    summary = 'failed';
+                }
+                this.showSuccess(severity, summary, res.data.message);
+            }
+        });
     }
 
     submit() {

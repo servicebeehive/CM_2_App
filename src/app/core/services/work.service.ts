@@ -2,7 +2,7 @@ import { environment } from "@/environments/environment";
 import { HttpClient } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 import { ShareService } from "./shared.service";
-import { MaterialForecastPayload, UpserWorkList } from "../models/authmodel/work.model";
+import { MaterialForecastPayload, PurchaseDraftPayload, PurchaseOrderPayload, UpserWorkList } from "../models/authmodel/work.model";
 import { catchError, Observable, throwError } from "rxjs";
 import { API_ENDPOINTS } from "../config/api-endpoints";
 
@@ -23,6 +23,22 @@ export class WorkService {
       upsertMaterialForecast(payload:MaterialForecastPayload):Observable<any>{
         let payloaddata = this.shareservice.GetApiBody(payload)
         let url = `${this.baseUrl}${API_ENDPOINTS.work.upsertmaterialforecast}`;
+        return this.http.post<any>(url,payloaddata).pipe(catchError(error=>{
+            return throwError(()=>error)
+        }))
+      }
+
+      upsertPODraft(payload:PurchaseDraftPayload):Observable<any>{
+        let payloaddata = this.shareservice.GetApiBody(payload)
+        let url = `${this.baseUrl}${API_ENDPOINTS.work.upsertpurchasedraft}`;
+        return this.http.post<any>(url,payloaddata).pipe(catchError(error=>{
+            return throwError(()=>error)
+        }))
+      }
+
+      upsertPurchaseOrder(payload:PurchaseOrderPayload):Observable<any>{
+        let payloaddata = this.shareservice.GetApiBody(payload)
+        let url = `${this.baseUrl}${API_ENDPOINTS.work.upsertpurchaseorder}`;
         return this.http.post<any>(url,payloaddata).pipe(catchError(error=>{
             return throwError(()=>error)
         }))

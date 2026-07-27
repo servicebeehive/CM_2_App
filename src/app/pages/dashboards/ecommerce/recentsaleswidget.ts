@@ -113,7 +113,7 @@ export class RecentSalesWidget {
         };
         this.OnttopBarService.GettopBarCard(apibody).subscribe({
             next: (res) => {
-                const data = res.message;
+                const data = res.data;
                 this.products = data;
             }
         });

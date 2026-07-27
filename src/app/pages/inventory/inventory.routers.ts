@@ -3,7 +3,6 @@ import { StockInComponent } from './stock-in/stock-in.component';
 import { AddinventoryComponent } from './addinventory/addinventory.component';
 import { StockAdjustmentComponent } from './stock-adjustment/stock-adjustment.component';
 import { TransactionComponent } from './transaction/transaction.component';
-import { IndentComponent } from './indent/indent.component';
 import { MaterialForcastingComponent } from './material-forcasting/material-forcasting.component';
 import { WorkComponent } from './work/work.component';
 import { PurchaseOrderComponent } from './purchase-order/purchase-order.component';
@@ -11,12 +10,12 @@ import { GrnComponent } from './grn/grn.component';
 import { QualityInspectionComponent } from './quality-inspection/quality-inspection.component';
 import { MaterialIssueComponent } from './material-issue/material-issue.component';
 import { MaterialReturnComponent } from './material-return/material-return.component';
+import { ProjectComponent } from './project/project.component';
 
 export default [
     { path: 'stock-in', component: StockInComponent },
     { path: 'addinventory', component: AddinventoryComponent },
     { path: 'stock-adjustment', component: StockAdjustmentComponent },
-    { path: 'indent', component: IndentComponent },
     { path: 'transaction', component: TransactionComponent },
     { path: 'material-forcasting', component: MaterialForcastingComponent },
     { path: 'work', component: WorkComponent },
@@ -25,5 +24,6 @@ export default [
     { path: 'quality-inspection', component: QualityInspectionComponent },
     { path: 'material-issue', component: MaterialIssueComponent },
     { path: 'material-return', component: MaterialReturnComponent },
+    { path: 'project', component: ProjectComponent },
     { path: '**', redirectTo: '/notfound' }
 ] as Routes;

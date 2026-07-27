@@ -38,11 +38,11 @@
                 <small class="text-red-500 mt-1 text-xs" *ngIf="minForm.get('p_issuedate')?.touched && minForm.get('p_issuedate')?.errors?.['required']"> Issue Date is required </small>
             </div>
 
-            <!-- Project -->
+            <!-- Site -->
             <div class="flex flex-col">
-                <label class="font-medium mb-1">Project <span class="text-red-500">*</span></label>
-                <p-dropdown [options]="projectOptions" optionLabel="label" optionValue="value" placeholder="Select Project" formControlName="p_project" [filter]="true" filterPlaceholder="Search Project" [showClear]="true"></p-dropdown>
-                <small class="text-red-500 mt-1 text-xs" *ngIf="minForm.get('p_project')?.touched && minForm.get('p_project')?.errors?.['required']"> Project is required </small>
+                <label class="font-medium mb-1">Site <span class="text-red-500">*</span></label>
+                <p-dropdown [options]="projectOptions" optionLabel="label" optionValue="value" placeholder="Select Site" formControlName="p_project" [filter]="true" filterPlaceholder="Search Site" [showClear]="true"></p-dropdown>
+                <small class="text-red-500 mt-1 text-xs" *ngIf="minForm.get('p_project')?.touched && minForm.get('p_project')?.errors?.['required']"> Site is required </small>
             </div>
 
             <!-- Tower / Block -->

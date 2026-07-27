@@ -130,7 +130,7 @@ export class SaleMangerDashboard {
         };
         this.OnttopBarService.GettopBarCard(apibody).subscribe({
             next: (res) => {
-                const data = res?.message[0];
+                const data = res?.data[0];
                 this.dashboardCards = [
                     {
                         label: 'Total Item -  Sold & Return',
@@ -173,7 +173,7 @@ export class SaleMangerDashboard {
         this.OnttopBarService.GettopBarCard(apibody).subscribe({
             next: (res) => {
                 console.log(res);
-                const data = res.message;
+                const data = res.data;
                 this.products = data;
                 console.log(this.products);
             }

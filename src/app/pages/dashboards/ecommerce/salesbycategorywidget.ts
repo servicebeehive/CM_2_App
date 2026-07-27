@@ -65,7 +65,7 @@ export class SalesByCategoryWidget implements OnInit, OnDestroy {
 
         this.dashboardService.GettopBarCard(apiBody).subscribe({
             next: (res: any) => {
-                const data = res?.message ?? [];
+                const data = res?.data ?? [];
 
                 // 🔹 Transform API response
                 this.months = data.map((item: any) =>

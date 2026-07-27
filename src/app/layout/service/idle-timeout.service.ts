@@ -22,6 +22,6 @@ clearTimeout(this.timeoutId);
 }
 logout(){
     localStorage.clear();
-   window.location.href = 'http://13.201.136.123:8081/';
+   window.location.href = 'http://13.127.7.166:8081/';
 }
 }

@@ -13,48 +13,14 @@ import { RadioButtonModule } from 'primeng/radiobutton';
 import { TableModule } from 'primeng/table';
 import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmationService, MessageService } from 'primeng/api';
-
-// ── Replace these imports with your actual services ──────────────────────────
 import { InventoryService } from '@/core/services/inventory.service';
 import { AuthService } from '@/core/services/auth.service';
 import { FileUploadModule } from 'primeng/fileupload';
 import { TabViewModule } from 'primeng/tabview';
 import { MultiSelectModule } from 'primeng/multiselect';
-// ─────────────────────────────────────────────────────────────────────────────
+import { WorkService } from '@/core/services/work.service';
+import { PurchaseDraftPayload, PurchaseOrderItem, PurchaseOrderPayload } from '@/core/models/authmodel/work.model';
 
-/** Shape of a single MF record returned by the backend */
-export interface MFRecord {
-    mfno: string;
-    department: string;
-    requestedBy: string;
-    forecastDate: string;
-    totalItems: number;
-    status: string;
-    /** Items belonging to this MF */
-    items: MFItem[];
-}
-
-/** A single line item inside an MF */
-export interface MFItem {
-    category: string;
-    item: string;
-    uom: string;
-    forecastQty: number;
-    availableStock: number;
-    pendingPOQty: number;
-    requiredQty: number;
-}
-
-/** A vendor record for comparison */
-export interface VendorRecord {
-    name: string;
-    lastOrder: string;
-    lastRate: number;
-    paymentTerm: string;
-    deliveryDays: number;
-}
-
-/** A single advance payment entry */
 export interface PaymentEntry {
     date: Date;
     amount: number;
@@ -90,36 +56,15 @@ export interface PaymentEntry {
     providers: [ConfirmationService, DatePipe]
 })
 export class PurchaseOrderComponent implements OnInit {
-    // ── Form ───────────────────────────────────────────────────────────────────
     poForm!: FormGroup;
-
-    // ── UI state ───────────────────────────────────────────────────────────────
     today: Date = new Date();
     submitted = false;
-
     isLoadingProjects = false;
     isLoadingLocations = false;
     showForecastError = false;
-
-    // ── Submitted PO list (for the top dropdown) ───────────────────────────────
     poList: { pono: string; [key: string]: any }[] = [];
-
-    // ── Forecast reference chips ───────────────────────────────────────────────
     selectedMFNos: string[] = [];
-
-    // ── Dropdown data (replace with API calls) ─────────────────────────────────
-    projectOptions: { label: string; value: string }[] = [
-        { label: 'Project A', value: 'Project A' },
-        { label: 'Project B', value: 'Project B' },
-        { label: 'Project C', value: 'Project C' }
-    ];
-
-    deliveryLocationOptions: { label: string; value: string }[] = [
-        { label: 'Site Office - Block A', value: 'Site Office - Block A' },
-        { label: 'Site Office - Block B', value: 'Site Office - Block B' },
-        { label: 'Warehouse - Main', value: 'Warehouse - Main' },
-        { label: 'Warehouse - South', value: 'Warehouse - South' }
-    ];
+    projectOptions:any[]=[];
 
     paymentTermsOptions: { label: string; value: string }[] = [
         { label: '30 Days Net', value: '30 Days Net' },
@@ -128,29 +73,24 @@ export class PurchaseOrderComponent implements OnInit {
         { label: 'On Delivery', value: 'On Delivery' }
     ];
 
-    // ── MF Dialog ──────────────────────────────────────────────────────────────
     showMFDialog = false;
-    mfList: MFRecord[] = [];
-    mfSelections: MFRecord[] = [];
-    generatedPONos: { label: string; value: string }[] = [];
+    mfList: any[] = [];
+    mfSelections: any[] = [];
     selectedVendorNames: string[] = [];
+    generatedPONos:any[]=[];
 
-    // ── Vendor Comparison Dialog ───────────────────────────────────────────────
     showVendorDialog = false;
     vendorDialogItem: AbstractControl | null = null;
     vendorDialogIndex: number | null = null;
     vendorFilter: 'lowest' | 'fastest' | 'preferred' = 'lowest';
-    allVendorList: VendorRecord[] = [];
-    filteredVendorList: VendorRecord[] = [];
-    selectedVendor: VendorRecord | null = null;
+    allVendorList:any[] = [];
+    filteredVendorList: any[] = [];
+    selectedVendor: any | null = null;
     performaFileName: string = '';
-
-    // ── Grand total ────────────────────────────────────────────────────────────
+    
+    companyId = '';
+    userId = '';
     grandTotal = 0;
-
-    // ── PO counter (replace with backend auto-increment) ──────────────────────
-    private poCounter = 124;
-    // ── Payment history ────────────────────────────────────────────────────────
     paymentHistory: PaymentEntry[] = [];
     totalPaid = 0;
 
@@ -174,11 +114,13 @@ export class PurchaseOrderComponent implements OnInit {
         private confirmationService: ConfirmationService,
         private messageService: MessageService,
         private authService: AuthService,
-        private datePipe: DatePipe
+        private datePipe: DatePipe,
+        private workService: WorkService
     ) {}
 
     // ── Lifecycle ──────────────────────────────────────────────────────────────
     ngOnInit(): void {
+        this.companyId= this.authService.isLogIntType()?.companyid;
         this.initForm();
         this.loadDropdowns();
     }
@@ -191,7 +133,7 @@ export class PurchaseOrderComponent implements OnInit {
                 p_podate: [this.today, Validators.required],
                 p_project: [null, Validators.required],
                 p_vendor: [{ value: [], disabled: true }],
-                p_deliverylocation: [null],
+                p_deliverylocation: [{value: null, disabled:true}],
                 p_deliverydate: [null],
                 p_paymentterms: [null],
                 p_remarks: [''],
@@ -236,9 +178,8 @@ export class PurchaseOrderComponent implements OnInit {
     // ── Load all dropdowns ─────────────────────────────────────────────────────
     private loadDropdowns(): void {
         this.onGetProject();
-        this.loadDeliveryLocations();
-        this.loadMFList();
-        this.loadDraftPOs();
+      this.onGetDraftPO();
+      this.onGetPO();
     }
 
     private dateRangeValidator(): ValidatorFn {
@@ -285,6 +226,38 @@ export class PurchaseOrderComponent implements OnInit {
         };
     }
 
+onGetPO(){
+ const payload = {
+            p_returntype: 'PONO',
+            p_returnvalue: this.companyId.toString(),
+            username: ''
+        };
+  this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+    next: (res: any) => {
+      this.generatedPONos = res.data;
+    },
+    error: (err: any) => {
+      console.error('Error fetching PO numbers:', err);
+    }
+  });
+}
+
+onGetDraftPO() {
+   const payload = {
+            p_returntype: 'PODRAFT',
+            p_returnvalue: this.companyId.toString(),
+            username: ''
+        };
+  this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+    next: (res: any) => {
+      this.poList = res.data;
+    },
+    error: (err: any) => {
+      console.error('Error fetching PO numbers:', err);
+    }
+  });
+}
+
     onGetProject(): void {
         const companyId = this.authService.isLogIntType().companyid.toString();
         const payload = {
@@ -297,8 +270,16 @@ export class PurchaseOrderComponent implements OnInit {
         this.inventoryService.getparameterbased(payload).subscribe({
             next: (res) => {
                 this.projectOptions = res.data;
-            },
+                },
             error: (err) => console.error(err)
+        });
+    }
+
+    onSiteChange(data:any){
+        const selectedProjectId = data.value;
+        const selectedProject = this.projectOptions.find(p=> p.project_id === selectedProjectId);
+        this.poForm.patchValue({
+            p_deliverylocation: selectedProject?.delivery_location ?? null
         });
     }
 
@@ -306,82 +287,8 @@ export class PurchaseOrderComponent implements OnInit {
         return Number(this.poForm.get('p_totalpayment')?.value || 0);
     }
 
-    /** Live preview of remaining after typing amount in the input row */
     getPreviewRemaining(): number {
         return +(this.getRemainingPayment() - (this.newPayment.amount ?? 0)).toFixed(2);
-    }
-   
-    private loadDeliveryLocations(): void {
-        this.isLoadingLocations = true;
-        // Example:
-        // this.inventoryService.getdropdowndetails({ p_returntype: 'DELIVERY_LOCATION' }).subscribe({
-        //   next: res => {
-        //     this.deliveryLocationOptions = res.data.map((d: any) => ({ label: d.locationname, value: d.locationid }));
-        //     this.isLoadingLocations = false;
-        //   },
-        //   error: () => this.isLoadingLocations = false
-        // });
-        this.isLoadingLocations = false; // remove once API is wired
-    }
-
-    /**
-     * Load approved MF records from backend.
-     * Replace body with your real API call.
-     */
-    private loadMFList(): void {
-        // Example:
-        // this.inventoryService.getdropdowndetails({ p_returntype: 'APPROVED_MF' }).subscribe({
-        //   next: res => { this.mfList = res.data; },
-        //   error: err => console.error(err)
-        // });
-
-        // ── Static mock data — remove once API is wired ────────────────────────
-        this.mfList = [
-            {
-                mfno: 'MF-00125',
-                department: 'Civil',
-                requestedBy: 'Rajesh',
-                forecastDate: '10-Jun-26',
-                totalItems: 15,
-                status: 'Approved',
-                items: [
-                    { category: 'Cement', item: 'Cement OPC 53', uom: 'Bag', forecastQty: 1200, availableStock: 400, pendingPOQty: 300, requiredQty: 500 },
-                    { category: 'Steel', item: 'Steel TMT 12mm', uom: 'Kg', forecastQty: 13500, availableStock: 5000, pendingPOQty: 3000, requiredQty: 5500 }
-                ]
-            },
-            {
-                mfno: 'MF-00128',
-                department: 'Electrical',
-                requestedBy: 'Amit',
-                forecastDate: '11-Jun-26',
-                totalItems: 8,
-                status: 'Approved',
-                items: [{ category: 'Wire', item: 'Copper Wire 2.5mm', uom: 'Mtr', forecastQty: 500, availableStock: 100, pendingPOQty: 50, requiredQty: 350 }]
-            },
-            {
-                mfno: 'MF-00130',
-                department: 'Plumbing',
-                requestedBy: 'Suresh',
-                forecastDate: '11-Jun-26',
-                totalItems: 6,
-                status: 'Approved',
-                items: [{ category: 'Pipe', item: 'PVC Pipe 4 inch', uom: 'Mtr', forecastQty: 200, availableStock: 50, pendingPOQty: 20, requiredQty: 130 }]
-            }
-        ];
-    }
-
-    /**
-     * Load already-submitted draft POs for the top dropdown.
-     * Replace body with your real API call.
-     */
-    private loadDraftPOs(): void {
-        // this.isLoadingPOs = true;
-        // Example:
-        // this.inventoryService.getdropdowndetails({ p_returntype: 'DRAFT_PO' }).subscribe({
-        //   next: res => { this.poList = res.data; this.isLoadingPOs = false; },
-        //   error: () => this.isLoadingPOs = false
-        // });
-        // this.isLoadingPOs = false;
     }
 
     // ── PO dropdown: load a previously submitted PO into the form ─────────────
@@ -407,20 +314,9 @@ export class PurchaseOrderComponent implements OnInit {
         return this.poItemArray.length === 0;
     }
 
-    // ── Submit ─────────────────────────────────────────────────────────────────
     onSubmit(): void {
         this.poForm.markAllAsTouched();
         this.showForecastError = this.selectedMFNos.length === 0;
-
-        if (this.poForm.invalid || this.showForecastError || this.poItemArray.length === 0) {
-            this.messageService.add({
-                severity: 'error',
-                summary: 'Validation Failed',
-                detail: 'Please fill all required fields.',
-                life: 3000
-            });
-            return;
-        }
 
         this.confirmationService.confirm({
             message: 'Are you sure you want to submit this Purchase Order?',
@@ -434,39 +330,68 @@ export class PurchaseOrderComponent implements OnInit {
     }
 
     private savePO(): void {
-        const newPONo = this.generatePONo();
         const formVal = this.poForm.getRawValue();
-
-        const payload = {
-            p_pono: newPONo,
-            p_podate: this.datePipe.transform(formVal.p_podate, 'dd/MM/yyyy'),
-            p_project: formVal.p_project,
-            p_vendor: formVal.p_vendor,
-            p_deliverylocation: formVal.p_deliverylocation,
-            p_deliverydate: this.datePipe.transform(formVal.p_deliverydate, 'dd/MM/yyyy'),
-            p_paymentterms: formVal.p_paymentterms,
+        const payload:PurchaseOrderPayload = {
+            p_action: 'SUBMIT',
+            p_operation:'INSERT',
+            p_po_id: 0,
+            p_draft_id: 0,
+            p_company_id: Number(this.companyId),
+            p_project_id: formVal.p_project,
+            p_department_id: formVal.department_id ||8,
+            p_po_date: this.datePipe.transform(formVal.p_podate, 'yyyy-MM-dd'),
+            p_delivery_date: this.datePipe.transform(formVal.p_deliverydate, 'yyyy-MM-dd'),
+            p_delivery_location: formVal.p_deliverylocation || '',
+            p_payment_terms: formVal.p_paymentterms,
             p_remarks: formVal.p_remarks,
-            p_forecastrefno: this.selectedMFNos.join(', '),
-            p_items: formVal.p_items
+            p_items_json: formVal.p_items,
+            p_loginuser: this.authService.isLogIntType()?.userid.toString()
         };
 
-        // ── Replace below with your real API call ──────────────────────────────
-        // this.inventoryService.createPurchaseOrder(payload).subscribe({
-        //   next: res => { ... },
-        //   error: err => { ... }
-        // });
+     this.workService.upsertPurchaseOrder(payload).subscribe({
+        next: (res: any) => {
+            const data = res.data;
 
-        // ── Mock success flow (remove once API is wired) ────────────────────────
-        this.poList = [...this.poList, { ...payload, pono: newPONo }];
-        this.poForm.patchValue({ p_pono: newPONo });
-        this.submitted = true;
+            if (data.success) {
+                const pos = data.data as any[];
 
-        this.messageService.add({
-            severity: 'success',
-            summary: 'Success',
-            detail: `Purchase Order ${newPONo} submitted successfully!`,
-            life: 3000
-        });
+                   this.generatedPONos = pos.map((po) => ({
+                    po_id: po.po_id,
+                    po_no: po.po_no
+                }));
+
+                this.poForm.patchValue({
+                    p_pono: pos[0]?.po_id ?? null,
+                });
+
+                this.poList = [...this.poList, ...pos];
+                this.submitted = true;
+
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Success',
+                    detail: data.msg,
+                    life: 2500
+                });
+            } else {
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Submit Failed',
+                    detail: data.msg,
+                    life: 3000
+                });
+            }
+        },
+        error: (err) => {
+            console.error(err);
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Submit Failed',
+                detail: err?.error?.error ?? err?.message ?? 'Something went wrong.',
+                life: 3000
+            });
+        }
+    });
     }
 
     // ── Performa ──────────────────────────────────────────────
@@ -537,17 +462,86 @@ export class PurchaseOrderComponent implements OnInit {
         });
     }
 
-    /** Draft: save without final submission */
-    submitDraft(): void {
-        const newPONo = this.generatePONo();
-        this.poForm.patchValue({ p_pono: newPONo });
+private buildItemsPayload(): PurchaseOrderItem[] {
+    return this.poItemArray.controls.map((row) => ({
+        mf_id: row.get('mf_id')?.value,
+        mfdetailid: row.get('mfdetailid')?.value,
+        department_id: row.get('department_id')?.value,
+        vendor_id: row.get('vendor_id')?.value,
+        item_category_id: row.get('item_category_id')?.value,
+        item_id: row.get('item_id')?.value,
+        uom_id: row.get('uom_id')?.value,
+        forecast_qty: row.get('forecastQty')?.value ?? 0,
+        available_stock: row.get('availableStock')?.value ?? 0,
+        pending_po_qty: row.get('pendingPOQty')?.value ?? 0,
+        required_qty: row.get('requiredQty')?.value ?? 0,
+        po_qty: row.get('poQty')?.value ?? 0,
+        rate: row.get('rate')?.value ?? 0,
+        amount: row.get('amount')?.value ?? 0,
+        remarks: row.get('remarks')?.value ?? ''
+    }));
+}
+
+submitDraft(): void {
+    if (this.poItemArray.length === 0) {
+        this.messageService.add({ severity: 'error', summary: 'No Items', detail: 'Add at least one MF item before saving a draft.', life: 3000 });
+        return;
+    }
+
+    const v = this.poForm.getRawValue();
+    console.log('v=',v)
+    const draftId: number = v.p_draft_id ?? 0;
+    const operation = draftId ? 'UPDATE' : 'INSERT';
+
+    const payload:PurchaseDraftPayload = {
+        p_operation: operation,
+        p_draft_id: draftId,
+        p_company_id: Number(this.companyId),
+        p_project_id: v.p_project,
+        p_department_id: v.p_department_id ?? 9, 
+        p_po_date: this.datePipe.transform(v.p_podate, 'yyyy-MM-dd'),
+        p_delivery_date: this.datePipe.transform(v.p_deliverydate, 'yyyy-MM-dd'),
+        p_delivery_location: v.p_deliverylocation || '',
+        p_payment_terms: v.p_paymentterms,
+        p_remarks: v.p_remarks,
+        p_items_json: this.buildItemsPayload(),
+        p_loginuser:this.authService.isLogIntType().userid
+    };
+
+    this.workService.upsertPODraft(payload).subscribe({
+        next: (res) => {
+          
+            if(res.data.success){
+                  this.poForm.patchValue({ 
+                    p_pono: res.data.draft_no,
+                    p_draft_id: res.data.draft_id
+                });
+            this.messageService.add({
+                severity: 'success',
+                summary: res.data.msg,
+                detail: `Draft PO #${res.data.draft_no} saved.`,
+                life: 2500
+            });
+        }else {
         this.messageService.add({
-            severity: 'info',
-            summary: 'Draft Saved',
-            detail: `Draft PO ${newPONo} saved.`,
-            life: 2500
+            severity: 'error',
+            summary: 'Draft Save Failed',
+            detail: res.data.msg,
+            life: 3000
         });
     }
+        },
+        error: (err) => {
+            console.error(err);
+          this.messageService.add({
+        severity: 'error',
+        summary: 'Draft Save Failed',
+        detail: err?.error?.error ?? err?.message ?? 'Something went wrong.',
+        life: 3000
+    });
+        }
+    });
+}
 
     // ── Reset ──────────────────────────────────────────────────────────────────
     onReset(): void {
@@ -558,7 +552,6 @@ export class PurchaseOrderComponent implements OnInit {
         this.submitted = false;
         this.showForecastError = false;
         this.grandTotal = 0;
-        this.generatedPONos = [];
         this.selectedVendorNames = [];
         this.paymentHistory = [];
         this.totalPaid = 0;
@@ -580,58 +573,82 @@ export class PurchaseOrderComponent implements OnInit {
     // ──────────────────────────────────────────────────────────────────────────
     // MF DIALOG
     // ──────────────────────────────────────────────────────────────────────────
-
+   
     openMFDialog(): void {
         // Pre-select already-chosen MFs
-        this.mfSelections = this.mfList.filter((m) => this.selectedMFNos.includes(m.mfno));
+         const payload = {
+            p_returntype: 'MFAPPROVED',
+            p_returnvalue: '',
+            username: ''
+        };
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res) => {
+                this.mfList = res.data;
+                 this.mfSelections = this.mfList.filter((m) => this.selectedMFNos.includes(m.mfno));
         this.showMFDialog = true;
+            },
+            error: (err) => console.error(err)
+        });
+       
     }
 
     confirmMFSelection(): void {
-        this.selectedMFNos = this.mfSelections.map((m) => m.mfno);
+        this.selectedMFNos = this.mfSelections.map((m:any) => m.mf_no); 
         this.poForm.patchValue({ p_forecastrefno: this.selectedMFNos.join(', ') });
         this.showForecastError = false;
-
-        // Merge items from all selected MFs (deduplicate by item name)
-        const merged: MFItem[] = [];
-        this.mfSelections.forEach((mf) => {
-            mf.items.forEach((it) => {
-                if (!merged.find((x) => x.item === it.item)) {
-                    merged.push(it);
-                }
-            });
-        });
-
-        this.mapItemsToFormArray(merged);
         this.showMFDialog = false;
+
+        const payload = {
+         p_returntype: 'MFDETAILSMULTI',
+        p_returnvalue: this.selectedMFNos.join(','), 
+        username: this.userId
+    };
+
+    this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+        next: (res) => {
+            const rows: any[] = res.data || [];
+            this.mapItemsToFormArray(rows);
+        },
+        error: (err) => {
+            console.error(err);
+            this.messageService.add({ severity: 'error', summary: 'Failed to load MF item details', life: 2500 });
+        }
+    });
     }
 
-    /** Build FormArray rows from an array of items */
-    private mapItemsToFormArray(items: MFItem[]): void {
-        this.poItemArray.clear();
-        items.forEach((it) => {
-            this.poItemArray.push(
-                this.fb.group({
-                    category: [it.category],
-                    item: [it.item],
-                    uom: [it.uom],
-                    forecastQty: [it.forecastQty],
-                    availableStock: [it.availableStock],
-                    pendingPOQty: [it.pendingPOQty],
-                    requiredQty: [it.requiredQty],
-                    poQty: [null],
-                    vendorName: [''],
-                    rate: [null],
-                    amount: [null]
-                })
-            );
-        });
-        this.recalcGrandTotal();
-    }
+   private mapItemsToFormArray(items: any[]): void {
+    this.poItemArray.clear();
+    items.forEach((it) => {
+        console.log(it)
+        this.poItemArray.push(
+            this.fb.group({
+                department: [it.department_name ?? ''],
+                mf_no: [it.mf_no ?? ''],
+                category: [it.categoryname ?? ''],
+                item: [it.itemname ?? ''],
+                uom: [it.uomname ?? ''],
+                forecastQty: [it.forecast_qty ?? 0],
+                availableStock: [it.available_stock ?? 0],
+                pendingPOQty: [it.pending_qty ?? 0],
+                requiredQty: [(it.forecast_qty ?? 0) - (it.pending_qty ?? 0) - (it.available_stock ?? 0)],
+                poQty: [null],
+                vendorName: [it.suppliername],
+                rate: [null],
+                amount: [null],
+                remarks: [''],
 
-    // ──────────────────────────────────────────────────────────────────────────
-    // TABLE CALCULATIONS
-    // ──────────────────────────────────────────────────────────────────────────
+                mf_id: [it.mf_id ?? null],
+                mfdetailid: [it.mfdetailid ?? null],
+                department_id: [it.department_id ?? null],
+                vendor_id: [it.supplierid],
+                item_category_id: [it.item_category_id ?? null],
+                item_id: [it.item_id ?? null],
+                uom_id: [it.uom_id ?? null]
+            })
+        );
+    });
+    this.recalcGrandTotal();
+}
 
     onPoQtyChange(i: number): void {
         this.recalcRow(i);
@@ -659,79 +676,72 @@ export class PurchaseOrderComponent implements OnInit {
     // VENDOR COMPARISON DIALOG
     // ──────────────────────────────────────────────────────────────────────────
 
+private vendorFilterReturnTypeMap: Record<string, string> = {
+    lowest: 'VENDORRATE',
+    fastest: 'VENDORFAST',
+    preferred: 'VENDORPREF'
+};
+
     openVendorDialog(row: AbstractControl, index: number): void {
         this.vendorDialogItem = row;
         this.vendorDialogIndex = index;
         this.vendorFilter = 'lowest';
         this.selectedVendor = null;
-
-        // Load vendor list for this item.
-        // Replace with your real API call, e.g.:
-        // this.inventoryService.getVendorsForItem({ p_itemname: row.get('item')?.value }).subscribe({
-        //   next: res => { this.allVendorList = res.data; this.sortVendors(); },
-        //   error: err => console.error(err)
-        // });
-
-        // ── Static vendor mock data — remove once API is wired ─────────────────
-        const itemName: string = row.get('item')?.value || '';
-        const vendorMap: Record<string, VendorRecord[]> = {
-            'Cement OPC 53': [
-                { name: 'Vendor A', lastOrder: 'ACC Cement', lastRate: 380, paymentTerm: '30 Days', deliveryDays: 3 },
-                { name: 'Vendor B', lastOrder: 'Ultratech', lastRate: 370, paymentTerm: 'Advance', deliveryDays: 2 },
-                { name: 'Vendor C', lastOrder: 'ACC Cement', lastRate: 395, paymentTerm: '60 Days', deliveryDays: 5 }
-            ],
-            'Steel TMT 12mm': [
-                { name: 'Vendor A', lastOrder: 'TATA Steel', lastRate: 58, paymentTerm: '30 Days', deliveryDays: 4 },
-                { name: 'Vendor B', lastOrder: 'JSW Steel', lastRate: 55, paymentTerm: 'Advance', deliveryDays: 3 },
-                { name: 'Vendor C', lastOrder: 'SAIL', lastRate: 60, paymentTerm: '60 Days', deliveryDays: 6 }
-            ]
-        };
-        this.allVendorList = vendorMap[itemName] ?? [
-            { name: 'Vendor A', lastOrder: 'Generic', lastRate: 100, paymentTerm: '30 Days', deliveryDays: 3 },
-            { name: 'Vendor B', lastOrder: 'Generic', lastRate: 95, paymentTerm: 'Advance', deliveryDays: 2 },
-            { name: 'Vendor C', lastOrder: 'Generic', lastRate: 110, paymentTerm: '60 Days', deliveryDays: 5 }
-        ];
-
-        this.sortVendors();
+       
         this.showVendorDialog = true;
+        this.fetchVendorsForFilter(row)
     }
 
-    /** Sort the vendor list based on the selected radio filter */
-    sortVendors(): void {
-        const list = [...this.allVendorList];
-        if (this.vendorFilter === 'lowest') {
-            list.sort((a, b) => a.lastRate - b.lastRate);
-        } else if (this.vendorFilter === 'fastest') {
-            list.sort((a, b) => a.deliveryDays - b.deliveryDays);
+    onVendorFilterChange(filter: 'lowest' | 'fastest' | 'preferred'): void {
+    this.vendorFilter = filter;
+    if (this.vendorDialogItem) {
+        this.fetchVendorsForFilter(this.vendorDialogItem);
+    }
+}
+
+    private fetchVendorsForFilter(row:AbstractControl):void{
+        const returnType = this.vendorFilterReturnTypeMap[this.vendorFilter]??'VENDORRATE';
+        const payload = {
+            p_returntype: returnType,
+            p_returnvalue: this.companyId.toString(),
+            username:''
+        };
+
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next:(res:any)=>{
+                console.log(res.data)
+                this.allVendorList = res.data ?? [];
+                this.filteredVendorList = [...this.allVendorList];
+            },
+             error: (err: any) => {
+            console.error('Error fetching vendor list:', err);
+            this.allVendorList = [];
+            this.filteredVendorList = [];
         }
-        // 'preferred' keeps original order
-        this.filteredVendorList = list;
+        });
     }
 
     confirmVendor(): void {
         if (!this.selectedVendor || this.vendorDialogIndex === null) return;
 
-        const v = this.selectedVendor;
+        const v = this.selectedVendor as any;
         const row = this.poItemArray.at(this.vendorDialogIndex);
         const qty = Number(row.get('poQty')?.value || 0);
 
         row.patchValue({
-            vendorName: v.name,
-            rate: v.lastRate,
-            amount: qty ? +(qty * v.lastRate).toFixed(2) : null
+            vendorName: v.suppliername,
+            vendor_id: v.supplierid ?? null,
+            rate: v.lastrate,
+            amount: qty ? +(qty * v.lastrate).toFixed(2) : null
         });
 
-        // Also patch the header vendor field with the selected vendor name
-        this.poForm.patchValue({ p_vendor: v.name });
-
         this.recalcGrandTotal();
-        this.regenerateVendorPONos();
         this.showVendorDialog = false;
 
         this.messageService.add({
             severity: 'success',
             summary: 'Vendor Selected',
-            detail: `${v.name} assigned to ${row.get('item')?.value}`,
+            detail: `${v.suppliername} assigned to ${row.get('item')?.value}`,
             life: 2000
         });
     }
@@ -739,131 +749,131 @@ export class PurchaseOrderComponent implements OnInit {
     /** Called after every vendor confirmation.
      *  Collects unique vendor names from all item rows,
      *  generates one PO No per vendor, updates the dropdown + multiselect. */
-    private regenerateVendorPONos(): void {
-        // 1. Collect distinct vendor names from item rows
-        const uniqueVendors = [...new Set(this.poItemArray.controls.map((row) => row.get('vendorName')?.value as string).filter((name) => !!name))];
+    // private regenerateVendorPONos(): void {
+    //     // 1. Collect distinct vendor names from item rows
+    //     const uniqueVendors = [...new Set(this.poItemArray.controls.map((row) => row.get('vendorName')?.value as string).filter((name) => !!name))];
 
-        // 2. Generate one PO No per vendor (preserve existing mapping if already generated)
-        const existingMap = new Map(this.generatedPONos.map((p) => [p.label, p.value]));
-        this.generatedPONos = uniqueVendors.map((vendorName) => {
-            const existing = existingMap.get(vendorName);
-            return {
-                label: `${vendorName}`, // display: "Vendor A — PO-00125"
-                value: existing ?? this.generatePONo()
-            };
-        });
+    //     // 2. Generate one PO No per vendor (preserve existing mapping if already generated)
+    //     const existingMap = new Map(this.generatedPONos.map((p) => [p.label, p.value]));
+    //     this.generatedPONos = uniqueVendors.map((vendorName) => {
+    //         const existing = existingMap.get(vendorName);
+    //         return {
+    //             label: `${vendorName}`, // display: "Vendor A — PO-00125"
+    //             value: existing ?? this.generatePONo()
+    //         };
+    //     });
 
-        // Better label with PO No visible
-        this.generatedPONos = uniqueVendors.map((vendorName) => {
-            const existing = existingMap.get(vendorName);
-            const poNo = existing ?? this.generatePONo();
-            existingMap.set(vendorName, poNo);
-            return { label: `${poNo}  (${vendorName})`, value: poNo };
-        });
+    //     // Better label with PO No visible
+    //     this.generatedPONos = uniqueVendors.map((vendorName) => {
+    //         const existing = existingMap.get(vendorName);
+    //         const poNo = existing ?? this.generatePONo();
+    //         existingMap.set(vendorName, poNo);
+    //         return { label: `${poNo}  (${vendorName})`, value: poNo };
+    //     });
 
-        // 3. Update the vendor multiselect display
-        this.selectedVendorNames = uniqueVendors;
-        this.poForm.get('p_vendor')?.setValue(uniqueVendors);
+    //     // 3. Update the vendor multiselect display
+    //     this.selectedVendorNames = uniqueVendors;
+    //     this.poForm.get('p_vendor')?.setValue(uniqueVendors);
 
-        // 4. Auto-select first PO if only one vendor
-        if (this.generatedPONos.length === 1) {
-            this.poForm.patchValue({ p_pono: this.generatedPONos[0].value });
-        }
-    }
+    //     // 4. Auto-select first PO if only one vendor
+    //     if (this.generatedPONos.length === 1) {
+    //         this.poForm.patchValue({ p_pono: this.generatedPONos[0].value });
+    //     }
+    // }
 
     // ── Utility ────────────────────────────────────────────────────────────────
-    private generatePONo(): string {
-        this.poCounter++;
-        return `PO-${String(this.poCounter).padStart(5, '0')}`;
-    }
+    // private generatePONo(): string {
+    //     this.poCounter++;
+    //     return `PO-${String(this.poCounter).padStart(5, '0')}`;
+    // }
 
-    duplicatePO(): void {
-        const raw = this.poForm.getRawValue();
+    // duplicatePO(): void {
+    //     const raw = this.poForm.getRawValue();
 
-        // 1. Snapshot current items
-        const itemsSnapshot: MFItem[] = this.poItemArray.controls.map((row) => ({
-            category: row.get('category')?.value,
-            item: row.get('item')?.value,
-            uom: row.get('uom')?.value,
-            forecastQty: row.get('forecastQty')?.value,
-            availableStock: row.get('availableStock')?.value,
-            pendingPOQty: row.get('pendingPOQty')?.value,
-            requiredQty: row.get('requiredQty')?.value
-        }));
+    //     // 1. Snapshot current items
+    //     const itemsSnapshot: MFItem[] = this.poItemArray.controls.map((row) => ({
+    //         category: row.get('category')?.value,
+    //         item: row.get('item')?.value,
+    //         uom: row.get('uom')?.value,
+    //         forecastQty: row.get('forecastQty')?.value,
+    //         availableStock: row.get('availableStock')?.value,
+    //         pendingPOQty: row.get('pendingPOQty')?.value,
+    //         requiredQty: row.get('requiredQty')?.value
+    //     }));
 
-        // 2. Snapshot vendor assignments (poQty, vendorName, rate, amount)
-        const vendorSnapshot = this.poItemArray.controls.map((row) => ({
-            poQty: row.get('poQty')?.value,
-            vendorName: row.get('vendorName')?.value,
-            rate: row.get('rate')?.value,
-            amount: row.get('amount')?.value
-        }));
+    //     // 2. Snapshot vendor assignments (poQty, vendorName, rate, amount)
+    //     const vendorSnapshot = this.poItemArray.controls.map((row) => ({
+    //         poQty: row.get('poQty')?.value,
+    //         vendorName: row.get('vendorName')?.value,
+    //         rate: row.get('rate')?.value,
+    //         amount: row.get('amount')?.value
+    //     }));
 
-        // 3. Snapshot MF selections & vendor PO nos
-        const mfSnapshot = [...this.selectedMFNos];
-        const mfSelSnapshot = [...this.mfSelections];
-        const vendorNamesSnap = [...this.selectedVendorNames];
+    //     // 3. Snapshot MF selections & vendor PO nos
+    //     const mfSnapshot = [...this.selectedMFNos];
+    //     const mfSelSnapshot = [...this.mfSelections];
+    //     const vendorNamesSnap = [...this.selectedVendorNames];
 
-        // 4. Reset form state
-        this.poForm.reset();
-        this.poItemArray.clear();
-        this.submitted = false;
-        this.showForecastError = false;
-        this.grandTotal = 0;
-        this.generatedPONos = [];
-        this.selectedVendorNames = [];
-        this.paymentHistory = [];
-        this.totalPaid = 0;
-        this.newPayment = { date: new Date(), amount: 0, mode: '', referenceNo: '' };
+    //     // 4. Reset form state
+    //     this.poForm.reset();
+    //     this.poItemArray.clear();
+    //     this.submitted = false;
+    //     this.showForecastError = false;
+    //     this.grandTotal = 0;
+    //     this.generatedPONos = [];
+    //     this.selectedVendorNames = [];
+    //     this.paymentHistory = [];
+    //     this.totalPaid = 0;
+    //     this.newPayment = { date: new Date(), amount: 0, mode: '', referenceNo: '' };
 
-        // 5. Patch header fields — clear PO No, set date to today
-        this.poForm.patchValue({
-            p_pono: null, // cleared
-            p_podate: new Date(), // today
-            p_project: raw.p_project,
-            p_deliverylocation: raw.p_deliverylocation,
-            p_deliverydate: raw.p_deliverydate ? new Date(raw.p_deliverydate) : null,
-            p_paymentterms: raw.p_paymentterms,
-            p_remarks: raw.p_remarks
-        });
+    //     // 5. Patch header fields — clear PO No, set date to today
+    //     this.poForm.patchValue({
+    //         p_pono: null, // cleared
+    //         p_podate: new Date(), // today
+    //         p_project: raw.p_project,
+    //         p_deliverylocation: raw.p_deliverylocation,
+    //         p_deliverydate: raw.p_deliverydate ? new Date(raw.p_deliverydate) : null,
+    //         p_paymentterms: raw.p_paymentterms,
+    //         p_remarks: raw.p_remarks
+    //     });
 
-        // 6. Restore MF chips
-        this.selectedMFNos = mfSnapshot;
-        this.mfSelections = mfSelSnapshot;
+    //     // 6. Restore MF chips
+    //     this.selectedMFNos = mfSnapshot;
+    //     this.mfSelections = mfSelSnapshot;
 
-        // 7. Rebuild FormArray with items + vendor assignments
-        itemsSnapshot.forEach((it, idx) => {
-            const v = vendorSnapshot[idx];
-            this.poItemArray.push(
-                this.fb.group({
-                    category: [it.category],
-                    item: [it.item],
-                    uom: [it.uom],
-                    forecastQty: [it.forecastQty],
-                    availableStock: [it.availableStock],
-                    pendingPOQty: [it.pendingPOQty],
-                    requiredQty: [it.requiredQty],
-                    poQty: [v.poQty],
-                    vendorName: [v.vendorName],
-                    rate: [v.rate],
-                    amount: [v.amount]
-                })
-            );
-        });
+    //     // 7. Rebuild FormArray with items + vendor assignments
+    //     itemsSnapshot.forEach((it, idx) => {
+    //         const v = vendorSnapshot[idx];
+    //         this.poItemArray.push(
+    //             this.fb.group({
+    //                 category: [it.category],
+    //                 item: [it.item],
+    //                 uom: [it.uom],
+    //                 forecastQty: [it.forecastQty],
+    //                 availableStock: [it.availableStock],
+    //                 pendingPOQty: [it.pendingPOQty],
+    //                 requiredQty: [it.requiredQty],
+    //                 poQty: [v.poQty],
+    //                 vendorName: [v.vendorName],
+    //                 rate: [v.rate],
+    //                 amount: [v.amount]
+    //             })
+    //         );
+    //     });
 
-        // 8. Restore vendor state & regenerate PO Nos fresh
-        this.selectedVendorNames = vendorNamesSnap;
-        this.poForm.get('p_vendor')?.setValue(vendorNamesSnap);
-        this.regenerateVendorPONos();
-        this.recalcGrandTotal();
+    //     // 8. Restore vendor state & regenerate PO Nos fresh
+    //     this.selectedVendorNames = vendorNamesSnap;
+    //     this.poForm.get('p_vendor')?.setValue(vendorNamesSnap);
+    //     this.regenerateVendorPONos();
+    //     this.recalcGrandTotal();
 
-        this.messageService.add({
-            severity: 'info',
-            summary: 'Duplicated',
-            detail: 'PO duplicated — PO No. cleared and date set to today. Ready to submit.',
-            life: 3000
-        });
-    }
+    //     this.messageService.add({
+    //         severity: 'info',
+    //         summary: 'Duplicated',
+    //         detail: 'PO duplicated — PO No. cleared and date set to today. Ready to submit.',
+    //         life: 3000
+    //     });
+    // }
 
     addAdvancePayment(): void {
         const total = Number(this.poForm.get('p_totalpayment')?.value || 0);

@@ -71,8 +71,8 @@ export class WorkComponent implements OnInit {
        
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res) => {
-                this.filterWorkList = res.message;
-                this.workList = res.message;
+                this.filterWorkList = res.data;
+                this.workList = res.data;
             },
             error: (err) => console.error(err)
         });
@@ -141,9 +141,9 @@ export class WorkComponent implements OnInit {
         this.workService.upsertWorkListing(payload).subscribe({
             next: (res) => {
                 if(res.status === 'success'){
-                     this.showSuccess( 'success', "Success", res.message.message)
+                     this.showSuccess( 'success', "Success", res.data.message)
                 }else{
-                    this.showSuccess(  'success', "Failed", res.message.message )
+                    this.showSuccess(  'success', "Failed", res.data.message )
                 }
                
                 this.loadWorkList();

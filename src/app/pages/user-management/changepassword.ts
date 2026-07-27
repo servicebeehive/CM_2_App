@@ -13,6 +13,7 @@ import { AuthService } from '@/core/services/auth.service';
 import { InventoryService } from '@/core/services/inventory.service';
 import { UserService } from '@/core/services/user.service';
 import { MessageService } from 'primeng/api';
+import { GetUserDetail } from '@/core/models/inventory.model';
 
 @Component({
   selector: 'app-new-password',
@@ -151,17 +152,19 @@ export class NewPassword {
 
 changePassword(data:any){
   const userName= this.autherService.isLogIntType().username;
-const payload:any={
+const payload:GetUserDetail={
      
-    "p_ufullname":"",
-    "p_uname": userName,
-    "p_pwd": data.newPassword,
-    "p_active": "",
-    "p_operationtype": "CHANGE",
-    "p_phone": "",
-    "p_utypeid": '',
-    "p_email": "",
-    "p_oldpwd": data.oldPassword,
+    p_ufullname:"",
+    p_uname: userName,
+    p_pwd: data.newPassword,
+    p_active: "",
+    p_operationtype: "CHANGE",
+    p_phone: "",
+    p_utypeid: '',
+    p_email: "",
+    p_oldpwd: data.oldPassword,
+    p_companyid:this.autherService.isLogIntType()?.companyid.toString(),
+    p_projects:[]
 };
 this.userService.OnUserHeaderCreate(payload).subscribe({
   next:(res)=>{

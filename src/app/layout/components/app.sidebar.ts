@@ -12,10 +12,8 @@ import { RouterModule } from '@angular/router';
         (mouseenter)="onMouseEnter()"
         (mouseleave)="onMouseLeave()"
     >
-        <div class="p-3">
-            <a [routerLink]="['/']" class="app-logo">
-          <img src="layout/images/logo.png" width="180" alt="Logo">
-            </a>
+        <div class="pt-5 flex justify-center">
+          <img src="layout/images/beeware.png" width="100" alt="Logo">
             <button
                 class="layout-sidebar-anchor p-link z-2"
                 type="button"

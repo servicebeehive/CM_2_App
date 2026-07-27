@@ -365,7 +365,7 @@ export class TransactionComponent {
         };
         this.inventoryService.updatestockadjustment(payload).subscribe({
             next: (res: any) => {
-                this.showSuccess(res?.message || 'Amount saved successfully');
+                this.showSuccess(res?.data || 'Amount saved successfully');
                 this.display();
             },
             error: (err) => {

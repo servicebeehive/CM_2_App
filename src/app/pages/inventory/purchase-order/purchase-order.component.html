@@ -10,12 +10,12 @@
                 <!-- PO No Dropdown (submitted POs) -->
                 <p-dropdown
                     [options]="poList"
-                    optionLabel="pono"
-                    optionValue="pono"
+                    optionLabel="draft_no"
+                    optionValue="draft_id"
                     placeholder="Draft PO No."
                     formControlName="p_pono"
                     [filter]="true"
-                    filterPlaceholder="Search PO No."
+                    filterPlaceholder="Search Draft PO No."
                     [showClear]="true"
                     (onChange)="onPOSelect($event)"
                 ></p-dropdown>
@@ -24,7 +24,7 @@
                 <button pButton type="button" label="Draft PO" class="p-button-warning w-full md:w-auto" (click)="submitDraft()" [disabled]="poForm.invalid || isSubmitDisabled()"></button>
 
                 <!-- Duplicate -->
-                <button pButton type="button" label="Duplicate" class="p-button-warning w-full md:w-auto" (click)="duplicatePO()" [disabled]="!submitted"></button>
+                <!-- <button pButton type="button" label="Duplicate" class="p-button-warning w-full md:w-auto" (click)="duplicatePO()" [disabled]="!submitted"></button> -->
 
                 <!-- Submit -->
                 <button pButton type="submit" label="Submit" class="p-button-primary w-full md:w-auto" [disabled]="poForm.invalid || isSubmitDisabled()"></button>
@@ -44,7 +44,7 @@
             <!-- PO No (Auto Generated per vendor) -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">PO No.</label>
-                <p-dropdown [options]="generatedPONos" optionLabel="label" optionValue="value" placeholder="Auto Generated" formControlName="p_pono" [showClear]="true"></p-dropdown>
+                <p-dropdown [options]="generatedPONos" optionLabel="po_no" optionValue="po_id" placeholder="Auto Generated" formControlName="p_pono" [showClear]="true"></p-dropdown>
             </div>
 
             <!-- PO Date -->
@@ -56,9 +56,9 @@
                 <small class="text-red-500 mt-1 text-xs" *ngIf="poForm.get('p_podate')?.touched && poForm.get('p_deliverydate')?.touched && poForm.errors?.['poDateAfterDelivery']"> PO date cannot be after delivery date </small>
             </div>
 
-            <!-- Project -->
+            <!-- Site -->
             <div class="flex flex-col">
-                <label class="font-medium mb-1">Project <span class="text-red-500">*</span></label>
+                <label class="font-medium mb-1">Site <span class="text-red-500">*</span></label>
                 <p-dropdown
                     [options]="projectOptions"
                     optionLabel="project_name"
@@ -67,10 +67,11 @@
                     formControlName="p_project"
                     [filter]="true"
                     filterPlaceholder="Search project"
+                    (onChange)="onSiteChange($event)"
                     [showClear]="true"
                     [loading]="isLoadingProjects"
                 ></p-dropdown>
-                <small class="text-red-500 mt-1 text-xs" *ngIf="poForm.get('p_project')?.touched && poForm.get('p_project')?.errors?.['required']"> Project is required </small>
+                <small class="text-red-500 mt-1 text-xs" *ngIf="poForm.get('p_project')?.touched && poForm.get('p_project')?.errors?.['required']">Site is required </small>
             </div>
 
             <!-- Remarks -->
@@ -82,17 +83,7 @@
             <!-- Delivery Location -->
             <div class="flex flex-col">
                 <label class="font-medium">Delivery Location</label>
-                <p-dropdown
-                    [options]="deliveryLocationOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Select location"
-                    formControlName="p_deliverylocation"
-                    [filter]="true"
-                    filterPlaceholder="Search location"
-                    [showClear]="true"
-                    [loading]="isLoadingLocations"
-                ></p-dropdown>
+                <input pInputText type="text" formControlName="p_deliverylocation" placeholder="Delivery Location" [disabled]="true"/>
             </div>
 
             <!-- Delivery Date -->
@@ -102,16 +93,16 @@
                 <small class="text-red-500 mt-1 text-xs" *ngIf="poForm.get('p_podate')?.touched && poForm.get('p_deliverydate')?.touched && poForm.errors?.['deliveryBeforePO']"> Delivery date cannot be before PO date </small>
             </div>
 
+             <!-- Vendor (auto-filled from item vendor selections) -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Vendor</label>
+                <p-multiSelect [options]="selectedVendorNames" formControlName="p_vendor" placeholder="Assigned via vendor icon ↓" [disabled]="true" display="chip" styleClass="w-full surface-100"></p-multiSelect>
+            </div>
+
             <!-- Payment Terms -->
             <div class="flex flex-col">
                 <label class="font-medium">Payment Terms</label>
                 <p-dropdown [options]="paymentTermsOptions" optionLabel="label" optionValue="value" placeholder="Select terms" formControlName="p_paymentterms" [filter]="true" filterPlaceholder="Search terms" [showClear]="true"></p-dropdown>
-            </div>
-
-            <!-- Vendor (auto-filled from item vendor selections) -->
-            <div class="flex flex-col">
-                <label class="font-medium mb-1">Vendor</label>
-                <p-multiSelect [options]="selectedVendorNames" formControlName="p_vendor" placeholder="Assigned via vendor icon ↓" [disabled]="true" display="chip" styleClass="w-full surface-100"></p-multiSelect>
             </div>
 
             <!-- Forecast Reference No (Add MF button + chips) -->
@@ -138,14 +129,17 @@
                     <p-table [value]="poItemArray.controls" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" appendTo="body" class="p-datatable-gridlines p-datatable-sm purchase-order">
                         <ng-template pTemplate="header">
                             <tr class="bg-yellow-400">
-                                <th>Item Category</th>
-                                <th>Item</th>
-                                <th>UOM</th>
+                                <th class="text-right">Department</th>
+                                <th class="text-right">MF No</th>
+                                <th class="text-right">Item Category</th>
+                                <th class="text-right">Item</th>
+                                <th class="text-right">UOM</th>
                                 <th class="text-right">Forecast Qty</th>
                                 <th class="text-right">Available Stock</th>
                                 <th class="text-right">Pending PO Qty</th>
                                 <th class="text-right">Required Qty</th>
                                 <th class="text-right">PO Qty</th>
+                                <th class="text-right">Vendor</th>
                                 <th class="text-right">Rate</th>
                                 <th class="text-right">Amount</th>
                                 <th class="text-center">Action</th>
@@ -154,6 +148,8 @@
 
                         <ng-template pTemplate="body" let-row let-i="rowIndex">
                             <tr [formGroup]="getRowGroup(i)">
+                                <td>{{row.get('department')?.value}}</td>
+                                <td>{{row.get('mf_no')?.value}}</td>
                                 <td>{{ row.get('category')?.value }}</td>
                                 <td>{{ row.get('item')?.value }}</td>
                                 <td>{{ row.get('uom')?.value }}</td>
@@ -164,6 +160,14 @@
                                 <td>
                                     <p-inputNumber formControlName="poQty" [min]="0" [useGrouping]="false" [inputStyle]="{ width: '90px' }" (onInput)="onPoQtyChange(i)"></p-inputNumber>
                                 </td>
+                                <td class="text-sm">
+    <span *ngIf="row.get('vendorName')?.value; else noVendor" class="font-semibold text-900">
+        {{ row.get('vendorName')?.value }}
+    </span>
+    <ng-template #noVendor>
+        <span class="text-400 text-xs" style="font-style: italic">Not assigned</span>
+    </ng-template>
+</td>
                                 <td style="padding: 4px">
                                     <p-inputNumber formControlName="rate" [min]="0" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" [inputStyle]="{ width: '90px' }" (onInput)="onRateChange(i)"></p-inputNumber>
                                 </td>
@@ -178,7 +182,7 @@
 
                         <ng-template pTemplate="emptymessage">
                             <tr>
-                                <td colspan="12" class="text-center text-400 italic py-6 text-sm">No items — click "Add MF" to load forecast items</td>
+                                <td colspan="14" class="text-center text-400 italic py-6 text-sm">No items — click "Add MF" to load forecast items</td>
                             </tr>
                         </ng-template>
 
@@ -428,7 +432,7 @@
      MF SELECTION DIALOG
 ================================================ -->
 <p-dialog header="Material Forecast Selection" [(visible)]="showMFDialog" [modal]="true" [style]="{ width: '950px' }" [draggable]="false" [resizable]="false" styleClass="mf-dialog">
-    <p-table [value]="mfList" [responsiveLayout]="'scroll'" styleClass="p-datatable-gridlines p-datatable-sm" selectionMode="multiple" [(selection)]="mfSelections" dataKey="mfno">
+    <p-table [value]="mfList" [responsiveLayout]="'scroll'" styleClass="p-datatable-gridlines p-datatable-sm" selectionMode="multiple" [(selection)]="mfSelections" dataKey="mf_id">
         <ng-template pTemplate="header">
             <tr>
                 <th style="width: 3rem"></th>
@@ -446,11 +450,11 @@
                 <td>
                     <p-tableCheckbox [value]="mf"></p-tableCheckbox>
                 </td>
-                <td class="font-semibold text-sm">{{ mf.mfno }}</td>
-                <td class="text-sm">{{ mf.department }}</td>
-                <td class="text-sm">{{ mf.requestedBy }}</td>
-                <td class="text-sm">{{ mf.forecastDate }}</td>
-                <td class="text-center text-sm">{{ mf.totalItems }}</td>
+                <td class="font-semibold text-sm">{{ mf.mf_no }}</td>
+                <td class="text-sm">{{ mf.department_name }}</td>
+                <td class="text-sm">{{ mf.requested_by }}</td>
+                <td class="text-sm">{{ mf.forecast_date }}</td>
+                <td class="text-center text-sm">{{ mf.total_items }}</td>
                 <td>
                     <span class="text-green-600 font-semibold text-xs">{{ mf.status }}</span>
                 </td>
@@ -475,26 +479,26 @@
 
     <!-- Filter radio buttons -->
     <div class="flex gap-6 mb-3">
-        <label class="flex items-center gap-2 text-sm cursor-pointer">
-            <p-radioButton name="vendorFilter" value="lowest" [(ngModel)]="vendorFilter" (onClick)="sortVendors()"></p-radioButton>
-            Lowest Rate
-        </label>
-        <label class="flex items-center gap-2 text-sm cursor-pointer">
-            <p-radioButton name="vendorFilter" value="fastest" [(ngModel)]="vendorFilter" (onClick)="sortVendors()"></p-radioButton>
-            Fastest Delivery
-        </label>
-        <label class="flex items-center gap-2 text-sm cursor-pointer">
-            <p-radioButton name="vendorFilter" value="preferred" [(ngModel)]="vendorFilter" (onClick)="sortVendors()"></p-radioButton>
-            Preferred Vendor
-        </label>
-    </div>
+    <label class="flex items-center gap-2 text-sm cursor-pointer">
+        <p-radioButton name="vendorFilter" value="lowest" [(ngModel)]="vendorFilter" (onClick)="onVendorFilterChange('lowest')"></p-radioButton>
+        Lowest Rate
+    </label>
+    <label class="flex items-center gap-2 text-sm cursor-pointer">
+        <p-radioButton name="vendorFilter" value="fastest" [(ngModel)]="vendorFilter" (onClick)="onVendorFilterChange('fastest')"></p-radioButton>
+        Fastest Delivery
+    </label>
+    <label class="flex items-center gap-2 text-sm cursor-pointer">
+        <p-radioButton name="vendorFilter" value="preferred" [(ngModel)]="vendorFilter" (onClick)="onVendorFilterChange('preferred')"></p-radioButton>
+        Preferred Vendor
+    </label>
+</div>
 
-    <p-table [value]="filteredVendorList" selectionMode="single" [(selection)]="selectedVendor" dataKey="name" styleClass="p-datatable-gridlines p-datatable-sm" [responsiveLayout]="'scroll'">
+    <p-table [value]="filteredVendorList" selectionMode="single" [(selection)]="selectedVendor" dataKey="supplierid" styleClass="p-datatable-gridlines p-datatable-sm" [responsiveLayout]="'scroll'">
         <ng-template pTemplate="header">
             <tr>
                 <th style="width: 3rem"></th>
                 <th>Vendor</th>
-                <th>Material / Last Order</th>
+                <th>Last Order</th>
                 <th class="text-right">Last Rate (₹)</th>
                 <th>Payment Term</th>
                 <th class="text-center">Delivery Days</th>
@@ -506,11 +510,11 @@
                 <td>
                     <p-tableRadioButton [value]="vendor"></p-tableRadioButton>
                 </td>
-                <td class="font-semibold text-sm">{{ vendor.name }}</td>
+                <td class="font-semibold text-sm">{{ vendor.suppliername }}</td>
                 <td class="text-sm text-500">{{ vendor.lastOrder }}</td>
-                <td class="text-right text-sm" [ngClass]="{ 'text-green-600 font-bold': vendorFilter === 'lowest' && i === 0 }">₹{{ vendor.lastRate | number: '1.2-2' }}</td>
-                <td class="text-sm">{{ vendor.paymentTerm }}</td>
-                <td class="text-center text-sm" [ngClass]="{ 'text-green-600 font-bold': vendorFilter === 'fastest' && i === 0 }">{{ vendor.deliveryDays }}d</td>
+                <td class="text-right text-sm" [ngClass]="{ 'text-green-600 font-bold': vendorFilter === 'lowest' && i === 0 }">₹{{ vendor.lastrate | number: '1.2-2' }}</td>
+                <td class="text-sm">{{ vendor.paymentterm }}</td>
+                <td class="text-center text-sm" [ngClass]="{ 'text-green-600 font-bold': vendorFilter === 'fastest' && i === 0 }">{{ vendor.deliverydays }}d</td>
             </tr>
         </ng-template>
     </p-table>

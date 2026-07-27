@@ -83,7 +83,7 @@ export class StatsWidget implements OnInit, OnChanges {
         };
         this.OnttopBarService.GettopBarCard(apibody).subscribe({
             next: (res) => {
-                const data = res.message[0];
+                const data = res.data[0];
                 this.dashboardCards = [
                     {
                         label: 'Total Cost',

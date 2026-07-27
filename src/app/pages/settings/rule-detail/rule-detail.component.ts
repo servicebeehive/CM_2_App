@@ -82,7 +82,7 @@ export class RuleDetailComponent {
         };
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res) => {
-                this.user = res.message || [];
+                this.user = res.data || [];
                 this.buildDisplayRows();
             },
             error: (err) => console.log(err)
@@ -93,7 +93,7 @@ export class RuleDetailComponent {
         const industrytype = this.authService.isLogIntType().industrytype;
         const payload = this.createDropdownPayload('RULENAME', industrytype);
         this.inventoryService.getdropdowndetailsPublic(payload).subscribe({
-            next: (res) => (this.ruleOptions = res.message || []),
+            next: (res) => (this.ruleOptions = res.data || []),
             error: (err) => console.log(err)
         });
     }
@@ -102,7 +102,7 @@ export class RuleDetailComponent {
         const industrytype = this.authService.isLogIntType().industrytype;
         const payload = this.createDropdownPayload('APPUSERTYPE',industrytype );
         this.inventoryService.getdropdowndetails(payload).subscribe({
-            next: (res) => (this.usernameOptions = res.message || []),
+            next: (res) => (this.usernameOptions = res.data || []),
             error: (err) => console.log(err)
         });
     }
@@ -155,7 +155,7 @@ export class RuleDetailComponent {
 
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res) => {
-                const data = res.message || [];
+                const data = res.data || [];
                 this.levels = data.map((l: any) => ({
                     level_no: l.level_no,
                     pusername: l.profile_id

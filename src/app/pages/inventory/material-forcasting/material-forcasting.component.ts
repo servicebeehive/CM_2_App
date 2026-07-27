@@ -66,7 +66,7 @@ export class MaterialForcastingComponent {
             p_project: [null, Validators.required],
             p_department: [null],
             p_work: [null, Validators.required], 
-            p_level: [null, Validators.required],
+            p_level: [null],
             p_pour: [null],
             p_period: [null, Validators.required],
             p_remarks: [''],
@@ -150,7 +150,7 @@ export class MaterialForcastingComponent {
             username: this.userId
         };
         this.inventoryService.Getreturndropdowndetails(paylaod).subscribe({
-            next: (res) => (this.itemOptions = res.message),
+            next: (res) => (this.itemOptions = res.data),
             error: (err) => console.error(err)
         });
     }
@@ -163,7 +163,7 @@ export class MaterialForcastingComponent {
         };
         this.inventoryService.Getreturndropdowndetails(paylaod).subscribe({
             next: (res) => {
-                const detail = Array.isArray(res.message) ? res.message[0] : res.message;
+                const detail = Array.isArray(res.data) ? res.data[0] : res.data;
                 if (!detail) return;
                 this.itemArray.push(this.createItemRow(detail));
             },
@@ -175,7 +175,7 @@ export class MaterialForcastingComponent {
         const paylaod = { p_returntype: 'WORKLISTDD', p_returnvalue: data.value.toString(), username: this.userId };
         this.inventoryService.Getreturndropdowndetails(paylaod).subscribe({
             next: (res) => {
-                this.workList = res.message || [];
+                this.workList = res.data || [];
                 this.buildTowerOptions();
                 this.levelOptions = [];
                 this.pourOptions = [];
@@ -193,7 +193,7 @@ export class MaterialForcastingComponent {
         };
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res) => {
-                this.requisitionOptions = res.message;
+                this.requisitionOptions = res.data;
             },
             error: (err) => console.error(err)
         });
@@ -208,7 +208,7 @@ export class MaterialForcastingComponent {
         };
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res) => {
-                this.draftRequisitionOptions = res.message;
+                this.draftRequisitionOptions = res.data;
             },
             error: (err) => console.error(err)
         });
@@ -223,7 +223,7 @@ export class MaterialForcastingComponent {
         };
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res) => {
-                this.departmentOptions = res.message;
+                this.departmentOptions = res.data;
             },
             error: (err) => console.error(err)
         });
@@ -319,7 +319,7 @@ private isCurrentOrFuturePeriod(periodName: string): boolean {
 
  onDraftChange(data: any): void {
     const fromRequisition = this.requisitionOptions.find((m: any) => m.mf_id === data.value );
-    const fromDraft = this.draftRequisitionOptions.find((m: any) => m.mf_no === data.value );
+    const fromDraft = this.draftRequisitionOptions.find((m: any) => m.mf_id === data.value );
     const matched = fromRequisition ?? fromDraft;
 
     if (!matched) {
@@ -330,10 +330,9 @@ private isCurrentOrFuturePeriod(periodName: string): boolean {
     const paylaod = { p_returntype: 'MFDETAILS', p_returnvalue: matched.mf_no, username: this.userId };
     this.inventoryService.Getreturndropdowndetails(paylaod).subscribe({
         next: (res) => {
-            const rows: any[] = Array.isArray(res?.message) ? res.message : [];
+            const rows: any[] = Array.isArray(res?.data) ? res.data : [];
             if (!rows.length) return;
             const header = rows[0];
-
             const applyDraft = () => {
                 this.buildTowerOptions();
 
@@ -397,7 +396,7 @@ this.forecastForm.patchValue(
                 const wlPayload = { p_returntype: 'WORKLISTDD', p_returnvalue: header.project_id.toString(), username: this.userId };
                 this.inventoryService.Getreturndropdowndetails(wlPayload).subscribe({
                     next: (res2) => {
-                        this.workList = res2.message || [];
+                        this.workList = res2.data || [];
                         applyDraft();
                     },
                     error: (err) => console.error(err)
@@ -556,18 +555,20 @@ get isReadOnlyView(): boolean {
     const operation = v.p_mf_id ? 'EDIT' : 'INSERT';
     this.workService.upsertMaterialForecast(this.buildPayload('DRAFT', operation)).subscribe({
         next: (res) => {
-            this.messageService.add({ severity: 'success', summary: res.message.message, life: 2000 });
+            this.messageService.add({ severity: 'success', summary: res.data.message, life: 2000 });
 
-            if (res.message.status === 'success') {
-                const newEntry = { mf_id: res.message.mf_id, mf_no: res.message.mf_no };
+            if (res.data.status === 'success') {
+               
 
-                if (!this.draftRequisitionOptions.some((r) => r.mf_id === newEntry.mf_id)) {
-                    this.draftRequisitionOptions = [...this.draftRequisitionOptions, newEntry];
-                }
-
+                // if (!this.draftRequisitionOptions.some((r) => r.mf_id === newEntry.mf_id)) {
+                //     this.draftRequisitionOptions = [...this.draftRequisitionOptions, newEntry];
+                // }{ mf_id: res.data.mf_id, mf_no: res.data.mf_no };
+this.OnGetDraftList();
+ const newEntry = this.draftRequisitionOptions.find(u=> u.mf_no === res.data.mf_id )
+ console.log(newEntry)
                 this.forecastForm.patchValue({
-                    p_mf_id: res.message.mf_id,
-                    p_draft_requisitionno: res.message.mf_id,  
+                    p_mf_id: res.data.mf_id,
+                    p_draft_requisitionno: res.data.mf_id,  
                     status: 'Draft'
                 });
             }
@@ -596,27 +597,27 @@ get isReadOnlyView(): boolean {
             accept: () => {
                 this.workService.upsertMaterialForecast(this.buildPayload('SUBMIT')).subscribe({
                     next: (res) => {
-                        if (res.message.status === 'success') {
-                             this.messageService.add({ severity: 'success', summary: res.message.message , life: 2000 });
-                            const newEntry = { mf_id: res.message.mf_id, mf_no: res.message.mf_no };
+                        if (res.data.status === 'success') {
+                             this.messageService.add({ severity: 'success', summary: res.data.message , life: 2000 });
+                            const newEntry = { mf_id: res.data.mf_id, mf_no: res.data.mf_no };
 
                             if (!this.requisitionOptions.some((r) => r.mf_id === newEntry.mf_id)) {
                                 this.requisitionOptions = [...this.requisitionOptions, newEntry];
                             }
 
                             this.forecastForm.patchValue({
-                                p_mf_id: res.message.mf_id,
-                                p_requisitionno: res.message.mf_id,
+                                p_mf_id: res.data.mf_id,
+                                p_requisitionno: res.data.mf_id,
                                 status: 'Submitted'
                             });
                         }
                         else{
-                             this.messageService.add({ severity: 'error', summary: res.message.message , life: 2000 });
+                             this.messageService.add({ severity: 'error', summary: res.data.message , life: 2000 });
                         }
                     },
                     error: (res) => {
                         console.error(res);
-                        const detail = res?.error?.message || res?.message || 'Something went wrong';
+                        const detail = res?.error?.message || res?.data || 'Something went wrong';
                         this.messageService.add({ severity: 'error', summary: detail, life: 2500 });
                     }
                 });
@@ -654,7 +655,7 @@ get isReadOnlyView(): boolean {
         accept: () => {
             this.workService.upsertMaterialForecast(this.buildDeletePayload(item.mf_id)).subscribe({
                 next: (res) => {
-                    this.messageService.add({ severity: 'success', summary: res.message.message , life: 2000 });
+                    this.messageService.add({ severity: 'success', summary: res.data.message , life: 2000 });
                     this.draftRequisitionOptions = this.draftRequisitionOptions.filter((x) => x.mf_id !== item.mf_id);
                 },
                 error: (err) => {
@@ -670,7 +671,6 @@ get isReadOnlyView(): boolean {
         this.forecastForm.reset();
         this.itemArray.clear();
         this.uomlist = [];
-        this.draftRequisitionOptions=[];
         this.forecastForm.get('p_period')?.setValue(null);
     }
 }

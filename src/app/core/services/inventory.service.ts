@@ -105,6 +105,7 @@ Oninsertitemdetails(payload:any):Observable<any>{
 
 )
   }
+  
   getdropdowndetails(payload:any):Observable<any>{
    let payloaddata=this.shareservice.GetApiBody(payload)
     let url=`${this.baseUrl}${API_ENDPOINTS.inventory.getdropdowndetailsbeeware}`;
@@ -283,6 +284,22 @@ updatewriteoffamount(payload:any):Observable<any>{
 approverequest(payload:any):Observable<any>{
   let payloaddata = this.shareservice.GetApiBody(payload)
   let url = `${this.baseUrl}${API_ENDPOINTS.settings.approverequest}`;
+  return this.http.post<any>(url,payloaddata).pipe(catchError(error=>{
+    return throwError(()=>error)
+  }))
+}
+
+upsertProject(payload:any):Observable<any>{
+  let payloaddata = this.shareservice.GetApiBody(payload)
+  let url = `${this.baseUrl}${API_ENDPOINTS.inventory.upsertproject}`;
+  return this.http.post<any>(url,payloaddata).pipe(catchError(error=>{
+    return throwError(()=>error)
+  }))
+}
+
+getProjectList(payload:any):Observable<any>{
+  let payloaddata = this.shareservice.GetApiBody(payload)
+  let url = `${this.baseUrl}${API_ENDPOINTS.inventory.getprojectlist}`;
   return this.http.post<any>(url,payloaddata).pipe(catchError(error=>{
     return throwError(()=>error)
   }))

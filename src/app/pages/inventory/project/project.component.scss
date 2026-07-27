@@ -1,0 +1,24 @@
+
+        :host ::ng-deep .p-fileupload-header {
+            display: none;
+        }
+
+        :host ::ng-deep .p-fileupload-file-list {
+            display: none;
+        }
+
+        :host ::ng-deep .p-fileupload-content {
+            height: 20rem;
+        }
+     
+::ng-deep .stock{
+    .p-datatable-thead > tr > th:nth-child(4),
+    .p-datatable-tbody > tr > th:nth-child(4){
+       min-width: 180px !important;
+    max-width: 200px !important;
+    }
+}
+ [readonly] {
+    background-color: #eaf0f5 !important;
+    color: #6b757e !important;
+}

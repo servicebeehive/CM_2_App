@@ -30,8 +30,8 @@
   }
   .p-datatable-thead > tr > th:nth-child(3),
   .p-datatable-tbody > tr > td:nth-child(3) {
-    min-width: 80px;
-    max-width: 100px;
+    min-width: 180px;
+    max-width: 2000px;
   }
   .p-datatable-thead > tr > th:nth-child(4),
   .p-datatable-tbody > tr > td:nth-child(4) {
@@ -45,3 +45,14 @@
   z-index: 10000 !important;
 }
 
+// Lighter grey for disabled inputs
+:host ::ng-deep {
+    input.p-inputtext:disabled,
+    input.p-inputtext[disabled],
+    .p-inputnumber-input:disabled,
+    .p-dropdown.p-disabled,
+    p-dropdown.p-disabled .p-dropdown,
+    .p-multiselect.p-disabled {
+        background-color: #dae2eb !important; 
+    }
+}

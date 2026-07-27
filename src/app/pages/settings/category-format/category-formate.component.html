@@ -27,8 +27,8 @@
     [tableStyle]="{'table-layout': 'fixed' , 'width': '100%', 'overflow': 'hidden' , 'text-overflow': 'ellipsis' , 'white-space': 'nowrap'}"
     dataKey="id"
     [paginator]="true"
-    [rows]="5"
-    [rowsPerPageOptions]="[5, 10, 20]"
+    [rows]="10"
+    [rowsPerPageOptions]="[10, 20]"
     [responsiveLayout]="'scroll'"
     class="p-datatable-gridlines mt-6"
   >
@@ -46,8 +46,8 @@
        <td [style.width]="col.width">{{row[col.field]}}</td>
       }
        <td class="text-center">
-                    <i class="pi pi-pencil cursor-pointer text-blue-500" (click)="openEditDialog(row)"></i>
-                    <i class="pi pi-trash ms-2 text-red-500 cursor-pointer text-sm md:text-base" (click)="removeItem(row)"> </i>
+                    <i class="pi pi-pencil cursor-pointer text-blue-500" [class.disabled-icon]="row.is_deleted === 'N'" (click)="openEditDialog(row)"></i>
+                    <i class="pi pi-trash ms-2 text-red-500 cursor-pointer text-sm md:text-base" [class.disabled-icon]="row.is_deleted === 'N'" (click)="removeItem(row)"> </i>
                 </td>
       </tr>
     </ng-template>
@@ -121,11 +121,11 @@
             [options]="countries"
             optionLabel="country_name"
             optionValue="country_id"
-            formControlName="customercountry"
+            formControlName="countryforall"
             placeholder="Select Country"
             (onChange)="onCountryChange($event)"
           ></p-dropdown>
-          <small class="text-red-500 mt-1" *ngIf="masterForm.get('customercountry')?.touched && masterForm.get('customercountry')?.invalid">
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('countryforall')?.touched && masterForm.get('countryforall')?.invalid">
             Country is required
           </small>
         </div>
@@ -137,11 +137,11 @@
             [options]="states"
             optionLabel="state_name"
             optionValue="state_id"
-            formControlName="customerstate"
+            formControlName="stateforall"
             placeholder="Select State"
             (onChange)="onGetStateChange($event)"
           ></p-dropdown>
-          <small class="text-red-500 mt-1" *ngIf="masterForm.get('customerstate')?.touched && masterForm.get('customerstate')?.invalid">
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('stateforall')?.touched && masterForm.get('stateforall')?.invalid">
             State is required
           </small>
         </div>
@@ -305,11 +305,11 @@
             [options]="countries"
             optionLabel="country_name"
             optionValue="country_id"
-            formControlName="suppliercountry"
+            formControlName="countryforall"
             placeholder="Select Country"
             (onChange)="onCountryChange($event)"
           ></p-dropdown>
-          <small class="text-red-500 mt-1" *ngIf="masterForm.get('suppliercountry')?.touched && masterForm.get('suppliercountry')?.invalid">
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('countryforall')?.touched && masterForm.get('countryforall')?.invalid">
             Country is required
           </small>
         </div>
@@ -321,11 +321,11 @@
             [options]="states"
             optionLabel="state_name"
             optionValue="state_id"
-            formControlName="supplierstate"
+            formControlName="stateforall"
             placeholder="Select State"
             (onChange)="onGetStateChange($event)"
           ></p-dropdown>
-          <small class="text-red-500 mt-1" *ngIf="masterForm.get('supplierstate')?.touched && masterForm.get('supplierstate')?.invalid">
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('stateforall')?.touched && masterForm.get('stateforall')?.invalid">
             State is required
           </small>
         </div>
@@ -337,10 +337,10 @@
             [options]="cities"
             optionLabel="city_name"
             optionValue="city_id"
-            formControlName="suppliercity"
+            formControlName="cityforall"
             placeholder="Select City"
           ></p-dropdown>
-          <small class="text-red-500 mt-1" *ngIf="masterForm.get('suppliercity')?.touched && masterForm.get('suppliercity')?.invalid">
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('cityforall')?.touched && masterForm.get('cityforall')?.invalid">
             City is required
           </small>
         </div>
@@ -422,10 +422,34 @@
             Enter a valid email address
           </small>
         </div>
-         <!-- Active -->
+
+        <!-- Payment Terms -->
+        <div class="flex flex-col">
+          <label class="font-medium mb-1">Payment Terms <span class="text-red-500">*</span></label>
+          <p-dropdown
+            [options]="paymentOptions"
+            optionLabel="label"
+            optionValue="value"
+            formControlName="payment_term"
+            placeholder="Select Payment Terms"
+          ></p-dropdown>
+          <small class="text-red-500 mt-1" *ngIf="masterForm.get('payment_term')?.touched && masterForm.get('payment_term')?.invalid">
+            Payment Term is required
+          </small>
+        </div>
+
+        <div class="flex gap-6 mt-9 ">
+         <!-- Preferred Vendor -->
+        <div class="flex gap-3">
+          <p-checkbox formControlName="preferred_vendor" [binary]="true"></p-checkbox>
+          <label class="font-medium">Preferred Vendor</label>
+        </div>
+
+        <!-- Active -->
         <div class="flex gap-3">
           <p-checkbox formControlName="checked" [binary]="true"></p-checkbox>
           <label class="font-medium">Active</label>
+        </div>
         </div>
       </div>
     }
@@ -533,6 +557,12 @@
                 <div class="flex gap-3 mt-9">
                     <p-checkbox formControlName="checked" [binary]="true"></p-checkbox>
                     <label class="font-medium">Active</label>
+
+                    <p-checkbox formControlName="is_approval" [binary]="true"></p-checkbox>
+                    <label class="font-medium">Approval</label>
+              
+                    <p-checkbox formControlName="web_access" [binary]="true"></p-checkbox>
+                    <label class="font-medium">Web Access</label>
                 </div>
             </div>
     }

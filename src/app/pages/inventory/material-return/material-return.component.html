@@ -84,22 +84,22 @@
         ></p-datePicker>
       </div>
 
-      <!-- Project (auto from MIN, readonly) -->
+      <!-- Site (auto from MIN, readonly) -->
       <div class="flex flex-col">
-        <label class="font-medium mb-1">Project <span class="text-red-500">*</span></label>
+        <label class="font-medium mb-1">Site <span class="text-red-500">*</span></label>
         <p-dropdown
           [options]="projectOptions"
           optionLabel="label"
           optionValue="value"
-          placeholder="Select Project"
+          placeholder="Select Site"
           formControlName="p_project"
           [filter]="true"
-          filterPlaceholder="Search Project"
+          filterPlaceholder="Search Site"
           [showClear]="true"
         ></p-dropdown>
         <small class="text-red-500 mt-1 text-xs"
           *ngIf="mrnForm.get('p_project')?.touched && mrnForm.get('p_project')?.errors?.['required']">
-          Project is required
+          Site is required
         </small>
       </div>
 
