@@ -37,11 +37,11 @@
                         </div>
                     </div>
                     <!-- Buttons -->
-                    <div class="flex gap-4">
-                        <button *ngIf="canAddItem" pButton type="button" label="Add" class="p-button-secondary" (click)="add()"></button>
-                        <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
-                        <button pButton disabled type="button" label="BarCode Print" (click)="openBarcodeDialog()" class="p-button-secondary"></button>
-                    </div>
+                    <div class="flex gap-4 items-end">
+        <button *ngIf="canAddItem" pButton type="button" label="Add" class="p-button-secondary h-[42px]" (click)="add()"></button>
+        <button pButton type="button" label="Reset" class="p-button-secondary h-[42px]" (click)="reset()"></button>
+        <button pButton disabled type="button" label="BarCode Print" (click)="openBarcodeDialog()" class="p-button-secondary h-[42px]"></button>
+    </div>
                 </div>
                 <div class="mt-6">
                     <p-table
