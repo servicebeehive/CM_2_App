@@ -111,12 +111,9 @@ export class FilterPage {
         // Handle filter changes here
     }
      createDropdownPayload(returnType: string) {
-        return {
-             
-            p_username: 'admin',
-            p_returntype: returnType,
-                
-                  
+        return {        
+            p_username: this.authService.isLogIntType().userid.toString(),
+            p_returntype: returnType
         };
     }
     onItemChange(event:any){
@@ -138,7 +135,7 @@ export class FilterPage {
       this.itemOptions=[];
       const payload={
  
-        p_username:"admin",
+        p_username:"this.authService.isLogIntType().userid.toString(),",
         p_returntype:"CATEGORY",
         p_returnvalue:id.toString(),
         clientcode:"CG01-SE",

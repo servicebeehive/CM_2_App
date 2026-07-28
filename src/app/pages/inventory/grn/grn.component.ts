@@ -178,16 +178,6 @@ export class GrnComponent implements OnInit {
         this.poSelected    = true;
         this.addItemEnabled = true;
 
-        // Replace with your real API call to fetch PO details:
-        // this.stockInService.getPODetails({ p_poid: event.value }).subscribe(res => {
-        //   this.productForm.patchValue({
-        //     p_podate:    res.data.podate ? new Date(res.data.podate) : null,
-        //     p_project:   res.data.project,
-        //     p_vendor:    res.data.vendorid
-        //   });
-        //   this.mapItemsFromPO(res.data.items);
-        // });
-
         // ── Mock: auto-fill PO fields ──────────────────────────────────────
         this.productForm.patchValue({
             p_podate:  new Date('2026-05-15'),
@@ -334,11 +324,11 @@ export class GrnComponent implements OnInit {
 
     // ── Dropdowns ──────────────────────────────────────────────────────────
     private createDropdownPayload(returnType: string) {
-        return { p_username: 'admin', p_returntype: returnType };
+        return { p_username: this.authService.isLogIntType().userid.toString(), p_returntype: returnType };
     }
 
     OnGetDropdown(): void {
-        this.stockInService.getdropdowndetails({ p_username: 'admin', p_returntype: 'ITEM' }).subscribe({
+        this.stockInService.getdropdowndetails({ p_username: this.authService.isLogIntType().userid.toString(), p_returntype: 'ITEM' }).subscribe({
             next:  res => { this.vendorNameOptions = res.data; },
             error: err => console.error(err)
         });
@@ -391,7 +381,7 @@ export class GrnComponent implements OnInit {
     }
 
     OnDeleteItem(id: any): void {
-        const payload = { p_username: 'admin', p_returntype: 'PURCHASEDETAIL', p_purchasedetailid: id };
+        const payload = { p_username: this.authService.isLogIntType().userid.toString(), p_returntype: 'PURCHASEDETAIL', p_purchasedetailid: id };
         this.stockInService.DeletStockinitem(payload).subscribe({
             next: res => {
                 this.showSuccess(res.data[0].msg);
@@ -407,7 +397,7 @@ export class GrnComponent implements OnInit {
     }
 
     viewItem(id: number): void {
-        const payload = { p_username: 'admin', p_returntype: 'CHILDUOM', p_returnvalue: id.toString() };
+        const payload = { p_username: this.authService.isLogIntType().userid.toString(), p_returntype: 'CHILDUOM', p_returnvalue: id.toString() };
         this.stockInService.Getreturndropdowndetails(payload).subscribe({
             next: (res: any) => {
                 if (!res.data?.length) return;

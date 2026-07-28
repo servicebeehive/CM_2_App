@@ -38,6 +38,7 @@
                     </div>
                     <!-- Buttons -->
                     <div class="flex gap-4">
+                        <button *ngIf="canAddItem" pButton type="button" label="Add" class="p-button-secondary" (click)="add()"></button>
                         <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
                         <button pButton disabled type="button" label="BarCode Print" (click)="openBarcodeDialog()" class="p-button-secondary"></button>
                     </div>
@@ -99,9 +100,31 @@
             </div>
         </form>
     </div>
-    <p-dialog header="{{ 'Edit Item' }}" [(visible)]="visibleDialog" [modal]="true" [style]="{ width: '80vw' }">
-        <app-addinventory [itemOptions]="itemOptions" [categoryOptions]="categoryOptions" [uomOptions]="uomOptions" [editData]="selectedRow" [mode]="mode" (close)="closeDialog()" (save)="onSave($event)"></app-addinventory>
-    </p-dialog>
+   <p-dialog
+    header="{{ mode === 'add' ? (addTarget === 'cons' ? 'Add Item' : 'Add Item') : 'Edit Item' }}"
+    [(visible)]="visibleDialog"
+    [modal]="true"
+    [style]="{ width: '80vw' }"
+>
+    <app-add-item-cons
+        *ngIf="mode === 'add' && addTarget === 'cons'"
+        [categoryOptions]="categoryOptions"
+        [uomOptions]="uomOptions"
+        (close)="closeDialog()"
+        (save)="onSave($event)"
+    ></app-add-item-cons>
+
+    <app-addinventory
+        *ngIf="!(mode === 'add' && addTarget === 'cons')"
+        [itemOptions]="itemOptions"
+        [categoryOptions]="categoryOptions"
+        [uomOptions]="uomOptions"
+        [editData]="selectedRow"
+        [mode]="mode"
+        (close)="closeDialog()"
+        (save)="onSave($event)"
+    ></app-addinventory>
+</p-dialog>
     <p-confirmDialog></p-confirmDialog>
 </div>
 

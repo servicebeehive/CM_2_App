@@ -175,6 +175,20 @@
                 <p-checkbox readonly binary="true" variant="filled" formControlName="p_gsttran"></p-checkbox>
                 <label class="font-medium mb-1 text-sm md:text-base">GST Transaction</label>
            </div>
+
+             <!-- Status Badge -->
+            <div class="flex items-center gap-4 mt-0 lg:mt-5">
+                <span class="text-xl font-bold">Status</span>
+                <span class="font-bold text-xl"
+                      [ngStyle]="{
+                          color: salesForm.get('status')?.value === 'Done'           ? 'green'
+                               : salesForm.get('status')?.value === 'Partial Cancel' ? 'grey'
+                               : salesForm.get('status')?.value === 'Cancel'         ? 'red'
+                               : 'black'
+                      }">
+                    {{ salesForm.get('status')?.value }}
+                </span>
+            </div>
            
             <!-- Item Selector — spans 2 cols on desktop -->
             <div class="flex flex-col sm:col-span-2 lg:col-span-2">
@@ -201,26 +215,6 @@
                         </div>
                     </ng-template>
                 </p-select>
-            </div>
-
-            <!-- GST Transaction -->
-            <div class="flex items-center gap-4 mt-0 lg:mt-5">
-                <p-checkbox binary="true" variant="filled" formControlName="p_gsttran"></p-checkbox>
-                <label class="font-medium">GST Transaction</label>
-            </div>
-
-            <!-- Status Badge -->
-            <div class="flex items-center gap-4 mt-0 lg:mt-5">
-                <span class="text-xl font-bold">Status</span>
-                <span class="font-bold text-xl"
-                      [ngStyle]="{
-                          color: salesForm.get('status')?.value === 'Done'           ? 'green'
-                               : salesForm.get('status')?.value === 'Partial Cancel' ? 'grey'
-                               : salesForm.get('status')?.value === 'Cancel'         ? 'red'
-                               : 'black'
-                      }">
-                    {{ salesForm.get('status')?.value }}
-                </span>
             </div>
         </div>
 

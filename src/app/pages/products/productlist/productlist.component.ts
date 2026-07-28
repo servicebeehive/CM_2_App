@@ -23,6 +23,8 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { AddinventoryComponent } from '@/pages/inventory/addinventory/addinventory.component';
 import { AuthService } from '@/core/services/auth.service';
 import JsBarcode from 'jsbarcode';
+import { Router } from '@angular/router';
+import { AddItemConsComponent } from '@/pages/inventory/add-item-cons/add-item-cons.component';
 
 @Component({
     selector: 'app-productlist',
@@ -46,7 +48,8 @@ import JsBarcode from 'jsbarcode';
         DialogModule,
         ConfirmDialogModule,
         CheckboxModule,
-        AddinventoryComponent
+        AddinventoryComponent,
+        AddItemConsComponent
     ],
     templateUrl: './productlist.component.html',
     styleUrl: './productlist.component.scss',
@@ -59,6 +62,7 @@ export class ProductlistComponent {
     selectedRow: any = null;
     selection: boolean = true;
     mode: 'add' | 'itemedit' = 'itemedit';
+    addTarget: 'cons' | 'inventory' = 'inventory';
     first: number = 0;
     rowsPerPage: number = 5;
     products: StockIn[] = [];
@@ -66,8 +70,7 @@ export class ProductlistComponent {
     globalFilter: string = '';
     showGlobalSearch: boolean = true;
     uomOptions: any[] = [];
-    showData: boolean = false; // New flag to control table visibility
-
+    showData: boolean = false; 
     categoryOptions = [];
     printList: any[] = [];
     itemOptions = [];
@@ -75,11 +78,14 @@ export class ProductlistComponent {
     selectedItems: any[] = [];
     currentPage = 1;
     itemsPerPage = 10;
+    canAddItem:boolean = false;
 
     constructor(
         private fb: FormBuilder,
         private inventoryService: InventoryService,
-        private messageService: MessageService
+        private messageService: MessageService,
+        private authService: AuthService,
+        private router: Router
     ) {}
 
     ngOnInit(): void {
@@ -88,7 +94,7 @@ export class ProductlistComponent {
             item: [''],
             p_stock: this.fb.array([])
         });
-
+        this.canAddItem = this.authService.isLogIntType()?.industry_type_id === 1;
         this.loadAllDropdowns();
     }
 
@@ -107,14 +113,14 @@ export class ProductlistComponent {
 
     openEditDialog(rowData: any) {
         this.mode = 'itemedit';
+        this.addTarget = 'inventory'; 
         this.selectedRow = rowData || null;
         this.visibleDialog = true;
-        console.log('selectedrow', this.selectedRow);
     }
 
     createDropdownPayload(returnType: string) {
         return {
-            p_username: 'admin',
+            p_username: this.authService.isLogIntType().industry_type_id.toString(),
             p_returntype: returnType
         };
     }
@@ -138,7 +144,7 @@ export class ProductlistComponent {
     categoryRelavantItem(id: any) {
         this.itemOptions = [];
         const payload = {
-            p_username: 'admin',
+            p_username: this.authService.isLogIntType().industry_type_id.toString(),
             p_returntype: 'CATEGORY',
             p_returnvalue: id.toString()
         };
@@ -189,8 +195,8 @@ export class ProductlistComponent {
         const payload = {
             p_categoryid: category || null,
             p_itemid: item || null,
-            p_username: 'admin',
-            p_type: ''
+            p_username: this.authService.isLogIntType().industry_type_id.toString(),
+            p_type: 'ITEMLIST'
         };
 
         this.showData = false;
@@ -222,10 +228,21 @@ export class ProductlistComponent {
         });
     }
 
+    add(){
+       this.mode = 'add';
+    this.selectedRow = null;
+
+    if (this.canAddItem) {
+        this.addTarget = 'cons';
+    } else {
+        this.addTarget = 'inventory';
+    }
+
+    this.visibleDialog = true;
+    }
+
     onSave(updatedData: any) {
-        console.log('updated before:', updatedData);
         this.Onreturndropdowndetails();
-        console.log('updated after:', updatedData);
     }
 
     closeDialog() {

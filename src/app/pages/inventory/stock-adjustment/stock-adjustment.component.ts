@@ -60,11 +60,10 @@ export class StockAdjustmentComponent {
     pagedProducts: StockIn[] = [];
 
     // Data arrays
-    products: any[] = []; // full data list (raw objects)
-    filteredProducts: any[] = []; // current visible list used by p-table
+    products: any[] = []; 
+    filteredProducts: any[] = [];
     globalFilter: string = '';
-    showData: boolean = false; // New flag to control table visibility
-
+    showData: boolean = false;
     // Dropdown options
     categoryOptions: any[] = [];
     itemOptions: any[] = [];
@@ -88,7 +87,8 @@ export class StockAdjustmentComponent {
         private fb: FormBuilder,
         private inventoryService: InventoryService,
         private confirmationService: ConfirmationService,
-        private messageService: MessageService
+        private messageService: MessageService,
+        private authService: AuthService
     ) {}
 
     // -------------------------
@@ -100,82 +100,46 @@ export class StockAdjustmentComponent {
             category: [''],
             item: [''],
             mrpUpdate: ['B'],
-            p_stock: this.fb.array([]) // holds FormGroups for each table row
+            p_stock: this.fb.array([])
         });
         this.loadAllDropdowns();
     }
 
-    // -------------------------
-    // Helpers: FormArray access
-    // -------------------------
     getStockArray(): FormArray {
         return this.updateForm.get('p_stock') as FormArray;
     }
 
-    // -------------------------
-    // UI utility: Prevent negative sign input
-    // -------------------------
     blockMinus(event: KeyboardEvent) {
-        // prevents '-' from being typed in numeric inputs used for quantity/mrp
         console.log(event);
         if (event.key === '-' || event.key === 'Minus' || event.key === 'e' || event.key === 'E') {
             event.preventDefault();
         }
     }
-
-    // -------------------------
-    // Build Form Array from Products
-    // -------------------------
-    /**
-     * Rebuilds the p_stock FormArray based on a product list.
-     * - ensures each product has bound controls (mrpControl, quantityControl, adjustmentControl)
-     * - subscribes to adjustmentControl changes to revalidate quantityControl (validator depends on adj type)
-     *
-     * IMPORTANT: This method intentionally preserves the product object reference and attaches controls to it.
-     */
     private buildFormArrayFromProducts(products: any[]) {
         const stockArray = this.getStockArray();
         stockArray.clear();
 
         products.forEach((p: any) => {
-            // ensure a default adjustment type exists on the product model
             p.adjustmentType = p.adjustmentType || 'increase';
-
-            // create group for each product row
             const group = this.fb.group({
                 ItemId: [p.itemid ?? p.ItemId],
                 BatchId: [p.batchid ?? p.BatchId],
-
-                // mrpvalue control with minimum validator
                 mrpvalue: [p.mrpvalue ?? p.saleprice ?? null, [Validators.min(1)]],
-
-                // Quantity control:
-                // - min(1) always
-                // - quantityBatchValidator(p) added (validator logic may reference the product row)
                 Quantity: [
                     p.Quantity ?? null,
                     [
                         Validators.min(1),
-                        this.quantityBatchValidator(p) // single validator handling increase/decrease logic
+                        this.quantityBatchValidator(p) 
                     ]
                 ],
-
-                // adjtype bound to product.adjustmentType
                 adjtype: [p.adjustmentType]
             });
-
-            // Attach controls back onto product model so template can directly read control references.
-            // Template expects row.mrpControl, row.quantityControl, row.adjustmentControl
             p.mrpControl = group.get('mrpvalue');
             p.quantityControl = group.get('Quantity');
             p.adjustmentControl = group.get('adjtype');
-
-            // Keep validator responsive: when adjustment type changes, revalidate Quantity control
             p.adjustmentControl.valueChanges.subscribe(() => {
                 p.quantityControl.updateValueAndValidity();
             });
-
-            // push FormGroup into the FormArray
             stockArray.push(group);
         });
 
@@ -184,16 +148,6 @@ export class StockAdjustmentComponent {
         this.updatePagedProducts();
     }
 
-    // -------------------------
-    // Validator: Quantity vs Batch + Adj Type
-    // -------------------------
-    /**
-     * Custom validator factory that checks:
-     *  - If adj type is 'increase' => no batch validation
-     *  - If adj type is 'decrease' => ensure Quantity <= row.batch_available
-     *
-     * The validator uses the product row object (row) which is attached to the form controls.
-     */
     quantityBatchValidator(row: any): ValidatorFn {
         return (control: AbstractControl): ValidationErrors | null => {
             const qty = Number(control.value);
@@ -201,13 +155,9 @@ export class StockAdjustmentComponent {
             const batch = row.batch_available;
 
             if (!qty || qty < 1) return null;
-
-            // No validation for Increase
             if (adjType === 'increase') {
                 return null;
             }
-
-            // Validation for Decrease only
             if (adjType === 'decrease' && qty > batch) {
                 return { greaterThanBatch: true };
             }
@@ -216,13 +166,6 @@ export class StockAdjustmentComponent {
         };
     }
 
-    // -------------------------
-    // Adjustment dropdown handler
-    // -------------------------
-    /**
-     * Called when adjustment dropdown changes for a product row.
-     * Keeps product model in sync, sets control value and revalidates quantity control.
-     */
     onAdjustmentChange(event: any, product: any, idx?: number) {
         const selected = event?.value ?? event;
 
@@ -299,7 +242,7 @@ export class StockAdjustmentComponent {
     // -------------------------
     createDropdownPayload(returnType: string) {
         return {
-            p_username: 'admin',
+            p_username: this.authService.isLogIntType().userid.toString(),
             p_returntype: returnType
         };
     }
@@ -324,7 +267,7 @@ export class StockAdjustmentComponent {
     categoryRelavantItem(id: any) {
         this.itemOptions = [];
         const payload = {
-            p_username: 'admin',
+            p_username: this.authService.isLogIntType().userid.toString(),
             p_returntype: 'CATEGORYITEM',
             p_returnvalue: id.toString()
         };
@@ -379,7 +322,7 @@ export class StockAdjustmentComponent {
         const payload = {
             p_categoryid: category || null,
             p_itemid: item || null,
-            p_username: 'admin',
+            p_username: this.authService.isLogIntType().userid.toString(),
             p_updatetype: this.updateForm.controls['mrpUpdate'].value
         };
 

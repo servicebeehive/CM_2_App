@@ -63,6 +63,8 @@ export const API_ENDPOINTS = {
         deletetransaction: '/beeware/fndeletetransaction',
         upsertcustomermaster: '/beeware/fnupsertcustomermaster',
         upsertsuppliermaster: '/beeware/fnupsertsuppliermaster',
+        upsertcategorymaster: '/beeware/upsert_category',
+        upsertuommaster: '/beeware/upsert_uom',
         fnmanageapprovalrulelevels: '/beeware/fnmanageapprovalrulelevels',
         approverequest: '/beeware/fnapproverequest'
     }

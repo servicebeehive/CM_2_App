@@ -425,8 +425,8 @@ export class UserCreate {
 
     createDropdownPayload(returnType: string) {
         return {
-            uname: 'admin',
-            p_username: 'admin',
+            uname: this.authservice.isLogIntType().userid.toString(),
+            p_username: this.authservice.isLogIntType().userid.toString(),
             p_returntype: returnType
         };
     }

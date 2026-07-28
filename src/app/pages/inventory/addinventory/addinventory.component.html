@@ -1,392 +1,259 @@
-<p-toast></p-toast>
-<form [formGroup]="addForm" (ngSubmit)="onSubmit()" class="add-inventory-form">
-
-  <!-- Header -->
-  <div class="form-header">
-    <p class="txn-id">Transaction Id : {{ transationid }}</p>
-  </div>
-
-  <!-- Item Search Row -->
-  <div class="search-row">
-    <div class="search-field">
-      <label class="field-label">Item Search</label>
-      <p-select
-        #itemSelect
-        (onChange)="onItemCodeChange($event)"
-        [options]="itemOptions"
-        optionLabel="itemcombine"
-        optionValue="itemsku"
-        formControlName="itemSearch"
-        [filter]="true"
-        filterBy="itemcombine"
-        [showClear]="true"
-        placeholder="Select Item"
-        (onFilter)="onItemSearch($event)"
-        styleClass="w-full"
-      >
-        <ng-template #selectedItem let-item>
-          <div>{{ item.itemcombine }}</div>
-        </ng-template>
-        <ng-template let-details #item>
-          <div>{{ details.itemcombine }}</div>
-        </ng-template>
-      </p-select>
+<form [formGroup]="addForm" (ngSubmit)="onSubmit()" class="space-y-8">
+    <!-- 🧾 Transaction Info -->
+    <div>
+        <p class="text font-semibold mb-4 border-b pb-2 text-gray-700">Transaction Id : {{transationid}}</p>
     </div>
-    <div class="search-actions">
-      <button pButton type="button" label="Reset" class="p-button-outlined p-button-secondary" [class.disabled]="resetDisabled" (click)="Reset()"></button>
-      <button pButton type="button" label="Copy" class="p-button-warning" [class.disabled]="resetDisabled" (click)="copy($event)"></button>
+     <div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
+        <div class="flex flex-col">
+  <label class="font-medium mb-1">Item Search</label>
+
+  <!-- 🔽 Select Dropdown -->
+  <p-select #itemSelect (onChange)="onItemCodeChange($event)"  [options]="itemOptions"  optionLabel="itemcombine" optionValue="itemsku" formControlName="itemSearch" [filter]="true" filterBy="itemcombine" [showClear]="true" placeholder="Select Item" (onFilter)="onItemSearch($event)">
+    <ng-template #selectedItem let-item>
+        <div class="flex items-center gap-2">
+          
+            <div>{{ item.itemcombine }}</div>
+        </div>
+    </ng-template>
+    <ng-template let-details #item>
+        <div class="flex items-center gap-2">
+           
+            <div>{{ details.itemcombine}}</div>
+        </div>
+    </ng-template>
+  
+  </p-select>
+</div>
+
+<div class="flex justify-start gap-3">
+     <button pButton type="button" label="Reset" class="p-button-secondary mt-6" [class.disabled]="resetDisabled" (click)="Reset()"></button>
+       <button pButton type="button" label="Copy" class="p-button-primary mt-6" [class.disabled]="resetDisabled" (click)="copy($event)"></button>
+</div>
+     </div>
+
+    <!-- 🧩 Product Details -->
+    <div>
+        <div class="flex gap-5 items-center">
+ <h3 class="text-lg font-semibold mb-3 text-gray-700 border-b pb-2">Product Details</h3>
+  <div class="mb-5" *ngIf="showCopyMessage">
+    <p-message  severity="error" variant="simple">Enter a unique Item code & Bar Code to proceed with item creation</p-message>
+</div>
+       </div>
+<div class="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
+<!-- Item Bar Code -->
+  <div class="flex flex-col">
+                <label class="font-medium mb-1">Item BarCode</label>
+                <input pInputText formControlName="itembarcode" placeholder="Item BarCode" (input)="toUppercase($event)" (blur)="onBlurBarCode($event)" [readOnly]="mode==='edit'" />
+            </div>
+<div class="flex gap-6">
+                <!-- Active -->
+                    <!-- ACTIVE Item -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Active Item</label>
+                <p-checkbox formControlName="activeItem" [binary]="true"></p-checkbox>
+            </div>
+
+            <!-- GST Item -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">GST Item</label>
+                <p-checkbox formControlName="gstItem" [binary]="true"></p-checkbox>
+            </div>
+            </div>
+
+   <!-- Item Code -->
+             <div class="flex flex-col">
+                <label class="font-medium mb-1">Item Code <span class="text-red-500">*</span></label>
+                <input pInputText formControlName="itemCode" placeholder="Item Code" (input)="toUppercase($event)" (blur)="onBlur($event)" [readOnly]="mode==='edit'" />
+                <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('itemCode')?.touched">
+                    <span *ngIf="addForm.get('itemCode')?.errors?.['required']">Item Code is required</span>
+                </small>
+            </div>
+
+            <!-- Current Stock -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Current Stock</label>
+                <input pInputText formControlName="curStock" placeholder="Current Stock" (input)="toUppercase($event)" readonly class="grayout"/>
+            </div>
+
+            <!-- Item Name -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Item Name <span class="text-red-500">*</span></label>
+                <input pInputText formControlName="itemName" (input)="toUppercase($event)" placeholder="Item Name" />
+                <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('itemName')?.touched">
+                    <span *ngIf="addForm.get('itemName')?.errors?.['required']">Item Name is required</span>
+                </small>
+            </div>
+
+            <!-- Category -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Category <span class="text-red-500">*</span></label>
+                <p-dropdown [options]="categoryOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search Category" formControlName="category" placeholder="Category"> </p-dropdown>
+                <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('category')?.touched">
+                    <span *ngIf="addForm.get('category')?.errors?.['required']">Category is required</span>
+                </small>
+            </div>
+
+             <!-- Parent UOM -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Parent UOM <span class="text-red-500">*</span></label>
+                <p-dropdown [options]="uomOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true"  (onChange)="onItemParentUM($event)" filterPlaceholder="Search Parent UOM" formControlName="parentUOM" placeholder="Parent UOM" [readonly]="mode==='edit'"> </p-dropdown>
+                <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('parentUOM')?.touched">
+                    <span *ngIf="addForm.get('parentUOM')?.errors?.['required']">Parent UOM is required</span>
+                </small>
+            </div>
+
+            <!-- Minimum Stock -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Min Stock</label>
+                <input pInputText formControlName="minStock"  placeholder="Min Stock" (keypress)="allowOnlyNumbers($event)" />
+            </div>
+<!-- Purchase Price -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Purchase Price <span class="text-red-500">*</span></label>
+                <input pInputText type="number" min="1" formControlName="purchasePrice" placeholder="Purchase Price"  (keydown)="blockMinus($event)"/>
+                <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('purchasePrice')?.touched && addForm.get('purchasePrice')?.invalid">
+                    <span *ngIf="addForm.get('purchasePrice')?.errors?.['required']">Purchase Price is required</span>
+                    <span *ngIf="addForm.get('purchasePrice')?.errors?.['min']">Purchase Price must be greater than 0</span>
+                </small>
+            </div>
+
+           
+            <!-- Warranty Period -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Warranty Period (in months)</label>
+                          <!-- <p-datepicker  fluid formControlName="warPeriod" placeholder="Warranty Period" [showIcon]="true" placeholder="Invoice Date"></p-datepicker> -->
+                <input pInputText formControlName="warPeriod" placeholder="Warranty Period" (keypress)="allowOnlyNumbers($event)" />
+            </div>
+
+             <!-- Quantity -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Quantity <span class="text-red-500">*</span></label>
+                <input pInputText type="number" min="1" formControlName="qty" placeholder="Quantity" (keydown)="blockMinus($event)" />
+                <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('qty')?.touched && addForm.get('qty')?.invalid">
+                    <span *ngIf="addForm.get('qty')?.errors?.['required']">Quantity is required</span>
+                    <span *ngIf="addForm.get('qty')?.errors?.['min']">Quantity must be greater than 0</span>
+                </small>
+            </div>
+            <!-- Expiry Date -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Expiry Date</label>
+                          <p-datepicker  fluid formControlName="p_expirydate" dateFormat="dd/mm/yy" [minDate]="dateTime" placeholder="Warranty Period" [showIcon]="true" placeholder="Expiry Date"></p-datepicker>
+                <!-- <input pInputText formControlName="warPeriod" placeholder="Warranty Period" (keypress)="allowOnlyNumbers($event)" /> -->
+            </div>
+
+             <!-- Cost/Item -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Cost/Item</label>
+               
+                <input pInputText formControlName="costPerItem" placeholder="Cost/Item" [disabled]="false" readonly  class="grayout"/>
+            </div>
+
+            <!-- Location -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Location</label>
+                <input pInputText formControlName="location" placeholder="Location" />
+            </div>
+
+             <!-- MRP -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">MRP <span class="text-red-500">*</span></label>
+                <input pInputText type="number" min="1" formControlName="mrp" placeholder="MRP" (keydown)="blockMinus($event)" (keypress)="allowOnlyNumbers($event)"/>
+                <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('mrp')?.touched || addForm.hasError('mrpGreaterThanPurchase')">
+                    <span *ngIf="addForm.get('mrp')?.errors?.['required']">MRP is required</span>
+                    <span *ngIf="addForm.hasError('mrpGreaterThanPurchase')">MRP must be greater than or equal to Purchase Price</span>
+                </small>
+            </div>
+
+             <!-- Discount -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Discount (%)</label>
+               <input pInputText formControlName="discount" placeholder="discount" readonly  class="grayout"/>
+                <small class="text-red-500 ms-3 mt-1" *ngIf="addForm.get('discount')?.touched && addForm.get('discount')?.invalid"> </small>
+            </div>
+
+           
+              
+        </div>
     </div>
-  </div>
 
-  <!-- Copy Message -->
-  <div *ngIf="showCopyMessage" class="copy-msg">
-    <p-message severity="error" variant="simple">Enter a unique Item code &amp; Bar Code to proceed with item creation</p-message>
-  </div>
+    <!-- 🧮 Child UOM Table -->
+    <div class="flex flex-col mt-6">
+        <h3 class="text-lg font-semibold mb-3 text-gray-700 border-b pb-2">Child UOM Details</h3>
+        
+        <div class="flex gap-4 items-start">
+            <div class="flex-1">
+                <p-table [value]="products" class="w-full">
+                    <ng-template #header>
+                        <tr [class.disabled]="uomTableDisabled" class="bg-yellow-400">
+                            <th>Child UOM</th>
+                            <th>Conversion</th>
+                            <th>MRP</th>
+                            <th>Remove UOM</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template #body let-product>
+<tr [class.disabled]="uomTableDisabled">
+  <td>
+    <p-dropdown
+    [options]="this.ChilduomOptions"
+     
+      optionLabel="fieldname" optionValue="fieldid"
+      [filter]="true"
+      filterPlaceholder="Search Child UOM"
+      [(ngModel)]="product.childUOM"
+      [ngModelOptions]="{standalone: true}"
+      (ngModelChange)="isChildUOMValid()"
+      placeholder="Select Child UOM"
+      appendTo="body">
+    </p-dropdown>
+  </td>
 
-  <!-- Transaction Type Tabs -->
-  <div class="type-tabs">
-    <label class="type-tab" [class.active]="isTransactionType('purchase')">
-      <input type="radio" formControlName="transactionType" value="purchase" hidden />
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-      Purchase
-    </label>
-    <label class="type-tab" [class.active]="isTransactionType('lease')">
-      <input type="radio" formControlName="transactionType" value="lease" hidden />
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-      Lease
-    </label>
-    <label class="type-tab" [class.active]="isTransactionType('rent')">
-      <input type="radio" formControlName="transactionType" value="rent" hidden />
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      Rent
-    </label>
-  </div>
+  <td>
+    <input pInputText
+      type="number" min="1"
+      [(ngModel)]="product.conversion"
+      [ngModelOptions]="{standalone: true}"
+      (ngModelChange)="isChildUOMValid()"
+      placeholder="Conversion"
+      (keypress)="allowOnlyNumbers($event)" />
+  </td>
 
-  <!-- ═══════════════════════════════════════════
-       SECTION A — Common Information
-  ════════════════════════════════════════════ -->
-  <div class="section-block">
-    <h3 class="section-title blue">A.&nbsp; Common Information</h3>
+  <td>
+    <input pInputText
+      type="number" min="1"
+      [(ngModel)]="product.mrpUom"
+      [ngModelOptions]="{standalone: true}"
+      (ngModelChange)="isChildUOMValid()"
+      placeholder="MRP"
+     />
+      <br>
+      <small class="text-red-500" *ngIf="product.mrpError">
+  MRP/conversion must be greater than {{ (addForm.get('mrp')?.value / product.conversion) | number:'1.2-2' }}
+</small>
+  </td>
 
-    <div class="cards-row">
+  <td>
+    <i class="pi pi-minus-circle cursor-pointer text-yellow-500" (click)="removeRow()"></i>
+  </td>
+</tr>
+</ng-template>
 
-      <!-- Card 1: Basic Info -->
-      <div class="info-card">
-        <p class="card-title">Basic Info</p>
-        <div class="card-fields">
+                </p-table>
+            </div>
 
-          <div class="field-col">
-            <label class="field-label">Item Code <span class="req">*</span></label>
-            <input pInputText formControlName="itemCode" placeholder="Item Code"
-                   (input)="toUppercase($event)" (blur)="onBlur($event)"
-                   [readOnly]="mode === 'edit'" />
-            <small class="err-msg" *ngIf="addForm.get('itemCode')?.touched && addForm.get('itemCode')?.errors?.['required']">
-              Item Code is required
-            </small>
-          </div>
+            <div class="flex flex-col gap-3">
+                <button pButton type="button" label="Add UOM" [class.disabled]="uomTableDisabled" class="p-button-warning" (click)="addRow()"></button>
+            </div>
+        </div>
+    </div>
 
-          <div class="field-col">
-            <label class="field-label">Item BarCode</label>
-            <input pInputText formControlName="itembarcode" placeholder="Item BarCode"
-                   (input)="toUppercase($event)" (blur)="onBlurBarCode($event)"
-                   [readOnly]="mode === 'edit'" />
-          </div>
-
-          <div class="field-col span-2">
-            <label class="field-label">Item Name <span class="req">*</span></label>
-            <input pInputText formControlName="itemName" placeholder="Item Name"
-                   (input)="toUppercase($event)" />
-            <small class="err-msg" *ngIf="addForm.get('itemName')?.touched && addForm.get('itemName')?.errors?.['required']">
-              Item Name is required
-            </small>
-          </div>
-
-          <div class="field-col">
-            <label class="field-label">Item Type <span class="req">*</span></label>
-            <p-dropdown [options]="itemtypeOptions" optionLabel="fieldname" optionValue="fieldid"
-                        [filter]="true" filterPlaceholder="Search Item Type"
-                        formControlName="itemtype" placeholder="Item Type">
-            </p-dropdown>
-            <small class="err-msg" *ngIf="addForm.get('itemtype')?.touched && addForm.get('itemtype')?.errors?.['required']">
-              Item Type is required
-            </small>
-          </div>
-
-          <div class="field-col">
-            <label class="field-label">Category <span class="req">*</span></label>
-            <p-dropdown [options]="categoryOptions" optionLabel="fieldname" optionValue="fieldid"
-                        [filter]="true" filterPlaceholder="Search Category"
-                        formControlName="category" placeholder="Category">
-            </p-dropdown>
-            <small class="err-msg" *ngIf="addForm.get('category')?.touched && addForm.get('category')?.errors?.['required']">
-              Category is required
-            </small>
-          </div>
+    <!-- 🔘 Form Buttons -->
+    <div class="flex justify-end items-center mt-8 border-t pt-4">
+        <div class="flex gap-4">
+          
+                  <button pButton type="button" label="Cancel"  class="p-button-secondary" (click)="onCancel()"></button>
+            <button pButton type="submit" label="Submit" class="p-button-warning" [disabled]="addForm.invalid || !isChildUOMValid() || itemCodeExists|| barcodeExists"></button>
 
         </div>
-
-        <div class="checkboxes">
-          <div class="chk-item">
-            <p-checkbox formControlName="activeItem" [binary]="true"></p-checkbox>
-            <label class="field-label">Active Item</label>
-          </div>
-          <div class="chk-item">
-            <p-checkbox formControlName="gstItem" [binary]="true"></p-checkbox>
-            <label class="field-label">GST Item</label>
-          </div>
-        </div>
-      </div>
-
-      <!-- Card 2: Stock & Unit -->
-      <div class="info-card">
-        <p class="card-title">Stock &amp; Unit</p>
-        <div class="card-fields">
-
-          <div class="field-col">
-            <label class="field-label">Parent UOM <span class="req">*</span></label>
-            <p-dropdown [options]="uomOptions" optionLabel="fieldname" optionValue="fieldid"
-                        [filter]="true" (onChange)="onItemParentUM($event)"
-                        filterPlaceholder="Search Parent UOM"
-                        formControlName="parentUOM" placeholder="Parent UOM"
-                        [readonly]="mode === 'edit'">
-            </p-dropdown>
-            <small class="err-msg" *ngIf="addForm.get('parentUOM')?.touched && addForm.get('parentUOM')?.errors?.['required']">
-              Parent UOM is required
-            </small>
-          </div>
-
-          <div class="field-col">
-            <label class="field-label">Quantity <span class="req">*</span></label>
-            <input pInputText type="number" min="1" formControlName="qty"
-                   placeholder="Quantity" (keydown)="blockMinus($event)" />
-            <small class="err-msg" *ngIf="addForm.get('qty')?.touched && addForm.get('qty')?.invalid">
-              <span *ngIf="addForm.get('qty')?.errors?.['required']">Quantity is required</span>
-              <span *ngIf="addForm.get('qty')?.errors?.['min']">Must be greater than 0</span>
-            </small>
-          </div>
-
-          <div class="field-col">
-            <label class="field-label">Current Stock</label>
-            <input pInputText formControlName="curStock" placeholder="Current Stock" readonly class="grayout" />
-          </div>
-
-          <div class="field-col" *ngIf="isTransactionType('purchase')">
-            <label class="field-label">Min Stock</label>
-            <input pInputText formControlName="minStock" placeholder="Min Stock"
-                   (keypress)="allowOnlyNumbers($event)" />
-          </div>
-
-        </div>
-      </div>
-
-      <!-- Card 3: Pricing -->
-      <div class="info-card">
-        <p class="card-title">Pricing</p>
-        <div class="card-fields">
-
-          <div class="field-col">
-            <label class="field-label">
-              {{ isTransactionType('lease') ? 'Lease Price' : isTransactionType('rent') ? 'Rent Price' : 'Purchase Price' }}
-              <span class="req">*</span>
-            </label>
-            <input pInputText type="number" min="1" formControlName="purchasePrice"
-                   [placeholder]="isTransactionType('lease') ? 'Lease Price' : isTransactionType('rent') ? 'Rent Price' : 'Purchase Price'"
-                   (keydown)="blockMinus($event)" />
-            <small class="err-msg" *ngIf="addForm.get('purchasePrice')?.touched && addForm.get('purchasePrice')?.invalid">
-              <span *ngIf="addForm.get('purchasePrice')?.errors?.['required']">
-                {{ isTransactionType('lease') ? 'Lease Price' : isTransactionType('rent') ? 'Rent Price' : 'Purchase Price' }} is required
-              </span>
-              <span *ngIf="addForm.get('purchasePrice')?.errors?.['min']">Must be greater than 0</span>
-            </small>
-          </div>
-
-          <div class="field-col">
-            <label class="field-label">MRP <span class="req">*</span></label>
-            <input pInputText type="number" min="1" formControlName="mrp" placeholder="MRP"
-                   (keydown)="blockMinus($event)" (keypress)="allowOnlyNumbers($event)" />
-            <small class="err-msg" *ngIf="addForm.get('mrp')?.touched || addForm.hasError('mrpGreaterThanPurchase')">
-              <span *ngIf="addForm.get('mrp')?.errors?.['required']">MRP is required</span>
-              <span *ngIf="addForm.hasError('mrpGreaterThanPurchase')">MRP must be ≥ Purchase Price</span>
-            </small>
-          </div>
-
-          <div class="field-col">
-            <label class="field-label">Tax <span class="req">*</span></label>
-            <p-dropdown [options]="taxOptions" optionLabel="fieldname" optionValue="fieldid"
-                        [filter]="true" filterPlaceholder="Search Tax"
-                        formControlName="p_tax" placeholder="Tax">
-            </p-dropdown>
-            <small class="err-msg" *ngIf="addForm.get('p_tax')?.touched && addForm.get('p_tax')?.errors?.['required']">
-              Tax is required
-            </small>
-          </div>
-
-          <div class="field-col" *ngIf="!isTransactionType('lease')">
-            <label class="field-label">Discount (%)</label>
-            <input pInputText formControlName="discount" placeholder="Discount" />
-          </div>
-
-          <div class="field-col">
-            <label class="field-label">{{ isTransactionType('rent') ? 'Cost/Day' : 'Cost/Item' }}</label>
-            <input pInputText formControlName="costPerItem" placeholder="Cost/Item" readonly class="grayout" />
-          </div>
-
-          <div class="field-col">
-            <label class="field-label">Location</label>
-           <p-dropdown #locationDropdown [options]="locationOptions" optionLabel="label" optionValue="value" formControlName="location" placeholder="Select Location" [filter]="true" [showClear]="true" (onFilter)="onLocationFilter($event)" appendTo="body">
-  <ng-template pTemplate="footer">
-    <div *ngIf="showEmptyFilter" class="text-center p-2">
-      <button pButton type="button" label="Add" icon="pi pi-plus"  class="w-full p-button-warning" (click)="addNewLocation()"></button>
     </div>
-  </ng-template>
-</p-dropdown>
-          </div>
-
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════
-       SECTION B — Type-specific Details
-  ════════════════════════════════════════════ -->
-  <div class="section-block">
-    <h3 class="section-title green">
-      B.&nbsp;
-      {{ isTransactionType('lease') ? 'Lease Details' : isTransactionType('rent') ? 'Rent Details' : 'Purchase Details' }}
-    </h3>
-
-    <!-- Purchase Details -->
-    <div class="detail-fields" *ngIf="isTransactionType('purchase')">
-
-      <div class="field-col">
-        <label class="field-label">Warranty Period (in months)</label>
-        <input pInputText formControlName="warPeriod" placeholder="Warranty Period"
-               (keypress)="allowOnlyNumbers($event)" />
-      </div>
-
-      <div class="field-col">
-        <label class="field-label">Expiry Date</label>
-        <p-datepicker fluid formControlName="p_expirydate" dateFormat="dd/mm/yy"
-                      [minDate]="dateTime" [showIcon]="true" placeholder="Expiry Date">
-        </p-datepicker>
-      </div>
-
-    </div>
-
-    <!-- Lease Details -->
-    <div class="detail-fields" *ngIf="isTransactionType('lease')">
-
-      <div class="field-col">
-        <label class="field-label">Payment Type <span class="req">*</span></label>
-        <p-dropdown [options]="paymentTypeOptions" optionLabel="label" optionValue="value"
-                    formControlName="paymentType" placeholder="Select Payment Type">
-        </p-dropdown>
-        <small class="err-msg" *ngIf="addForm.get('paymentType')?.touched && addForm.get('paymentType')?.errors?.['required']">
-          Payment Type is required
-        </small>
-      </div>
-
-      <div class="field-col">
-        <label class="field-label">Lease Start Date <span class="req">*</span></label>
-        <p-datepicker fluid formControlName="leaseStartDate" dateFormat="dd/mm/yy"
-                      [showIcon]="true" placeholder="Lease Start Date">
-        </p-datepicker>
-        <small class="err-msg" *ngIf="addForm.get('leaseStartDate')?.touched && addForm.get('leaseStartDate')?.errors?.['required']">
-          Lease Start Date is required
-        </small>
-      </div>
-
-      <div class="field-col">
-        <label class="field-label">Lease End Date <span class="req">*</span></label>
-        <p-datepicker fluid formControlName="leaseEndDate" dateFormat="dd/mm/yy"
-                      [showIcon]="true" placeholder="Lease End Date">
-        </p-datepicker>
-        <small class="err-msg" *ngIf="addForm.get('leaseEndDate')?.touched && addForm.get('leaseEndDate')?.errors?.['required']">
-          Lease End Date is required
-        </small>
-      </div>
-
-    </div>
-
-    <!-- Rent Details -->
-    <div class="detail-fields" *ngIf="isTransactionType('rent')">
-
-      <div class="field-col">
-        <label class="field-label">Payment Type <span class="req">*</span></label>
-        <p-dropdown [options]="paymentTypeOptions" optionLabel="label" optionValue="value"
-                    formControlName="paymentType" placeholder="Select Payment Type">
-        </p-dropdown>
-        <small class="err-msg" *ngIf="addForm.get('paymentType')?.touched && addForm.get('paymentType')?.errors?.['required']">
-          Payment Type is required
-        </small>
-      </div>
-
-    </div>
-
-  </div>
-
-  <!-- ═══════════════════════════════════════════
-       Child UOM Table
-  ════════════════════════════════════════════ -->
-  <div class="section-block" *ngIf="isTransactionType('purchase')">
-    <h3 class="section-title blue">C.&nbsp; Child UOM Details</h3>
-
-    <div class="uom-table-wrapper">
-      <p-table [value]="products" styleClass="uom-table">
-        <ng-template #header>
-          <tr [class.disabled]="uomTableDisabled" class="uom-header">
-            <th>Child UOM</th>
-            <th>Conversion</th>
-            <th>MRP</th>
-            <th style="width:60px">Remove</th>
-          </tr>
-        </ng-template>
-        <ng-template #body let-product>
-          <tr [class.disabled]="uomTableDisabled">
-            <td>
-              <p-dropdown [options]="ChilduomOptions" optionLabel="fieldname" optionValue="fieldid"
-                          [filter]="true" filterPlaceholder="Search Child UOM"
-                          [(ngModel)]="product.childUOM" [ngModelOptions]="{ standalone: true }"
-                          (ngModelChange)="isChildUOMValid()" placeholder="Select Child UOM" appendTo="body">
-              </p-dropdown>
-            </td>
-            <td>
-              <input pInputText type="number" min="1" [(ngModel)]="product.conversion"
-                     [ngModelOptions]="{ standalone: true }" (ngModelChange)="isChildUOMValid()"
-                     placeholder="Conversion" (keypress)="allowOnlyNumbers($event)" />
-            </td>
-            <td>
-              <input pInputText type="number" min="1" [(ngModel)]="product.mrpUom"
-                     [ngModelOptions]="{ standalone: true }" (ngModelChange)="isChildUOMValid()"
-                     placeholder="MRP" />
-              <br />
-              <small class="err-msg" *ngIf="product.mrpError">
-                MRP/conversion must be &gt; {{ addForm.get('mrp')?.value / product.conversion | number: '1.2-2' }}
-              </small>
-            </td>
-            <td>
-              <i class="pi pi-minus-circle remove-icon" (click)="removeRow()"></i>
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
-
-      <button pButton type="button" label="Add UOM"
-              [class.disabled]="uomTableDisabled || !isTransactionType('purchase')"
-              class="p-button-warning add-uom-btn"
-              (click)="addRow()">
-      </button>
-    </div>
-  </div>
-
-  <!-- Footer Buttons -->
-  <div class="form-footer">
-    <button pButton type="button" label="Cancel" class="p-button-outlined p-button-secondary" (click)="onCancel()"></button>
-    <button pButton type="submit" label="Submit" class="p-button-warning"
-            [disabled]="addForm.invalid || !isChildUOMValid() || itemCodeExists || barcodeExists">
-    </button>
-  </div>
-
 </form>

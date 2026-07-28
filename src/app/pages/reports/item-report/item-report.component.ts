@@ -117,7 +117,7 @@ export class ItemReportComponent {
         const payload = {
             p_categoryid: category || null,
             p_itemid: item || null,
-            p_username: 'admin',
+            p_username: this.authService.isLogIntType().userid.toString(),
             p_type: reportType || 'ITEMLIST'
         };
         this.showData = false;
@@ -162,7 +162,7 @@ export class ItemReportComponent {
     categoryRelavantItem(id: any) {
         this.itemOptions = [];
         const payload = {
-            p_username: 'admin',
+            p_username: this.authService.isLogIntType().userid.toString(),
             p_returntype: 'CATEGORY',
             p_returnvalue: id.toString()
         };
@@ -196,7 +196,7 @@ export class ItemReportComponent {
 
     createDropdownPayload(returnType: string) {
         return {
-            p_username: 'admin',
+            p_username: this.authService.isLogIntType().userid.toString(),
             p_returntype: returnType
         };
     }

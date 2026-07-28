@@ -12,14 +12,14 @@ export const MENU_MODEL: any[] = [
                 icon: 'pi pi-fw pi-home',
                 routerLink: ['/layout/dashboard']
             },
-             {
+            {
                 label: 'Main Dashboard',
                 icon: 'pi pi-fw pi-home',
                 routerLink: ['/layout/dashboard']
             }
         ]
     },
-     {
+    {
         label: 'PURCHASE',
         icon: 'pi pi-chart-bar',
         accessKey: 'Purchase',
@@ -30,19 +30,24 @@ export const MENU_MODEL: any[] = [
                 routerLink: ['/layout/inventory/overview'],
                 items: [
                     {
-                       label: 'Work Listing',
-                       icon: 'pi pi-fw pi pi-sitemap',
-                       routerLink: ['/layout/inventory/work']
+                        label: 'Work Listing',
+                        icon: 'pi pi-fw pi pi-sitemap',
+                        routerLink: ['/layout/inventory/work']
                     },
                     {
-                       label: 'Material Forcasting',
-                       icon: 'pi pi-fw pi pi-sparkles',
-                       routerLink: ['/layout/inventory/material-forcasting']
-                    },    
+                        label: 'Material Forcasting',
+                        icon: 'pi pi-fw pi pi-sparkles',
+                        routerLink: ['/layout/inventory/material-forcasting']
+                    },
                     {
-                       label: 'Purchase Order',
-                       icon: 'pi pi-fw pi pi-send',
-                       routerLink: ['/layout/inventory/purchase-order']
+                        label: 'Purchase Order',
+                        icon: 'pi pi-fw pi pi-send',
+                        routerLink: ['/layout/inventory/purchase-order']
+                    },
+                     {
+                        label: 'Vendor Comparison',
+                        icon: 'pi pi-fw pi pi-truck',
+                        routerLink: ['/layout/inventory/purchase-order']
                     }
                 ]
             }
@@ -58,11 +63,6 @@ export const MENU_MODEL: any[] = [
                 icon: 'pi pi-fw pi-database',
                 routerLink: ['/layout/inventory/overview'],
                 items: [
-                     {
-                        label: 'Stock In',
-                        icon: 'pi pi-fw pi-arrow-down-left',
-                        routerLink: ['/layout/inventory/stock-in']
-                    },
                     {
                         label: 'Stock In',
                         icon: 'pi pi-fw pi-arrow-down-left',
@@ -78,7 +78,7 @@ export const MENU_MODEL: any[] = [
                         icon: 'pi pi-fw pi-history',
                         routerLink: ['/layout/inventory/transaction']
                     },
-                       {
+                    {
                         label: 'GRN',
                         icon: 'pi pi-fw pi-inbox',
                         routerLink: ['/layout/inventory/grn']
@@ -111,7 +111,7 @@ export const MENU_MODEL: any[] = [
             }
         ]
     },
-          {
+    {
         label: 'POS',
         icon: 'pi pi-shopping-cart',
         accessKey: 'POS',
@@ -136,12 +136,12 @@ export const MENU_MODEL: any[] = [
                         icon: 'pi pi-fw pi-arrow-right-arrow-left',
                         routerLink: ['/layout/pos/replace']
                     },
-                      {
+                    {
                         label: 'Invoice',
                         icon: 'pi pi-fw pi-file',
                         routerLink: ['/layout/pos/invoice']
                     },
-                     {
+                    {
                         label: 'Customer Due',
                         icon: 'pi pi-fw pi-money-bill',
                         routerLink: ['/layout/pos/customer-due']
@@ -165,7 +165,7 @@ export const MENU_MODEL: any[] = [
                 icon: 'pi pi-fw pi-desktop',
                 routerLink: ['/layout/pos/overview'],
                 items: [
-                      {
+                    {
                         label: 'Material Issue',
                         icon: 'pi pi-fw pi-arrow-right-arrow-left',
                         routerLink: ['/layout/inventory/material-issue']
@@ -175,7 +175,7 @@ export const MENU_MODEL: any[] = [
                         icon: 'pi pi-fw pi-arrow-left',
                         routerLink: ['/layout/inventory/material-return']
                     },
-                      {
+                    {
                         label: 'Invoice',
                         icon: 'pi pi-fw pi-file',
                         routerLink: ['/layout/pos/invoice']
@@ -210,7 +210,7 @@ export const MENU_MODEL: any[] = [
                         routerLink: ['/layout/reports/transaction-report']
                     },
                     {
-                        label: 'P&L',
+                        label: 'P & L',
                         icon: 'pi pi-fw pi-chart-scatter',
                         routerLink: ['/layout/reports/balance-sheet']
                     }
@@ -228,17 +228,17 @@ export const MENU_MODEL: any[] = [
                 icon: 'pi pi-fw pi-cog',
                 routerLink: ['/layout/settings/overview'],
                 items: [
-                     {
+                    {
                         label: 'UserType',
                         icon: 'pi pi-fw pi-file',
                         routerLink: ['/layout/settings/category-formate', 'usertype']
                     },
-                     {
-                       label: 'Site',
-                       icon: 'pi pi-fw pi-file-edit',
-                       routerLink: ['/layout/inventory/project']
+                    {
+                        label: 'Site',
+                        icon: 'pi pi-fw pi-file-edit',
+                        routerLink: ['/layout/inventory/project']
                     },
-                     {
+                    {
                         label: 'User Management',
                         icon: 'pi pi-fw pi-users',
                         routerLink: ['/layout/security/user-management']
@@ -252,32 +252,32 @@ export const MENU_MODEL: any[] = [
                         label: 'Customer Master',
                         icon: 'pi pi-fw pi-user',
                         routerLink: ['/layout/settings/category-formate', 'customermaster'],
-                        routerLinkActiveOptions:{exact: false}
+                        routerLinkActiveOptions: { exact: false }
                     },
                     {
                         label: 'Tax Master',
                         icon: 'pi pi-fw pi-percentage',
                         routerLink: ['/layout/settings/category-formate', 'taxmaster'],
-                        routerLinkActiveOptions:{exact: false}
+                        routerLinkActiveOptions: { exact: false }
                     },
                     {
                         label: 'Supplier Master',
                         icon: 'pi pi-fw pi-sliders-h',
                         routerLink: ['/layout/settings/category-formate', 'suppliermaster'],
-                        routerLinkActiveOptions:{exact:false}
+                        routerLinkActiveOptions: { exact: false }
                     },
                     {
                         label: 'UOM Master',
                         icon: 'pi pi-fw pi-briefcase',
                         routerLink: ['/layout/settings/category-formate', 'uommaster'],
-                        routerLinkActiveOptions:{exact: false}
+                        routerLinkActiveOptions: { exact: false }
                     },
-                       {
-                        label: 'Rule Details',
+                    {
+                        label: 'Rule Detail',
                         icon: 'pi pi-exclamation-triangle',
                         routerLink: ['/layout/settings/rule-detail']
                     },
-                      {
+                    {
                         label: 'Misc Charges',
                         icon: 'pi pi-fw pi-wallet',
                         routerLink: ['/layout/settings/misc-charges']
@@ -296,18 +296,25 @@ export const MENU_MODEL: any[] = [
                 icon: 'pi pi-fw pi-shield',
                 routerLink: ['/layout/security/overview'],
                 items: [
-                   
                     {
                         label: 'Access-Control',
                         icon: 'pi pi-fw pi-file',
-                        routerLink: ['/layout/security/access-control'] 
-                    },  
-                     
+                        routerLink: ['/layout/security/access-control']
+                    },
+                     {
+                        label: 'User Management',
+                        icon: 'pi pi-fw pi-users',
+                        routerLink: ['/layout/security/user-management']
+                    },
+                     {
+                        label: 'Rule Detail',
+                        icon: 'pi pi-exclamation-triangle',
+                        routerLink: ['/layout/settings/rule-detail']
+                    },
                 ]
             }
         ]
     },
-    ,
     {
         label: 'ACTION',
         icon: 'pi pi-cog',
@@ -317,18 +324,19 @@ export const MENU_MODEL: any[] = [
                 label: 'Actions',
                 icon: 'pi pi-fw pi-pencil',
                 routerLink: ['/layout/settings/overview'],
-                items: []
-            },
-             {
+                items: [
+                    {
                         label: 'Bulk Upload',
                         icon: 'pi pi-fw pi-upload',
                         routerLink: ['/layout/settings/bulk-upload']
                     },
-                     {
+                    {
                         label: 'My Approval',
                         icon: 'pi pi-fw pi-check-circle',
                         routerLink: ['/layout/settings/my-approval']
                     }
+                ]
+            }
         ]
     }
 ];

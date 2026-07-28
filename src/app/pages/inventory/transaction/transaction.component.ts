@@ -176,7 +176,7 @@ export class TransactionComponent {
                 p_invoiceend: this.datepipe.transform(endDate, 'yyyy/MM/dd'),
                 p_vendor: p_vendor || null,
                 p_invoicenumber: invoice || null,
-                p_username: 'admin',
+                p_username: this.authService.isLogIntType().userid.toString(),
                 clientcode: 'CG01-SE'
             };
             this.inventoryService.gettransactiondetail(payload).subscribe({
@@ -296,7 +296,7 @@ export class TransactionComponent {
 
     createDropdownPayload(returnType: string) {
         return {
-            p_username: 'admin',
+            p_username: this.authService.isLogIntType().userid.toString(),
             p_returntype: returnType
         };
     }
@@ -361,7 +361,7 @@ export class TransactionComponent {
         const payload = {
             p_stock: payloadItems,
             p_updatetype: 'PURDUE',
-            p_username: 'admin'
+            p_username: this.authService.isLogIntType().userid.toString()
         };
         this.inventoryService.updatestockadjustment(payload).subscribe({
             next: (res: any) => {
@@ -399,14 +399,14 @@ export class TransactionComponent {
 
         // 🔸 First API call: Get purchase details (items)
         const detailsPayload$ = this.inventoryService.Getreturndropdowndetails({
-            p_username: 'admin',
+            p_username: this.authService.isLogIntType().userid.toString(),
             p_returntype: 'PURCHASEDETAIL',
             p_returnvalue: purchaseId
         });
 
         // 🔸 Second API call: Get purchase header information
         const headerPayload$ = this.inventoryService.getdropdowndetails({
-            p_username: 'admin',
+            p_username: this.authService.isLogIntType().userid.toString(),
             p_returntype: 'PURCHASEID' // Assuming this endpoint exists
         });
         forkJoin([detailsPayload$, headerPayload$]).subscribe({

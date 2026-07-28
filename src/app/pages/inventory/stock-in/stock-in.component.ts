@@ -380,7 +380,7 @@ export class StockInComponent {
 
     OnGetDropdown() {
         let payload = {
-            p_username: 'admin',
+            p_username: this.authService.isLogIntType().industry_type_id.toString(),
             p_returntype: 'ITEM'
         };
         this.stockInService.getdropdowndetails(payload).subscribe({
@@ -444,7 +444,7 @@ export class StockInComponent {
     }
     createDropdownPayload(returnType: string) {
         return {
-            p_username: 'admin',
+            p_username: this.authService.isLogIntType().industry_type_id.toString(),
             p_returntype: returnType
         };
     }
@@ -538,7 +538,7 @@ export class StockInComponent {
     OnGetPurcheseItem(id?: number | string) {
         if(!id) return;
         const payload = {
-            p_username: 'admin',
+            p_username: this.authService.isLogIntType().industry_type_id.toString(),
             p_returntype: 'PURCHASEDETAIL',
             p_returnvalue: id.toString()
         };
@@ -557,7 +557,7 @@ export class StockInComponent {
     //Delete stock item
     OnDeleteItem(id: any) {
         const payload = {
-            p_username: 'admin',
+            p_username: this.authService.isLogIntType().industry_type_id.toString(),
             p_returntype: 'PURCHASEDETAIL',
             p_purchasedetailid: id
 
@@ -574,7 +574,7 @@ export class StockInComponent {
     // onchildUOM(id:any){
     //     const payload = {
     //
-    //     "p_username": "admin",
+    //     "p_username": "this.authService.isLogIntType().industry_type_id.toString()",
     //     "p_returntype": "CHILDUOM",
     //      "p_returnvalue":id.toString(),
     //
@@ -593,7 +593,7 @@ export class StockInComponent {
         console.log(id);
 
         const payload = {
-            p_username: 'admin',
+            p_username: this.authService.isLogIntType().industry_type_id.toString(),
             p_returntype: 'CHILDUOM',
             p_returnvalue: id.toString()
         };

@@ -123,7 +123,7 @@ export class MiscChargesComponent {
 
     createDropdownPayload(returnType: string) {
         return {
-            p_username: 'admin',
+            p_username: this.authService.isLogIntType().userid.toString(),
             p_returntype: returnType
         };
     }

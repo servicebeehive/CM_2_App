@@ -230,14 +230,14 @@ export class InvoiceComponent implements OnInit {
 
     private loadDropdown(returnType: string, onSuccess: (data: any[]) => void): void {
         this.inventoryService
-            .getdropdowndetails({ p_username: 'admin', p_returntype: returnType })
+            .getdropdowndetails({ p_username: this.authService.isLogIntType().userid.toString(), p_returntype: returnType })
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({ next: (res) => onSuccess(res.data), error: console.error });
     }
 
     private loadProfile(): void {
         this.inventoryService
-            .getdropdowndetails({ p_username: 'admin', p_returntype: 'PROFILE' })
+            .getdropdowndetails({ p_username: this.authService.isLogIntType().userid.toString(), p_returntype: 'PROFILE' })
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (res) => {
@@ -309,7 +309,7 @@ export class InvoiceComponent implements OnInit {
             p_enddate: this.datepipe.transform(toDate, 'yyyy/MM/dd'),
             p_customer: p_cusname || null,
             p_status: status || null,
-            p_username: 'admin'
+            p_username: this.authService.isLogIntType().userid.toString()
         };
 
         this.showData = false;
@@ -354,7 +354,7 @@ export class InvoiceComponent implements OnInit {
         }
 
         this.inventoryService
-            .Getreturndropdowndetails({ p_returnvalue: mobile, p_returntype: 'CUSTOMERLEDGER', p_username: 'admin' })
+            .Getreturndropdowndetails({ p_returnvalue: mobile, p_returntype: 'CUSTOMERLEDGER', p_username: this.authService.isLogIntType().userid.toString() })
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (res: any) => {
@@ -501,7 +501,7 @@ export class InvoiceComponent implements OnInit {
         }
 
         this.inventoryService
-            .updatestockadjustment({ p_stock: payloadItems, p_updatetype: 'DUE', p_username: 'admin' })
+            .updatestockadjustment({ p_stock: payloadItems, p_updatetype: 'DUE', p_username: this.authService.isLogIntType().userid.toString() })
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => {
@@ -520,7 +520,7 @@ export class InvoiceComponent implements OnInit {
     // -------------------------------------------------------------------------
     printInvoice(row: any): void {
         this.inventoryService
-            .Getreturndropdowndetails({ p_username: 'admin', p_returntype: 'SALEPRINT', p_returnvalue: row.invoice_no })
+            .Getreturndropdowndetails({ p_username: this.authService.isLogIntType().userid.toString(), p_returntype: 'SALEPRINT', p_returnvalue: row.invoice_no })
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (res) => {

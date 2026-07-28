@@ -265,6 +265,22 @@ upsertsuppliermaster(payload:any):Observable<any>{
   }))
 }
 
+upsertcategorymaster(payload:any):Observable<any>{
+  let payloaddata = this.shareservice.GetApiBody(payload)
+  let url = `${this.baseUrl}${API_ENDPOINTS.settings.upsertcategorymaster}`;
+  return this.http.post<any>(url,payloaddata).pipe(catchError(error=>{
+    return throwError(()=>error)
+  }))
+}
+
+upsertuommaster(payload:any):Observable<any>{
+  let payloaddata = this.shareservice.GetApiBody(payload)
+  let url = `${this.baseUrl}${API_ENDPOINTS.settings.upsertuommaster}`;
+  return this.http.post<any>(url,payloaddata).pipe(catchError(error=>{
+    return throwError(()=>error)
+  }))
+}
+
 manageapprovalrulelevels(payload:any):Observable<any>{
   let payloaddata = this.shareservice.GetApiBody(payload)
   let url = `${this.baseUrl}${API_ENDPOINTS.settings.fnmanageapprovalrulelevels}`;
