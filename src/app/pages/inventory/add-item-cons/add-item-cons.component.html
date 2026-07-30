@@ -145,7 +145,7 @@
           <div class="field-col">
             <label class="field-label">Parent UOM <span class="req">*</span></label>
             <p-dropdown [options]="uomOptions" optionLabel="fieldname" optionValue="fieldid"
-                        [filter]="true" (onChange)="onItemParentUM($event)"
+                        [filter]="true"
                         filterPlaceholder="Search Parent UOM"
                         formControlName="parentUOM" placeholder="Parent UOM"
                         [readonly]="mode === 'edit'">
@@ -327,65 +327,11 @@
 
   </div>
 
-  <!-- ═══════════════════════════════════════════
-       Child UOM Table
-  ════════════════════════════════════════════ -->
-  <div class="section-block" *ngIf="isTransactionType('purchase')">
-    <h3 class="section-title blue">C.&nbsp; Child UOM Details</h3>
-
-    <div class="uom-table-wrapper">
-      <p-table [value]="products" styleClass="uom-table">
-        <ng-template #header>
-          <tr [class.disabled]="uomTableDisabled" class="uom-header">
-            <th>Child UOM</th>
-            <th>Conversion</th>
-            <th>MRP</th>
-            <th style="width:60px">Remove</th>
-          </tr>
-        </ng-template>
-        <ng-template #body let-product>
-          <tr [class.disabled]="uomTableDisabled">
-            <td>
-              <p-dropdown [options]="ChilduomOptions" optionLabel="fieldname" optionValue="fieldid"
-                          [filter]="true" filterPlaceholder="Search Child UOM"
-                          [(ngModel)]="product.childUOM" [ngModelOptions]="{ standalone: true }"
-                          (ngModelChange)="isChildUOMValid()" placeholder="Select Child UOM" appendTo="body">
-              </p-dropdown>
-            </td>
-            <td>
-              <input pInputText type="number" min="1" [(ngModel)]="product.conversion"
-                     [ngModelOptions]="{ standalone: true }" (ngModelChange)="isChildUOMValid()"
-                     placeholder="Conversion" (keypress)="allowOnlyNumbers($event)" />
-            </td>
-            <td>
-              <input pInputText type="number" min="1" [(ngModel)]="product.mrpUom"
-                     [ngModelOptions]="{ standalone: true }" (ngModelChange)="isChildUOMValid()"
-                     placeholder="MRP" />
-              <br />
-              <small class="err-msg" *ngIf="product.mrpError">
-                MRP/conversion must be &gt; {{ addForm.get('mrp')?.value / product.conversion | number: '1.2-2' }}
-              </small>
-            </td>
-            <td>
-              <i class="pi pi-minus-circle remove-icon" (click)="removeRow()"></i>
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
-
-      <button pButton type="button" label="Add UOM"
-              [class.disabled]="uomTableDisabled || !isTransactionType('purchase')"
-              class="p-button-warning add-uom-btn"
-              (click)="addRow()">
-      </button>
-    </div>
-  </div>
-
   <!-- Footer Buttons -->
   <div class="form-footer">
     <button pButton type="button" label="Cancel" class="p-button-outlined p-button-secondary" (click)="onCancel()"></button>
     <button pButton type="submit" label="Submit" class="p-button-warning"
-            [disabled]="addForm.invalid || !isChildUOMValid() || itemCodeExists || barcodeExists">
+            [disabled]="addForm.invalid || itemCodeExists || barcodeExists">
     </button>
   </div>
 

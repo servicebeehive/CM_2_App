@@ -87,7 +87,6 @@ export class AddItemConsComponent {
 
     @ViewChild('locationDropdown') locationDropdown!: Dropdown;
     
-    public ChilduomOptions: [] = [];
     public authService = inject(AuthService);
     copyMessage: string = '';
     showCopyMessage: boolean = false;
@@ -100,9 +99,7 @@ export class AddItemConsComponent {
     uom = [];
     itemCodeExists: boolean = false;
     barcodeExists: boolean = false;
-    uomTableDisabled = false;
     resetDisabled = false;
-    products: any[] = [];
 
     itemtypeOptions: any[] = [
         { fieldid: 'consumable', fieldname: 'Consumable' },
@@ -186,7 +183,7 @@ export class AddItemConsComponent {
             this.onTransactionTypeChange(type);
         });
 
-        this.resetChildUOMTable();
+        this.applyModeData();
     }
 
     /** Helper to check current transaction type */
@@ -240,10 +237,6 @@ export class AddItemConsComponent {
         ['paymentType', 'leaseStartDate', 'leaseEndDate'].forEach((f) => {
             this.addForm.get(f)?.updateValueAndValidity();
         });
-    }
-
-    resetChildUOMTable() {
-        this.products = [];
     }
 
     allowOnlyNumbers(event: KeyboardEvent) {
@@ -317,6 +310,7 @@ addNewLocation(): void {
     }
 
     enterEditItemMode(itemData: any) {
+        console.log(itemData)
         this.addForm.patchValue({
             itemid: itemData.itemid,
             p_tranpurchaseid: itemData.purchaseid,
@@ -338,14 +332,11 @@ addNewLocation(): void {
             warPeriod: itemData.warrentyperiod
         });
 
-        this.OnChildOM(itemData.itemid);
-        this.viewItem(itemData.uomid);
         this.resetDisabled = true;
         this.disableItemRelatedControls();
         this.addForm.get('purchasePrice')?.enable();
         this.addForm.get('mrp')?.enable();
         this.addForm.get('qty')?.enable();
-        this.uomTableDisabled = true;
     }
 
     enterItemUpdateMode(itemData: any) {
@@ -367,8 +358,6 @@ addNewLocation(): void {
             warPeriod: itemData.warrentyperiod
         });
 
-        this.OnChildOM(itemData.itemid);
-        this.viewItem(itemData.uomid);
         this.resetDisabled = true;
         this.addForm.disable();
         this.disableItemRelatedControls();
@@ -382,8 +371,7 @@ addNewLocation(): void {
         this.addForm.get('discount')?.enable();
     }
 
-    enterAddItemMode(itemData: any) {
-        console.log('add item:', itemData);
+    enterAddItemMode(itemData: any) {   
         this.addForm.patchValue({
             itembarcode: itemData.itembarcode,
             itemCode: itemData.itemsku,
@@ -403,25 +391,21 @@ addNewLocation(): void {
             warPeriod: itemData.warrentyperiod
         });
 
-        this.OnChildOM(itemData.itemid);
-        this.viewItem(itemData.uomid);
         this.disableItemRelatedControls();
         this.addForm.get('purchasePrice')?.enable();
         this.addForm.get('mrp')?.enable();
         this.addForm.get('qty')?.enable();
         this.addForm.get('itemSearch')?.enable();
-        this.uomTableDisabled = true;
     }
 
     enterAddModeReset() {
-        this.uomTableDisabled = false;
-        this.resetDisabled = false;
-        this.addForm.enable();
-        this.resetChildUOMTable();
-        this.addForm.get('activeItem')?.setValue(true);
-        this.addForm.get('gstItem')?.setValue(true);
-        this.addForm.get('transactionType')?.setValue('purchase');
-        this.showCopyMessage = false;
+    this.resetDisabled = false;
+        this.addForm.reset();
+    this.addForm.enable();
+    this.addForm.get('activeItem')?.setValue(true);
+    this.addForm.get('gstItem')?.setValue(true);
+    this.addForm.get('transactionType')?.setValue('purchase');
+    this.showCopyMessage = false;
     }
 
     private disableItemRelatedControls() {
@@ -431,21 +415,24 @@ addNewLocation(): void {
 
     ngOnChanges(changes: SimpleChanges): void {
         if (!this.addForm) return;
-        const hasEditDataChange = !!changes['editData'] && !!this.editData;
-        const formReady = !!this.addForm;
-        if (hasEditDataChange && formReady) {
-            if (this.mode === 'edit') {
-                this.enterEditItemMode(this.editData);
-                return;
-            }
-            if (this.mode === 'itemedit') {
-                this.enterItemUpdateMode(this.editData);
-                return;
-            }
+        this.applyModeData();
+    }
+
+    private applyModeData():void{
+     const hasEditData = !!this.editData;
+    if (hasEditData) {
+        if (this.mode === 'edit') {
+            this.enterEditItemMode(this.editData);
+            return;
         }
-        if (this.mode === 'add' && formReady) {
-            this.enterAddModeReset();
+        if (this.mode === 'itemedit') {
+            this.enterItemUpdateMode(this.editData);
+            return;
         }
+    }
+    if (this.mode === 'add') {
+        this.enterAddModeReset();
+    }
     }
 
     copy(event: any) {
@@ -461,7 +448,6 @@ addNewLocation(): void {
 
         this.showCopyMessage = true;
         this.addForm.enable();
-        this.uomTableDisabled = false;
         this.addForm.get('curStock')?.setValue(0);
         this.addForm.get('itembarcode')?.setValue('');
         this.addForm.get('itemCode')?.setValue('');
@@ -532,61 +518,7 @@ addNewLocation(): void {
         }
     }
 
-    addRow() {
-        this.products.push({ childUOM: null, conversion: null, mrpUom: null });
-    }
-
-    removeRow() {
-        if (this.products.length > 1) {
-            this.products.pop();
-        } else {
-            this.resetChildUOMTable();
-        }
-    }
-
-    isChildUOMValid(): boolean {
-        this.addForm.updateValueAndValidity();
-        if (!this.products || this.products.length === 0) return true;
-
-        const parentMrp = Number(this.addForm.get('mrp')?.value || 0);
-        for (const row of this.products) {
-            const hasChild = !!row.childUOM?.toString().trim();
-            const hasConversion = !!row.conversion?.toString().trim();
-            const hasMrp = !!row.mrpUom?.toString().trim();
-
-            if (!hasChild && !hasConversion && !hasMrp) {
-                row.mrpError = false;
-                continue;
-            }
-
-            if (!(hasChild && hasConversion && hasMrp)) {
-                row.mrpError = false;
-                return false;
-            }
-
-            const conv = Number(row.conversion);
-            const mrpUom = Number(row.mrpUom);
-
-            if (!conv || !mrpUom) {
-                row.mrpError = false;
-                return false;
-            }
-
-            const requiredMinMrpUom = parentMrp / conv;
-
-            if (mrpUom < requiredMinMrpUom) {
-                row.mrpError = true;
-                return false;
-            } else {
-                row.mrpError = false;
-            }
-        }
-        return true;
-    }
-
     mapFormToPayload(form: any, childUOM: any[]) {
-        console.log('shds', form);
-
         return {
             p_operationtype: this.mode == 'itemedit' ? 'ITEM_UPD' : 'PUR_INSERT',
             p_purchaseid: this.mode == 'itemedit' ? '0' : (this.transationid?.toString() ?? '0'),
@@ -608,64 +540,50 @@ addNewLocation(): void {
             p_warehourse: form.warehouse || 'ShristiShop',
             p_isactive: form.activeItem ? 'Y' : 'N',
             p_gstitem: form.gstItem ? 'Y' : 'N',
-            // Transaction type fields
             p_transactiontype: form.transactionType,
             p_paymenttype: form.paymentType ?? '',
             p_leasestartdate: this.datePipe.transform(form.leaseStartDate, 'dd/MM/yyyy') ?? '',
             p_leaseenddate: this.datePipe.transform(form.leaseEndDate, 'dd/MM/yyyy') ?? '',
-            // Child UOM logic
-            p_childuom: childUOM.length > 0 ? 'Y' : 'N',
-            p_uom:
-                childUOM.length > 0
-                    ? childUOM.map((x) => ({
-                          itemsku: form.itemCode,
-                          childuomid: Number(x.childUOM),
-                          uomconversion: Number(x.conversion),
-                          childmrp: Number(x.mrpUom)
-                      }))
-                    : [],
-            // User Session Info
+            p_childuom: 'N',
+            p_uom: [],
             p_loginuser: this.shareservice.getUserData()?.username || this.authService.isLogIntType().userid.toString(),
         };
     }
 
-    onSubmit() {
-        if (this.addForm.invalid || !this.isChildUOMValid()) return;
-        if (this.mode == 'itemedit') {
-            this.inventoryService.Oninsertitemdetails(this.mapFormToPayload(this.addForm.getRawValue(), this.products)).subscribe({
-                next: (res) => {
-                    const msg = res?.data?.[0]?.msg || 'Item saved successfully';
-                    this.showSuccess(msg);
-                    this.save.emit(this.addForm.getRawValue());
-                    this.close.emit(this.addForm.getRawValue());
-                },
-                error: (res) => {}
-            });
-        } else {
-            this.inventoryService.Oninsertitemdetails(this.mapFormToPayload(this.addForm.getRawValue(), this.products)).subscribe({
-                next: (res) => {
-                    const msg = res?.data?.[0]?.msg || 'Item saved successfully';
-                    this.showSuccess(msg);
-                    this.close.emit(this.addForm.getRawValue());
-                },
-                error: (res) => {}
-            });
-        }
+onSubmit() {
+    if (this.addForm.invalid) return;
+    if (this.mode == 'itemedit') {
+        this.inventoryService.Oninsertitemdetails(this.mapFormToPayload(this.addForm.getRawValue(), [])).subscribe({
+            next: (res) => {
+                const msg = res?.data?.[0]?.msg || 'Item saved successfully';
+                this.showSuccess(msg);
+                this.save.emit(this.addForm.getRawValue());
+                this.close.emit(this.addForm.getRawValue());
+            },
+            error: (res) => {}
+        });
+    } else {
+        this.inventoryService.Oninsertitemdetails(this.mapFormToPayload(this.addForm.getRawValue(), [])).subscribe({
+            next: (res) => {
+                const msg = res?.data?.[0]?.msg || 'Item saved successfully';
+                this.showSuccess(msg);
+                this.close.emit(this.addForm.getRawValue());
+            },
+            error: (res) => {}
+        });
     }
+}
 
     onCancel() {
         this.close.emit();
-        console.log(this.products);
     }
 
     resetForm() {
         this.addForm.reset();
-        this.resetChildUOMTable();
         this.addForm.get('activeItem')?.setValue(true);
         this.addForm.get('gstItem')?.setValue(true);
         this.addForm.get('transactionType')?.setValue('purchase');
         this.addForm.enable();
-        this.uomTableDisabled = false;
     }
 
     onItemCodeChange(event: any) {
@@ -684,80 +602,11 @@ addNewLocation(): void {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });
     }
 
-    OnChildOM(id: number) {
-        const payload = {
-            p_username: this.authService.isLogIntType().userid.toString(),
-            p_returntype: 'CHILDUOM',
-            p_returnvalue: id.toString()
-        };
-
-        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-            next: (res: any) => {
-                console.log('CHILD UOM DATA =>', res.data);
-                if (!res.data || res.data.length === 0) {
-                    this.products = [];
-                    return;
-                }
-
-                this.products = res.data.map((x: any) => ({
-                    childUOM: x.childuomid,
-                    conversion: x.uomconversion,
-                    mrpUom: x.childmrp
-                }));
-            },
-            error: (err) => {
-                console.error(err);
-            }
-        });
-    }
 
     Reset() {
         this.addForm.reset();
         this.enterAddModeReset();
-        this.resetChildUOMTable();
         this.showCopyMessage = false;
     }
 
-    getFilteredChildUOM() {
-        const parent = this.addForm.get('parentUOM')?.value;
-        return this.uomOptions.filter((u) => u.fieldid !== parent);
-    }
-
-    onItemParentUM(event: any) {
-        this.viewItem(event.value);
-        this.clearChildUOMValues();
-    }
-
-    clearChildUOMValues() {
-        if (this.products && this.products.length > 0) {
-            this.products.forEach((row) => {
-                row.childUOM = '';
-                row.conversion = '';
-                row.mrpUom = '';
-                row.mrpError = false;
-            });
-        }
-    }
-
-    viewItem(id: number) {
-        console.log(id);
-        this.ChilduomOptions = [];
-        const payload = {
-            p_username: this.authService.isLogIntType().userid.toString(),
-            p_returntype: 'CHILDUOMMASTER',
-            p_returnvalue: id.toString()
-        };
-
-        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-            next: (res: any) => {
-                if (!res.data || res.data.length === 0) {
-                    return;
-                }
-                this.ChilduomOptions = res.data;
-            },
-            error: (err) => {
-                console.error(err);
-            }
-        });
-    }
 }

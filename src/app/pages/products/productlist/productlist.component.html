@@ -105,17 +105,21 @@
     [(visible)]="visibleDialog"
     [modal]="true"
     [style]="{ width: '80vw' }"
+    [contentStyle]="{ 'max-height': '80vh', overflow: 'auto' }"
+    appendTo="body"
 >
     <app-add-item-cons
-        *ngIf="mode === 'add' && addTarget === 'cons'"
+        *ngIf="addTarget === 'cons'"
         [categoryOptions]="categoryOptions"
         [uomOptions]="uomOptions"
+        [editData]="selectedRow"
+        [mode]="mode"
         (close)="closeDialog()"
         (save)="onSave($event)"
     ></app-add-item-cons>
 
     <app-addinventory
-        *ngIf="!(mode === 'add' && addTarget === 'cons')"
+        *ngIf="addTarget === 'inventory'"
         [itemOptions]="itemOptions"
         [categoryOptions]="categoryOptions"
         [uomOptions]="uomOptions"

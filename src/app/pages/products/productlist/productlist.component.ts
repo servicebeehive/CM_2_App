@@ -113,7 +113,7 @@ export class ProductlistComponent {
 
     openEditDialog(rowData: any) {
         this.mode = 'itemedit';
-        this.addTarget = 'inventory'; 
+        this.addTarget = this.canAddItem ? 'cons': 'inventory';
         this.selectedRow = rowData || null;
         this.visibleDialog = true;
     }
