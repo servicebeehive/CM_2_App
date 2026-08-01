@@ -1,0 +1,128 @@
+<p-toast></p-toast>
+
+<div class="card p-3 md:p-6">
+    <form [formGroup]="rfqForm" (ngSubmit)="onSubmit()">
+
+        <!-- Header row: title + Submit button -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4 md:mb-6">
+            <span class="block text-surface-900 font-bold text-lg md:text-xl">RFQ</span>
+            <button
+                pButton
+                type="submit"
+                label="Submit RFQ"
+                class="p-button-warning"
+                [disabled]="rfqList.length === 0 || selectedCount === 0"
+            ></button>
+        </div>
+
+       <!-- Global search -->
+        <div class="mb-3 w-full" *ngIf="showGlobalSearch">
+            <app-global-filter [(value)]="globalFilter" placeholder="Search Items..." (valueChange)="applyGlobalFilter()"></app-global-filter>
+        </div>
+
+        <!-- Site dropdown -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-3 w-full mb-4">
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">RFQ No <span class="text-red-500">*</span></label>
+                <p-dropdown
+                    [options]="rfqNoOptions"
+                    optionLabel="project_name"
+                    optionValue="project_id"
+                    placeholder="Select RFQ No"
+                    formControlName="p_rfqno"
+                    [filter]="true"
+                    filterPlaceholder="Search RFQ No"
+                    (onChange)="onRFQNoChange($event)"
+                    [showClear]="true"
+                ></p-dropdown>
+            </div>
+
+             <!-- RFQ Date -->
+            <div class="flex flex-col">
+    <label class="font-medium">RFQ Date</label>
+    <p-datePicker fluid formControlName="p_rfqdate" dateFormat="dd/mm/yy" [showIcon]="true"></p-datePicker>
+    <small class="text-red-500 mt-1 text-xs" *ngIf="rfqForm.get('p_podate')?.touched && rfqForm.get('p_deliverydate')?.touched && rfqForm.errors?.['deliveryBeforePO']">
+        RFQ date cannot be before current date
+    </small>
+</div>
+
+             <div class="flex flex-col">
+                <label class="font-medium mb-1">Site <span class="text-red-500">*</span></label>
+                <p-dropdown
+                    [options]="projectOptions"
+                    optionLabel="project_name"
+                    optionValue="project_id"
+                    placeholder="Select Site"
+                    formControlName="p_site"
+                    [filter]="true"
+                    filterPlaceholder="Search Site"
+                    (onChange)="onSiteChange($event)"
+                    [showClear]="true"
+                    [loading]="isLoadingProjects"
+                ></p-dropdown>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <p-table
+            #rfqTable
+            [value]="rfqList"
+            [responsiveLayout]="'scroll'"
+            [paginator]="true"
+            [rows]="10"
+            [rowsPerPageOptions]="[10, 20, 50]"
+            [globalFilterFields]="['category', 'item', 'vendor']"
+            [loading]="isLoadingItems"
+            class="p-datatable-gridlines p-datatable-sm"
+        >
+            <ng-template pTemplate="header">
+                <tr class="bg-yellow-400">
+                    <th>Category</th>
+                    <th>Item</th>
+                    <th>UOM</th>
+                    <th>Buffer Stock</th>
+                    <th>Available Stock</th>
+                    <th>Pending Qty</th>
+                    <th>Requisition Qty</th>
+                    <th>Vendor</th>
+                    <th class="text-center">
+                        <p-checkbox
+                            [binary]="true"
+                            [ngModel]="allSelected"
+                            [ngModelOptions]="{ standalone: true }"
+                            (onChange)="toggleSelectAll($event.checked)"
+                        ></p-checkbox>
+                    </th>
+                    <th>Last RFQ</th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-row>
+                <tr>
+                    <td>{{ row.category }}</td>
+                    <td>{{ row.item }}</td>
+                    <td>{{ row.category }}</td>
+                    <td>{{ row.item }}</td>
+                    <td>{{ row.category }}</td>
+                    <td>{{ row.item }}</td>
+                    <td>{{ row.item }}</td>
+                    <td>{{ row.vendor }}</td>
+                    <td class="text-center">
+                        <p-checkbox
+                            [binary]="true"
+                            [(ngModel)]="row.selected"
+                            [ngModelOptions]="{ standalone: true }"
+                        ></p-checkbox>
+                    </td>
+                    <td>{{ row.lastSubmit ? (row.lastSubmit | date: 'dd/MM/yyyy') : '—' }}</td>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="paginatorleft">
+                <div class="text-500 text-xs ms-2">
+                    Total items: {{ rfqList.length }} | Selected: {{ selectedCount }}
+                </div>
+            </ng-template>
+        </p-table>
+    </form>
+</div>

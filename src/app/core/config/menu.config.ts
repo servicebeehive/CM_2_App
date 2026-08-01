@@ -26,7 +26,7 @@ export const MENU_MODEL: any[] = [
         items: [
             {
                 label: 'Purchase Management',
-                icon: 'pi pi-fw pi-database',
+                icon: 'pi pi-fw pi-shopping-cart',
                 routerLink: ['/layout/inventory/overview'],
                 items: [
                     {
@@ -35,18 +35,23 @@ export const MENU_MODEL: any[] = [
                         routerLink: ['/layout/inventory/work']
                     },
                     {
-                        label: 'Material Forcasting',
+                        label: 'Material Requisition',
                         icon: 'pi pi-fw pi pi-sparkles',
                         routerLink: ['/layout/inventory/material-forcasting']
                     },
                     {
-                        label: 'Purchase Order',
-                        icon: 'pi pi-fw pi pi-send',
-                        routerLink: ['/layout/inventory/purchase-order']
+                        label: 'Request For Quote',
+                        icon: 'pi pi-fw pi pi-check-circle',
+                        routerLink: ['/layout/purchase/rfq']
                     },
                      {
                         label: 'Vendor Comparison',
                         icon: 'pi pi-fw pi pi-truck',
+                        routerLink: ['/layout/purchase/vendor-comparison']
+                    },
+                     {
+                        label: 'Purchase Order',
+                        icon: 'pi pi-fw pi pi-send',
                         routerLink: ['/layout/inventory/purchase-order']
                     }
                 ]

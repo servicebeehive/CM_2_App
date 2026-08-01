@@ -1,277 +1,222 @@
+// ── Design tokens ─────────────────────────────────────────
+$gold: #bf9137;
+$gold-dark: #9a6c18;
+$gold-soft: #fff8ec;
+$gold-border: #e6d0a0;
 
-        :host ::ng-deep .p-fileupload-header {
-            display: none;
-        }
-
-        :host ::ng-deep .p-fileupload-file-list {
-            display: none;
-        }
-
-        :host ::ng-deep .p-fileupload-content {
-            height: 20rem;
-        }
-        .grayout {
-    background-color: #eaf0f5 !important;
-    color: #6b757e !important;
-}
-.disabled {
-  pointer-events: none;
-  opacity: 0.6;
+.form-card {
+  background: #ffffff;
+  border: 1px solid rgba(191, 145, 55, 0.42);
+  border-radius: 1rem;
+  box-shadow: 0 16px 40px rgba(82, 61, 29, 0.08);
+  padding: 1.5rem 1.6rem;
 }
 
-// ── Variables ──────────────────────────────────────────
-$blue:      #185FA5;
-$blue-bg:   #E6F1FB;
-$green:     #3B6D11;
-$green-bg:  #EAF3DE;
-$amber:     #E8A020;
-$border:    rgba(0, 0, 0, 0.12);
-$radius-md: 8px;
-$radius-lg: 12px;
-
-// ── Form wrapper ───────────────────────────────────────
-.add-inventory-form {
+.form-header-bar {
   display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  padding: 1.25rem 1.5rem 1.5rem;
-  background: #f5f5f3;
-  min-height: 100%;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(191, 145, 55, 0.18);
+  margin-bottom: 1.3rem;
 }
 
-// ── Header ─────────────────────────────────────────────
-.txn-id {
+.form-header-bar .form-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.form-header-bar .form-subtitle {
   font-size: 13px;
-  color: #555;
-  font-weight: 500;
-  padding-bottom: 0.5rem;
-  border-bottom: 0.5px solid $border;
+  color: #5f5f5f;
+  margin: 0.25rem 0 0;
 }
 
-// ── Item Search Row ────────────────────────────────────
+.form-header-bar .header-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
 .search-row {
   display: flex;
-  gap: 10px;
+  gap: 1rem;
   align-items: flex-end;
-
-  .search-field {
-    flex: 1;
-  }
-
-  .search-actions {
-    display: flex;
-    gap: 8px;
-  }
+  margin-bottom: 1.35rem;
 }
 
-.copy-msg {
-  margin-top: -0.5rem;
+.search-field {
+  flex: 1;
 }
 
-// ── Transaction Type Tabs ──────────────────────────────
-.type-tabs {
+.search-actions {
   display: flex;
-  gap: 8px;
-
-  .type-tab {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 18px;
-    border-radius: $radius-md;
-    border: 0.5px solid $border;
-    background: #fff;
-    cursor: pointer;
-    font-size: 13px;
-    color: #666;
-    transition: all 0.15s ease;
-    user-select: none;
-
-    svg {
-      flex-shrink: 0;
-    }
-
-    &.active {
-      border-color: $blue;
-      color: $blue;
-      background: $blue-bg;
-      font-weight: 500;
-    }
-
-    &:hover:not(.active) {
-      border-color: #aaa;
-      background: #fafafa;
-    }
-  }
+  gap: 0.75rem;
 }
 
-// ── Section Block ──────────────────────────────────────
-.section-block {
-  background: #fff;
-  border-radius: $radius-lg;
-  border: 0.5px solid $border;
-  padding: 1.25rem;
+.section-card {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin-bottom: 1.35rem;
 }
 
-.section-title {
-  font-size: 14px;
-  font-weight: 500;
+.section-card:last-child {
   margin-bottom: 1rem;
-
-  &.blue { color: $blue; }
-  &.green { color: $green; }
 }
 
-// ── Three-column card row ──────────────────────────────
-.cards-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #a76f1b;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
 }
 
-.info-card {
-  background: #fff;
-  border-radius: $radius-lg;
-  border: 0.5px solid $border;
-  padding: 1rem;
-
-  .card-title {
-    font-size: 13px;
-    font-weight: 500;
-    color: $blue;
-    margin-bottom: 0.85rem;
-  }
+.section-header i {
+  font-size: 15px;
+  color: #c79932;
 }
 
-// ── Card Fields Grid ───────────────────────────────────
-.card-fields {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px 14px;
+.add-inventory-form {
+  width: 100%;
 }
 
 .field-col {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-
-  &.span-2 {
-    grid-column: 1 / -1;
-  }
+  gap: 0.45rem;
 }
 
-// ── Checkboxes ─────────────────────────────────────────
+.field-col.span-2 {
+  grid-column: span 2;
+}
+
+.field-col.span-3 {
+  grid-column: span 3;
+}
+
+.checkbox-col {
+  display: flex;
+  align-items: center;
+}
+
+.field-label {
+  color: #333;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.field-col span.req {
+  color: #d93025;
+}
+
+.field-col input,
+.field-col textarea,
+.field-col .p-inputtext,
+.field-col .p-dropdown,
+.field-col .p-datepicker {
+  border: 1px solid #e7d5a8;
+  background: #ffffff;
+  border-radius: 0.75rem;
+}
+
+.field-col .p-dropdown .p-dropdown-label,
+.field-col .p-dropdown .p-inputtext,
+.field-col .p-datepicker .p-inputtext {
+  background: #ffffff;
+}
+
+.field-col textarea {
+  resize: vertical;
+}
+
+.form-footer,
+.checkbox-row,
 .checkboxes {
   display: flex;
-  gap: 16px;
-  margin-top: 10px;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.form-footer {
+  border-top: 1px solid rgba(191, 145, 55, 0.16);
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+
+.checkboxes {
+  justify-content: flex-start;
+  margin-top: 0.75rem;
 }
 
 .chk-item {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 0.5rem;
 }
 
-// ── Field Labels ───────────────────────────────────────
-.field-label {
-  font-size: 12px;
-  color: #555;
-  font-weight: 500;
+.golden-button {
+  background-color: $gold !important;
+  border-color: $gold !important;
+  color: #fff !important;
 }
 
-.req {
-  color: #e24b4a;
+.golden-button:hover,
+.golden-button:focus {
+  background-color: $gold-dark !important;
+  border-color: $gold-dark !important;
 }
 
-// ── Error Messages ─────────────────────────────────────
-.err-msg {
-  font-size: 11px;
-  color: #e24b4a;
-  margin-top: 2px;
-}
-
-// ── Grayed-out readonly inputs ─────────────────────────
-.grayout {
-  background: #f2f2f0 !important;
-  color: #888 !important;
-  cursor: not-allowed;
-}
-
-// ── Section B: Detail Fields ───────────────────────────
-.detail-fields {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px 16px;
-}
-
-// ── Child UOM Table ────────────────────────────────────
-.uom-table-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-
-  .uom-header {
-    background: #f59e0b !important;
-
-    th {
-      background: #f59e0b;
-      color: #fff;
-      font-weight: 500;
-      font-size: 13px;
-      padding: 8px 12px;
-    }
-  }
-
-  .remove-icon {
-    font-size: 18px;
-    color: $amber;
-    cursor: pointer;
-
-    &:hover { color: darken($amber, 10%); }
-  }
-
-  .add-uom-btn {
-    align-self: flex-start;
-  }
-}
-
-// ── Form Footer ────────────────────────────────────────
 .form-footer {
-  display: flex;
+  padding-top: 0.75rem;
   justify-content: flex-end;
-  gap: 10px;
-  padding-top: 1rem;
-  border-top: 0.5px solid $border;
 }
 
-// ── Disabled state ─────────────────────────────────────
-.disabled {
-  opacity: 0.45;
-  pointer-events: none;
+.section-card .field-col span.req {
+  color: #c32f27;
 }
 
-// ── Responsive ─────────────────────────────────────────
-@media (max-width: 1024px) {
-  .cards-row {
-    grid-template-columns: 1fr 1fr;
+.field-col span.placeholder {
+  color: #8f7b58;
+}
+
+// ── Generic fields grid (replaces .card-fields / .detail-fields) ──
+.fields-grid {
+  display: grid;
+  gap: 1rem 1.25rem;
+
+  &.cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
+}
 
-  .detail-fields {
+@media (max-width: 1024px) {
+  .fields-grid.cols-4 {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 640px) {
-  .cards-row {
+  .fields-grid.cols-4 {
     grid-template-columns: 1fr;
   }
 
-  .detail-fields {
-    grid-template-columns: 1fr;
-  }
+  .form-header-bar {
+    flex-direction: column;
+    gap: 10px;
 
-  .type-tabs {
-    flex-wrap: wrap;
+    .header-actions {
+      width: 100%;
+      justify-content: flex-end;
+    }
   }
 }

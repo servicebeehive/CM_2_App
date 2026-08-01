@@ -321,6 +321,14 @@ getProjectList(payload:any):Observable<any>{
   }))
 }
 
+onUpsertItem(payload:any):Observable<any>{
+  let payloaddata = this.shareservice.GetApiBody(payload)
+  let url = `${this.baseUrl}${API_ENDPOINTS.inventory.getUpsertItem}`;
+  return this.http.post<any>(url,payloaddata).pipe(catchError(error=>{
+    return throwError(()=>error)
+  }))
+}
+
   /** 🔹 Common error handler */
   private handleError(error: HttpErrorResponse): Observable<never> {
     console.error('API error occurred:', error);

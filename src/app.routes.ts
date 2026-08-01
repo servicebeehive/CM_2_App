@@ -49,6 +49,11 @@ export const appRoutes: Routes = [
                 loadChildren: () => import('@/pages/inventory/inventory.routers'),
                 canActivate: [AuthGuard]
             },
+             {
+                path: 'purchase',
+                loadChildren: () => import('@/pages/purchase/purchase.routers'),
+                canActivate: [AuthGuard]
+            },
             {
                 path: 'pos',
                 loadChildren: () => import('@/pages/pos/pos.routers'),

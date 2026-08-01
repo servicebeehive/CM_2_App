@@ -1,338 +1,216 @@
 <p-toast></p-toast>
 <form [formGroup]="addForm" (ngSubmit)="onSubmit()" class="add-inventory-form">
-
-  <!-- Header -->
-  <div class="form-header">
-    <p class="txn-id">Transaction Id : {{ transationid }}</p>
-  </div>
-
-  <!-- Item Search Row -->
-  <div class="search-row">
-    <div class="search-field">
-      <label class="field-label">Item Search</label>
-      <p-select
-        #itemSelect
-        (onChange)="onItemCodeChange($event)"
-        [options]="itemOptions"
-        optionLabel="itemcombine"
-        optionValue="itemsku"
-        formControlName="itemSearch"
-        [filter]="true"
-        filterBy="itemcombine"
-        [showClear]="true"
-        placeholder="Select Item"
-        (onFilter)="onItemSearch($event)"
-        styleClass="w-full"
-      >
-        <ng-template #selectedItem let-item>
-          <div>{{ item.itemcombine }}</div>
-        </ng-template>
-        <ng-template let-details #item>
-          <div>{{ details.itemcombine }}</div>
-        </ng-template>
-      </p-select>
+    <div class="form-card">
+        <!-- ═══════════════════════════════════════════
+             HEADER
+        ════════════════════════════════════════════ -->
+    <div class="form-header-bar">
+        <div>
+            <h2 class="form-title">{{ mode === 'edit' || mode === 'itemedit' ? 'Edit Item' : 'Add New Item' }}</h2>
+            <p class="form-subtitle">{{ mode === 'edit' || mode === 'itemedit' ? 'Update item details' : 'Create a new item for construction inventory' }}</p>
+        </div>
+        <div class="header-actions">
+            <button pButton type="button" label="Cancel" icon="pi pi-times" class="p-button-outlined p-button-secondary" (click)="onCancel()"></button>
+            <button pButton type="submit" label="Save Item" icon="pi pi-save" class="p-button-primary golden-button" [disabled]="addForm.invalid || itemCodeExists || barcodeExists"></button>
+        </div>
     </div>
-    <div class="search-actions">
-      <button pButton type="button" label="Reset" class="p-button-outlined p-button-secondary" [class.disabled]="resetDisabled" (click)="Reset()"></button>
-      <button pButton type="button" label="Copy" class="p-button-warning" [class.disabled]="resetDisabled" (click)="copy($event)"></button>
-    </div>
-  </div>
 
-  <!-- Copy Message -->
-  <div *ngIf="showCopyMessage" class="copy-msg">
-    <p-message severity="error" variant="simple">Enter a unique Item code &amp; Bar Code to proceed with item creation</p-message>
-  </div>
-
-  <!-- Transaction Type Tabs -->
-  <div class="type-tabs">
-    <label class="type-tab" [class.active]="isTransactionType('purchase')">
-      <input type="radio" formControlName="transactionType" value="purchase" hidden />
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-      Purchase
-    </label>
-    <label class="type-tab" [class.active]="isTransactionType('lease')">
-      <input type="radio" formControlName="transactionType" value="lease" hidden />
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-      Lease
-    </label>
-    <label class="type-tab" [class.active]="isTransactionType('rent')">
-      <input type="radio" formControlName="transactionType" value="rent" hidden />
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      Rent
-    </label>
-  </div>
-
-  <!-- ═══════════════════════════════════════════
-       SECTION A — Common Information
-  ════════════════════════════════════════════ -->
-  <div class="section-block">
-    <h3 class="section-title blue">A.&nbsp; Common Information</h3>
-
-    <div class="cards-row">
-
-      <!-- Card 1: Basic Info -->
-      <div class="info-card">
-        <p class="card-title">Basic Info</p>
-        <div class="card-fields">
-
-          <div class="field-col">
-            <label class="field-label">Item Code <span class="req">*</span></label>
-            <input pInputText formControlName="itemCode" placeholder="Item Code"
-                   (input)="toUppercase($event)" (blur)="onBlur($event)"
-                   [readOnly]="mode === 'edit'" />
-            <small class="err-msg" *ngIf="addForm.get('itemCode')?.touched && addForm.get('itemCode')?.errors?.['required']">
-              Item Code is required
-            </small>
-          </div>
-
-          <div class="field-col">
-            <label class="field-label">Item BarCode</label>
-            <input pInputText formControlName="itembarcode" placeholder="Item BarCode"
-                   (input)="toUppercase($event)" (blur)="onBlurBarCode($event)"
-                   [readOnly]="mode === 'edit'" />
-          </div>
-
-          <div class="field-col span-2">
-            <label class="field-label">Item Name <span class="req">*</span></label>
-            <input pInputText formControlName="itemName" placeholder="Item Name"
-                   (input)="toUppercase($event)" />
-            <small class="err-msg" *ngIf="addForm.get('itemName')?.touched && addForm.get('itemName')?.errors?.['required']">
-              Item Name is required
-            </small>
-          </div>
-
-          <div class="field-col">
-            <label class="field-label">Item Type <span class="req">*</span></label>
-            <p-dropdown [options]="itemtypeOptions" optionLabel="fieldname" optionValue="fieldid"
-                        [filter]="true" filterPlaceholder="Search Item Type"
-                        formControlName="itemtype" placeholder="Item Type">
-            </p-dropdown>
-            <small class="err-msg" *ngIf="addForm.get('itemtype')?.touched && addForm.get('itemtype')?.errors?.['required']">
-              Item Type is required
-            </small>
-          </div>
-
-          <div class="field-col">
-            <label class="field-label">Category <span class="req">*</span></label>
-            <p-dropdown [options]="categoryOptions" optionLabel="fieldname" optionValue="fieldid"
-                        [filter]="true" filterPlaceholder="Search Category"
-                        formControlName="category" placeholder="Category">
-            </p-dropdown>
-            <small class="err-msg" *ngIf="addForm.get('category')?.touched && addForm.get('category')?.errors?.['required']">
-              Category is required
-            </small>
-          </div>
-
+    <!-- ═══════════════════════════════════════════
+         BASIC INFORMATION
+    ════════════════════════════════════════════ -->
+    <div class="section-card">
+        <div class="section-header">
+            <i class="pi pi-file"></i>
+            <span>BASIC INFORMATION</span>
         </div>
 
-        <div class="checkboxes">
-          <div class="chk-item">
-            <p-checkbox formControlName="activeItem" [binary]="true"></p-checkbox>
-            <label class="field-label">Active Item</label>
-          </div>
-          <div class="chk-item">
-            <p-checkbox formControlName="gstItem" [binary]="true"></p-checkbox>
-            <label class="field-label">GST Item</label>
-          </div>
+        <div class="fields-grid cols-4">
+            <div class="field-col">
+                <label class="field-label">Item Name <span class="req">*</span></label>
+                <input pInputText formControlName="itemName" placeholder="Enter item name" (input)="toUppercase($event)" />
+                <small class="err-msg" *ngIf="addForm.get('itemName')?.touched && addForm.get('itemName')?.errors?.['required']"> Item Name is required </small>
+            </div>
+
+            <div class="field-col">
+                <label class="field-label">Item SKU <span class="req">*</span></label>
+                <input pInputText formControlName="itemCode" placeholder="Enter SKU code" (input)="toUppercase($event)" (blur)="onBlur($event)" [readOnly]="mode === 'edit'" />
+                <small class="err-msg" *ngIf="addForm.get('itemCode')?.touched && addForm.get('itemCode')?.errors?.['required']"> Item Code is required </small>
+            </div>
+
+            <div class="field-col">
+                <label class="field-label">Barcode</label>
+                <input pInputText formControlName="itembarcode" placeholder="Enter barcode (optional)" (input)="toUppercase($event)" (blur)="onBlurBarCode($event)" [readOnly]="mode === 'edit'" />
+            </div>
+
+            <div class="field-col">
+                <label class="field-label">Item Category <span class="req">*</span></label>
+                <p-dropdown [options]="categoryOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search Category" formControlName="category" placeholder="Select category"> </p-dropdown>
+                <small class="err-msg" *ngIf="addForm.get('category')?.touched && addForm.get('category')?.errors?.['required']"> Category is required </small>
+            </div>
+
+            <div class="field-col span-2">
+                <label class="field-label">Description</label>
+                <textarea pInputTextarea formControlName="description" placeholder="Enter item description" rows="2"></textarea>
+            </div>
+
+            <div class="field-col">
+                <label class="field-label">Location / Storage Area</label>
+                <input pInputText formControlName="location" placeholder="Enter location" />
+            </div>
+
+            <div class="field-col">
+                <label class="field-label">Unit of Measurement (UOM) <span class="req">*</span></label>
+                <p-dropdown [options]="uomOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search UOM" formControlName="parentUOM" placeholder="Select UOM" [readonly]="mode === 'edit'">
+                </p-dropdown>
+                <small class="err-msg" *ngIf="addForm.get('parentUOM')?.touched && addForm.get('parentUOM')?.errors?.['required']"> UOM is required </small>
+            </div>
+
+            <div class="field-col">
+                <label class="field-label">Brand / Make</label>
+                <input pInputText formControlName="brand" placeholder="Enter brand or make" />
+            </div>
+
+            <div class="field-col">
+                <label class="field-label">Model / Size</label>
+                <input pInputText formControlName="model" placeholder="Enter model / size" />
+            </div>
+
+            <div class="field-col">
+                <label class="field-label">HSN Code</label>
+                <input pInputText formControlName="hsnCode" placeholder="Enter HSN code" />
+            </div>
         </div>
-      </div>
+    </div>
 
-      <!-- Card 2: Stock & Unit -->
-      <div class="info-card">
-        <p class="card-title">Stock &amp; Unit</p>
-        <div class="card-fields">
-
-          <div class="field-col">
-            <label class="field-label">Parent UOM <span class="req">*</span></label>
-            <p-dropdown [options]="uomOptions" optionLabel="fieldname" optionValue="fieldid"
-                        [filter]="true"
-                        filterPlaceholder="Search Parent UOM"
-                        formControlName="parentUOM" placeholder="Parent UOM"
-                        [readonly]="mode === 'edit'">
-            </p-dropdown>
-            <small class="err-msg" *ngIf="addForm.get('parentUOM')?.touched && addForm.get('parentUOM')?.errors?.['required']">
-              Parent UOM is required
-            </small>
-          </div>
-
-          <div class="field-col">
-            <label class="field-label">Quantity <span class="req">*</span></label>
-            <input pInputText type="number" min="1" formControlName="qty"
-                   placeholder="Quantity" (keydown)="blockMinus($event)" />
-            <small class="err-msg" *ngIf="addForm.get('qty')?.touched && addForm.get('qty')?.invalid">
-              <span *ngIf="addForm.get('qty')?.errors?.['required']">Quantity is required</span>
-              <span *ngIf="addForm.get('qty')?.errors?.['min']">Must be greater than 0</span>
-            </small>
-          </div>
-
-          <div class="field-col">
-            <label class="field-label">Current Stock</label>
-            <input pInputText formControlName="curStock" placeholder="Current Stock" readonly class="grayout" />
-          </div>
-
-          <div class="field-col" *ngIf="isTransactionType('purchase')">
-            <label class="field-label">Min Stock</label>
-            <input pInputText formControlName="minStock" placeholder="Min Stock"
-                   (keypress)="allowOnlyNumbers($event)" />
-          </div>
-
+    <!-- ═══════════════════════════════════════════
+         STOCK & INVENTORY
+    ════════════════════════════════════════════ -->
+    <div class="section-card">
+        <div class="section-header">
+            <i class="pi pi-box"></i>
+            <span>STOCK &amp; INVENTORY</span>
         </div>
-      </div>
 
-      <!-- Card 3: Pricing -->
-      <div class="info-card">
-        <p class="card-title">Pricing</p>
-        <div class="card-fields">
+        <div class="fields-grid cols-4">
+            <div class="field-col">
+                <label class="field-label">Minimum Stock Level</label>
+                <input pInputText formControlName="minStock" placeholder="Enter minimum stock" (keypress)="allowOnlyNumbers($event)" />
+            </div>
 
-          <div class="field-col">
-            <label class="field-label">
-              {{ isTransactionType('lease') ? 'Lease Price' : isTransactionType('rent') ? 'Rent Price' : 'Purchase Price' }}
-              <span class="req">*</span>
-            </label>
-            <input pInputText type="number" min="1" formControlName="purchasePrice"
-                   [placeholder]="isTransactionType('lease') ? 'Lease Price' : isTransactionType('rent') ? 'Rent Price' : 'Purchase Price'"
-                   (keydown)="blockMinus($event)" />
-            <small class="err-msg" *ngIf="addForm.get('purchasePrice')?.touched && addForm.get('purchasePrice')?.invalid">
-              <span *ngIf="addForm.get('purchasePrice')?.errors?.['required']">
-                {{ isTransactionType('lease') ? 'Lease Price' : isTransactionType('rent') ? 'Rent Price' : 'Purchase Price' }} is required
-              </span>
-              <span *ngIf="addForm.get('purchasePrice')?.errors?.['min']">Must be greater than 0</span>
-            </small>
-          </div>
+            <div class="field-col">
+                <label class="field-label">Reorder Level</label>
+                <input pInputText formControlName="reorderLevel" placeholder="Enter reorder level" (keypress)="allowOnlyNumbers($event)" />
+            </div>
 
-          <div class="field-col">
-            <label class="field-label">MRP <span class="req">*</span></label>
-            <input pInputText type="number" min="1" formControlName="mrp" placeholder="MRP"
-                   (keydown)="blockMinus($event)" (keypress)="allowOnlyNumbers($event)" />
-            <small class="err-msg" *ngIf="addForm.get('mrp')?.touched || addForm.hasError('mrpGreaterThanPurchase')">
-              <span *ngIf="addForm.get('mrp')?.errors?.['required']">MRP is required</span>
-              <span *ngIf="addForm.hasError('mrpGreaterThanPurchase')">MRP must be ≥ Purchase Price</span>
-            </small>
-          </div>
+            <div class="field-col">
+                <label class="field-label">Warranty Period (Months)</label>
+                <input pInputText formControlName="warPeriod" placeholder="Enter warranty period" (keypress)="allowOnlyNumbers($event)" />
+            </div>
 
-          <div class="field-col">
-            <label class="field-label">Tax <span class="req">*</span></label>
-            <p-dropdown [options]="taxOptions" optionLabel="fieldname" optionValue="fieldid"
-                        [filter]="true" filterPlaceholder="Search Tax"
-                        formControlName="p_tax" placeholder="Tax">
-            </p-dropdown>
-            <small class="err-msg" *ngIf="addForm.get('p_tax')?.touched && addForm.get('p_tax')?.errors?.['required']">
-              Tax is required
-            </small>
-          </div>
-
-          <div class="field-col" *ngIf="!isTransactionType('lease')">
-            <label class="field-label">Discount (%)</label>
-            <input pInputText formControlName="discount" placeholder="Discount" />
-          </div>
-
-          <div class="field-col">
-            <label class="field-label">{{ isTransactionType('rent') ? 'Cost/Day' : 'Cost/Item' }}</label>
-            <input pInputText formControlName="costPerItem" placeholder="Cost/Item" readonly class="grayout" />
-          </div>
-
-          <div class="field-col">
-            <label class="field-label">Location</label>
-           <p-dropdown #locationDropdown [options]="locationOptions" optionLabel="label" optionValue="value" formControlName="location" placeholder="Select Location" [filter]="true" [showClear]="true" (onFilter)="onLocationFilter($event)" appendTo="body">
-  <ng-template pTemplate="footer">
-    <div *ngIf="showEmptyFilter" class="text-center p-2">
-      <button pButton type="button" label="Add" icon="pi pi-plus"  class="w-full p-button-warning" (click)="addNewLocation()"></button>
-    </div>
-  </ng-template>
-</p-dropdown>
-          </div>
-
+            <div class="field-col checkbox-col">
+                <label class="field-label">Is Active</label>
+                <div class="chk-item">
+                    <p-checkbox formControlName="activeItem" [binary]="true"></p-checkbox>
+                    <label>Is Active</label>
+                </div>
+            </div>
         </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════
-       SECTION B — Type-specific Details
-  ════════════════════════════════════════════ -->
-  <div class="section-block">
-    <h3 class="section-title green">
-      B.&nbsp;
-      {{ isTransactionType('lease') ? 'Lease Details' : isTransactionType('rent') ? 'Rent Details' : 'Purchase Details' }}
-    </h3>
-
-    <!-- Purchase Details -->
-    <div class="detail-fields" *ngIf="isTransactionType('purchase')">
-
-      <div class="field-col">
-        <label class="field-label">Warranty Period (in months)</label>
-        <input pInputText formControlName="warPeriod" placeholder="Warranty Period"
-               (keypress)="allowOnlyNumbers($event)" />
-      </div>
-
-      <div class="field-col">
-        <label class="field-label">Expiry Date</label>
-        <p-datepicker fluid formControlName="p_expirydate" dateFormat="dd/mm/yy"
-                      [minDate]="dateTime" [showIcon]="true" placeholder="Expiry Date">
-        </p-datepicker>
-      </div>
-
     </div>
 
-    <!-- Lease Details -->
-    <div class="detail-fields" *ngIf="isTransactionType('lease')">
+    <!-- ═══════════════════════════════════════════
+         PRICING INFORMATION
+    ════════════════════════════════════════════ -->
+    <div class="section-card">
+        <div class="section-header">
+            <i class="pi pi-indian-rupee"></i>
+            <span>PRICING INFORMATION</span>
+        </div>
 
-      <div class="field-col">
-        <label class="field-label">Payment Type <span class="req">*</span></label>
-        <p-dropdown [options]="paymentTypeOptions" optionLabel="label" optionValue="value"
-                    formControlName="paymentType" placeholder="Select Payment Type">
-        </p-dropdown>
-        <small class="err-msg" *ngIf="addForm.get('paymentType')?.touched && addForm.get('paymentType')?.errors?.['required']">
-          Payment Type is required
-        </small>
-      </div>
+        <div class="fields-grid cols-4">
+            <div class="field-col">
+                <label class="field-label">Purchase Price (₹)</label>
+                <input pInputText type="number" min="1" formControlName="purchasePrice" placeholder="Enter purchase price" (keydown)="blockMinus($event)" />
+                <small class="err-msg" *ngIf="addForm.get('purchasePrice')?.touched && addForm.get('purchasePrice')?.invalid">
+                    <span *ngIf="addForm.get('purchasePrice')?.errors?.['min']">Must be greater than 0</span>
+                </small>
+            </div>
 
-      <div class="field-col">
-        <label class="field-label">Lease Start Date <span class="req">*</span></label>
-        <p-datepicker fluid formControlName="leaseStartDate" dateFormat="dd/mm/yy"
-                      [showIcon]="true" placeholder="Lease Start Date">
-        </p-datepicker>
-        <small class="err-msg" *ngIf="addForm.get('leaseStartDate')?.touched && addForm.get('leaseStartDate')?.errors?.['required']">
-          Lease Start Date is required
-        </small>
-      </div>
+            <div class="field-col">
+                <label class="field-label">Sale Price (₹)</label>
+                <input pInputText type="number" min="1" formControlName="mrp" placeholder="Enter sale price" (keydown)="blockMinus($event)" (keypress)="allowOnlyNumbers($event)" />
+                <small class="err-msg" *ngIf="addForm.get('mrp')?.touched || addForm.hasError('mrpGreaterThanPurchase')">
+                    <span *ngIf="addForm.hasError('mrpGreaterThanPurchase')">MRP must be ≥ Purchase Price</span>
+                </small>
+            </div>
 
-      <div class="field-col">
-        <label class="field-label">Lease End Date <span class="req">*</span></label>
-        <p-datepicker fluid formControlName="leaseEndDate" dateFormat="dd/mm/yy"
-                      [showIcon]="true" placeholder="Lease End Date">
-        </p-datepicker>
-        <small class="err-msg" *ngIf="addForm.get('leaseEndDate')?.touched && addForm.get('leaseEndDate')?.errors?.['required']">
-          Lease End Date is required
-        </small>
-      </div>
+            <div class="field-col">
+                <label class="field-label">GST Rate (%) <span class="req">*</span></label>
+                <p-dropdown [options]="taxOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search GST rate" formControlName="p_tax" placeholder="Select GST rate"> </p-dropdown>
+                <small class="err-msg" *ngIf="addForm.get('p_tax')?.touched && addForm.get('p_tax')?.errors?.['required']"> GST Rate is required </small>
+            </div>
 
+            <div class="field-col checkbox-col">
+                <label class="field-label">GST Item </label>
+                <div class="chk-item">
+                    <p-checkbox formControlName="gstItem" [binary]="true"></p-checkbox>
+                    <label>Is GST Applicable</label>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Rent Details -->
-    <div class="detail-fields" *ngIf="isTransactionType('rent')">
+    <!-- ═══════════════════════════════════════════
+         CLASSIFICATION
+    ════════════════════════════════════════════ -->
+    <div class="section-card">
+        <div class="section-header">
+            <i class="pi pi-tags"></i>
+            <span>CLASSIFICATION</span>
+        </div>
 
-      <div class="field-col">
-        <label class="field-label">Payment Type <span class="req">*</span></label>
-        <p-dropdown [options]="paymentTypeOptions" optionLabel="label" optionValue="value"
-                    formControlName="paymentType" placeholder="Select Payment Type">
-        </p-dropdown>
-        <small class="err-msg" *ngIf="addForm.get('paymentType')?.touched && addForm.get('paymentType')?.errors?.['required']">
-          Payment Type is required
-        </small>
-      </div>
+        <div class="fields-grid cols-4">
+            <div class="field-col">
+                <label class="field-label">Material Type</label>
+                <p-dropdown [options]="materialTypeOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search Material Type" formControlName="materialType" placeholder="Select material type"> </p-dropdown>
+            </div>
 
+            <div class="field-col">
+                <label class="field-label">Sub Category</label>
+                <p-dropdown [options]="subCategoryOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search Sub Category" formControlName="subCategory" placeholder="Select sub category"> </p-dropdown>
+            </div>
+
+            <div class="field-col">
+                <label class="field-label">Item Group</label>
+                <p-dropdown [options]="itemGroupOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search Item Group" formControlName="itemGroup" placeholder="Select item group"> </p-dropdown>
+            </div>
+
+            <div class="field-col">
+                <label class="field-label">Item Sub Group</label>
+                <p-dropdown [options]="itemSubGroupOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search Item Sub Group" formControlName="itemSubGroup" placeholder="Select item sub group"> </p-dropdown>
+            </div>
+        </div>
     </div>
 
-  </div>
+    <!-- ═══════════════════════════════════════════
+         OTHER DETAILS
+    ════════════════════════════════════════════ -->
+    <div class="section-card">
+        <div class="section-header">
+            <i class="pi pi-info-circle"></i>
+            <span>OTHER DETAILS</span>
+        </div>
 
-  <!-- Footer Buttons -->
-  <div class="form-footer">
-    <button pButton type="button" label="Cancel" class="p-button-outlined p-button-secondary" (click)="onCancel()"></button>
-    <button pButton type="submit" label="Submit" class="p-button-warning"
-            [disabled]="addForm.invalid || itemCodeExists || barcodeExists">
-    </button>
-  </div>
+        <div class="fields-grid cols-4">
+            <div class="field-col">
+                <label class="field-label">Expiry Date (if applicable)</label>
+                <p-datepicker fluid formControlName="p_expirydate" dateFormat="dd-mm-yyyy" [minDate]="dateTime" [showIcon]="true" placeholder="dd-mm-yyyy"> </p-datepicker>
+            </div>
 
+            <div class="field-col span-3">
+                <label class="field-label">Remarks</label>
+                <textarea pInputTextarea formControlName="remarks" placeholder="Enter any additional remarks" rows="2"></textarea>
+            </div>
+        </div>
+    </div>
+    </div>
 </form>

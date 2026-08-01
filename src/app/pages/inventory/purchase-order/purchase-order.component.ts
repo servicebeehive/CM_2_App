@@ -63,7 +63,6 @@ export class PurchaseOrderComponent implements OnInit {
     isLoadingLocations = false;
     showForecastError = false;
     poList: { pono: string; [key: string]: any }[] = [];
-    selectedMFNos: string[] = [];
     projectOptions:any[]=[];
 
     paymentTermsOptions: { label: string; value: string }[] = [
@@ -73,9 +72,13 @@ export class PurchaseOrderComponent implements OnInit {
         { label: 'On Delivery', value: 'On Delivery' }
     ];
 
-    showMFDialog = false;
-    mfList: any[] = [];
-    mfSelections: any[] = [];
+      paymentModeOptions: { label: string; value: string }[] = [
+        { label: 'Bank Transfer', value: 'Bank Transfer' },
+        { label: 'Cash', value: 'Cash' },
+        { label: 'Cheque', value: 'Cheque' },
+        { label: 'UPI', value: 'UPI' }
+    ];
+
     selectedVendorNames: string[] = [];
     generatedPONos:any[]=[];
 
@@ -100,13 +103,6 @@ export class PurchaseOrderComponent implements OnInit {
         mode: '',
         referenceNo: ''
     };
-
-    paymentModeOptions: { label: string; value: string }[] = [
-        { label: 'Bank Transfer', value: 'Bank Transfer' },
-        { label: 'Cash', value: 'Cash' },
-        { label: 'Cheque', value: 'Cheque' },
-        { label: 'UPI', value: 'UPI' }
-    ];
 
     constructor(
         private fb: FormBuilder,
@@ -135,7 +131,7 @@ export class PurchaseOrderComponent implements OnInit {
                 p_vendor: [{ value: [], disabled: true }],
                 p_deliverylocation: [{value: null, disabled:true}],
                 p_deliverydate: [null],
-                p_paymentterms: [null],
+                p_paymentterms: [{value: null, disabled:true}],
                 p_remarks: [''],
                 p_forecastrefno: [''],
                 p_items: this.fb.array([]),
@@ -275,13 +271,59 @@ onGetDraftPO() {
         });
     }
 
-    onSiteChange(data:any){
-        const selectedProjectId = data.value;
-        const selectedProject = this.projectOptions.find(p=> p.project_id === selectedProjectId);
-        this.poForm.patchValue({
-            p_deliverylocation: selectedProject?.delivery_location ?? null
-        });
+   onSiteChange(data: any): void {
+    const selectedProjectId = data.value;
+    const selectedProject = this.projectOptions.find((p) => p.project_id === selectedProjectId);
+
+    this.poForm.patchValue({
+        p_deliverylocation: selectedProject?.delivery_location ?? null
+    });
+
+    if (selectedProjectId) {
+        this.loadItemsForProject(selectedProjectId);
+    } else {
+        this.poItemArray.clear();
+        this.recalcGrandTotal();
     }
+}
+
+private loadItemsForProject(projectId: number): void {
+    const payload = {
+        p_returntype: 'MFAPPROVED',       // ⬅️ confirm this is the right return type for your API
+        p_returnvalue: projectId.toString(),
+        username: ''
+    };
+
+    this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+        next: (res: any) => {
+            const rows: any[] = res.data || [];
+
+            if (rows.length === 0) {
+                this.poItemArray.clear();
+                this.recalcGrandTotal();
+                this.messageService.add({
+                    severity: 'info',
+                    summary: 'No Data',
+                    detail: 'No forecast items found for this site.',
+                    life: 2500
+                });
+                return;
+            }
+
+            this.mapItemsToFormArray(rows);
+        },
+        error: (err) => {
+            console.error('Error fetching items for project:', err);
+            this.poItemArray.clear();
+            this.recalcGrandTotal();
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Failed to load items for this site',
+                life: 2500
+            });
+        }
+    });
+}
 
     getTotalPayable(): number {
         return Number(this.poForm.get('p_totalpayment')?.value || 0);
@@ -316,8 +358,6 @@ onGetDraftPO() {
 
     onSubmit(): void {
         this.poForm.markAllAsTouched();
-        this.showForecastError = this.selectedMFNos.length === 0;
-
         this.confirmationService.confirm({
             message: 'Are you sure you want to submit this Purchase Order?',
             header: 'Confirm Submission',
@@ -547,8 +587,6 @@ submitDraft(): void {
     onReset(): void {
         this.poForm.reset();
         this.poItemArray.clear();
-        this.selectedMFNos = [];
-        this.mfSelections = [];
         this.submitted = false;
         this.showForecastError = false;
         this.grandTotal = 0;
@@ -574,47 +612,24 @@ submitDraft(): void {
     // MF DIALOG
     // ──────────────────────────────────────────────────────────────────────────
    
-    openMFDialog(): void {
-        // Pre-select already-chosen MFs
-         const payload = {
-            p_returntype: 'MFAPPROVED',
-            p_returnvalue: '',
-            username: ''
-        };
-        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-            next: (res) => {
-                this.mfList = res.data;
-                 this.mfSelections = this.mfList.filter((m) => this.selectedMFNos.includes(m.mfno));
-        this.showMFDialog = true;
-            },
-            error: (err) => console.error(err)
-        });
+    // openMFDialog(): void {
+    //     // Pre-select already-chosen MFs
+    //      const payload = {
+    //         p_returntype: 'MFAPPROVED',
+    //         p_returnvalue: '',
+    //         username: ''
+    //     };
+    //     this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+    //         next: (res) => {
+    //             this.mfList = res.data;
+    //              this.mfSelections = this.mfList.filter((m) => this.selectedMFNos.includes(m.mfno));
+    //     this.showMFDialog = true;
+    //         },
+    //         error: (err) => console.error(err)
+    //     });
        
-    }
+    // }
 
-    confirmMFSelection(): void {
-        this.selectedMFNos = this.mfSelections.map((m:any) => m.mf_no); 
-        this.poForm.patchValue({ p_forecastrefno: this.selectedMFNos.join(', ') });
-        this.showForecastError = false;
-        this.showMFDialog = false;
-
-        const payload = {
-         p_returntype: 'MFDETAILSMULTI',
-        p_returnvalue: this.selectedMFNos.join(','), 
-        username: this.userId
-    };
-
-    this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-        next: (res) => {
-            const rows: any[] = res.data || [];
-            this.mapItemsToFormArray(rows);
-        },
-        error: (err) => {
-            console.error(err);
-            this.messageService.add({ severity: 'error', summary: 'Failed to load MF item details', life: 2500 });
-        }
-    });
-    }
 
    private mapItemsToFormArray(items: any[]): void {
     this.poItemArray.clear();

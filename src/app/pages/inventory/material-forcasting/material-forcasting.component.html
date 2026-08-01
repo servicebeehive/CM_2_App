@@ -1,99 +1,115 @@
 <div class="card p-3 md:p-6">
-    <form [formGroup]="forecastForm" (ngSubmit)="onSubmit()" class="space-y-6 md:space-y-8">
-        <!-- HEADER + ACTIONS -->
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4 md:mb-6">
-            <div class="flex flex-wrap gap-2 md:gap-4 w-full md:w-auto">
-                <span class="block text-surface-900 font-bold text-lg md:text-xl">Material Forecasting</span>
-            </div>
-            <div class="flex flex-wrap gap-2 md:gap-4 w-full md:w-auto">
-                <span class="text-xl font-bold mt-2">Status</span>
-                <span class="font-bold text-xl mt-2" [ngStyle]="{ color: forecastForm.get('status')?.value === 'SUBMITTED' ? 'green' : 'blue' }">
-                    {{ forecastForm.get('status')?.value }}
-                </span>
-
-                <p-dropdown
-                    [options]="draftRequisitionOptions"
-                    optionLabel="mf_no"
-                    optionValue="mf_id"
-                    placeholder="Draft MF No."
-                    formControlName="p_draft_requisitionno"
-                    [filter]="true"
-                    filterPlaceholder="Search Draft MF No."
-                    [showClear]="true"
-                    [loading]="isLoadingBills"
-                    (onChange)="onDraftChange($event)"
-                >
-                    <ng-template let-item pTemplate="item">
-                        <div class="flex justify-between items-center w-full">
-                            <span>{{ item.mf_no }}</span>
-                            <i class="pi pi-trash text-red-500 cursor-pointer" (click)="deleteDraftItem(item, $event)"></i>
-                        </div>
-                    </ng-template>
-                </p-dropdown>
-
-                <button pButton type="button" label="Draft" class="p-button-warning w-full md:w-auto" *ngIf="!isReadOnlyView" (click)="submitDraft()" [disabled]="forecastForm.invalid || isSubmitDisabled()"></button>
-
-                <button pButton type="submit" label="Submit" class="p-button-warning w-full md:w-auto" *ngIf="!isReadOnlyView" [disabled]="forecastForm.invalid || isSubmitDisabled()"></button>
-
-                <button pButton type="button" label="Reset" class="p-button-secondary w-full md:w-auto" (click)="onReset()"></button>
+    <form [formGroup]="forecastForm" (ngSubmit)="onSubmit()">
+        <!-- ═══════════════════════════════════════════
+             TOP HEADER
+        ════════════════════════════════════════════ -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <span class="block text-surface-900 font-bold text-lg md:text-xl">Material Requisition</span>
+            <div class="mr-form-footer">
+                <!-- Requisition No / Date row -->
+                                        <p-dropdown
+                            [options]="draftRequisitionOptions"
+                            optionLabel="mf_no"
+                            optionValue="mf_id"
+                            placeholder="Select Draft MR No"
+                            filterPlaceholder="Search Draft MR No"
+                            formControlName="p_draft_requisitionno"
+                            [filter]="true"
+                            [showClear]="true"
+                            (onChange)="onDraftChange($event)"
+                        ></p-dropdown>
+                  
+                <button pButton type="button" label="Reset" class="p-button-secondary" (click)="onReset()"></button>
+                <button pButton type="button" label="Draft" class="p-button-outlined p-button-warning" *ngIf="!isReadOnlyView" (click)="submitDraft()" [disabled]="forecastForm.invalid || isSubmitDisabled()"></button>
+                <button pButton type="submit" label="Submit" class="p-button-primary" *ngIf="!isReadOnlyView" [disabled]="forecastForm.invalid || isSubmitDisabled()"></button>
             </div>
         </div>
 
-        <!-- FORM FIELDS -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 md:gap-x-8 gap-y-3 md:gap-y-4 w-full">
-            <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">MF No</label>
-                <p-dropdown
-                    [options]="requisitionOptions"
-                    optionLabel="mf_no"
-                    optionValue="mf_id"
-                    placeholder="MF No."
-                    formControlName="p_requisitionno"
-                    [filter]="true"
-                    filterPlaceholder="Search MF No."
-                    [showClear]="true"
-                    [loading]="isLoadingBills"
-                    (onChange)="onDraftChange($event)"
-                >
-                </p-dropdown>
+        <!-- ═══════════════════════════════════════════
+             REQUISITION DETAILS
+        ════════════════════════════════════════════ -->
+        <div class="mr-card">
+            <div class="mr-card-header">
+                <i class="pi pi-file-edit"></i>
+                <span>Requisition Details</span>
             </div>
 
-            <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">Site</label>
-                <p-dropdown [options]="projectOptions" optionLabel="project_name" optionValue="project_id" placeholder="Select Site" formControlName="p_project" [filter]="true" [showClear]="true" (onChange)="onProjectChange($event)"></p-dropdown>
-            </div>
+            <div class="mr-fields-grid cols-4">
+                <div class="field-col">
+                    <label class="field-label">MR No<span class="req">*</span></label>
+                    <p-dropdown [options]="requisitionOptions" optionLabel="mf_no" optionValue="mf_id" placeholder="Select MR No" formControlName="p_requisitionno" [filter]="true" [showClear]="true" filterPlaceholder="Search MR No"></p-dropdown>
+                </div>
 
-            <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">Department</label>
-                <p-dropdown [options]="departmentOptions" optionLabel="department_name" optionValue="department_id" placeholder="Department" formControlName="p_department" [filter]="true" [showClear]="true"></p-dropdown>
-            </div>
+                <div class="field-col">
+                    <label class="field-label">MR Date <span class="req">*</span></label>
+                    <p-datePicker fluid [showIcon]="true" formControlName="p_period" dateFormat="dd-mm-yy" placeholder="Select date"></p-datePicker>
+                </div>
 
-            <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">Tower/Block <span class="text-red-500">*</span></label>
-                <p-dropdown [options]="towerOptions" optionLabel="tower_name" optionValue="tower_id" placeholder="Tower/Block" formControlName="p_work" [filter]="true" [showClear]="true" (onChange)="onTowerChange($event)"></p-dropdown>
-            </div>
+                 <div class="field-col">
+                    <label class="field-label">Department<span class="req">*</span></label>
+                    <p-dropdown
+                        [options]="departmentOptions"
+                        optionLabel="department_name"
+                        optionValue="department_id"
+                        placeholder="Department"
+                        formControlName="p_department"
+                        [filter]="true"
+                        [showClear]="true"
+                        filterPlaceholder="Search Department"
+                    ></p-dropdown>
+                </div>
 
-            <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">Level </label>
-                <p-dropdown [options]="levelOptions" optionLabel="label" optionValue="value" placeholder="Level" formControlName="p_level" [filter]="true" [showClear]="true" (onChange)="onLevelChange($event)"></p-dropdown>
-            </div>
+                <div class="field-col">
+                    <label class="field-label">Site <span class="req">*</span></label>
+                    <p-dropdown
+                        [options]="projectOptions"
+                        optionLabel="project_name"
+                        optionValue="project_id"
+                        placeholder="Select Site"
+                        filterPlaceholder="Search Site"
+                        formControlName="p_project"
+                        [filter]="true"
+                        [showClear]="true"
+                        (onChange)="onProjectChange($event)"
+                    ></p-dropdown>
+                </div>
 
-            <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">Pour</label>
-                <p-dropdown [options]="pourOptions" optionLabel="label" optionValue="value" placeholder="Pour" formControlName="p_pour" [filter]="true" [showClear]="true"></p-dropdown>
-            </div>
+                <div class="field-col">
+                    <label class="field-label">Tower/Block <span class="req">*</span></label>
+                    <p-dropdown [options]="towerOptions" optionLabel="tower_name" optionValue="tower_id" placeholder="Tower / Block" formControlName="p_work" [filter]="true" [showClear]="true" (onChange)="onTowerChange($event)"></p-dropdown>
+                </div>
 
-            <div class="flex flex-col">
-                <label class="font-medium mb-1 text-sm md:text-base">Forecast Month <span class="text-red-500">*</span></label>
-                <p-dropdown [options]="periodOptions" optionLabel="period_name" optionValue="period_name" placeholder="Forecast month" formControlName="p_period" [filter]="true" [showClear]="true"></p-dropdown>
-            </div>
+                <div class="field-col">
+                    <label class="field-label">Level<span class="req">*</span></label>
+                    <p-dropdown [options]="levelOptions" optionLabel="level_name" optionValue="level_id" placeholder="Level" formControlName="p_level" [filter]="true" [showClear]="true" (onChange)="onLevelChange($event)"></p-dropdown>
+                </div>
 
-            <div class="flex flex-col">
-                <label class="font-medium mb-1">Forecast Remark</label>
-                <input pInputText formControlName="p_remarks" placeholder="Forecast Remark" />
-            </div>
+                 <div class="field-col">
+                    <label class="field-label">Pour<span class="req">*</span></label>
+                    <p-dropdown [options]="pourOptions" optionLabel="tower_name" optionValue="tower_id" placeholder="Select Pour" formControlName="p_pour" [filter]="true" [showClear]="true"></p-dropdown>
+                </div>
 
-            <div class="flex flex-col col-span-2">
+                <div class="field-col">
+                    <label class="field-label">Requested By <span class="req">*</span></label>
+                    <p-dropdown [options]="categoryOptions" optionLabel="user_name" optionValue="user_id" placeholder="Select requester" formControlName="p_requestedby" [filter]="true" [showClear]="true"></p-dropdown>
+                </div>
+
+                <div class="field-col">
+                    <label class="field-label">Required By Date <span class="req">*</span></label>
+                    <p-datePicker fluid [showIcon]="true" formControlName="p_requiredbydate" dateFormat="dd-mm-yy" placeholder="Select date"></p-datePicker>
+                </div>
+
+                <div class="field-col">
+                    <label class="field-label">Priority</label>
+                    <p-dropdown [options]="priorityOptions" optionLabel="label" optionValue="value" placeholder="Select priority" formControlName="p_priority" [showClear]="true"></p-dropdown>
+                </div>
+
+                <div class="field-col span-2">
+                    <label class="field-label">Purpose / Work</label>
+                    <input pInputText formControlName="p_remarks" placeholder="e.g. Concrete work for Column C1 & C2" />
+                </div>
+                
+                 <div class="flex flex-col col-span-2">
                 <label class="font-medium mb-1 text-sm md:text-base">Item</label>
                 <p-select
                     class="w-full mb-3 md:mb-4"
@@ -118,30 +134,65 @@
                     </ng-template>
                 </p-select>
             </div>
+
+                <div class="field-col">
+                    <label class="field-label">Attachment</label>
+                    <div class="mr-file-input">
+                        <label for="mrAttachment" class="mr-choose-btn"><i class="pi pi-upload"></i> Choose File</label>
+                        <input id="mrAttachment" type="file" hidden (change)="onAttachmentSelect($event)" />
+                        <!-- <span class="mr-file-name">{{ attachmentFileName || 'No file chosen' }}</span> -->
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- ITEMS TABLE -->
-        <div class="mt-4 md:mt-6" (click)="keepBarcodeFocus($event)">
+        <!-- ═══════════════════════════════════════════
+             REQUISITION ITEMS
+        ════════════════════════════════════════════ -->
+        <div class="mr-card">
+            <div class="mr-card-header justify-between">
+                <div class="mr-card-header-left">
+                    <i class="pi pi-list"></i>
+                    <span>Requisition Items</span>
+                </div>
+
+                <div class="mr-approval-info">
+                    <div>
+                        <span class="mr-meta-label">Approval Status</span>
+                        <!-- <span class="mr-status-badge" [ngClass]="approvalStatusClass">{{ forecastForm.get('status')?.value || 'Pending' }}</span> -->
+                    </div>
+                    <div>
+                        <span class="mr-meta-label">Approved By</span>
+                        <!-- <span class="mr-meta-value">{{ approvedByName || '—' }}</span> -->
+                    </div>
+                    <div>
+                        <span class="mr-meta-label">Approved On</span>
+                        <!-- <span class="mr-meta-value">{{ approvedOnDate || '—' }}</span> -->
+                    </div>
+                </div>
+            </div>
+
+             <div class="mt-4 md:mt-6" (click)="keepBarcodeFocus($event)">
             <input #barcodeInput type="text" class="absolute opacity-0 pointer-events-none" placeholder="Type barcode / SKU and press Enter" (keydown.enter)="onBarcodeScan($event)" />
             <p-table [value]="itemArray.controls" dataKey="item_id" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" appendTo="body" class="p-datatable-gridlines" styleClass="material-forcast">
                 <ng-template pTemplate="header">
                     <tr class="bg-yellow-400">
                         <th>Item Category</th>
-                        <th>Item</th>
+                        <th>Item Description</th>
                         <th>UOM</th>
                         <th>Buffer Stock</th>
-                        <th>Available Stock</th>
-                        <th>Pending Qty</th>
-                        <th>Forecast Qty</th>
-                        <th>Procure Qty</th>
-                        <th>Item Remarks</th>
+                        <th class="text-right">Required Qty</th>
+                        <th class="text-right">Available Stock</th>
+                        <th class="text-right">Pending Qty</th>
+                        <th class="text-right">Required Qty (Net)</th>
+                        <th>Remarks</th>
                         <th *ngIf="!isReadOnlyView" class="text-center">Action</th>
                     </tr>
                 </ng-template>
 
                 <ng-template pTemplate="body" let-row let-i="rowIndex">
                     <tr [formGroup]="row">
-                        <td class="text-xs md:text-sm">{{ row.get('item_category')?.value }}</td>
+<td class="text-xs md:text-sm">{{ row.get('item_category')?.value }}</td>
                         <td class="text-xs md:text-sm">{{ row.get('item_name')?.value }}</td>
                         <td class="text-xs md:text-sm">{{ row.get('uom_name')?.value }}</td>
                         <!-- <td><p-dropdown #uomDropdown [options]="uomlist[i]" optionLabel="fieldname" optionValue="fieldid" placeholder="UOM" formControlName="uom_id" [filter]="true" appendTo="body" (onChange)="UOMId($event, i)"></p-dropdown></td> -->
@@ -171,6 +222,7 @@
                     <div class="text-gray-600 ms-2 text-xs md:text-sm">Total Items: {{ itemArray.controls.length }}</div>
                 </ng-template>
             </p-table>
+            </div>
         </div>
     </form>
 

@@ -282,6 +282,32 @@
                         <small class="text-red-500 mt-1" *ngIf="masterForm.get('supplierpincode')?.touched && masterForm.get('supplierpincode')?.invalid"> Pincode is required </small>
                     </div>
 
+                    <!-- Category -->
+<div class="flex flex-col">
+    <label class="font-medium mb-1">
+        Category <span class="text-red-500">*</span>
+    </label>
+
+    <p-multiSelect
+        [options]="categoryOptions"
+        optionLabel="fieldname"
+        optionValue="fieldid"
+        formControlName="categories"
+        placeholder="Select Categories"
+        [filter]="true"
+        [showClear]="true"
+        display="chip"
+        defaultLabel="Select Categories"
+    >
+    </p-multiSelect>
+
+    <small
+        class="text-red-500 mt-1"
+        *ngIf="masterForm.get('categories')?.touched && masterForm.get('categories')?.invalid">
+        At least one category is required
+    </small>
+</div>
+
                     <!-- Mobile -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Mobile <span class="text-red-500">*</span></label>

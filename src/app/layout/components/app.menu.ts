@@ -53,53 +53,62 @@ export class AppMenu {
             }
         });
     }
-    private buildFilteredMenu(menuItems: any[], flatData: any[]): any[] {
-        const level0Items = flatData.filter((d) => d.level === 0);
+private buildFilteredMenu(menuItems: any[], flatData: any[]): any[] {
+    const childrenByCategory = new Map<string, Set<string>>();
+    const categoryByLevel = new Map<number, string>();
 
-        const headerNameToId = new Map<string, number>();
-        level0Items.forEach((d) => {
-            headerNameToId.set((d.access_name || '').trim().toLowerCase(), d.permissionid);
-        });
+    // First pass: infer category per level from well-formed rows (handles bad access_desc rows)
+    flatData.forEach((d) => {
+        const desc = (d.access_desc || '').trim();
+        if (desc.includes(' - ')) {
+            const category = desc.split(' - ')[0].trim().toLowerCase();
+            if (!categoryByLevel.has(d.level)) {
+                categoryByLevel.set(d.level, category);
+            }
+        }
+    });
 
-        const childrenByHeaderId = new Map<number, Set<string>>();
-        flatData
-            .filter((d) => d.level !== 0)
-            .forEach((d) => {
-                if (!childrenByHeaderId.has(d.level)) {
-                    childrenByHeaderId.set(d.level, new Set());
-                }
-                childrenByHeaderId.get(d.level)!.add((d.access_name || '').trim().toLowerCase());
-            });
+    flatData.forEach((d) => {
+        const desc = (d.access_desc || '').trim();
+        const childName = (d.access_name || '').trim().toLowerCase();
+        if (!childName) return;
 
-        const allowedHeaderNames = new Set(headerNameToId.keys());
+        const category = desc.includes(' - ')
+            ? desc.split(' - ')[0].trim().toLowerCase()
+            : categoryByLevel.get(d.level) ?? '';
 
-        return menuItems
-            .map((item) => {
-                const keys: string[] = Array.isArray(item.accessKey) ? item.accessKey : [item.accessKey];
-                const matchedKey = keys.find((k) => allowedHeaderNames.has((k || '').trim().toLowerCase()));
+        if (!category) return;
 
-                if (!matchedKey) return null; 
+        if (!childrenByCategory.has(category)) {
+            childrenByCategory.set(category, new Set());
+        }
+        childrenByCategory.get(category)!.add(childName);
+    });
 
-                const headerId = headerNameToId.get(matchedKey.trim().toLowerCase())!;
-                const allowedChildren = childrenByHeaderId.get(headerId) ?? new Set<string>();
+    return menuItems
+        .map((item) => {
+            const keys: string[] = Array.isArray(item.accessKey) ? item.accessKey : [item.accessKey];
+            const matchedKey = keys.find((k) => childrenByCategory.has((k || '').trim().toLowerCase()));
 
-                const filteredItems = this.filterLeafItems(item.items, allowedChildren);
+            if (!matchedKey) return null;
 
-                return { ...item, items: filteredItems };
-            })
-            .filter(Boolean);
-    }
+            const allowedChildren = childrenByCategory.get(matchedKey.trim().toLowerCase()) ?? new Set<string>();
+            const filteredItems = this.filterLeafItems(item.items, allowedChildren);
 
-    private filterLeafItems(items: any[] = [], allowedChildrenLower: Set<string>): any[] {
-        return items
-            .map((item) => {
-                if (item.items?.length > 0) {
-                    const children = this.filterLeafItems(item.items, allowedChildrenLower);
-                    return children.length > 0 ? { ...item, items: children } : null;
-                }
-                
-                return allowedChildrenLower.has((item.label || '').trim().toLowerCase()) ? item : null;
-            })
-            .filter(Boolean);
-    }
+            return filteredItems.length > 0 ? { ...item, items: filteredItems } : null;
+        })
+        .filter(Boolean);
+}
+
+private filterLeafItems(items: any[] = [], allowedChildrenLower: Set<string>): any[] {
+    return items
+        .map((item) => {
+            if (item.items?.length > 0) {
+                const children = this.filterLeafItems(item.items, allowedChildrenLower);
+                return children.length > 0 ? { ...item, items: children } : null;
+            }
+            return allowedChildrenLower.has((item.label || '').trim().toLowerCase()) ? item : null;
+        })
+        .filter(Boolean);
+}
 }

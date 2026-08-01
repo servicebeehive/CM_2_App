@@ -1,0 +1,133 @@
+<p-toast></p-toast>
+
+<div class="card p-3 md:p-6">
+    <form [formGroup]="filterForm" (ngSubmit)="onSubmit()">
+         <div class="flex justify-between items-center mb-6">
+    <span class="block text-surface-900 font-bold text-xl">Vendor Comparison</span>
+    <button
+                pButton
+                type="submit"
+                label="Submit"
+                class="p-button-primary"
+                [disabled]="comparisonRows.length === 0 || selectedVendors.length === 0"
+            ></button>
+</div>
+
+        <!-- Global search -->
+        <div class="mb-3 w-full" *ngIf="showGlobalSearch">
+            <app-global-filter [(value)]="globalFilter" placeholder="Search Items..." (valueChange)="applyGlobalFilter()"></app-global-filter>
+        </div>
+
+        <!-- Project + Vendor filters -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-3 w-full mb-4">
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Site <span class="text-red-500">*</span></label>
+                <p-dropdown
+                    [options]="projectOptions"
+                    optionLabel="project_name"
+                    optionValue="project_id"
+                    placeholder="Select Site"
+                    formControlName="p_project"
+                    [filter]="true"
+                    filterPlaceholder="Search Site"
+                    (onChange)="onProjectChange($event)"
+                    [showClear]="true"
+                    [loading]="isLoadingProjects"
+                ></p-dropdown>
+            </div>
+
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Vendors <span class="text-red-500">*</span></label>
+                <p-multiSelect
+                    [options]="vendorOptions"
+                    optionLabel="vendor_name"
+                    optionValue="vendor_id"
+                    placeholder="Select Vendors to Compare"
+                    formControlName="p_vendors"
+                    [filter]="true"
+                    filterPlaceholder="Search Vendor"
+                    display="chip"
+                    (onChange)="onVendorChange($event)"
+                    [loading]="isLoadingVendors"
+                ></p-multiSelect>
+            </div>
+        </div>
+
+        <!-- Input grid: item rows × vendor columns -->
+        <p-table
+            [value]="filteredRows"
+            [responsiveLayout]="'scroll'"
+            [paginator]="true"
+            [rows]="10"
+            [rowsPerPageOptions]="[10, 20, 50]"
+            [loading]="isLoadingItems"
+            class="p-datatable-gridlines p-datatable-sm vendor-comparison-table"
+        >
+            <ng-template pTemplate="header">
+                <tr class="bg-yellow-400">
+                    <th rowspan="2" class="text-left">Category</th>
+                    <th rowspan="2" class="text-left">Item</th>
+                    <ng-container *ngFor="let v of selectedVendors">
+                        <th colspan="3" class="text-center border-l-2">{{ v.vendor_name }}</th>
+                    </ng-container>
+                </tr>
+                <tr class="bg-yellow-100">
+                    <ng-container *ngFor="let v of selectedVendors">
+                        <th class="text-center border-l-2">Price</th>
+                        <th class="text-center">Quantity</th>
+                        <th class="text-center">Payment Term</th>
+                    </ng-container>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-row>
+                <tr>
+                    <td class="font-medium">{{ row.category }}</td>
+                    <td>{{ row.item }}</td>
+                    <ng-container *ngFor="let v of selectedVendors">
+                        <td class="border-l-2" style="padding: 4px">
+                            <p-inputNumber
+                                [(ngModel)]="row.vendorData[v.vendor_id].price"
+                                [ngModelOptions]="{ standalone: true }"
+                                mode="decimal"
+                                [minFractionDigits]="2"
+                                [maxFractionDigits]="2"
+                                [min]="0"
+                                [inputStyle]="{ width: '100px' }"
+                            ></p-inputNumber>
+                        </td>
+                        <td style="padding: 4px">
+                            <p-inputNumber
+                                [(ngModel)]="row.vendorData[v.vendor_id].quantity"
+                                [ngModelOptions]="{ standalone: true }"
+                                [min]="0"
+                                [useGrouping]="false"
+                                [inputStyle]="{ width: '90px' }"
+                            ></p-inputNumber>
+                        </td>
+                        <td style="padding: 4px">
+                            <input
+                                pInputText
+                                type="text"
+                                [(ngModel)]="row.vendorData[v.vendor_id].paymentTerm"
+                                [ngModelOptions]="{ standalone: true }"
+                                placeholder="e.g. 30 Days Net"
+                                style="width: 130px"
+                            />
+                        </td>
+                    </ng-container>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td [attr.colspan]="2 + (selectedVendors.length * 3)" class="text-center text-400 italic py-6 text-sm">
+                        Select a site to load items, and at least one vendor
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+
+       
+    </form>
+</div>

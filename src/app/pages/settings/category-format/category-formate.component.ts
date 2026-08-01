@@ -18,6 +18,7 @@ import { ActivatedRoute } from '@angular/router';
 import { state } from '@angular/animations';
 import { Subject, switchMap, of } from 'rxjs';
 import { RemovedParamterBased } from '@/core/models/inventory.model';
+import { MultiSelectModule } from 'primeng/multiselect';
 
 export function gstNumberValidator(control: AbstractControl): ValidationErrors | null {
     if (!control.value) return null;
@@ -31,7 +32,7 @@ export function gstNumberValidator(control: AbstractControl): ValidationErrors |
     standalone: true,
     templateUrl: './category-formate.component.html',
     styleUrls: ['./category-formate.component.scss'],
-    imports: [CommonModule, FormsModule, ReactiveFormsModule, ButtonModule, DropdownModule, InputTextModule, TableModule, CheckboxModule, DialogModule, ConfirmDialogModule, RippleModule, GlobalFilterComponent],
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, ButtonModule, DropdownModule, InputTextModule, TableModule, CheckboxModule, DialogModule, ConfirmDialogModule, RippleModule, GlobalFilterComponent, MultiSelectModule],
     providers: [ConfirmationService]
 })
 export class CategoryFormateComponent {
@@ -43,6 +44,7 @@ export class CategoryFormateComponent {
     countries: any[] = [];
     states: any[] = [];
     cities: any[] = [];
+    categoryOptions: any[] = [];
     editMode = false;
     selectedUser: any = null;
     globalFilter: string = '';
@@ -62,7 +64,7 @@ export class CategoryFormateComponent {
         { label: '90 Days', value: '90 Days' }
     ];
 
-   products: { batchid: number; childUOM: any; conversion: number | null }[] = [];
+    products: { batchid: number; childUOM: any; conversion: number | null }[] = [];
     ChilduomOptions: any[] = [];
     uomTableDisabled = false;
     childUomError = '';
@@ -82,6 +84,7 @@ export class CategoryFormateComponent {
     ngOnInit() {
         this.initForm();
         this.onGetCountry();
+        this.onGetCategory();
         this.routeChange$
             .pipe(
                 switchMap((master: any) => {
@@ -198,10 +201,10 @@ export class CategoryFormateComponent {
             { field: 'isactive', header: 'Active', width: '80px' }
         ],
         categorymaster: [
-        { field: 'categoryname', header: 'Name', width: '300px' },
-        { field: 'categorydesc', header: 'Description' },
-        { field: 'isactive', header: 'Active', width: '80px' }
-    ],
+            { field: 'categoryname', header: 'Name', width: '300px' },
+            { field: 'categorydesc', header: 'Description' },
+            { field: 'isactive', header: 'Active', width: '80px' }
+        ],
         customermaster: [
             { field: 'customername', header: 'Name', width: '300px' },
             { field: 'customerphone', header: 'Phone' },
@@ -214,22 +217,22 @@ export class CategoryFormateComponent {
             { field: 'supplierphone', header: 'Phone' },
             { field: 'suppliergstno', header: 'Gst No' },
             { field: 'suppliercity', header: 'City' },
-            { field: 'paymentterms', header: 'Payment Terms' },
+            { field: 'paymentterm', header: 'Payment Terms' },
             { field: 'prefferedvendor', header: 'Preferred' },
             { field: 'isactive', header: 'Active', width: '80px' }
         ],
         taxmaster: [
-        { field: 'taxname', header: 'Name' }, 
-        { field: 'taxtype', header: 'Type', width: '300px' },
-        { field: 'taxdesc', header: 'Description' },
-        { field: 'taxpercentage', header: 'Percentage' },
-        { field: 'isactive', header: 'Active', width: '80px' }
-    ],
-        uommaster:[
-        { field: 'fieldname', header: 'Name', width: '300px' },
-        { field: 'uomdesc', header: 'Description' },
-        { field: 'isactive', header: 'Active', width: '80px' }
-    ],
+            { field: 'taxname', header: 'Name' },
+            { field: 'taxtype', header: 'Type', width: '300px' },
+            { field: 'taxdesc', header: 'Description' },
+            { field: 'taxpercentage', header: 'Percentage' },
+            { field: 'isactive', header: 'Active', width: '80px' }
+        ],
+        uommaster: [
+            { field: 'fieldname', header: 'Name', width: '300px' },
+            { field: 'uomdesc', header: 'Description' },
+            { field: 'isactive', header: 'Active', width: '80px' }
+        ],
         usertype: [
             { field: 'usertypename', header: 'Name', width: '300px' },
             { field: 'web_access', header: 'Web Access', width: '80px' },
@@ -286,6 +289,7 @@ export class CategoryFormateComponent {
             this.masterForm.addControl('countryforall', this.fb.control('', Validators.required));
             this.masterForm.addControl('stateforall', this.fb.control('', Validators.required));
             this.masterForm.addControl('cityforall', this.fb.control('', Validators.required));
+            this.masterForm.addControl('categories', this.fb.control([], Validators.required));
             this.masterForm.addControl('supplierpincode', this.fb.control('', Validators.required));
             this.masterForm.addControl('supplierphone', this.fb.control('', [Validators.required, Validators.pattern(/^[6-9]\d{9}$/)]));
             this.masterForm.addControl('supplieremail', this.fb.control('', [Validators.email]));
@@ -385,7 +389,7 @@ export class CategoryFormateComponent {
                 suppliercontactphone: row.suppliercontactphone,
                 suppliercontactemail: row.suppliercontactemail,
                 payment_term: row.paymentterm,
-                preferred_vendor: row.prefferedvendor === 'Y',
+                categories: (row.categories || []).map((c:any)=> c.categoryid),                preferred_vendor: row.prefferedvendor === 'Y',
                 checked: row.isactive === 'Y'
             },
             taxmaster: {
@@ -506,48 +510,48 @@ export class CategoryFormateComponent {
         this.selectedUser = null;
     }
 
-   loadChildUomOptions() {
-    const payload = {
-        p_returntype: 'UOM',
-        p_username: this.authService.isLogIntType()?.industry_type_id.toString()
-    }
-    this.inventoryService.getdropdowndetails(payload).subscribe({
-        next: (res: any) => {
-            this.ChilduomOptions = res.data || [];
-        },
-        error: (err) => console.log(err)
-    });
-}
-
-addRow() {
-    this.products.push({ batchid: 0, childUOM: null, conversion: null });
-}
-
-removeRow(index: number) {
-    this.products.splice(index, 1);
-    this.isChildUOMValid();
-}
-
-isChildUOMValid(): boolean {
-    this.childUomError = '';
-
-    // no empty child UOM or conversion
-    const hasIncomplete = this.products.some((p) => !p.childUOM || !p.conversion || p.conversion <= 0);
-    if (hasIncomplete) {
-        this.childUomError = 'Each row needs a Child UOM and a valid conversion value';
-        return false;
+    loadChildUomOptions() {
+        const payload = {
+            p_returntype: 'UOM',
+            p_username: this.authService.isLogIntType()?.industry_type_id.toString()
+        };
+        this.inventoryService.getdropdowndetails(payload).subscribe({
+            next: (res: any) => {
+                this.ChilduomOptions = res.data || [];
+            },
+            error: (err) => console.log(err)
+        });
     }
 
-    // no duplicate child UOM selected twice
-    const ids = this.products.map((p) => p.childUOM);
-    const hasDuplicates = new Set(ids).size !== ids.length;
-    if (hasDuplicates) {
-        this.childUomError = 'Duplicate Child UOM selected';
-        return false;
+    addRow() {
+        this.products.push({ batchid: 0, childUOM: null, conversion: null });
     }
 
-    return true;
-}
+    removeRow(index: number) {
+        this.products.splice(index, 1);
+        this.isChildUOMValid();
+    }
+
+    isChildUOMValid(): boolean {
+        this.childUomError = '';
+
+        // no empty child UOM or conversion
+        const hasIncomplete = this.products.some((p) => !p.childUOM || !p.conversion || p.conversion <= 0);
+        if (hasIncomplete) {
+            this.childUomError = 'Each row needs a Child UOM and a valid conversion value';
+            return false;
+        }
+
+        // no duplicate child UOM selected twice
+        const ids = this.products.map((p) => p.childUOM);
+        const hasDuplicates = new Set(ids).size !== ids.length;
+        if (hasDuplicates) {
+            this.childUomError = 'Duplicate Child UOM selected';
+            return false;
+        }
+
+        return true;
+    }
 
     loadMasterData(masterKey: string) {
         const payloadType = this.masterPayloadMap[masterKey];
@@ -574,15 +578,14 @@ isChildUOMValid(): boolean {
                 p_username: this.authService.isLogIntType()?.industry_type_id.toString()
             };
             api$ = this.inventoryService.getdropdowndetails(payload);
-        } 
-        else if (masterKey === 'taxmaster') {
+        } else if (masterKey === 'taxmaster') {
             const payload = {
                 p_returntype: 'TAXDETAILS',
                 p_returnvalue: this.authService.isLogIntType()?.industry_type_id.toString(),
                 p_username: ''
             };
             api$ = this.inventoryService.Getreturndropdowndetails(payload);
-        }else {
+        } else {
             return;
         }
         api$.subscribe({
@@ -619,6 +622,19 @@ isChildUOMValid(): boolean {
         });
     }
 
+    onGetCategory() {
+        const payload = {
+            p_returntype: 'CATEGORY',
+            p_username: this.authService.isLogIntType()?.industry_type_id.toString()
+        };
+        this.inventoryService.getdropdowndetails(payload).subscribe({
+            next: (res) => {
+                this.categoryOptions = res.data || [];
+            },
+            error: (err) => console.log(err)
+        });
+    }
+
     onGetCountry() {
         const payload = this.createParameterBased('COUNTRY', '');
         this.inventoryService.getparameterbased(payload).subscribe({
@@ -640,15 +656,15 @@ isChildUOMValid(): boolean {
         });
     }
 
-      onGetStateChange(data: any) {
+    onGetStateChange(data: any) {
         const payload = this.createParameterBased('CITY', data.value);
         this.inventoryService.getparameterbased(payload).subscribe({
-            next:(res)=>{
-              if (res.data && res.data.length > 0) {
+            next: (res) => {
+                if (res.data && res.data.length > 0) {
                     this.cities = res.data;
-                }   
+                }
             }
-        })
+        });
     }
 
     onSubmit() {
@@ -660,9 +676,9 @@ isChildUOMValid(): boolean {
     }
 
     saveMasterData(data: any) {
-        console.log('data', data,this.selectedUser);
+        console.log('data', data, this.selectedUser);
         const master = this.selectedMaster;
-        const username = this.authService.isLogIntType().username;
+        const username = this.authService.isLogIntType().userid.toString();
         const userId = this.authService.isLogIntType()?.userid?.toString();
         const industryTypeId = this.authService.isLogIntType()?.industry_type_id;
 
@@ -673,6 +689,7 @@ isChildUOMValid(): boolean {
             const stateName = this.states.find((s) => s.state_id === data.stateforall)?.state_name ?? '';
             const cityName = this.cities.find((c) => c.city_id === data.cityforall)?.city_name ?? '';
             const payload = {
+                p_companyid: this.authService.isLogIntType().companyid,
                 p_customerid: this.editMode ? this.selectedUser.customerid : 0,
                 p_customername: data.customername,
                 p_customeraddress: data.customeraddress,
@@ -695,6 +712,7 @@ isChildUOMValid(): boolean {
             const stateName = this.states.find((s) => s.state_id === data.stateforall)?.state_name ?? '';
             const cityName = this.cities.find((c) => c.city_id === data.cityforall)?.city_name ?? '';
             const payload: any = {
+                p_companyid: this.authService.isLogIntType().companyid,
                 p_supplierid: this.editMode ? this.selectedUser.supplierid : 0,
                 p_suppliername: data.suppliername,
                 p_supplieraddress: data.supplieraddress,
@@ -711,11 +729,15 @@ isChildUOMValid(): boolean {
                 p_isactive: data.checked ? 'Y' : 'N',
                 p_username: username,
                 p_paymentterm: data.payment_term,
-                p_prefferedvendor: data.preferred_vendor ? 'Y' : 'N'
+                p_prefferedvendor: data.preferred_vendor ? 'Y' : 'N',
+                p_categories: data.categories.map((id: number) => ({
+                    categoryid: id
+                }))
             };
             apicall$ = this.inventoryService.upsertsuppliermaster(payload);
         } else if (master === 'categorymaster') {
             const payload = {
+                p_companyid: this.authService.isLogIntType().companyid,
                 p_categoryid: this.editMode ? this.selectedUser.categoryid : 0,
                 p_categoryname: data.p_categoryname,
                 p_categorydesc: data.p_categorydesc,
@@ -726,19 +748,20 @@ isChildUOMValid(): boolean {
             apicall$ = this.inventoryService.upsertcategorymaster(payload);
         } else if (master === 'uommaster') {
             if (this.products.length && !this.isChildUOMValid()) {
-        this.errorSuccess(this.childUomError || 'Please fix Child UOM rows before saving');
-        return;
-    }
+                this.errorSuccess(this.childUomError || 'Please fix Child UOM rows before saving');
+                return;
+            }
 
-    const conversionJson = this.products.length
-        ? this.products.map((p) => ({
-              batchid: p.batchid || 0,
-              uomchildid: p.childUOM,
-              conversionunit: p.conversion
-          }))
-        : null;
+            const conversionJson = this.products.length
+                ? this.products.map((p) => ({
+                      batchid: p.batchid || 0,
+                      uomchildid: p.childUOM,
+                      conversionunit: p.conversion
+                  }))
+                : null;
 
             const payload = {
+                p_companyid: this.authService.isLogIntType().companyid,
                 p_uomid: this.editMode ? this.selectedUser.fieldid : 0,
                 p_uomname: data.uomname,
                 p_uomdesc: data.uomdesc,
@@ -794,6 +817,9 @@ isChildUOMValid(): boolean {
                 this.visibleDialog = false;
                 this.showSuccess(res?.data?.msg);
                 this.loadMasterData(master);
+                if(master === 'suppliermaster' || master === 'customermaster'){
+                    this.onGetDataList();
+                }
             },
             error: (err: any) => {
                 console.error('API error', err);
