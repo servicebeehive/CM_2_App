@@ -24,7 +24,7 @@
         <!-- ================================
          TOP 3 FIELDS (always visible)
     ================================= -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-4 mb-6">
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-x-6 gap-y-4 mb-6">
             <!-- GRN No -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">GRN No</label>
@@ -53,6 +53,12 @@
                 <p-dropdown [options]="vendorOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search PO No" formControlName="p_vendorid" placeholder="Select PO No" (onChange)="onPOChange($event)"></p-dropdown>
                 <small class="text-red-500 mt-1 text-xs" *ngIf="productForm.get('p_vendorid')?.touched && productForm.get('p_vendorid')?.errors?.['required']"> PO Number is required </small>
             </div>
+
+            <!-- PO Date (readonly, past dates only) -->
+                    <div class="flex flex-col">
+                        <label class="font-medium mb-1">PO Date</label>
+                        <p-datepicker fluid formControlName="p_podate" dateFormat="dd/mm/yy" [maxDate]="dateTime" [showIcon]="true" placeholder="Auto from PO"></p-datepicker>
+                    </div>
         </div>
 
         <!-- hint when no PO selected -->
@@ -72,12 +78,6 @@
                 </ng-template>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4 p-3">
-                    <!-- PO Date (readonly, past dates only) -->
-                    <div class="flex flex-col">
-                        <label class="font-medium mb-1">PO Date</label>
-                        <p-datepicker fluid formControlName="p_podate" dateFormat="dd/mm/yy" [maxDate]="dateTime" [showIcon]="true" placeholder="Auto from PO"></p-datepicker>
-                    </div>
-
                     <!-- Site (auto from PO, readonly) -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Site <span class="text-red-500">*</span></label>
@@ -93,9 +93,29 @@
 
                     <!-- Store Location -->
                     <div class="flex flex-col">
-                        <label class="font-medium mb-1">Store Location <span class="text-red-500">*</span></label>
-                        <p-dropdown [options]="storeLocationOptions" optionLabel="label" optionValue="value" [filter]="true" filterPlaceholder="Search Location" formControlName="p_storelocation" placeholder="Select Location"></p-dropdown>
-                        <small class="text-red-500 mt-1 text-xs" *ngIf="productForm.get('p_storelocation')?.touched && productForm.get('p_storelocation')?.errors?.['required']"> Store Location is required </small>
+                        <label class="font-medium mb-1">Location <span class="text-red-500">*</span></label>
+                        <p-dropdown [options]="storeLocationOptions" optionLabel="label" optionValue="value" [filter]="true" filterPlaceholder="Search Location" formControlName="p_location" placeholder="Select Location"></p-dropdown>
+                        <small class="text-red-500 mt-1 text-xs" *ngIf="productForm.get('p_location')?.touched && productForm.get('p_location')?.errors?.['required']">Location is required </small>
+                    </div>
+
+                    <div class="flex flex-col">
+                        <label class="font-medium mb-1">Total PO Amount (INR)</label>
+                        <input pInputText formControlName="p_totalpoamount" placeholder="Auto from PO" class="surface-100 text-500 text-right" [readonly]="true" />
+                    </div>
+
+                    <div class="flex flex-col">
+                        <label class="font-medium mb-1">Payment Terms</label>
+                        <input pInputText formControlName="p_paymentterms" placeholder="Payment Terms" />
+                    </div>
+
+                    <div class="flex flex-col">
+                        <label class="font-medium mb-1">Contact Person</label>
+                        <input pInputText formControlName="p_contactperson" placeholder="Contact Person" />
+                    </div>
+
+                    <div class="flex flex-col">
+                        <label class="font-medium mb-1">Contact No.</label>
+                        <input pInputText formControlName="p_contactno" placeholder="Contact Number" (keypress)="allowOnlyNumbers($event)" maxlength="10" />
                     </div>
                 </div>
             </p-tabPanel>
@@ -192,6 +212,17 @@
                         </div>
                     </div>
 
+                    <!-- Quality Report Upload (mandatory if any row has Quality Report = Y) -->
+                    <div class="flex flex-col">
+                        <label class="font-medium mb-1">Quality Report <span class="text-red-500" *ngIf="isQualityReportAttachmentRequired">*</span><span class="ms-3 text-xs text-red-500 mt-1">PDF / JPG / PNG</span></label>
+                        <div class="flex align-items-center gap-2 px-3 py-2" style="border: 1px solid var(--surface-300); border-radius: 6px; background: var(--surface-0); min-height: 38px">
+                            <label for="qualityReportFile" class="p-button p-button-sm p-button-outlined p-button-primary m-0" style="cursor: pointer; white-space: nowrap"> <i class="pi pi-upload mr-1"></i> Upload </label>
+                            <input id="qualityReportFile" type="file" accept=".pdf,.jpg,.jpeg,.png" style="display: none" (change)="onFileSelect($event, 'qualityreport')" />
+                            <span class="text-xs text-400 mt-2 italic">{{ fileNames.qualityreport || 'No file chosen' }}</span>
+                        </div>
+                        <small class="text-red-500 mt-1 text-xs" *ngIf="isQualityReportAttachmentRequired && !uploadedFiles.qualityreport">Quality report file is required when any row has Quality Report = Y.</small>
+                    </div>
+
                     <!-- Other Documents Upload -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Other Documents<span class="ms-3 text-xs text-red-500 mt-1">PDF / JPG / PNG / DOC (multiple)</span></label>
@@ -209,23 +240,43 @@
          ITEMS TABLE (visible after PO selected)
     ================================= -->
         <div class="mt-6" *ngIf="poSelected">
-            <p-table [value]="itemOptionslist" dataKey="purchasedetailid" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" [responsiveLayout]="'scroll'" styleClass="p-datatable-gridlines p-datatable-sm">
+            <div class="flex justify-end gap-4 mb-3">
+                <div class="grn-total-chip accepted">
+                    <span class="chip-label">Total Accepted Qty</span>
+                    <span class="chip-value">{{ totalAcceptedQty | number: '1.0-2' }}</span>
+                </div>
+                <div class="grn-total-chip received">
+                    <span class="chip-label">Total Received Qty</span>
+                    <span class="chip-value">{{ totalReceivedQty | number: '1.0-2' }}</span>
+                </div>
+                <div class="grn-total-chip rejected">
+                    <span class="chip-label">Total Rejected Qty</span>
+                    <span class="chip-value">{{ totalRejectedQty | number: '1.0-2' }}</span>
+                </div>
+            </div>
+
+            <p-table [value]="itemOptionslist" dataKey="purchasedetailid" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines p-datatable-sm">
                 <ng-template pTemplate="header">
                     <tr class="bg-yellow-400">
-                        <th>Material</th>
+                        <th>Item Category</th>
+                        <th>Item Description</th>
                         <th>UOM</th>
-                        <th class="text-right">Ordered Qty</th>
-                        <th class="text-right">Previously Received</th>
+                        <th class="text-right">PO Qty</th>
+                        <th class="text-right">Previously Received Qty</th>
                         <th class="text-right">Pending Qty</th>
-                        <th class="text-right">Received Qty</th>
+                        <th class="text-right">Received Qty <span class="text-red-500">*</span></th>
                         <th class="text-right">Accepted Qty</th>
                         <th class="text-right">Rejected Qty</th>
-                        <th class="text-center">Action</th>
+                        <th class="text-center">Quality Report Required (Y/N/P)</th>
+                        <th class="text-right">Rate (INR)</th>
+                        <th class="text-right">Amount (INR)</th>
+                        <th>Remarks</th>
                     </tr>
                 </ng-template>
 
-                <ng-template pTemplate="body" let-product>
+                <ng-template pTemplate="body" let-product let-rowIndex="rowIndex">
                     <tr>
+                        <td class="text-sm">{{ product.categoryname || product.category || '—' }}</td>
                         <td class="text-sm font-medium">{{ product.itemname }}</td>
                         <td class="text-sm">{{ product.uomname }}</td>
                         <td class="text-right text-sm">{{ product.orderedqty | number }}</td>
@@ -244,9 +295,15 @@
                             </p-inputNumber>
                         </td>
                         <td class="text-right">
-                             <span class="text-sm" [ngClass]="{ 'text-red-500 font-semibold': product.rejectedqty > 0 }">
-                                {{ product.acceptedqty|| 0 }}
-                            </span>
+                            <p-inputNumber
+                                [(ngModel)]="product.acceptedqty"
+                                [ngModelOptions]="{ standalone: true }"
+                                [min]="0"
+                                [max]="product.receivedqty || 0"
+                                [useGrouping]="false"
+                                [inputStyle]="{ width: '90px' }"
+                                (onInput)="onAcceptedQtyChange(product)"
+                            ></p-inputNumber>
                         </td>
                         <td class="text-right">
                             <span class="text-sm" [ngClass]="{ 'text-red-500 font-semibold': product.rejectedqty > 0 }">
@@ -254,29 +311,41 @@
                             </span>
                         </td>
                         <td class="text-center">
-                            <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm" pTooltip="Delete" tooltipPosition="top" (click)="deleteItem(product)"></button>
+                            <p-dropdown [options]="qualityReportOptions" optionLabel="label" optionValue="value" [(ngModel)]="product.qualityreport" [ngModelOptions]="{ standalone: true }" placeholder="Select" appendTo="body" styleClass="w-5rem"></p-dropdown>
                         </td>
+                        <td class="text-right text-sm">{{ product.rate || 0 | number: '1.2-2' }}</td>
+                        <td class="text-right text-sm font-semibold">{{ calculateRowAmount(product) | number: '1.2-2' }}</td>
+                        <td class="text-sm">{{ product.rowremarks || '—' }}</td>
+                    </tr>
+                </ng-template>
+
+                <ng-template pTemplate="footer">
+                    <tr>
+                        <td colspan="4" class="font-semibold">Total</td>
+                        <td class="text-right font-semibold">{{ totalPoQty | number: '1.0-2' }}</td>
+                        <td class="text-right font-semibold">{{ totalPreviouslyReceivedQty | number: '1.0-2' }}</td>
+                        <td class="text-right font-semibold">{{ totalPendingQty | number: '1.0-2' }}</td>
+                        <td class="text-right font-semibold">{{ totalReceivedQty | number: '1.0-2' }}</td>
+                        <td class="text-right font-semibold">{{ totalAcceptedQty | number: '1.0-2' }}</td>
+                        <td class="text-right font-semibold">{{ totalRejectedQty | number: '1.0-2' }}</td>
+                        <td></td>
+                        <td></td>
+                        <td class="text-right font-semibold">{{ totalAmount | number: '1.2-2' }}</td>
+                        <td></td>
                     </tr>
                 </ng-template>
 
                 <ng-template pTemplate="emptymessage">
                     <tr>
-                        <td colspan="9" class="text-center text-400 italic py-6 text-sm">No items — select a PO No. to load materials</td>
+                        <td colspan="14" class="text-center text-400 italic py-6 text-sm">No items — select a PO No. to load materials</td>
                     </tr>
                 </ng-template>
 
                 <ng-template pTemplate="paginatorleft">
-                    <div class="text-500 text-xs ms-2">Total Items: {{ itemOptionslist?.length || 0 }}</div>
+                    <div class="text-500 text-xs ms-2">Total Items: {{ itemOptionslist.length || 0 }}</div>
                 </ng-template>
             </p-table>
 
-            <!-- Grand Total -->
-            <div class="flex justify-end border-t pt-4 mt-2">
-                <div class="flex items-center gap-4">
-                    <label class="font-medium text-sm">Grand Total</label>
-                    <input pInputText type="text" [value]="grandTotal | number: '1.2-2'" readonly class="w-40 text-right surface-100 text-500" />
-                </div>
-            </div>
         </div>
     </form>
 

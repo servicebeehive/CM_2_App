@@ -51,6 +51,9 @@ export interface PurchaseOrderItem {
     po_qty: number;
     rate: number;
     amount: number;
+    tax_id?: string | number | null;
+    tax_percent?: number | null;
+    total_amount?: number | null;
     remarks: string | null;
 }
 

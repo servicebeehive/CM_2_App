@@ -2,132 +2,158 @@
 
 <div class="card p-3 md:p-6">
     <form [formGroup]="filterForm" (ngSubmit)="onSubmit()">
-         <div class="flex justify-between items-center mb-6">
-    <span class="block text-surface-900 font-bold text-xl">Vendor Comparison</span>
-    <button
-                pButton
-                type="submit"
-                label="Submit"
-                class="p-button-primary"
-                [disabled]="comparisonRows.length === 0 || selectedVendors.length === 0"
-            ></button>
-</div>
-
-        <!-- Global search -->
-        <div class="mb-3 w-full" *ngIf="showGlobalSearch">
-            <app-global-filter [(value)]="globalFilter" placeholder="Search Items..." (valueChange)="applyGlobalFilter()"></app-global-filter>
-        </div>
-
-        <!-- Project + Vendor filters -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-3 w-full mb-4">
-            <div class="flex flex-col">
-                <label class="font-medium mb-1">Site <span class="text-red-500">*</span></label>
-                <p-dropdown
-                    [options]="projectOptions"
-                    optionLabel="project_name"
-                    optionValue="project_id"
-                    placeholder="Select Site"
-                    formControlName="p_project"
-                    [filter]="true"
-                    filterPlaceholder="Search Site"
-                    (onChange)="onProjectChange($event)"
-                    [showClear]="true"
-                    [loading]="isLoadingProjects"
-                ></p-dropdown>
-            </div>
-
-            <div class="flex flex-col">
-                <label class="font-medium mb-1">Vendors <span class="text-red-500">*</span></label>
-                <p-multiSelect
-                    [options]="vendorOptions"
-                    optionLabel="vendor_name"
-                    optionValue="vendor_id"
-                    placeholder="Select Vendors to Compare"
-                    formControlName="p_vendors"
-                    [filter]="true"
-                    filterPlaceholder="Search Vendor"
-                    display="chip"
-                    (onChange)="onVendorChange($event)"
-                    [loading]="isLoadingVendors"
-                ></p-multiSelect>
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <span class="block text-surface-900 font-bold text-lg md:text-xl">Vendor Comparison</span>
+            <div class="mr-form-footer">
+                <button pButton type="button" label="Export to Excel" class="p-button-outlined"></button>
+                <button pButton type="button" label="View" class="p-button-outlined" (click)="openMaterialReqDialog()"></button>
+                <button pButton type="button" label="Save Draft" class="p-button-outlined p-button-warning"></button>
+                <button pButton type="submit" label="Finalize Comparison" class="p-button-primary" [disabled]="comparisonRows.length === 0 || selectedVendors.length === 0"></button>
             </div>
         </div>
 
-        <!-- Input grid: item rows × vendor columns -->
-        <p-table
-            [value]="filteredRows"
-            [responsiveLayout]="'scroll'"
-            [paginator]="true"
-            [rows]="10"
-            [rowsPerPageOptions]="[10, 20, 50]"
-            [loading]="isLoadingItems"
-            class="p-datatable-gridlines p-datatable-sm vendor-comparison-table"
-        >
+        <div class="mr-card mb-4">
+            <div class="mr-card-header justify-between">
+                <div class="mr-card-header-left">
+                    <i class="pi pi-file-edit"></i>
+                    <span>RFQ Details</span>
+                </div>
+                <div class="vendors-invited-inline" *ngIf="selectedVendors.length > 0">
+                    <span class="vendors-invited-title">Vendors Invited ({{ selectedVendors.length }})</span>
+                    <ul class="vendors-list-inline">
+                        <li *ngFor="let v of selectedVendors">{{ v.vendor_name }}</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mr-fields-grid cols-4">
+                <div class="flex flex-col">
+                    <label class="font-medium mb-1">RFQ No.</label>
+                    <p-dropdown
+                        [options]="rfqNoOptions"
+                        optionLabel="rfq_no"
+                        optionValue="rfq_id"
+                        placeholder="Select RFQ No"
+                        formControlName="p_rfqno"
+                        [filter]="true"
+                        filterPlaceholder="Search RFQ No"
+                        [showClear]="true"
+                        [loading]="isLoadingRfqNo"
+                        (onChange)="onRfqNoChange($event)"
+                    ></p-dropdown>
+                </div>
+
+                <div class="flex flex-col">
+                    <label class="font-medium mb-1">RFQ Date</label>
+                    <input pInputText formControlName="p_rfqdate" placeholder="RFQ Date" readonly />
+                </div>
+
+                <div class="flex flex-col">
+                    <label class="font-medium mb-1">Site / Project <span class="text-red-500">*</span></label>
+                    <p-dropdown
+                        [options]="projectOptions"
+                        optionLabel="project_name"
+                        optionValue="project_id"
+                        placeholder="Select Site"
+                        formControlName="p_project"
+                        [filter]="true"
+                        filterPlaceholder="Search Site"
+                        (onChange)="onProjectChange($event)"
+                        [showClear]="true"
+                        [loading]="isLoadingProjects"
+                    ></p-dropdown>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="mr-card">
+            <div class="mr-card-header justify-between">
+                <div class="mr-card-header-left">
+                    <i class="pi pi-list"></i>
+                    <span>Item Wise Comparison</span>
+                </div>
+                    <div class="text-gray-600 me-2 text-sm">
+                        <span class="mr-3">Total Items: {{ totalVisibleItems }}</span>
+                        <span>Total Quantity: {{ totalVisibleRequestedQty }}</span>
+                    </div>
+            </div>
+
+            <p-table
+                [value]="filteredRows"
+                [responsiveLayout]="'scroll'"
+                [paginator]="true"
+                [rows]="10"
+                [rowsPerPageOptions]="[10, 20, 50]"
+                [loading]="isLoadingItems"
+                class="p-datatable-gridlines p-datatable-sm vendor-comparison-table"
+                styleClass="material-forcast"
+            >
+                <ng-template pTemplate="body" let-row>
+                    <tr>
+                        <td class="font-medium">{{ row.category }}</td>
+                        <td>{{ row.item }}</td>
+                        <ng-container *ngFor="let v of selectedVendors">
+                            <td class="border-l-2 cell-pad">
+                                <p-inputNumber
+                                    [(ngModel)]="row.vendorData[v.vendor_id].price"
+                                    [ngModelOptions]="{ standalone: true }"
+                                    mode="decimal"
+                                    [minFractionDigits]="2"
+                                    [maxFractionDigits]="2"
+                                    [min]="0"
+                                    [inputStyle]="{ width: '100%' }"
+                                ></p-inputNumber>
+                            </td>
+                            <td class="cell-pad">
+                                <p-inputNumber [(ngModel)]="row.vendorData[v.vendor_id].quantity" [ngModelOptions]="{ standalone: true }" [min]="0" [useGrouping]="false" [inputStyle]="{ width: '100%' }"></p-inputNumber>
+                            </td>
+                            <td class="cell-pad">
+                                <input pInputText type="text" [(ngModel)]="row.vendorData[v.vendor_id].paymentTerm" [ngModelOptions]="{ standalone: true }" placeholder="e.g. 30 Days" class="w-full" />
+                            </td>
+                        </ng-container>
+                    </tr>
+                </ng-template>
+
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td [attr.colspan]="2 + selectedVendors.length * 3" class="text-center text-400 italic py-6 text-sm">Select RFQ to load table.</td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="paginatorleft" appendTo="body">
+                    <div class="total-items text-gray-600 ms-2">Total Items: {{ comparisonRows.length || 0 }}</div>
+                </ng-template>
+            </p-table>
+        </div>
+    </form>
+
+    <p-dialog [(visible)]="showMaterialReqDialog" [modal]="true" [style]="{ width: '72rem', maxWidth: '95vw' }" [draggable]="false" [resizable]="false" header="Material Requisitions">
+        <p-table [value]="materialReqRows" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" [loading]="isLoadingMrRows" class="p-datatable-gridlines p-datatable-sm">
             <ng-template pTemplate="header">
                 <tr class="bg-yellow-400">
-                    <th rowspan="2" class="text-left">Category</th>
-                    <th rowspan="2" class="text-left">Item</th>
-                    <ng-container *ngFor="let v of selectedVendors">
-                        <th colspan="3" class="text-center border-l-2">{{ v.vendor_name }}</th>
-                    </ng-container>
-                </tr>
-                <tr class="bg-yellow-100">
-                    <ng-container *ngFor="let v of selectedVendors">
-                        <th class="text-center border-l-2">Price</th>
-                        <th class="text-center">Quantity</th>
-                        <th class="text-center">Payment Term</th>
-                    </ng-container>
+                    <th>MR No</th>
+                    <th>MR Date</th>
+                    <th>Department</th>
+                    <th>Requested By</th>
+                    <th class="text-right">Items</th>
                 </tr>
             </ng-template>
 
             <ng-template pTemplate="body" let-row>
                 <tr>
-                    <td class="font-medium">{{ row.category }}</td>
-                    <td>{{ row.item }}</td>
-                    <ng-container *ngFor="let v of selectedVendors">
-                        <td class="border-l-2" style="padding: 4px">
-                            <p-inputNumber
-                                [(ngModel)]="row.vendorData[v.vendor_id].price"
-                                [ngModelOptions]="{ standalone: true }"
-                                mode="decimal"
-                                [minFractionDigits]="2"
-                                [maxFractionDigits]="2"
-                                [min]="0"
-                                [inputStyle]="{ width: '100px' }"
-                            ></p-inputNumber>
-                        </td>
-                        <td style="padding: 4px">
-                            <p-inputNumber
-                                [(ngModel)]="row.vendorData[v.vendor_id].quantity"
-                                [ngModelOptions]="{ standalone: true }"
-                                [min]="0"
-                                [useGrouping]="false"
-                                [inputStyle]="{ width: '90px' }"
-                            ></p-inputNumber>
-                        </td>
-                        <td style="padding: 4px">
-                            <input
-                                pInputText
-                                type="text"
-                                [(ngModel)]="row.vendorData[v.vendor_id].paymentTerm"
-                                [ngModelOptions]="{ standalone: true }"
-                                placeholder="e.g. 30 Days Net"
-                                style="width: 130px"
-                            />
-                        </td>
-                    </ng-container>
+                    <td>{{ row.mr_no || '—' }}</td>
+                    <td>{{ row.mr_date ? (row.mr_date | date: 'dd-MM-yyyy') : '—' }}</td>
+                    <td>{{ row.department || '—' }}</td>
+                    <td>{{ row.requested_by || '—' }}</td>
+                    <td class="text-right">{{ row.item_count || 0 }}</td>
                 </tr>
             </ng-template>
 
             <ng-template pTemplate="emptymessage">
                 <tr>
-                    <td [attr.colspan]="2 + (selectedVendors.length * 3)" class="text-center text-400 italic py-6 text-sm">
-                        Select a site to load items, and at least one vendor
-                    </td>
+                    <td colspan="5" class="text-center text-400 italic py-6 text-sm">No material requisitions found for selected site.</td>
                 </tr>
             </ng-template>
         </p-table>
-
-       
-    </form>
+    </p-dialog>
 </div>

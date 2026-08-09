@@ -23,6 +23,8 @@
                 <!-- Draft PO -->
                 <button pButton type="button" label="Draft PO" class="p-button-warning w-full md:w-auto" (click)="submitDraft()" [disabled]="poForm.invalid || isSubmitDisabled()"></button>
 
+                <button pButton type="button" label="View" class="p-button-outlined w-full md:w-auto" (click)="openMrDialog()"></button>
+
                 <!-- Duplicate -->
                 <!-- <button pButton type="button" label="Duplicate" class="p-button-warning w-full md:w-auto" (click)="duplicatePO()" [disabled]="!submitted"></button> -->
 
@@ -63,10 +65,10 @@
                 <small class="text-red-500 mt-1 text-xs" *ngIf="poForm.get('p_podate')?.touched && poForm.get('p_deliverydate')?.touched && poForm.errors?.['deliveryBeforePO']"> Delivery date cannot be before PO date </small>
             </div>
 
-             <!-- Delivery Location -->
+              <!-- Remarks -->
             <div class="flex flex-col">
-                <label class="font-medium">Delivery Location</label>
-                <input pInputText type="text" formControlName="p_deliverylocation" placeholder="Delivery Location" [disabled]="true" />
+                <label class="font-medium">Remarks</label>
+                <input pInputText type="text" formControlName="p_remarks" placeholder="Optional remarks" />
             </div>
 
             <!-- Site -->
@@ -87,10 +89,10 @@
                 <small class="text-red-500 mt-1 text-xs" *ngIf="poForm.get('p_project')?.touched && poForm.get('p_project')?.errors?.['required']">Site is required </small>
             </div>
 
-            <!-- Remarks -->
+             <!-- Delivery Location -->
             <div class="flex flex-col">
-                <label class="font-medium">Remarks</label>
-                <input pInputText type="text" formControlName="p_remarks" placeholder="Optional remarks" />
+                <label class="font-medium">Delivery Location</label>
+                <input pInputText type="text" formControlName="p_deliverylocation" placeholder="Delivery Location" [disabled]="true" />
             </div>
 
             <!-- Vendor (auto-filled from item vendor selections) -->
@@ -130,6 +132,8 @@
                                 <th class="text-right">Vendor</th>
                                 <th class="text-right">Rate</th>
                                 <th class="text-right">Amount</th>
+                                <th class="text-right">Tax %</th>
+                                <th class="text-right">Total Amount / Bill</th>
                                 <th class="text-center">Action</th>
                             </tr>
                         </ng-template>
@@ -146,19 +150,30 @@
                                 <td>
                                     <p-inputNumber formControlName="poQty" [min]="0" [useGrouping]="false" [inputStyle]="{ width: '90px' }" (onInput)="onPoQtyChange(i)"></p-inputNumber>
                                 </td>
-                                <td class="text-sm">
-                                    <span *ngIf="row.get('vendorName')?.value; else noVendor" class="font-semibold text-900">
-                                        {{ row.get('vendorName')?.value }}
-                                    </span>
-                                    <ng-template #noVendor>
-                                        <span class="text-400 text-xs" style="font-style: italic">Not assigned</span>
-                                    </ng-template>
+                                <td style="padding: 4px; min-width: 180px">
+                                    <p-dropdown
+                                        formControlName="vendor_id"
+                                        [options]="vendorMasterOptions"
+                                        optionLabel="suppliername"
+                                        optionValue="supplierid"
+                                        placeholder="Select Vendor"
+                                        [filter]="true"
+                                        filterPlaceholder="Search Vendor"
+                                        [showClear]="true"
+                                        appendTo="body"
+                                        styleClass="w-full"
+                                        (onChange)="onVendorDropdownChange(i, $event.value)"
+                                    ></p-dropdown>
                                 </td>
                                 <td style="padding: 4px">
                                     <p-inputNumber formControlName="rate" [min]="0" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" [inputStyle]="{ width: '90px' }" (onInput)="onRateChange(i)"></p-inputNumber>
                                 </td>
                                 <td class="text-right text-sm font-semibold">
                                     {{ row.get('amount')?.value ? '₹' + (row.get('amount')?.value | number: '1.2-2') : '' }}
+                                </td>
+                                <td class="text-right text-sm">{{ row.get('taxPercent')?.value || 0 }}</td>
+                                <td class="text-right text-sm font-semibold text-blue-700">
+                                    {{ row.get('totalAmount')?.value ? '₹' + (row.get('totalAmount')?.value | number: '1.2-2') : '' }}
                                 </td>
                                 <td class="text-center">
                                     <button pButton type="button" icon="pi pi-building" class="p-button-text p-button-info p-button-sm" pTooltip="Vendor comparison" tooltipPosition="top" (click)="openVendorDialog(row, i)"></button>
@@ -469,4 +484,40 @@
         <button pButton type="button" label="Cancel" class="p-button-secondary" (click)="showVendorDialog = false"></button>
         <button pButton type="button" label="Confirm Vendor" class="p-button-primary" (click)="confirmVendor()" [disabled]="!selectedVendor"></button>
     </ng-template>
+</p-dialog>
+
+<p-dialog header="Material Requisition Details" [(visible)]="showMrDialog" [modal]="true" [style]="{ width: '78rem', maxWidth: '95vw' }" [draggable]="false" [resizable]="false">
+    <p-table [value]="mrPopupRows" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" [loading]="isLoadingMrPopup" class="p-datatable-gridlines p-datatable-sm">
+        <ng-template pTemplate="header">
+            <tr class="bg-yellow-400">
+                <th>MR No</th>
+                <th>Item Category</th>
+                <th>Item</th>
+                <th>UOM</th>
+                <th class="text-right">Forecast Qty</th>
+                <th class="text-right">Available Stock</th>
+                <th class="text-right">Pending PO Qty</th>
+                <th class="text-right">Required Qty</th>
+            </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-row>
+            <tr>
+                <td>{{ row.mf_no || '—' }}</td>
+                <td>{{ row.categoryname || '—' }}</td>
+                <td>{{ row.itemname || '—' }}</td>
+                <td>{{ row.uomname || '—' }}</td>
+                <td class="text-right">{{ row.forecast_qty || 0 }}</td>
+                <td class="text-right">{{ row.available_stock || 0 }}</td>
+                <td class="text-right">{{ row.pending_qty || 0 }}</td>
+                <td class="text-right">{{ ((row.forecast_qty || 0) - (row.pending_qty || 0) - (row.available_stock || 0)) > 0 ? ((row.forecast_qty || 0) - (row.pending_qty || 0) - (row.available_stock || 0)) : 0 }}</td>
+            </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+            <tr>
+                <td colspan="8" class="text-center text-400 italic py-6 text-sm">No material requisition rows found for selected site.</td>
+            </tr>
+        </ng-template>
+    </p-table>
 </p-dialog>

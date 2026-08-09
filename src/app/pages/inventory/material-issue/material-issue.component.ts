@@ -35,6 +35,9 @@ export interface IssueItem {
     requestedqty: number;
     issueqty:     number;
     balance:      number;
+    remarks:      string;
+    rate:         number;
+    amount:       number;
 }
 
 /** Shape of an item returned by the item dropdown API */
@@ -93,7 +96,9 @@ export class MaterialIssueComponent implements OnInit {
     projectOptions: { label: string; value: string }[] = [];
     towerOptions:   { label: string; value: string }[] = [];
     levelOptions: { label: string; value: string }[] = [];
-pourOptions:  { label: string; value: string }[] = [];
+    pourOptions:  { label: string; value: string }[] = [];
+    storeOptions: { label: string; value: string }[] = [];
+    requestReferenceOptions: { label: string; value: string }[] = [];
     requestedByOptions: { label: string; value: string }[] = [];
     itemOptions: ItemOption[] = [];
 
@@ -126,6 +131,8 @@ pourOptions:  { label: string; value: string }[] = [];
             p_tower:       [null, Validators.required],
             p_level:       [null],
             p_pour:        [null],
+            p_selectstore: [null, Validators.required],
+            p_requestreference: [null],
             p_selecteditem: [null],
             p_requestedby: [null, Validators.required],
             p_issuedby:    [{ value: currentUser, disabled: true }],
@@ -140,6 +147,8 @@ pourOptions:  { label: string; value: string }[] = [];
         v.p_tower        ||
         v.p_level        ||
         v.p_pour         ||
+        v.p_selectstore  ||
+        v.p_requestreference ||
         v.p_requestedby  ||
         v.p_remarks      ||
         this.issueItems.length > 0
@@ -157,6 +166,8 @@ duplicateForm(): void {
         p_tower:       v.p_tower,
         p_level:       v.p_level,
         p_pour:        v.p_pour,
+        p_selectstore: v.p_selectstore,
+        p_requestreference: v.p_requestreference,
         p_requestedby: v.p_requestedby,
         p_remarks:     v.p_remarks
     });
@@ -181,6 +192,8 @@ duplicateForm(): void {
         this.loadItems();
         this.loadLevels();
         this.loadPours();
+        this.loadStoreOptions();
+        this.loadRequestReferenceOptions();
     }
 
     /**
@@ -327,10 +340,12 @@ private loadPours(): void {
 
         // ── Static mock ───────────────────────────────────────────────────
         this.itemOptions = [
-            { itemid: 1, itemcode: 'MAT001', itemname: 'Cement OPC 53', uom: 'Bag',  currentstock: 1000, reservedqty: 100, availableqty: 900 },
-            { itemid: 2, itemcode: 'MAT002', itemname: 'Steel 12mm',    uom: 'Kg',   currentstock: 5000, reservedqty: 500, availableqty: 4500 },
-            { itemid: 3, itemcode: 'MAT003', itemname: 'Sand (River)',   uom: 'CFT',  currentstock: 800,  reservedqty: 50,  availableqty: 750 },
-            { itemid: 4, itemcode: 'MAT004', itemname: 'Bricks',        uom: 'Nos',  currentstock: 10000,reservedqty: 200, availableqty: 9800 }
+            { itemid: 1, itemcode: 'MAT-CC-001', itemname: 'OPC 53 Grade Cement', uom: 'Bag', currentstock: 850, reservedqty: 100, availableqty: 750, requestedqty: 300, rate: 420, remarks: 'For Column C1 & C2' },
+            { itemid: 2, itemcode: 'MAT-ST-010', itemname: 'TMT Bar 12mm', uom: 'Kg', currentstock: 2500, reservedqty: 250, availableqty: 2250, requestedqty: 500, rate: 68, remarks: 'Main reinforcement' },
+            { itemid: 3, itemcode: 'MAT-ST-008', itemname: 'TMT Bar 8mm', uom: 'Kg', currentstock: 1800, reservedqty: 150, availableqty: 1650, requestedqty: 400, rate: 64, remarks: 'Stirrups' },
+            { itemid: 4, itemcode: 'MAT-AG-020', itemname: '20mm Aggregate', uom: 'Cft', currentstock: 300, reservedqty: 20, availableqty: 280, requestedqty: 100, rate: 50, remarks: 'Concrete Mix' },
+            { itemid: 5, itemcode: 'MAT-SA-002', itemname: 'Sand (M-Sand)', uom: 'Cft', currentstock: 250, reservedqty: 10, availableqty: 240, requestedqty: 80, rate: 45, remarks: 'Concrete Mix' },
+            { itemid: 6, itemcode: 'MAT-AD-005', itemname: 'Plasticizer', uom: 'Ltr', currentstock: 60, reservedqty: 5, availableqty: 55, requestedqty: 20, rate: 190, remarks: 'For workability' }
         ];
     }
 
@@ -370,6 +385,7 @@ private loadPours(): void {
         }
 
         item.balance = available - Number(item.issueqty);
+        item.amount = Number(item.issueqty || 0) * Number(item.rate || 0);
     }
 
     removeItem(index: number): void {
@@ -397,6 +413,10 @@ private loadPours(): void {
 
     get totalBalance(): number {
         return this.issueItems.reduce((s, it) => s + (Number(it.balance) || 0), 0);
+    }
+
+    get totalIssueValue(): number {
+        return this.issueItems.reduce((s, it) => s + (Number(it.amount) || 0), 0);
     }
 
     // ── Submit ─────────────────────────────────────────────────────────────
@@ -464,9 +484,12 @@ onDirectItemSelect(event: any): void {
         currentstock: item.currentstock,
         reservedqty:  item.reservedqty,
         availableqty: item.availableqty,
-        requestedqty: 0,
+        requestedqty: Number(item['requestedqty'] || 0),
         issueqty:     0,
-        balance:      item.availableqty
+        balance:      item.availableqty,
+        remarks:      item['remarks'] || '',
+        rate:         Number(item['rate'] || 0),
+        amount:       0
     };
 
     this.issueItems = [...this.issueItems, newRow];
@@ -494,6 +517,8 @@ onDirectItemSelect(event: any): void {
         p_tower:       formVal.p_tower,
         p_level:       formVal.p_level,
         p_pour:        formVal.p_pour,
+        p_selectstore: formVal.p_selectstore,
+        p_requestreference: formVal.p_requestreference,
         p_requestedby: formVal.p_requestedby,
         p_issuedby:    formVal.p_issuedby,
         p_remarks:     formVal.p_remarks,
@@ -503,7 +528,10 @@ onDirectItemSelect(event: any): void {
             uom:          it.uom,
             requestedqty: it.requestedqty,
             issueqty:     it.issueqty,
-            balance:      it.balance
+            balance:      it.balance,
+            remarks:      it.remarks,
+            rate:         it.rate,
+            amount:       it.amount
         }))
     };
 
@@ -555,4 +583,18 @@ private afterSaveSuccess(minno: string): void {
         this.minCounter++;
         return `MIN-${String(this.minCounter).padStart(5, '0')}`;
     }
+ loadStoreOptions(): void {
+    this.storeOptions = [
+        { label: 'Main Store', value: 'MAIN' },
+        { label: 'Tower A Store', value: 'TA' },
+        { label: 'Tower B Store', value: 'TB' }
+    ];
+}
+
+ loadRequestReferenceOptions(): void {
+    this.requestReferenceOptions = [
+        { label: 'REQ/2025-26/0152', value: 'REQ/2025-26/0152' },
+        { label: 'REQ/2025-26/0153', value: 'REQ/2025-26/0153' }
+    ];
+}
 }

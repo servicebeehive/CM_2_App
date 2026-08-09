@@ -6,7 +6,6 @@ import { MaterialForcastingComponent } from './material-forcasting/material-forc
 import { WorkComponent } from './work/work.component';
 import { PurchaseOrderComponent } from './purchase-order/purchase-order.component';
 import { GrnComponent } from './grn/grn.component';
-import { QualityInspectionComponent } from './quality-inspection/quality-inspection.component';
 import { MaterialIssueComponent } from './material-issue/material-issue.component';
 import { MaterialReturnComponent } from './material-return/material-return.component';
 import { ProjectComponent } from './project/project.component';
@@ -23,7 +22,6 @@ export default [
     { path: 'work', component: WorkComponent },
     { path: 'purchase-order', component: PurchaseOrderComponent },
     { path: 'grn', component: GrnComponent },
-    { path: 'quality-inspection', component: QualityInspectionComponent },
     { path: 'material-issue', component: MaterialIssueComponent },
     { path: 'material-return', component: MaterialReturnComponent },
     { path: 'project', component: ProjectComponent },

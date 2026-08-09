@@ -1,0 +1,33 @@
+.grn-total-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	border: 1px solid var(--surface-300);
+	border-radius: 999px;
+	padding: 0.35rem 0.85rem;
+	background: var(--surface-0);
+}
+
+.grn-total-chip .chip-label {
+	font-size: 0.8rem;
+	color: var(--text-color-secondary);
+}
+
+.grn-total-chip .chip-value {
+	font-size: 0.9rem;
+	font-weight: 700;
+	min-width: 3.5rem;
+	text-align: right;
+}
+
+.grn-total-chip.accepted .chip-value {
+	color: #157347;
+}
+
+.grn-total-chip.received .chip-value {
+	color: #0d6efd;
+}
+
+.grn-total-chip.rejected .chip-value {
+	color: #b02a37;
+}

@@ -1,5 +1,5 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, inject, OnInit, ViewChild } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import {
     FormBuilder,
     FormGroup,
@@ -20,7 +20,6 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { Router } from '@angular/router';
 
-import { AddinventoryComponent } from '../addinventory/addinventory.component';
 import { StockIn } from '@/types/stockin.model';
 import { InventoryService } from '@/core/services/inventory.service';
 import { AuthService } from '@/core/services/auth.service';
@@ -43,8 +42,7 @@ import { ShareService } from '@/core/services/shared.service';
         InputTextModule,
         TableModule,
         TabViewModule,
-        TooltipModule,
-        AddinventoryComponent
+        TooltipModule
     ],
     templateUrl: './grn.component.html',
     styleUrl: './grn.component.scss',
@@ -82,14 +80,21 @@ export class GrnComponent implements OnInit {
     dateTime = new Date();
 
     // ── File upload state ──────────────────────────────────────────────────
-    fileNames: { challan: string; material: string; other: string } = {
-        challan: '', material: '', other: ''
+    fileNames: { challan: string; material: string; qualityreport: string; other: string } = {
+        challan: '', material: '', qualityreport: '', other: ''
     };
     uploadedFiles: {
         challan: File | null;
         material: File[] | null;
+        qualityreport: File | null;
         other: File[] | null;
-    } = { challan: null, material: null, other: null };
+    } = { challan: null, material: null, qualityreport: null, other: null };
+
+    qualityReportOptions: { label: string; value: string }[] = [
+        { label: 'Y', value: 'Y' },
+        { label: 'N', value: 'N' },
+        { label: 'P', value: 'P' }
+    ];
 
     // ── Dropdown options ───────────────────────────────────────────────────
     vendorOptions: any[]              = [];
@@ -106,8 +111,6 @@ export class GrnComponent implements OnInit {
         { label: 'Site Store B',      value: 'Site Store B' },
         { label: 'Temporary Storage', value: 'Temporary Storage' }
     ];
-
-    @ViewChild(AddinventoryComponent) addInventoryComp!: AddinventoryComponent;
 
     constructor(
         private fb: FormBuilder,
@@ -148,7 +151,14 @@ export class GrnComponent implements OnInit {
             p_podate:         [null],
             p_project:        [''],
             p_vendor:         [null, Validators.required],
-            p_storelocation:  [null, Validators.required],
+            p_location:  [null, Validators.required],
+            p_worklocation:   [''],
+            p_totalpoamount:  [''],
+            p_deliveryterms:  [''],
+            p_paymentterms:   [''],
+            p_poreference:    [''],
+            p_contactperson:  [''],
+            p_contactno:      [''],
 
             // Tab 2: Delivery
             p_challanno:      ['', Validators.required],
@@ -181,11 +191,18 @@ export class GrnComponent implements OnInit {
         // ── Mock: auto-fill PO fields ──────────────────────────────────────
         this.productForm.patchValue({
             p_podate:  new Date('2026-05-15'),
-            p_project: 'Project A'
+            p_project: 'Project A',
+            p_worklocation: 'Main Site',
+            p_totalpoamount: '524548.81',
+            p_deliveryterms: 'For Destination',
+            p_paymentterms: '30 Days Credit',
+            p_poreference: 'RFQ/2024-25/0001',
+            p_contactperson: 'Rakesh Sharma',
+            p_contactno: '9876543210'
         });
         this.mapItemsFromPO([
-            { itemname: 'Cement OPC 53', uomname: 'Bag', poqty: 1200, receivedqty: 700 },
-            { itemname: 'Steel TMT 12mm', uomname: 'Kg',  poqty: 5500, receivedqty: 0 }
+            { categoryname: 'Cement & Concrete', itemname: 'OPC 53 Grade Cement', uomname: 'Bag', poqty: 550, receivedqty: 200, rate: 420, rowremarks: '' },
+            { categoryname: 'Steel', itemname: 'TMT Bar 12mm', uomname: 'Kg', poqty: 1200, receivedqty: 500, rate: 68, rowremarks: 'Minor bend' }
         ]);
     }
 
@@ -198,7 +215,10 @@ export class GrnComponent implements OnInit {
             pendingqty:          (it.poqty || 0) - (it.receivedqty || 0),
             receivedqty:         null,
             acceptedqty:         null,
-            rejectedqty:         null
+            rejectedqty:         null,
+            qualityreport:       it.qualityreport || 'N',
+            rate:                Number(it.rate || 0),
+            rowremarks:          it.rowremarks || ''
         }));
     }
 
@@ -221,7 +241,7 @@ export class GrnComponent implements OnInit {
     }
 
     // ── File upload ────────────────────────────────────────────────────────
-    onFileSelect(event: Event, type: 'challan' | 'material' | 'other'): void {
+    onFileSelect(event: Event, type: 'challan' | 'material' | 'qualityreport' | 'other'): void {
         const input = event.target as HTMLInputElement;
         if (!input.files?.length) return;
 
@@ -231,6 +251,9 @@ export class GrnComponent implements OnInit {
         } else if (type === 'material') {
             this.uploadedFiles.material = Array.from(input.files);
             this.fileNames.material     = `${input.files.length} file(s) selected`;
+        } else if (type === 'qualityreport') {
+            this.uploadedFiles.qualityreport = input.files[0];
+            this.fileNames.qualityreport = input.files[0].name;
         } else {
             this.uploadedFiles.other    = Array.from(input.files);
             this.fileNames.other        = `${input.files.length} file(s) selected`;
@@ -252,11 +275,49 @@ export class GrnComponent implements OnInit {
         product.rejectedqty = received - Number(product.acceptedqty || 0);
     }
 
+    calculateRowAmount(product: any): number {
+        return Number(product.acceptedqty || 0) * Number(product.rate || 0);
+    }
+
     // ── Grand total ────────────────────────────────────────────────────────
     get grandTotal(): number {
-        if (!this.itemOptionslist?.length) return 0;
+        if (!this.itemOptionslist.length) return 0;
         return this.itemOptionslist.reduce((sum, item) =>
             sum + (Number(item.quantity || 0) * Number(item.costprice || 0)), 0);
+    }
+
+    get totalPoQty(): number {
+        return this.itemOptionslist.reduce((sum, item) => sum + (Number(item.orderedqty) || 0), 0);
+    }
+
+    get totalPreviouslyReceivedQty(): number {
+        return this.itemOptionslist.reduce((sum, item) => sum + (Number(item.previouslyreceived) || 0), 0);
+    }
+
+    get totalPendingQty(): number {
+        return this.itemOptionslist.reduce((sum, item) => sum + (Number(item.pendingqty) || 0), 0);
+    }
+
+    get totalReceivedQty(): number {
+        return this.itemOptionslist.reduce((sum, item) => sum + (Number(item.receivedqty) || 0), 0);
+    }
+
+    get totalAcceptedQty(): number {
+        if (!this.itemOptionslist.length) return 0;
+        return this.itemOptionslist.reduce((sum, item) => sum + (Number(item.acceptedqty) || 0), 0);
+    }
+
+    get totalRejectedQty(): number {
+        if (!this.itemOptionslist.length) return 0;
+        return this.itemOptionslist.reduce((sum, item) => sum + (Number(item.rejectedqty) || 0), 0);
+    }
+
+    get totalAmount(): number {
+        return this.itemOptionslist.reduce((sum, item) => sum + this.calculateRowAmount(item), 0);
+    }
+
+    get isQualityReportAttachmentRequired(): boolean {
+        return this.itemOptionslist.some((item) => item.qualityreport === 'Y');
     }
 
     // ── Submit ─────────────────────────────────────────────────────────────
@@ -268,6 +329,16 @@ export class GrnComponent implements OnInit {
                 summary:  'Validation Failed',
                 detail:   'Please fill all required fields across all tabs.',
                 life:      3000
+            });
+            return;
+        }
+
+        if (this.isQualityReportAttachmentRequired && !this.uploadedFiles.qualityreport) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Quality Report Required',
+                detail: 'Attach a quality report file when any item has Quality Report = Y.',
+                life: 3000
             });
             return;
         }
@@ -292,7 +363,14 @@ export class GrnComponent implements OnInit {
             p_podate:        this.datePipe.transform(data.p_podate,  'dd/MM/yyyy'),
             p_project:       data.p_project       || '',
             p_vendor:        data.p_vendor         || '',
-            p_storelocation: data.p_storelocation  || '',
+            p_location: data.p_location  || '',
+            p_worklocation:  data.p_worklocation   || '',
+            p_totalpoamount: data.p_totalpoamount  || '',
+            p_deliveryterms: data.p_deliveryterms  || '',
+            p_paymentterms:  data.p_paymentterms   || '',
+            p_poreference:   data.p_poreference    || '',
+            p_contactperson: data.p_contactperson  || '',
+            p_contactno:     data.p_contactno      || '',
             p_challanno:     data.p_challanno      || '',
             p_challandate:   this.datePipe.transform(data.p_challandate, 'dd/MM/yyyy'),
             p_vehicleno:     data.p_vehicleno      || '',
@@ -422,6 +500,13 @@ export class GrnComponent implements OnInit {
             p_grndate:        data.invoicedate  ? new Date(data.invoicedate) : new Date(),
             p_remarks:        data.remark       || '',
             p_vendorid:       data.vendorid      || null,
+            p_worklocation:   data.worklocation || '',
+            p_totalpoamount:  data.total_po_amount || '',
+            p_deliveryterms:  data.delivery_terms || '',
+            p_paymentterms:   data.payment_terms || '',
+            p_poreference:    data.po_reference || '',
+            p_contactperson:  data.contact_person || '',
+            p_contactno:      data.contact_no || '',
             p_amountpaid:     (data.total_paid  || 0).toFixed(2),
             grandTotal:       (data.total_cost  || 0).toFixed(2)
         });
@@ -433,7 +518,10 @@ export class GrnComponent implements OnInit {
                 pendingqty:         item.pendingqty         || item.quantity || 0,
                 receivedqty:        item.receivedqty        || 0,
                 acceptedqty:        item.acceptedqty        || 0,
-                rejectedqty:        item.rejectedqty        || 0
+                rejectedqty:        item.rejectedqty        || 0,
+                qualityreport:      item.qualityreport      || 'N',
+                rate:               Number(item.rate || 0),
+                rowremarks:         item.rowremarks || item.remarks || ''
             }));
         }
     }
@@ -447,9 +535,8 @@ export class GrnComponent implements OnInit {
         this.poSelected      = false;
         this.addItemEnabled  = false;
         this.backshow        = false;
-        this.fileNames       = { challan: '', material: '', other: '' };
-        this.uploadedFiles   = { challan: null, material: null, other: null };
-        this.addInventoryComp?.resetForm();
+        this.fileNames       = { challan: '', material: '', qualityreport: '', other: '' };
+        this.uploadedFiles   = { challan: null, material: null, qualityreport: null, other: null };
     }
 
     back(): void {

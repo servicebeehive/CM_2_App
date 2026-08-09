@@ -52,35 +52,17 @@
                 <small class="text-red-500 mt-1 text-xs" *ngIf="minForm.get('p_tower')?.touched && minForm.get('p_tower')?.errors?.['required']"> Tower/Block is required </small>
             </div>
 
-           <!-- Level -->
-<div class="flex flex-col">
-    <label class="font-medium mb-1">Level</label>
-    <p-dropdown
-        [options]="levelOptions"
-        optionLabel="label"
-        optionValue="value"
-        placeholder="Select Level"
-        formControlName="p_level"
-        [filter]="true"
-        filterPlaceholder="Search Level"
-        [showClear]="true"
-    ></p-dropdown>
-</div>
+            <!-- Level -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Level</label>
+                <p-dropdown [options]="levelOptions" optionLabel="label" optionValue="value" placeholder="Select Level" formControlName="p_level" [filter]="true" filterPlaceholder="Search Level" [showClear]="true"></p-dropdown>
+            </div>
 
-<!-- Pour -->
-<div class="flex flex-col">
-    <label class="font-medium mb-1">Pour</label>
-    <p-dropdown
-        [options]="pourOptions"
-        optionLabel="label"
-        optionValue="value"
-        placeholder="Select Pour"
-        formControlName="p_pour"
-        [filter]="true"
-        filterPlaceholder="Search Pour"
-        [showClear]="true"
-    ></p-dropdown>
-</div>
+            <!-- Pour / Activity -->
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Pour / Activity</label>
+                <p-dropdown [options]="pourOptions" optionLabel="label" optionValue="value" placeholder="Select Pour / Activity" formControlName="p_pour" [filter]="true" filterPlaceholder="Search Pour / Activity" [showClear]="true"></p-dropdown>
+            </div>
 
             <!-- Requested By -->
             <div class="flex flex-col">
@@ -158,6 +140,8 @@
                     <th class="text-right">Requested Qty</th>
                     <th class="text-right">Issue Qty</th>
                     <th class="text-right">Balance</th>
+                    <th class="text-right">Rate (INR)</th>
+                    <th class="text-right">Amount (INR)</th>
                     <th class="text-center">Action</th>
                 </tr>
             </ng-template>
@@ -197,6 +181,9 @@
                         </span>
                     </td>
 
+                    <td class="text-right text-sm">{{ item.rate | number: '1.2-2' }}</td>
+                    <td class="text-right text-sm font-semibold">{{ item.amount | number: '1.2-2' }}</td>
+
                     <!-- Action -->
                     <td class="text-center">
                         <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm" pTooltip="Remove" tooltipPosition="top" (click)="removeItem(i)"></button>
@@ -206,7 +193,7 @@
 
             <ng-template pTemplate="emptymessage">
                 <tr>
-                    <td colspan="10" class="text-center text-400 italic py-6 text-sm">No items added — click "Add Item" to select materials</td>
+                    <td colspan="14" class="text-center text-400 italic py-6 text-sm">No items added — click "Add Item" to select materials</td>
                 </tr>
             </ng-template>
 
@@ -219,7 +206,7 @@
                 <div class="flex justify-end gap-6 px-3 py-2 text-sm font-semibold">
                     <span>Total Requested: {{ totalRequestedQty | number }}</span>
                     <span class="text-primary">Total Issued: {{ totalIssueQty | number }}</span>
-                    <span class="text-green-600">Total Balance: {{ totalBalance | number }}</span>
+                    <span class="text-green-600">Total Value (INR): {{ totalIssueValue | number: '1.2-2' }}</span>
                 </div>
             </ng-template>
         </p-table>

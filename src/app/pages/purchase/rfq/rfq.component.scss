@@ -1,0 +1,122 @@
+$blue: #185fa5;
+$border: rgba(0, 0, 0, 0.1);
+$radius: 10px;
+
+.mr-card {
+	background: #fff;
+	border-radius: $radius;
+	border: 1px solid $border;
+	padding: 1.25rem 1.5rem;
+}
+
+.mr-card-header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 13px;
+	font-weight: 600;
+	color: $blue;
+	margin-bottom: 1rem;
+
+	&.justify-between {
+		justify-content: space-between;
+	}
+}
+
+.mr-card-header-left {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.mr-fields-grid {
+	display: grid;
+	gap: 12px 16px;
+
+	&.cols-4 {
+		grid-template-columns: repeat(4, 1fr);
+	}
+}
+
+.mr-form-footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+	padding-top: 0.5rem;
+	flex-wrap: wrap;
+}
+
+.mr-file-input {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	border: 1px solid $border;
+	border-radius: 6px;
+	padding: 6px 10px;
+}
+
+.mr-choose-btn {
+	font-size: 12px;
+	border: 1px solid $blue;
+	color: $blue;
+	padding: 4px 10px;
+	border-radius: 6px;
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+.mr-file-name {
+	font-size: 12px;
+	color: #999;
+	font-style: italic;
+}
+
+.rfq-grid {
+	display: grid;
+	grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
+	gap: 16px;
+    align-items: start;
+}
+
+.rfq-grid > .mr-card {
+	min-width: 0;
+}
+
+.vendor-note {
+	font-size: 12px;
+	color: #666;
+	margin-bottom: 0.75rem;
+}
+
+.vendor-grid {
+	display: flex;
+	gap: 6px;
+	width: 100%;
+	margin-bottom: 0.85rem;
+}
+
+.vendor-category {
+	font-size: 12px;
+	color: #444;
+	font-weight: 500;
+}
+
+.mr-dialog-wrap {
+	padding-top: 0.25rem;
+}
+
+@media (max-width: 1024px) {
+	.mr-fields-grid.cols-4 {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.rfq-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: 640px) {
+	.mr-fields-grid.cols-4 {
+		grid-template-columns: 1fr;
+	}
+}

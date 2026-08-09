@@ -17,7 +17,6 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { DropdownModule } from 'primeng/dropdown';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
-
 export function gstNumberValidator(control: AbstractControl): ValidationErrors | null {
     if (!control.value) return null;
 
@@ -37,10 +36,7 @@ export function gstNumberValidator(control: AbstractControl): ValidationErrors |
                 <div class="card">
                     <div class="flex items-center gap-4">
                         <!-- LEFT : LOGO (SQUARE) -->
-                        <img
-                            [src]="imageUrl"
-                            alt="logo"
-                            class="w-[140px] h-[80px] object-contain border rounded-md bg-white p-2" />
+                        <img [src]="imageUrl" alt="logo" class="w-[140px] h-[80px] object-contain border rounded-md bg-white p-2" />
 
                         <!-- RIGHT : UPLOAD BUTTON -->
                         <div class="flex flex-col gap-1">
@@ -74,6 +70,25 @@ export function gstNumberValidator(control: AbstractControl): ValidationErrors |
                             <label for="companyphone" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Company Phone <span class="text-red-500">*</span></label>
                             <input formControlName="companyphone" type="text" pInputText fluid placeholder="Company Phone" maxlength="10" (keypress)="allowOnlyDigits($event)" />
                             <small class="text-red-500 mt-1" *ngIf="profileForm.get('companyphone')?.touched && profileForm.get('companyphone')?.invalid"> Enter a valid 10-digit mobile number </small>
+                        </div>
+
+                        <div class="col-span-12 md:col-span-4">
+                            <label class="font-medium mb-1">Industry Type <span class="text-red-500">*</span></label>
+                            <p-dropdown
+                                formControlName="industrytype"
+                                [options]="industryTypeOptions"
+                                optionLabel="industry_type_name"
+                                optionValue="industry_type_id"
+                                [filter]="true"
+                                [showClear]="true"
+                                placeholder="Select Industry Type"
+                                styleClass="w-full"
+                            ></p-dropdown>
+                        </div>
+
+                        <div class="col-span-12 md:col-span-4">
+                            <label class="font-medium mb-1">Time Zone <span class="text-red-500">*</span></label>
+                            <p-dropdown formControlName="timezone" [options]="timeZoneOptions" optionLabel="label" optionValue="label" [filter]="true" [showClear]="true" placeholder="Select Time Zone" styleClass="w-full"></p-dropdown>
                         </div>
                     </div>
                 </div>
@@ -197,7 +212,7 @@ export function gstNumberValidator(control: AbstractControl): ValidationErrors |
                         </div>
 
                         <div class="col-span-12 md:col-span-4">
-                            <label for="pan" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block">Company PAN <span class="text-red-500">*</span></label>
+                            <label for="pan" class="font-medium text-sur~face-900 dark:text-surface-0 mb-2 block">Company PAN <span class="text-red-500">*</span></label>
                             <input formControlName="pan" type="text" pInputText fluid placeholder="Company PAN" />
                         </div>
                     </div>
@@ -223,17 +238,20 @@ export class UserCreate {
     selectedFile: File | null = null;
     logoBase64: string | null = null;
     fb = inject(FormBuilder);
-    loggedInRole : string = '';
+    loggedInRole: string = '';
     countries: any[] = [];
     states: any[] = [];
     cities: any[] = [];
+    industryTypeOptions: any[] = [];
+    timeZoneOptions: any[] = [{ label: 'Asia/Kolkata' }];
     companyId = '';
     public getUserDetails = {};
+    private readonly alwaysDisabled = ['industrytype', 'timezone', 'companygstno', 'statecode'];
     public imageUrl: string | null = '';
     profileForm: FormGroup = this.fb.group({
         companyname: ['', [Validators.required, Validators.maxLength(100)]],
         companyemail: ['', [Validators.required, Validators.email, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/), Validators.maxLength(100)]],
-        companygstno: ['', [Validators.required, gstNumberValidator]],
+        companygstno: [{ value: '', disabled: true }, [Validators.required, gstNumberValidator]],
         companycontactperson: ['', Validators.maxLength(100)],
         companyaddress: ['', [Validators.required, Validators.maxLength(500)]],
         companycontactphone: ['', Validators.pattern(/[6-9]\d{9}$/)],
@@ -244,12 +262,14 @@ export class UserCreate {
         companyphone: ['', [Validators.required, Validators.pattern(/[6-9]\d{9}$/)]],
         companypincode: ['', [Validators.required, Validators.maxLength(6)]],
         p_warehouse: ['', [Validators.required, Validators.maxLength(100)]],
-        statecode: ['', [Validators.required, Validators.maxLength(5)]],
+        statecode: [{ value: '', disabled: true }, [Validators.required, Validators.maxLength(5)]],
         bankname: ['', [Validators.required, Validators.maxLength(100)]],
         accountno: ['', [Validators.required, Validators.maxLength(25)]],
         pan: ['', [Validators.required, Validators.maxLength(25)]],
         ifsc: ['', [Validators.required, Validators.maxLength(25)]],
-        branch: ['', [Validators.required, Validators.maxLength(100)]]
+        branch: ['', [Validators.required, Validators.maxLength(100)]],
+        industrytype: [{ value: '', disabled: true }, Validators.required],
+        timezone: [{ value: '', disabled: true }, Validators.required]
     });
 
     constructor(
@@ -261,8 +281,9 @@ export class UserCreate {
     ) {}
     ngOnInit() {
         this.companyId = this.authservice.isLogIntType()?.companyid.toString();
-       this.loggedInRole= this.authservice.isLogIntType()?.usertypecode;
+        this.loggedInRole = this.authservice.isLogIntType()?.usertypecode;
         this.onGetCompanyProfile();
+        this.loadDropdown('INDUSTRY', '', 'industryTypeOptions');
     }
     allowOnlyDigits(event: KeyboardEvent) {
         const char = event.key;
@@ -271,31 +292,31 @@ export class UserCreate {
         }
     }
 
-  loadDropdown(type: string, value:string, key: 'countries'|'states'|'cities',callback?:()=>void) {
-    const userId = this.authservice.isLogIntType()?.userid;
-          const payload = {
-              returnType: type,
-              returnValue: value,
-              username: userId,
-             option1: this.companyId, 
-            option2:''
-          };
-  
-          this.inventoryService.getparameterbased(payload).subscribe({
-              next: (res) => {
-                  this[key] = res.data;
-                  if(key === 'states'){
+    loadDropdown(type: string, value: string, key: 'countries' | 'states' | 'cities' | 'industryTypeOptions', callback?: () => void) {
+        const userId = this.authservice.isLogIntType()?.userid;
+        const payload = {
+            returnType: type,
+            returnValue: value,
+            username: userId,
+            option1: this.companyId,
+            option2: ''
+        };
+
+        this.inventoryService.getparameterbased(payload).subscribe({
+            next: (res) => {
+                this[key] = res.data;
+                if (key === 'states') {
                     this.states = res.data;
-                  }
-                  callback?.();
-              }
-          });
-      }
+                }
+                callback?.();
+            }
+        });
+    }
 
     submitValue(form: any) {
         let loggedIn = this.authservice.isLogIntType()?.userid.toString();
         let companyid = this.authservice.isLogIntType()?.companyid;
-        console.log(form)
+        console.log(form);
         const payload = {
             p_companyid: companyid,
             p_companyname: form.companyname,
@@ -318,7 +339,9 @@ export class UserCreate {
             p_pan: form.pan,
             p_warehouse: form.p_warehouse,
             p_companyLogo: this.logoBase64 || null,
-            p_loginuser: loggedIn
+            p_loginuser: loggedIn,
+            p_industry: form.industrytype,
+            p_timezone: 'Asia/Kolkata'
         };
 
         this.userService.OnUserListHeaderCreate(payload).subscribe({
@@ -330,7 +353,7 @@ export class UserCreate {
             }
         });
     }
-    
+
     onSubmit() {
         if (this.profileForm.invalid) {
             this.profileForm.markAllAsTouched();
@@ -344,7 +367,7 @@ export class UserCreate {
             acceptButtonStyleClass: 'p-button-primary',
             rejectButtonStyleClass: 'p-button-secondary',
             accept: () => {
-                this.submitValue(this.profileForm.value);
+                this.submitValue(this.profileForm.getRawValue());
             }
         });
     }
@@ -361,16 +384,16 @@ export class UserCreate {
             });
             return;
         }
-        if (file.size > 2 * 1024 * 1024) { 
-        this.messageService.add({
-            severity: 'warn',
-            summary: 'Large File',
-            detail: 'Image is large and will be compressed automatically'
-        });
-    }
+        if (file.size > 2 * 1024 * 1024) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Large File',
+                detail: 'Image is large and will be compressed automatically'
+            });
+        }
 
-    this.selectedFile = file;
-    this.convertToBase64(file);
+        this.selectedFile = file;
+        this.convertToBase64(file);
     }
 
     onFileClear() {
@@ -378,50 +401,48 @@ export class UserCreate {
         this.logoBase64 = null;
     }
 
-  convertToBase64(file: File) {
-    const maxWidth = 300;
-    const maxHeight = 200;
-    const quality = 0.7; // 70% quality
+    convertToBase64(file: File) {
+        const maxWidth = 300;
+        const maxHeight = 200;
+        const quality = 0.7; // 70% quality
 
-    const img = new Image();
-    const objectUrl = URL.createObjectURL(file);
-    const isPng = file.type === 'image/png';
+        const img = new Image();
+        const objectUrl = URL.createObjectURL(file);
+        const isPng = file.type === 'image/png';
 
-    img.onload = () => {
-        URL.revokeObjectURL(objectUrl);
+        img.onload = () => {
+            URL.revokeObjectURL(objectUrl);
 
-        // Calculate scaled dimensions
-        let width = img.width;
-        let height = img.height;
+            // Calculate scaled dimensions
+            let width = img.width;
+            let height = img.height;
 
-        if (width > maxWidth || height > maxHeight) {
-            const ratio = Math.min(maxWidth / width, maxHeight / height);
-            width = Math.round(width * ratio);
-            height = Math.round(height * ratio);
-        }
+            if (width > maxWidth || height > maxHeight) {
+                const ratio = Math.min(maxWidth / width, maxHeight / height);
+                width = Math.round(width * ratio);
+                height = Math.round(height * ratio);
+            }
 
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
 
-        const ctx = canvas.getContext('2d')!;
+            const ctx = canvas.getContext('2d')!;
 
-        if(!isPng){
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(0, 0, width, height);
-        }
-        ctx.drawImage(img, 0, 0, width, height);
+            if (!isPng) {
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, width, height);
+            }
+            ctx.drawImage(img, 0, 0, width, height);
 
-        // Compress to JPEG
-       this.logoBase64 = isPng
-            ? canvas.toDataURL('image/png')
-            : canvas.toDataURL('image/jpeg', quality);
-        this.imageUrl = this.base64ToBlobUrl(this.logoBase64);
-    };
+            // Compress to JPEG
+            this.logoBase64 = isPng ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', quality);
+            this.imageUrl = this.base64ToBlobUrl(this.logoBase64);
+        };
 
-    img.onerror = () => console.error('Image load error');
-    img.src = objectUrl;
-}
+        img.onerror = () => console.error('Image load error');
+        img.src = objectUrl;
+    }
 
     createDropdownPayload(returnType: string) {
         return {
@@ -449,6 +470,7 @@ export class UserCreate {
                         this.profileForm.disable();
                     } else {
                         this.profileForm.enable();
+                        this.alwaysDisabled.forEach((name) => this.profileForm.get(name)?.disable());
                     }
                 }
             },
@@ -457,29 +479,29 @@ export class UserCreate {
     }
 
     onGetState(countryId: string, stateName: string, statecode: string, cityName: string) {
-        this.loadDropdown('STATE',countryId,'states',()=>{
-                const state = this.states.filter((s) => s.state_id === Number(stateName));
-                const statename = state[0].state_id;
-                if (statename) {
-                    this.profileForm.patchValue({
-                        companystate: statename,
-                        statecode: state[0].state_code
-                    });
-                    this.onGetCity(statename, cityName);
-                }
+        this.loadDropdown('STATE', countryId, 'states', () => {
+            const state = this.states.filter((s) => s.state_id === Number(stateName));
+            const statename = state[0].state_id;
+            if (statename) {
+                this.profileForm.patchValue({
+                    companystate: statename,
+                    statecode: state[0].state_code
+                });
+                this.onGetCity(statename, cityName);
+            }
         });
     }
 
     onGetCity(statename: string, cityName: string) {
-        this.loadDropdown('CITY',statename,'cities',()=>{
-                const city = this.cities.filter((c) => c.city_id === cityName);
-                const cityname = city[0].city_id;
-                if (city) {
-                    this.profileForm.patchValue({
-                        companycity: cityname
-                    });
-                }
-            });
+        this.loadDropdown('CITY', statename, 'cities', () => {
+            const city = this.cities.filter((c) => c.city_id === cityName);
+            const cityname = city[0].city_id;
+            if (city) {
+                this.profileForm.patchValue({
+                    companycity: cityname
+                });
+            }
+        });
     }
     onGetStateChange(data: any) {
         const stateId = data.value;
@@ -491,18 +513,18 @@ export class UserCreate {
         if (!stateId) {
             return;
         }
-        
-        this.loadDropdown('STATE','1','states')
 
-        this.loadDropdown('CITY',stateId,'cities');
-                    const stateCode = this.states.filter((s) => s.state_id === data.value);
-                    this.profileForm.patchValue({
-                        statecode: stateCode[0].state_code
+        this.loadDropdown('STATE', '1', 'states');
+
+        this.loadDropdown('CITY', stateId, 'cities');
+        const stateCode = this.states.filter((s) => s.state_id === data.value);
+        this.profileForm.patchValue({
+            statecode: stateCode[0].state_code
         });
     }
     onCountryChange(event: any) {
         const countryId = event.value;
-        this.loadDropdown('STATE',countryId,'states')
+        this.loadDropdown('STATE', countryId, 'states');
     }
 
     patchFromData(data: any) {
@@ -510,9 +532,11 @@ export class UserCreate {
             console.warn('No data provided to patchFromData');
             return;
         }
-         this.loadDropdown('COUNTRY','null','countries')
+        this.loadDropdown('COUNTRY', 'null', 'countries');
         const country = this.countries.find((c) => c.country_id === data.companycountry || c.company_id?.toLowerCase() === data.companycountry?.toLowerCase());
         const countryId = country ? country.country_id : data.companycountry;
+        const industry = this.industryTypeOptions.find((i) => i.industry_type_id === data.industry_type_id);
+        console.log('Patching form with data:', data, industry);
         this.profileForm.patchValue({
             companyname: data.companyname,
             companyemail: data.companyemail,
@@ -529,7 +553,9 @@ export class UserCreate {
             pan: data.pan,
             companypincode: data.companypincode,
             p_warehouse: data.warehouse,
-            accountno: data.accountno
+            accountno: data.accountno,
+            industrytype: data.industry_type_id,
+            timezone: data.timezone
         });
         this.imageUrl = this.base64ToBlobUrl(data.companylogo);
         if (countryId) {

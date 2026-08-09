@@ -81,8 +81,10 @@ export class PurchaseOrderComponent implements OnInit {
 
     selectedVendorNames: string[] = [];
     generatedPONos:any[]=[];
+    vendorMasterOptions: any[] = [];
 
     showVendorDialog = false;
+    showMrDialog = false;
     vendorDialogItem: AbstractControl | null = null;
     vendorDialogIndex: number | null = null;
     vendorFilter: 'lowest' | 'fastest' | 'preferred' = 'lowest';
@@ -94,6 +96,8 @@ export class PurchaseOrderComponent implements OnInit {
     companyId = '';
     userId = '';
     grandTotal = 0;
+    isLoadingMrPopup = false;
+    mrPopupRows: any[] = [];
     paymentHistory: PaymentEntry[] = [];
     totalPaid = 0;
 
@@ -174,8 +178,27 @@ export class PurchaseOrderComponent implements OnInit {
     // ── Load all dropdowns ─────────────────────────────────────────────────────
     private loadDropdowns(): void {
         this.onGetProject();
-      this.onGetDraftPO();
-      this.onGetPO();
+        this.onGetDraftPO();
+        this.onGetPO();
+        this.loadVendorMaster();
+    }
+
+    private loadVendorMaster(): void {
+        const payload = {
+            p_returntype: 'VENDORLIST',
+            p_returnvalue: this.companyId.toString(),
+            username: ''
+        };
+
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res: any) => {
+                this.vendorMasterOptions = res.data ?? [];
+            },
+            error: (err: any) => {
+                console.error('Error fetching vendor master:', err);
+                this.vendorMasterOptions = [];
+            }
+        });
     }
 
     private dateRangeValidator(): ValidatorFn {
@@ -518,6 +541,9 @@ private buildItemsPayload(): PurchaseOrderItem[] {
         po_qty: row.get('poQty')?.value ?? 0,
         rate: row.get('rate')?.value ?? 0,
         amount: row.get('amount')?.value ?? 0,
+        tax_id: row.get('tax_id')?.value ?? null,
+        tax_percent: row.get('taxPercent')?.value ?? 0,
+        total_amount: row.get('totalAmount')?.value ?? 0,
         remarks: row.get('remarks')?.value ?? ''
     }));
 }
@@ -650,6 +676,9 @@ submitDraft(): void {
                 vendorName: [it.suppliername],
                 rate: [null],
                 amount: [null],
+                tax_id: [it.tax_id ?? '18'],
+                taxPercent: [Number(it.tax_percent ?? 18)],
+                totalAmount: [null],
                 remarks: [''],
 
                 mf_id: [it.mf_id ?? null],
@@ -662,8 +691,38 @@ submitDraft(): void {
             })
         );
     });
+    this.syncSelectedVendors();
     this.recalcGrandTotal();
 }
+
+    onVendorDropdownChange(index: number, vendorId: number | null): void {
+        const row = this.poItemArray.at(index);
+
+        if (!vendorId) {
+            row.patchValue(
+                {
+                    vendorName: null,
+                    vendor_id: null
+                },
+                { emitEvent: false }
+            );
+            this.syncSelectedVendors();
+            return;
+        }
+
+        const vendor = this.vendorMasterOptions.find((v) => v.supplierid === vendorId);
+        row.patchValue(
+            {
+                vendorName: vendor?.suppliername ?? null,
+                vendor_id: vendorId,
+                rate: vendor?.lastrate ?? row.get('rate')?.value ?? null
+            },
+            { emitEvent: false }
+        );
+
+        this.recalcRow(index);
+        this.syncSelectedVendors();
+    }
 
     onPoQtyChange(i: number): void {
         this.recalcRow(i);
@@ -677,13 +736,22 @@ submitDraft(): void {
         const row = this.poItemArray.at(i);
         const qty = Number(row.get('poQty')?.value || 0);
         const rate = Number(row.get('rate')?.value || 0);
-        row.patchValue({ amount: qty && rate ? +(qty * rate).toFixed(2) : null }, { emitEvent: false });
+        const amount = qty && rate ? +(qty * rate).toFixed(2) : 0;
+        const taxPercent = Number(row.get('taxPercent')?.value || 0);
+        const totalAmount = +(amount + (amount * taxPercent) / 100).toFixed(2);
+        row.patchValue(
+            {
+                amount: amount || null,
+                totalAmount: amount ? totalAmount : null
+            },
+            { emitEvent: false }
+        );
         this.recalcGrandTotal();
     }
 
     private recalcGrandTotal(): void {
         this.grandTotal = this.poItemArray.controls.reduce((sum, row) => {
-            return sum + (Number(row.get('amount')?.value) || 0);
+            return sum + (Number(row.get('totalAmount')?.value) || Number(row.get('amount')?.value) || 0);
         }, 0);
     }
 
@@ -751,6 +819,7 @@ private vendorFilterReturnTypeMap: Record<string, string> = {
         });
 
         this.recalcGrandTotal();
+        this.syncSelectedVendors();
         this.showVendorDialog = false;
 
         this.messageService.add({
@@ -758,6 +827,51 @@ private vendorFilterReturnTypeMap: Record<string, string> = {
             summary: 'Vendor Selected',
             detail: `${v.suppliername} assigned to ${row.get('item')?.value}`,
             life: 2000
+        });
+    }
+
+    private syncSelectedVendors(): void {
+        const uniqueVendors = [
+            ...new Set(this.poItemArray.controls.map((row) => row.get('vendorName')?.value as string).filter((name) => !!name))
+        ];
+        this.selectedVendorNames = uniqueVendors;
+        this.poForm.get('p_vendor')?.setValue(uniqueVendors.join(', '), { emitEvent: false });
+    }
+
+    openMrDialog(): void {
+        const projectId = this.poForm.get('p_project')?.value;
+        if (!projectId) {
+            this.messageService.add({ severity: 'warn', summary: 'Select a site first', life: 2500 });
+            return;
+        }
+
+        this.showMrDialog = true;
+        this.loadMrPopupRows(projectId);
+    }
+
+    private loadMrPopupRows(projectId: number): void {
+        this.isLoadingMrPopup = true;
+        const payload = {
+            p_returntype: 'MFAPPROVED',
+            p_returnvalue: projectId.toString(),
+            username: ''
+        };
+
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res: any) => {
+                this.mrPopupRows = res.data ?? [];
+                this.isLoadingMrPopup = false;
+            },
+            error: (err: any) => {
+                console.error('Error fetching MR popup rows:', err);
+                this.mrPopupRows = [];
+                this.isLoadingMrPopup = false;
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Failed to load material requisitions',
+                    life: 2500
+                });
+            }
         });
     }
 

@@ -87,11 +87,6 @@ export const MENU_MODEL: any[] = [
                         label: 'GRN',
                         icon: 'pi pi-fw pi-inbox',
                         routerLink: ['/layout/inventory/grn']
-                    },
-                    {
-                        label: 'Quality Inspection',
-                        icon: 'pi pi-fw pi pi-search',
-                        routerLink: ['/layout/inventory/quality-inspection']
                     }
                 ]
             }

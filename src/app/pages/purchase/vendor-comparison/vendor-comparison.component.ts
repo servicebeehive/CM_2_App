@@ -7,11 +7,11 @@ import { MultiSelectModule } from 'primeng/multiselect';
 import { TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
+import { DialogModule } from 'primeng/dialog';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { InventoryService } from '@/core/services/inventory.service';
 import { AuthService } from '@/core/services/auth.service';
-import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
 
 interface VendorRef {
     vendor_id: number;
@@ -27,11 +27,20 @@ interface VendorEntry {
 interface ComparisonRow {
     category: string;
     item: string;
+    required_qty: number;
     item_id?: number;
     category_id?: number;
     // dynamic per-vendor input data keyed by vendor_id
     vendorData: { [vendorId: number]: VendorEntry };
     _searchText?: string;
+}
+
+interface MaterialReqRow {
+    mr_no: string;
+    mr_date: string | Date | null;
+    department: string;
+    requested_by: string;
+    item_count: number;
 }
 
 @Component({
@@ -47,8 +56,8 @@ interface ComparisonRow {
         TableModule,
         InputTextModule,
         InputNumberModule,
-        ToastModule,
-        GlobalFilterComponent
+        DialogModule,
+        ToastModule
     ],
     templateUrl: './vendor-comparison.component.html',
     styleUrl: './vendor-comparison.component.scss',
@@ -66,6 +75,14 @@ export class VendorComparisonComponent implements OnInit {
     selectedVendors: VendorRef[] = [];
     comparisonRows: ComparisonRow[] = [];
     isLoadingItems = false;
+    isLoadingMrRows = false;
+    itemOptions: any[] = [];
+isLoadingItemOptions = false;
+rfqNoOptions: any[] = [];
+isLoadingRfqNo = false;
+
+    showMaterialReqDialog = false;
+    materialReqRows: MaterialReqRow[] = [];
 
     showGlobalSearch = true;
     globalFilter = '';
@@ -81,15 +98,19 @@ export class VendorComparisonComponent implements OnInit {
 
     ngOnInit(): void {
         this.companyId = this.authService.isLogIntType()?.companyid;
-        this.initForm();
-        this.loadProjects();
-        this.loadVendors();
+         this.initForm();
+    this.loadProjects();
+    this.loadVendors();
+    this.loadItems();
+    this.loadRfqNoOptions();
     }
 
     private initForm(): void {
         this.filterForm = this.fb.group({
-            p_project: [null],
-            p_vendors: [[]]
+           p_rfqno: [''],
+       p_rfqdate: [{ value: '', disabled: true }],
+        p_project: [null],
+        p_item: [null]
         });
     }
 
@@ -115,6 +136,49 @@ export class VendorComparisonComponent implements OnInit {
             }
         });
     }
+
+    private loadRfqNoOptions(): void {
+    this.isLoadingRfqNo = true;
+    const payload = {
+        p_returntype: 'RFQLIST', // ⬅️ confirm exact return type with backend
+        p_returnvalue: this.companyId.toString(),
+        username: ''
+    };
+
+    this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+        next: (res: any) => {
+            this.rfqNoOptions = res.data || [];
+            this.isLoadingRfqNo = false;
+        },
+        error: (err) => {
+            console.error('Error fetching RFQ No list:', err);
+            this.isLoadingRfqNo = false;
+        }
+    });
+}
+
+private loadItems(): void {
+    this.isLoadingItemOptions = true;
+    const payload = {
+        p_returntype: 'ITEMLIST', // ⬅️ confirm exact return type with backend
+        p_returnvalue: this.companyId.toString(),
+        username: ''
+    };
+
+    this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+        next: (res: any) => {
+            this.itemOptions = (res.data || []).map((i: any) => ({
+                itemid: i.itemid ?? i.item_id,
+                itemname: i.itemname ?? i.item_name
+            }));
+            this.isLoadingItemOptions = false;
+        },
+        error: (err) => {
+            console.error('Error fetching items:', err);
+            this.isLoadingItemOptions = false;
+        }
+    });
+}
 
     // ── Load Vendor dropdown ────────────────────────────────────────────
     private loadVendors(): void {
@@ -144,7 +208,11 @@ export class VendorComparisonComponent implements OnInit {
     onProjectChange(event: any): void {
         const projectId = event.value;
         this.comparisonRows = [];
-        if (!projectId) return;
+        this.materialReqRows = [];
+        if (!projectId) {
+            this.filterForm.patchValue({ p_rfqno: '', p_rfqdate: '' }, { emitEvent: false });
+            return;
+        }
         this.loadItemsForProject(projectId);
     }
 
@@ -160,6 +228,7 @@ export class VendorComparisonComponent implements OnInit {
             next: (res: any) => {
                 const rows: any[] = res.data || [];
                 this.comparisonRows = rows.map((r) => this.buildEmptyRow(r));
+                this.patchRfqHeader(rows);
                 this.isLoadingItems = false;
             },
             error: (err) => {
@@ -179,6 +248,7 @@ export class VendorComparisonComponent implements OnInit {
         const row: ComparisonRow = {
             category: r.categoryname ?? r.category ?? '',
             item: r.itemname ?? r.item ?? '',
+            required_qty: Number(r.required_qty ?? r.forecast_qty ?? 0),
             item_id: r.item_id,
             category_id: r.item_category_id ?? r.category_id,
             vendorData: {}
@@ -201,6 +271,131 @@ export class VendorComparisonComponent implements OnInit {
                 updated[v.vendor_id] = row.vendorData[v.vendor_id] ?? { price: null, quantity: null, paymentTerm: '' };
             });
             row.vendorData = updated;
+        });
+    }
+
+onRfqNoChange(event: any): void {
+    const rfq = this.rfqNoOptions.find((r) => r.rfq_id === event.value);
+    if (!rfq) return;
+
+    this.filterForm.patchValue(
+        { p_rfqdate: this.formatDisplayDate(rfq.rfq_date ?? rfq.rfqdate) },
+        { emitEvent: false }
+    );
+
+    const invitedVendorIds: number[] = rfq.vendor_ids ?? [];
+    this.selectedVendors = this.vendorOptions.filter((v) => invitedVendorIds.includes(v.vendor_id));
+    this.filterForm.get('p_vendors')?.setValue(invitedVendorIds, { emitEvent: false });
+
+    this.comparisonRows.forEach((row) => {
+        const updated: { [vendorId: number]: any } = {};
+        this.selectedVendors.forEach((v) => {
+            updated[v.vendor_id] = row.vendorData[v.vendor_id] ?? { price: null, quantity: null, paymentTerm: '' };
+        });
+        row.vendorData = updated;
+    });
+
+    if (rfq.project_id) {
+        this.filterForm.patchValue({ p_project: rfq.project_id }, { emitEvent: false });
+        this.loadItemsForProject(rfq.project_id);
+    }
+}
+
+    private patchRfqHeader(rows: any[]): void {
+        if (!rows.length) {
+            this.filterForm.patchValue({ p_rfqno: '', p_rfqdate: '' }, { emitEvent: false });
+            return;
+        }
+
+        const first = rows[0];
+        const rfqNo = first.rfq_no ?? first.rfqno ?? first.mf_no ?? '';
+        const dateSource = first.rfq_date ?? first.rfqdate ?? first.mf_date ?? null;
+        const rfqDate = dateSource ? this.formatDisplayDate(dateSource) : '';
+
+        this.filterForm.patchValue(
+            {
+                p_rfqno: rfqNo,
+                p_rfqdate: rfqDate
+            },
+            { emitEvent: false }
+        );
+    }
+
+    private formatDisplayDate(value: string | Date): string {
+        const date = value instanceof Date ? value : new Date(value);
+        if (Number.isNaN(date.getTime())) return '';
+        const day = `${date.getDate()}`.padStart(2, '0');
+        const month = `${date.getMonth() + 1}`.padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+    }
+
+    get totalRequestedQty(): number {
+        return this.comparisonRows.reduce((sum, row) => sum + (Number(row.required_qty) || 0), 0);
+    }
+
+    get totalVisibleItems(): number {
+        return this.filteredRows.length;
+    }
+
+    get totalVisibleRequestedQty(): number {
+        return this.filteredRows.reduce((sum, row) => sum + (Number(row.required_qty) || 0), 0);
+    }
+
+    openMaterialReqDialog(): void {
+        const projectId = this.filterForm.get('p_project')?.value;
+        if (!projectId) {
+            this.messageService.add({ severity: 'warn', summary: 'Select a site first', life: 2500 });
+            return;
+        }
+
+        this.showMaterialReqDialog = true;
+        this.loadMaterialReqRows(projectId);
+    }
+
+    private loadMaterialReqRows(projectId: number): void {
+        this.isLoadingMrRows = true;
+        const payload = {
+            p_returntype: 'MFAPPROVED',
+            p_returnvalue: projectId.toString(),
+            username: ''
+        };
+
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res: any) => {
+                const rows: any[] = res.data || [];
+                const grouped = new Map<string, MaterialReqRow>();
+
+                rows.forEach((r: any) => {
+                    const mrNo = r.mr_no ?? r.mf_no ?? r.requisition_no ?? '—';
+                    const key = `${mrNo}__${r.mr_date ?? r.mf_date ?? ''}`;
+
+                    if (!grouped.has(key)) {
+                        grouped.set(key, {
+                            mr_no: mrNo,
+                            mr_date: r.mr_date ?? r.mf_date ?? null,
+                            department: r.departmentname ?? r.department ?? '—',
+                            requested_by: r.requested_by ?? r.user_name ?? r.requestedby ?? '—',
+                            item_count: 0
+                        });
+                    }
+
+                    const current = grouped.get(key)!;
+                    current.item_count += 1;
+                });
+
+                this.materialReqRows = Array.from(grouped.values());
+                this.isLoadingMrRows = false;
+            },
+            error: () => {
+                this.materialReqRows = [];
+                this.isLoadingMrRows = false;
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Failed to load material requisitions',
+                    life: 2500
+                });
+            }
         });
     }
 
