@@ -55,6 +55,11 @@ export const appRoutes: Routes = [
                 canActivate: [AuthGuard]
             },
             {
+                path: 'issue-item',
+                loadChildren: () => import('@/pages/issue-item/issue-item.routers'),
+                canActivate: [AuthGuard]
+            },
+            {
                 path: 'pos',
                 loadChildren: () => import('@/pages/pos/pos.routers'),
                 canActivate: [AuthGuard]
@@ -75,23 +80,6 @@ export const appRoutes: Routes = [
                 loadChildren: () => import('@/pages/security/security.routers'),
                 canActivate: [AuthGuard]
             }
-
-
-            // {
-            //     path: 'blocks',
-            //     data: { breadcrumb: 'Free Blocks' },
-            //     loadChildren: () => import('./app/pages/blocks/blocks.routes')
-            // },
-            // {
-            //     path: 'ecommerce',
-            //     loadChildren: () =>
-            //         import('@/pages/ecommerce/ecommerce.routes'),
-            //     data: { breadcrumb: 'E-Commerce' },
-            // },
-            // {
-            //     path: 'profile',
-            //     loadChildren: () => import('@/pages/usermanagement/usermanagement.routes'),
-            // },
         ]
     },
     //  { path: 'landing', component: Landing },

@@ -6,8 +6,8 @@
         ════════════════════════════════════════════ -->
     <div class="form-header-bar">
         <div>
-            <h2 class="form-title">{{ mode === 'edit' || mode === 'itemedit' ? 'Edit Item' : 'Add New Item' }}</h2>
-            <p class="form-subtitle">{{ mode === 'edit' || mode === 'itemedit' ? 'Update item details' : 'Create a new item for construction inventory' }}</p>
+            <h2 class="form-title">{{ mode === 'edit' ? 'Edit Item' : 'Add New Item' }}</h2>
+            <p class="form-subtitle">{{ mode === 'edit' ? 'Update item details' : 'Create a new item for construction inventory' }}</p>
         </div>
         <div class="header-actions">
             <button pButton type="button" label="Cancel" icon="pi pi-times" class="p-button-outlined p-button-secondary" (click)="onCancel()"></button>
@@ -33,13 +33,14 @@
 
             <div class="field-col">
                 <label class="field-label">Item SKU <span class="req">*</span></label>
-                <input pInputText formControlName="itemCode" placeholder="Enter SKU code" (input)="toUppercase($event)" (blur)="onBlur($event)" [readOnly]="mode === 'edit'" />
+                <input pInputText formControlName="itemCode" placeholder="Enter SKU code" (input)="toUppercase($event)" (blur)="onBlur($event)" />
                 <small class="err-msg" *ngIf="addForm.get('itemCode')?.touched && addForm.get('itemCode')?.errors?.['required']"> Item Code is required </small>
             </div>
 
             <div class="field-col">
-                <label class="field-label">Barcode</label>
-                <input pInputText formControlName="itembarcode" placeholder="Enter barcode (optional)" (input)="toUppercase($event)" (blur)="onBlurBarCode($event)" [readOnly]="mode === 'edit'" />
+                <label class="field-label">Barcode <span class="req">*</span></label>
+                <input pInputText formControlName="itembarcode" placeholder="Enter barcode" (input)="toUppercase($event)" (blur)="onBlurBarCode($event)" />
+                <small class="err-msg" *ngIf="addForm.get('itembarcode')?.touched && addForm.get('itembarcode')?.errors?.['required']"> Barcode is required </small>
             </div>
 
             <div class="field-col">
@@ -60,8 +61,7 @@
 
             <div class="field-col">
                 <label class="field-label">Unit of Measurement (UOM) <span class="req">*</span></label>
-                <p-dropdown [options]="uomOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search UOM" formControlName="parentUOM" placeholder="Select UOM" [readonly]="mode === 'edit'">
-                </p-dropdown>
+                <p-dropdown [options]="uomOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search UOM" formControlName="parentUOM" placeholder="Select UOM"> </p-dropdown>
                 <small class="err-msg" *ngIf="addForm.get('parentUOM')?.touched && addForm.get('parentUOM')?.errors?.['required']"> UOM is required </small>
             </div>
 
@@ -203,7 +203,7 @@
         <div class="fields-grid cols-4">
             <div class="field-col">
                 <label class="field-label">Expiry Date (if applicable)</label>
-                <p-datepicker fluid formControlName="p_expirydate" dateFormat="dd-mm-yyyy" [minDate]="dateTime" [showIcon]="true" placeholder="dd-mm-yyyy"> </p-datepicker>
+                <p-datepicker fluid formControlName="p_expirydate" dateFormat="dd/mm/yy" [minDate]="dateTime" [showIcon]="true"></p-datepicker>
             </div>
 
             <div class="field-col span-3">

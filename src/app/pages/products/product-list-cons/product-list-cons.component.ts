@@ -20,12 +20,14 @@ import { InventoryService } from '@/core/services/inventory.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { CheckboxModule } from 'primeng/checkbox';
-import { AddinventoryComponent } from '@/pages/inventory/addinventory/addinventory.component';
 import { AuthService } from '@/core/services/auth.service';
 import JsBarcode from 'jsbarcode';
+import { Router } from '@angular/router';
+import { AddItemConsComponent } from '@/pages/inventory/add-item-cons/add-item-cons.component';
+import { ToastModule } from 'primeng/toast';
 
 @Component({
-    selector: 'app-productlist',
+    selector: 'app-product-list-cons',
     imports: [
         CommonModule,
         EditorModule,
@@ -46,19 +48,20 @@ import JsBarcode from 'jsbarcode';
         DialogModule,
         ConfirmDialogModule,
         CheckboxModule,
-        AddinventoryComponent
+        AddItemConsComponent,
+        ToastModule
     ],
-    templateUrl: './productlist.component.html',
-    styleUrl: './productlist.component.scss',
-    providers: [ConfirmationService]
+    templateUrl: './product-list-cons.component.html',
+    styleUrl: './product-list-cons.component.scss',
+    providers: [ConfirmationService, MessageService]
 })
-export class ProductlistComponent {
+export class ProductListConsComponent {
     updateForm!: FormGroup;
 
     visibleDialog = false;
     selectedRow: any = null;
     selection: boolean = true;
-    mode: 'add' | 'itemedit' = 'itemedit';
+    mode: 'add' | 'edit' = 'add';
     first: number = 0;
     rowsPerPage: number = 5;
     products: StockIn[] = [];
@@ -66,8 +69,7 @@ export class ProductlistComponent {
     globalFilter: string = '';
     showGlobalSearch: boolean = true;
     uomOptions: any[] = [];
-    showData: boolean = false; // New flag to control table visibility
-
+    showData: boolean = false; 
     categoryOptions = [];
     printList: any[] = [];
     itemOptions = [];
@@ -80,7 +82,8 @@ export class ProductlistComponent {
         private fb: FormBuilder,
         private inventoryService: InventoryService,
         private messageService: MessageService,
-        private authService: AuthService
+        private authService: AuthService,
+        private router: Router
     ) {}
 
     ngOnInit(): void {
@@ -89,7 +92,6 @@ export class ProductlistComponent {
             item: [''],
             p_stock: this.fb.array([])
         });
-
         this.loadAllDropdowns();
     }
 
@@ -107,10 +109,9 @@ export class ProductlistComponent {
     }
 
     openEditDialog(rowData: any) {
-        this.mode = 'itemedit';
+        this.mode='edit';
         this.selectedRow = rowData || null;
         this.visibleDialog = true;
-        console.log('selectedrow', this.selectedRow);
     }
 
     createDropdownPayload(returnType: string) {
@@ -139,7 +140,7 @@ export class ProductlistComponent {
     categoryRelavantItem(id: any) {
         this.itemOptions = [];
         const payload = {
-            p_username: 'admin',
+            p_username: this.authService.isLogIntType().industry_type_id.toString(),
             p_returntype: 'CATEGORY',
             p_returnvalue: id.toString()
         };
@@ -188,15 +189,14 @@ export class ProductlistComponent {
             return;
         }
         const payload = {
-            p_categoryid: category || null,
-            p_itemid: item || null,
-            p_username: 'admin',
-            p_type: ''
+            p_returntype: 'ITEMWISE',
+            p_returnvalue: item || '',
+             p_username: category || ''
         };
 
         this.showData = false;
 
-        this.inventoryService.getupdatedata(payload).subscribe({
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res: any) => {
                 console.log('API RESULT:', res.data);
                 this.products = res?.data || [];
@@ -223,14 +223,21 @@ export class ProductlistComponent {
         });
     }
 
+    add(){
+       this.mode = 'add';
+    this.selectedRow = null;
+    this.visibleDialog = true;
+    }
+
     onSave(updatedData: any) {
-        console.log('updated before:', updatedData);
+        const message = updatedData?.message || 'Item saved successfully.';
+        this.showSuccess(message);
         this.Onreturndropdowndetails();
-        console.log('updated after:', updatedData);
     }
 
     closeDialog() {
         this.visibleDialog = false;
+        this.reset();
     }
 
     reset() {

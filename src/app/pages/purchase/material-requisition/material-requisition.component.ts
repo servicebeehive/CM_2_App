@@ -13,16 +13,16 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { InventoryService } from '@/core/services/inventory.service';
 import { AuthService } from '@/core/services/auth.service';
 import { WorkService } from '@/core/services/work.service';
-import { MaterialForecastPayload } from '@/core/models/authmodel/work.model';
+import { MaterialRequisitionPayload } from '@/core/models/authmodel/work.model';
 
 @Component({
-    selector: 'app-material-forcasting',
+    selector: 'app-material-requisition',
     imports: [CommonModule, ReactiveFormsModule, FormsModule, TableModule, InputTextModule, TextareaModule, ButtonModule, SelectModule, DropdownModule, DatePickerModule, ConfirmDialogModule],
-    templateUrl: './material-forcasting.component.html',
-    styleUrl: './material-forcasting.component.scss',
+    templateUrl: './material-requisition.component.html',
+    styleUrl: './material-requisition.component.scss',
     providers: [ConfirmationService, DatePipe]
 })
-export class MaterialForcastingComponent {
+export class MaterialRequisitionComponent {
     @ViewChildren('uomDropdown') uomDropdown!: QueryList<Dropdown>;
     @ViewChild('barcodeInput') barcodeInput!: ElementRef<HTMLInputElement>;
     isBarcodeScan = false;
@@ -74,12 +74,13 @@ export class MaterialForcastingComponent {
             p_mf_id: [null],
             p_requisitionno: [null],
             p_draft_requisitionno: [null],
+            p_mrdate: [this.today],
             p_project: [null, Validators.required],
             p_department: [null],
             p_work: [null, Validators.required],
             p_level: [null, Validators.required],
             p_pour: [null],
-            p_period: [null, Validators.required],
+            // p_period: [null, Validators.required],
             p_remarks: [''],
             p_itemdata: [null],
             status: [''],
@@ -178,7 +179,7 @@ export class MaterialForcastingComponent {
         this.OnGetItem();
         this.OnGetDepartment();
         this.onGetProject();
-        this.onGetPeriod();
+        // this.onGetPeriod();
     }
 
     onProjectChange(data: any) {
@@ -288,52 +289,52 @@ export class MaterialForcastingComponent {
         });
     }
 
-    onGetPeriod(): void {
-        const payload = {
-            returnType: 'PERIOD',
-            returnValue: '',
-            username: '',
-            option1: null,
-            option2: null
-        };
-        this.inventoryService.getparameterbased(payload).subscribe({
-            next: (res) => {
-                const allPeriods: any[] = res.data || [];
-                this.periodOptions = allPeriods.filter((p) => this.isCurrentOrFuturePeriod(p.period_name));
-            },
-            error: (err) => console.error(err)
-        });
-    }
+    // onGetPeriod(): void {
+    //     const payload = {
+    //         returnType: 'PERIOD',
+    //         returnValue: '',
+    //         username: '',
+    //         option1: null,
+    //         option2: null
+    //     };
+    //     this.inventoryService.getparameterbased(payload).subscribe({
+    //         next: (res) => {
+    //             const allPeriods: any[] = res.data || [];
+    //             this.periodOptions = allPeriods.filter((p) => this.isCurrentOrFuturePeriod(p.period_name));
+    //         },
+    //         error: (err) => console.error(err)
+    //     });
+    // }
 
-    private isCurrentOrFuturePeriod(periodName: string): boolean {
-        // periodName format: "JAN-26", "APR-26", etc.
-        const monthMap: Record<string, number> = {
-            JAN: 0,
-            FEB: 1,
-            MAR: 2,
-            APR: 3,
-            MAY: 4,
-            JUN: 5,
-            JUL: 6,
-            AUG: 7,
-            SEP: 8,
-            OCT: 9,
-            NOV: 10,
-            DEC: 11
-        };
+    // private isCurrentOrFuturePeriod(periodName: string): boolean {
+    //     // periodName format: "JAN-26", "APR-26", etc.
+    //     const monthMap: Record<string, number> = {
+    //         JAN: 0,
+    //         FEB: 1,
+    //         MAR: 2,
+    //         APR: 3,
+    //         MAY: 4,
+    //         JUN: 5,
+    //         JUL: 6,
+    //         AUG: 7,
+    //         SEP: 8,
+    //         OCT: 9,
+    //         NOV: 10,
+    //         DEC: 11
+    //     };
 
-        const [monStr, yyStr] = periodName.split('-');
-        const month = monthMap[monStr.toUpperCase()];
-        if (month === undefined) return true; // unrecognized format — don't accidentally hide it
+    //     const [monStr, yyStr] = periodName.split('-');
+    //     const month = monthMap[monStr.toUpperCase()];
+    //     if (month === undefined) return true; // unrecognized format — don't accidentally hide it
 
-        const year = 2000 + parseInt(yyStr, 10);
-        const periodDate = new Date(year, month, 1);
+    //     const year = 2000 + parseInt(yyStr, 10);
+    //     const periodDate = new Date(year, month, 1);
 
-        const now = new Date();
-        const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    //     const now = new Date();
+    //     const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-        return periodDate >= currentMonthStart;
-    }
+    //     return periodDate >= currentMonthStart;
+    // }
 
     private buildTowerOptions(): void {
         const seen = new Map<number, any>();
@@ -572,7 +573,7 @@ export class MaterialForcastingComponent {
         return this.itemArray.length === 0 || !!this.forecastForm.get('p_project')?.invalid || !!this.forecastForm.get('p_work')?.invalid || !!this.forecastForm.get('p_level')?.invalid || !!this.forecastForm.get('p_period')?.invalid;
     }
 
-    private buildPayload(action: 'DRAFT' | 'SUBMIT', operation?: 'INSERT' | 'EDIT' | 'DELETE'): MaterialForecastPayload {
+    private buildPayload(action: 'DRAFT' | 'SUBMIT', operation?: 'INSERT' | 'EDIT' | 'DELETE'): MaterialRequisitionPayload {
         const v = this.forecastForm.value;
         return {
             p_action: action,
@@ -672,7 +673,7 @@ export class MaterialForcastingComponent {
         });
     }
 
-    private buildDeletePayload(mfId: number): MaterialForecastPayload {
+    private buildDeletePayload(mfId: number): MaterialRequisitionPayload {
         return {
             p_action: 'DRAFT',
             p_operation: 'DELETE',

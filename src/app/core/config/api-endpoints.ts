@@ -29,7 +29,7 @@ export const API_ENDPOINTS = {
         updatewriteoffamount: '/beeware/fnupdatewriteoffamount',
         upsertproject: '/beeware/upsert_project',
         getprojectlist: '/beeware/get_project_list',
-        getUpsertItem: '/beeware/upsert_item'
+        upsertItem: '/beeware/upsert_item'
     },
     work: {
         upsertworklisting: '/beeware/upsert_work_listing',

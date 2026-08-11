@@ -75,7 +75,7 @@ export class AddItemConsComponent {
     @Input() transationid: any = null;
     @Output() close = new EventEmitter<void>();
     @Input() editData: any;
-    @Input() mode: 'add' | 'edit' | 'itemedit' = 'add';
+    @Input() mode: 'add' | 'edit'= 'add';
     @Output() save = new EventEmitter<any>();
     @Output() childUom = new EventEmitter<boolean>();
 
@@ -134,7 +134,7 @@ export class AddItemConsComponent {
     ngOnInit(): void {
         this.addForm = this.fb.group(
             {
-                itembarcode: ['', [Validators.maxLength(50)]],
+                itembarcode: ['', [Validators.required, Validators.maxLength(50)]],
                 itemCode: ['', [Validators.required, Validators.maxLength(50)]],
                 category: ['', Validators.required],
                 parentUOM: ['', Validators.required],
@@ -226,65 +226,36 @@ export class AddItemConsComponent {
         this.searchValue = event.filter || '';
     }
 
-    enterEditItemMode(itemData: any) {
-        console.log(itemData)
-        this.addForm.patchValue({
-            itemid: itemData.itemid,
-            p_tranpurchaseid: itemData.purchaseid,
-            itembarcode: itemData.itembarcode,
-            itemCode: itemData.itemsku || itemData.itemid,
-            itemName: itemData.itemname,
-            category: itemData.categoryid,
-            curStock: itemData.currentstock,
-            p_expirydate: itemData.expirydate ? new Date(itemData.expirydate) : null,
-            gstItem: itemData.gstitem === 'Y',
-            activeItem: itemData.isactive === 'Y',
-            minStock: itemData.minimumstock,
-            purchasePrice: (itemData.costprice * itemData.quantity).toFixed(2),
-            mrp: itemData.saleprice,
-            parentUOM: itemData.uomid,
-            qty: itemData.quantity,
-            costPerItem: itemData.costprice.toFixed(5),
-            warPeriod: itemData.warrentyperiod
-        });
-
-        this.resetDisabled = true;
-        this.disableItemRelatedControls();
-        this.addForm.get('purchasePrice')?.enable();
-        this.addForm.get('mrp')?.enable();
-        this.addForm.get('qty')?.enable();
-    }
-
- enterItemUpdateMode(itemData: any) {
+   enterEditItemMode(itemData: any) {
     this.addForm.patchValue({
         itembarcode: itemData.itembarcode ?? '',
-        itemCode: itemData.itemsku || itemData.itemid,
-        itemName: itemData.itemname,
-        category: itemData.categoryid,
-        curStock: itemData.currentstock ?? 0,
+        itemCode: itemData.itemsku ?? itemData.itemid ?? '',
+        itemName: itemData.itemname ?? itemData.item_description ?? '',
+        category: itemData.categoryid ?? null,
+        curStock: itemData.currentstock ?? itemData.available_stock ?? 0,
         p_expirydate: itemData.expirydate ? new Date(itemData.expirydate) : null,
-        gstItem: itemData.gstitem === 'Y',
-        activeItem: itemData.isactive === 'Y',
-        minStock: itemData.minimumstock ?? '',
+        gstItem: itemData.gstitem ? itemData.gstitem === 'Y' : true,
+        activeItem: itemData.isactive ? itemData.isactive === 'Y' : true,
+        minStock: itemData.minimumstock ?? itemData.buffer_stock ?? '',
         mrp: itemData.saleprice ?? '',
-        parentUOM: itemData.uomid ?? null,
-        qty: itemData.currentstock ?? '',
-        costPerItem: itemData.costprice != null ? Number(itemData.costprice).toFixed(5) : '',
-        warPeriod: itemData.warrentyperiod ?? 0
+        parentUOM: itemData.uomid ?? itemData.uom ?? null,
+        warPeriod: itemData.warrentyperiod ?? 0,
+        brand: itemData.brand ?? '',
+        model: itemData.model_size ?? '',
+        hsnCode: itemData.hsncode ?? '',
+        reorderLevel: itemData.reorderlevel ?? '',
+        materialType: itemData.materialtypeid ?? '',
+        subCategory: itemData.subcategoryid ?? '',
+        itemGroup: itemData.itemgroupid ?? '',
+        itemSubGroup: itemData.itemsubgroupid ?? '',
+        remarks: itemData.remarks ?? '',
+        location: itemData.location ?? '',
+        p_tax: itemData.gstrate?.toString() ?? '',
+        purchasePrice: itemData.purchaseprice ?? 0
     });
 
     this.resetDisabled = true;
-    this.addForm.disable();
-    this.disableItemRelatedControls();
-    this.addForm.get('category')?.enable();
-    this.addForm.get('minStock')?.enable();
-    this.addForm.get('warPeriod')?.enable();
-    this.addForm.get('p_expirydate')?.enable();
-    this.addForm.get('gstItem')?.enable();
-    this.addForm.get('activeItem')?.enable();
-    this.addForm.get('mrp')?.enable();
-    this.addForm.get('costPerItem')?.enable();
-     this.addForm.get('qty')?.enable(); 
+    // this.disableItemRelatedControls();
 }
 
     enterAddItemMode(itemData: any) {   
@@ -306,7 +277,7 @@ export class AddItemConsComponent {
             warPeriod: itemData.warrentyperiod
         });
 
-        this.disableItemRelatedControls();
+        // this.disableItemRelatedControls();
         this.addForm.get('purchasePrice')?.enable();
         this.addForm.get('mrp')?.enable();
         this.addForm.get('qty')?.enable();
@@ -324,8 +295,8 @@ export class AddItemConsComponent {
     }
 
    private disableItemRelatedControls() {
-    const controls = ['itembarcode', 'itemCode', 'parentUOM', 'category', 'itemName', 'curStock', 'minStock', 'warPeriod', 'p_expirydate', 'activeItem', 'gstItem', 'itemSearch'];
-    controls.forEach((c) => this.addForm.get(c)?.disable());
+    // const controls = ['itembarcode', 'itemCode', 'parentUOM'];
+    // controls.forEach((c) => this.addForm.get(c)?.disable());
 }
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -338,10 +309,6 @@ export class AddItemConsComponent {
     if (hasEditData) {
         if (this.mode === 'edit') {
             this.enterEditItemMode(this.editData);
-            return;
-        }
-        if (this.mode === 'itemedit') {
-            this.enterItemUpdateMode(this.editData);
             return;
         }
     }
@@ -415,10 +382,10 @@ export class AddItemConsComponent {
         }
     }
 
-   mapFormToPayload(form: any) {
+  mapFormToPayload(form: any) {
     return {
         p_companyid: this.authService.isLogIntType()?.companyid,
-        p_itemid: this.mode === 'itemedit' ? Number(this.editData?.itemid ?? 0) : 0,
+        p_itemid: this.mode === 'edit' ? Number(this.editData?.itemid ?? 0) : 0,
         p_itemsku: form.itemCode,
         p_itemname: form.itemName,
         p_location: form.location ?? '',
@@ -430,24 +397,41 @@ export class AddItemConsComponent {
         p_isactive: form.activeItem ? 'Y' : 'N',
         p_loginuser: this.shareservice.getUserData()?.username || this.authService.isLogIntType().userid.toString(),
         p_itembarcode: form.itembarcode,
-        p_uomid: Number(form.parentUOM)
+        p_uomid: Number(form.parentUOM),
+        p_itemdesc: form.description ?? null,
+        p_reorderlevel: Number(form.reorderLevel) || 0,
+        p_brand: form.brand ?? null,
+        p_model_size: form.model ?? null,
+        p_hsncode: form.hsnCode ?? null,
+        p_purchaseprice: Number(form.purchasePrice) || 0,
+        p_saleprice: Number(form.mrp) || 0,
+        p_gstrate: Number(form.p_tax) || 0,
+        p_materialtypeid: form.materialType ? Number(form.materialType) : null,
+        p_subcategoryid: form.subCategory ? Number(form.subCategory) : null,
+        p_itemgroupid: form.itemGroup ? Number(form.itemGroup) : null,
+        p_itemsubgroupid: form.itemSubGroup ? Number(form.itemSubGroup) : null,
+        p_remarks: form.remarks ?? null,
+        p_industry: this.authService.isLogIntType()?.industry_type_id || null,
     };
 }
 
 onSubmit() {
     if (this.addForm.invalid) return;
-        this.inventoryService.onUpsertItem(this.mapFormToPayload(this.addForm.getRawValue())).subscribe({
-            next: (res) => {
-                const msg = res?.data?.[0]?.message;
-                this.showSuccess(msg);
-                this.save.emit(this.addForm.getRawValue());
-                this.close.emit(this.addForm.getRawValue());
-            },
-            error: (res) => {}
-        });
+    this.inventoryService.onUpsertItem(this.mapFormToPayload(this.addForm.getRawValue())).subscribe({
+        next: (res) => {
+            const msg = res?.data?.message;
+            this.save.emit({ message: msg, payload: this.addForm.getRawValue() });
+            this.close.emit();
+        },
+        error: (res) => {
+            const msg = res?.error?.message || 'Failed to save item.';
+            this.messageService.add({ severity: 'error', summary: 'Error', detail: msg });
+        }
+    });
 }
 
     onCancel() {
+        this.resetForm();
         this.close.emit();
     }
 
@@ -463,9 +447,6 @@ onSubmit() {
         this.showCopyMessage = false;
 
         const itemnamdata = this.itemOptions.find((item) => item.itemsku === event.value);
-
-        console.log('itemnamdata', itemnamdata);
-
         if (itemnamdata) {
             this.enterAddItemMode(itemnamdata);
         }

@@ -9,7 +9,7 @@ export interface UpserWorkList {
     p_status: string;
 }
 
-export interface MaterialForecastPayload {
+export interface MaterialRequisitionPayload {
     p_action: 'DRAFT' | 'SUBMIT';
     p_operation: 'INSERT' | 'EDIT' | 'DELETE';
     p_mf_id: number | null;

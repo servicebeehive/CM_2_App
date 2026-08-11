@@ -323,7 +323,7 @@ getProjectList(payload:any):Observable<any>{
 
 onUpsertItem(payload:any):Observable<any>{
   let payloaddata = this.shareservice.GetApiBody(payload)
-  let url = `${this.baseUrl}${API_ENDPOINTS.inventory.getUpsertItem}`;
+  let url = `${this.baseUrl}${API_ENDPOINTS.inventory.upsertItem}`;
   return this.http.post<any>(url,payloaddata).pipe(catchError(error=>{
     return throwError(()=>error)
   }))

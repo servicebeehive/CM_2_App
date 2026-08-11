@@ -27,17 +27,17 @@ export const MENU_MODEL: any[] = [
             {
                 label: 'Purchase Management',
                 icon: 'pi pi-fw pi-shopping-cart',
-                routerLink: ['/layout/inventory/overview'],
+                routerLink: ['/layout/purchase/overview'],
                 items: [
                     {
                         label: 'Work Listing',
                         icon: 'pi pi-fw pi pi-sitemap',
-                        routerLink: ['/layout/inventory/work']
+                        routerLink: ['/layout/purchase/work']
                     },
                     {
                         label: 'Material Requisition',
                         icon: 'pi pi-fw pi pi-sparkles',
-                        routerLink: ['/layout/inventory/material-forcasting']
+                        routerLink: ['/layout/purchase/material-requisition']
                     },
                     {
                         label: 'Request For Quote',
@@ -52,7 +52,7 @@ export const MENU_MODEL: any[] = [
                      {
                         label: 'Purchase Order',
                         icon: 'pi pi-fw pi pi-send',
-                        routerLink: ['/layout/inventory/purchase-order']
+                        routerLink: ['/layout/purchase/purchase-order']
                     }
                 ]
             }
@@ -105,7 +105,12 @@ export const MENU_MODEL: any[] = [
                     {
                         label: 'Item List',
                         icon: 'pi pi-fw pi-list-check',
-                        routerLink: ['/layout/products/list']
+                        routerLink: ['/layout/products/productlist']
+                    },
+                    {
+                        label: 'Item List',
+                        icon: 'pi pi-fw pi-list-check',
+                        routerLink: ['/layout/products/product-list-cons']
                     }
                 ]
             }
@@ -168,12 +173,12 @@ export const MENU_MODEL: any[] = [
                     {
                         label: 'Material Issue',
                         icon: 'pi pi-fw pi-arrow-right-arrow-left',
-                        routerLink: ['/layout/inventory/material-issue']
+                        routerLink: ['/layout/issue-item/material-issue']
                     },
                     {
                         label: 'Material Return',
                         icon: 'pi pi-fw pi-arrow-left',
-                        routerLink: ['/layout/inventory/material-return']
+                        routerLink: ['/layout/issue-item/material-return']
                     },
                     {
                         label: 'Invoice',
