@@ -43,16 +43,19 @@ export class AppMenu {
             p_username: this.industryType
         };
 
+         const resolvedMenu = this.resolveProductItems(MENU_MODEL, this.industryType);
+
         this.inventoryService.Getreturndropdowndetails(industryMenuPayload).subscribe({
             next: (res) => {
                 const data = res?.data || [];
-                this.model = this.buildFilteredMenu(MENU_MODEL, data);
+                this.model = this.buildFilteredMenu(resolvedMenu, data);
             },
             error: () => {
                 this.model = MENU_MODEL;
             }
         });
     }
+
 private buildFilteredMenu(menuItems: any[], flatData: any[]): any[] {
     const childrenByCategory = new Map<string, Set<string>>();
     const categoryByLevel = new Map<number, string>();
@@ -110,5 +113,24 @@ private filterLeafItems(items: any[] = [], allowedChildrenLower: Set<string>): a
             return allowedChildrenLower.has((item.label || '').trim().toLowerCase()) ? item : null;
         })
         .filter(Boolean);
+}
+
+private resolveProductItems(menuItems: any[], industryType: string): any[] {
+    return menuItems.map((item) => {
+        if (item.label !== 'PRODUCTS') return item;
+
+        return {
+            ...item,
+            items: item.items.map((productMgmt: any) => {
+                const [aboveItem, belowItem] = productMgmt.items;
+                const selected = industryType === '1' ? belowItem : aboveItem;
+
+                return {
+                    ...productMgmt,
+                    items: [selected]
+                };
+            })
+        };
+    });
 }
 }

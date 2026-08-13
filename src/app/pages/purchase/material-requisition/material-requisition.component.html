@@ -76,12 +76,12 @@
 
                 <div class="flex flex-col">
                     <label class="font-medium mb-1">Level<span class="text-red-500">*</span></label>
-                    <p-dropdown [options]="levelOptions" optionLabel="level_name" optionValue="level_id" placeholder="Level" formControlName="p_level" [filter]="true" [showClear]="true" (onChange)="onLevelChange($event)"></p-dropdown>
+                    <p-dropdown [options]="levelOptions" optionLabel="label" optionValue="value" placeholder="Level" formControlName="p_level" [filter]="true" [showClear]="true" (onChange)="onLevelChange($event)"></p-dropdown>
                 </div>
 
                 <div class="flex flex-col">
                     <label class="font-medium mb-1">Pour<span class="text-red-500">*</span></label>
-                    <p-dropdown [options]="pourOptions" optionLabel="tower_name" optionValue="tower_id" placeholder="Select Pour" formControlName="p_pour" [filter]="true" [showClear]="true"></p-dropdown>
+                    <p-dropdown [options]="pourOptions" optionLabel="label" optionValue="value" placeholder="Select Pour" formControlName="p_pour" [filter]="true" [showClear]="true"></p-dropdown>
                 </div>
 
                 <div class="flex flex-col">

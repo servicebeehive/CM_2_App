@@ -93,8 +93,8 @@ export class MaterialRequisitionComponent {
             reference: [''],
             p_priority:[null],
             p_requested: [null, Validators.required],
-            p_requiredBy: [null, Validators.required],
-            requiredByDate: [null, Validators.required],
+            p_requestedby: [null, Validators.required],
+            p_requiredbydate: [null, Validators.required],
             p_items: this.fb.array([])
         });
     }
@@ -190,7 +190,7 @@ export class MaterialRequisitionComponent {
         const paylaod = {
             p_returntype: 'ITEMALL',
             p_returnvalue: this.companyId,
-            username: this.userId
+            p_username: this.userId
         };
         this.inventoryService.Getreturndropdowndetails(paylaod).subscribe({
             next: (res) => (this.itemOptions = res.data),
@@ -200,9 +200,9 @@ export class MaterialRequisitionComponent {
 
     OnGetItemDetail(data: any): void {
         const paylaod = {
-            p_returntype: 'ITEMDETAILS',
+            p_returntype: 'ITEMWISE',
             p_returnvalue: data.value.toString(),
-            username: this.userId
+            p_username: this.userId
         };
         this.inventoryService.Getreturndropdowndetails(paylaod).subscribe({
             next: (res) => {
@@ -215,7 +215,7 @@ export class MaterialRequisitionComponent {
     }
 
     OnGetWorkList(data: any): void {
-        const paylaod = { p_returntype: 'WORKLISTDD', p_returnvalue: data.value.toString(), username: this.userId };
+        const paylaod = { p_returntype: 'WORKLISTDD', p_returnvalue: data.value.toString(), p_username: this.userId };
         this.inventoryService.Getreturndropdowndetails(paylaod).subscribe({
             next: (res) => {
                 this.workList = res.data || [];
@@ -230,9 +230,9 @@ export class MaterialRequisitionComponent {
 
     onGetMFNumberist() {
         const payload = {
-            p_returntype: 'MFNUMBER',
+            p_returntype: 'MRNUMBER',
             p_returnvalue: this.companyId,
-            username: this.userId
+            p_username: this.userId
         };
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res) => {
@@ -245,9 +245,9 @@ export class MaterialRequisitionComponent {
     OnGetDraftList() {
         const userId = this.authService.isLogIntType().userid.toString();
         const payload = {
-            p_returntype: 'MFDRAFT',
+            p_returntype: 'MRDRAFT',
             p_returnvalue: this.companyId,
-            username: userId
+            p_username: userId
         };
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res) => {
@@ -261,8 +261,8 @@ export class MaterialRequisitionComponent {
         const userId = this.authService.isLogIntType().userid.toString();
         const payload = {
             p_returntype: 'DEPARTMENT',
-            p_returnvalue: '',
-            username: userId
+            p_returnvalue: this.companyId,
+            p_username: userId
         };
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res) => {
@@ -380,7 +380,7 @@ export class MaterialRequisitionComponent {
             return;
         }
 
-        const paylaod = { p_returntype: 'MFDETAILS', p_returnvalue: matched.mf_no, username: this.userId };
+        const paylaod = { p_returntype: 'MFDETAILS', p_returnvalue: matched.mf_no, p_username: this.userId };
         this.inventoryService.Getreturndropdowndetails(paylaod).subscribe({
             next: (res) => {
                 const rows: any[] = Array.isArray(res?.data) ? res.data : [];
@@ -446,7 +446,7 @@ export class MaterialRequisitionComponent {
                 const hasTower = this.workList.some((w) => w.tower_block_id === header.tower_block_id);
                 if (!hasTower) {
                     // workList wasn't loaded for this draft's project yet — fetch it first
-                    const wlPayload = { p_returntype: 'WORKLISTDD', p_returnvalue: header.project_id.toString(), username: this.userId };
+                    const wlPayload = { p_returntype: 'WORKLISTDD', p_returnvalue: header.project_id.toString(), p_username: this.userId };
                     this.inventoryService.Getreturndropdowndetails(wlPayload).subscribe({
                         next: (res2) => {
                             this.workList = res2.data || [];

@@ -37,7 +37,7 @@
                     <td [style.width]="col.width">{{ row[col.field] }}</td>
                 }
                 <td class="text-center">
-                    <i class="pi pi-pencil cursor-pointer text-blue-500" [class.disabled-icon]="row.is_deleted === 'N' || masterForm.get('master')?.value === 'taxmaster'" (click)="masterForm.get('master')?.value !== 'taxmaster' && openEditDialog(row)"></i>
+                    <i class="pi pi-pencil cursor-pointer text-blue-500" [class.disabled-icon]="masterForm.get('master')?.value === 'taxmaster'" (click)="masterForm.get('master')?.value !== 'taxmaster' && openEditDialog(row)"></i>
                     <i class="pi pi-trash ms-2 text-red-500 cursor-pointer text-sm md:text-base" [class.disabled-icon]="row.is_deleted === 'N'" (click)="removeItem(row)"> </i>
                 </td>
             </tr>

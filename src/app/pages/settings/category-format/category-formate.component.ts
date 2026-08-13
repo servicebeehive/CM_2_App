@@ -242,6 +242,7 @@ export class CategoryFormateComponent {
     /** ✳️ Add User Dialog **/
     openUserDialog() {
         if (!this.masterForm) return;
+        this.masterForm.enable();
         this.selectedMaster = this.masterForm.get('master')?.value ?? 'categorymaster';
         this.addControlsByMaster(this.selectedMaster);
         this.editMode = false;
@@ -428,6 +429,18 @@ export class CategoryFormateComponent {
                 const cityName = master === 'customermaster' ? row.customercity : row.suppliercity;
                 this.patchLocationDropdowns(countryName, stateName, cityName);
             }
+
+            if(master === 'usertype') {
+                const lockedFields = ['p_usertype', 'is_approval', 'checked'];
+                if(row.is_deleted === 'N'){
+                    lockedFields.forEach(field => this.masterForm.get(field)?.disable());
+                    this.masterForm.get('web_access')?.enable();
+                }
+                else if (row.is_deleted === 'Y') {
+                    lockedFields.forEach(field => this.masterForm.get(field)?.enable());
+                    this.masterForm.get('web_access')?.enable();
+                }
+            }
         }
     }
 
@@ -505,6 +518,7 @@ export class CategoryFormateComponent {
     }
 
     closeDialog() {
+        this.masterForm.enable();
         this.visibleDialog = false;
         this.editMode = false;
         this.selectedUser = null;
@@ -676,7 +690,6 @@ export class CategoryFormateComponent {
     }
 
     saveMasterData(data: any) {
-        console.log('data', data, this.selectedUser);
         const master = this.selectedMaster;
         const username = this.authService.isLogIntType().userid.toString();
         const userId = this.authService.isLogIntType()?.userid?.toString();
@@ -778,7 +791,7 @@ export class CategoryFormateComponent {
                 p_isactive: data.checked ? 'Y' : 'N',
                 p_loginuser: userId,
                 p_companyid: this.authService.isLogIntType()?.companyid,
-                p_industrytype: this.authService.isLogIntType()?.industrytype,
+                p_industrytype: industryTypeId,
                 p_isapproval: data.is_approval ? 'Y' : 'N',
                 p_webaccess: data.web_access ? 'Y' : 'N'
             };

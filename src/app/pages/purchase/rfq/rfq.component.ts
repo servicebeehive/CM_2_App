@@ -158,7 +158,7 @@ export class RfqComponent implements OnInit {
         const payload = {
             p_returntype: 'RFQNUMBER',
             p_returnvalue: this.companyId,
-            username: this.userId
+            p_username: this.userId
         };
 
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
@@ -175,7 +175,7 @@ export class RfqComponent implements OnInit {
         const payload = {
             p_returntype: 'RFQDRAFT',
             p_returnvalue: this.companyId,
-            username: this.userId
+            p_username: this.userId
         };
 
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
@@ -192,7 +192,7 @@ export class RfqComponent implements OnInit {
         const payload = {
             p_returntype: 'ITEMALL',
             p_returnvalue: this.companyId,
-            username: this.userId
+            p_username: this.userId
         };
 
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
@@ -209,7 +209,7 @@ export class RfqComponent implements OnInit {
         const payload = {
             p_returntype: 'SUPPLIERMASTER',
             p_returnvalue: this.companyId,
-            username: this.userId
+            p_username: this.userId
         };
 
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
@@ -261,7 +261,7 @@ export class RfqComponent implements OnInit {
         const payload = {
             p_returntype: 'RFQITEMS',
             p_returnvalue: siteId.toString(),
-            username: this.userId
+            p_username: this.userId
         };
 
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
@@ -312,7 +312,7 @@ export class RfqComponent implements OnInit {
         const payload = {
             p_returntype: 'ITEMDETAILS',
             p_returnvalue: selectedItemId.toString(),
-            username: this.userId
+            p_username: this.userId
         };
 
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
@@ -452,7 +452,7 @@ export class RfqComponent implements OnInit {
         const payload = {
             p_returntype: 'RFQDETAILS',
             p_returnvalue: selected.rfq_no,
-            username: this.userId
+            p_username: this.userId
         };
 
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
