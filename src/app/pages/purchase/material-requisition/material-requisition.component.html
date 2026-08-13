@@ -7,6 +7,10 @@
             <span class="block text-surface-900 font-bold text-lg md:text-xl">Material Requisition</span>
             <div class="mr-form-footer">
                 <!-- Requisition No / Date row -->
+                 <span class="text-xl font-bold mt-2">Status</span>
+                <span class="font-bold text-xl mt-2" [ngStyle]="{ color: forecastForm.get('status')?.value === 'SUBMITTED' ? 'green' : 'blue' }">
+                    {{ forecastForm.get('status')?.value }}
+                </span>
                 <p-dropdown
                     [options]="draftRequisitionOptions"
                     optionLabel="mf_no"

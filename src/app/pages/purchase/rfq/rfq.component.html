@@ -5,6 +5,10 @@
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <span class="block text-surface-900 font-bold text-lg md:text-xl">Request for Quote (RFQ)</span>
             <div class="mr-form-footer">
+                <span class="text-xl font-bold mt-2">Status</span>
+                <span class="font-bold text-xl mt-2" [ngStyle]="{ color: rfqForm.get('status')?.value === 'SUBMITTED' ? 'green' : 'blue' }">
+                    {{ rfqForm.get('status')?.value }}
+                </span>
                 <p-dropdown
                     [options]="draftRfqOptions"
                     optionLabel="rfq_no"
@@ -62,9 +66,13 @@
                     ></p-dropdown>
                 </div>
 
-                <div class="flex flex-col">
-                    <label class="font-medium mb-1">Status</label>
-                    <p-dropdown [options]="statusOptions" optionLabel="label" optionValue="value" placeholder="Select Status" formControlName="p_status" [showClear]="false"></p-dropdown>
+                 <div class="flex flex-col">
+                    <label class="font-medium mb-1">Attachment</label>
+                    <div class="mr-file-input">
+                        <label for="rfqAttachment" class="mr-choose-btn"><i class="pi pi-upload"></i> Choose File</label>
+                        <input id="rfqAttachment" type="file" hidden (change)="onAttachmentSelect($event)" />
+                        <span class="mr-file-name">{{ attachmentFileName || 'No file chosen' }}</span>
+                    </div>
                 </div>
 
                 <div class="flex flex-col span-2">
@@ -75,15 +83,6 @@
                 <div class="flex flex-col span-2">
                     <label class="font-medium mb-1">Remarks</label>
                     <textarea pInputTextarea rows="3" formControlName="p_remarks" placeholder="Additional remarks"></textarea>
-                </div>
-
-                <div class="flex flex-col">
-                    <label class="font-medium mb-1">Attachment</label>
-                    <div class="mr-file-input">
-                        <label for="rfqAttachment" class="mr-choose-btn"><i class="pi pi-upload"></i> Choose File</label>
-                        <input id="rfqAttachment" type="file" hidden (change)="onAttachmentSelect($event)" />
-                        <span class="mr-file-name">{{ attachmentFileName || 'No file chosen' }}</span>
-                    </div>
                 </div>
             </div>
         </div>
@@ -152,15 +151,16 @@
 
                 <div class="vendor-grid" *ngFor="let vRow of vendorInviteRows; let i = index">
                     <p-dropdown
-                        [options]="categoryOptions"
+                        [options]="getAvailableCategoryOptions(i)"
                         optionLabel="label"
                         optionValue="value"
                         placeholder="Select Category"
                         [(ngModel)]="vRow.category"
+                        (ngModelChange)="onVendorCategoryChange(i)"
                         [ngModelOptions]="{ standalone: true }"
                     ></p-dropdown>
                     <p-multiSelect
-                        [options]="vendorOptions"
+                        [options]="vRow.availableVendors"
                         optionLabel="suppliername"
                         optionValue="supplierid"
                         [filter]="true"

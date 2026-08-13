@@ -14,40 +14,6 @@ import { TextareaModule } from 'primeng/textarea';
 import { DialogModule } from 'primeng/dialog';
 import { MultiSelectModule } from 'primeng/multiselect';
 
-interface RfqRow {
-    category: string;
-    item: string;
-    uom: string;
-    buffer_stock: number;
-    required_qty: number;
-    available_stock: number;
-    pending_qty: number;
-    total_mr_qty: number;
-    net_required_qty: number;
-    category_id?: number | null;
-    item_id?: number | null;
-    mr_no?: string;
-    mr_date?: string | Date | null;
-    department?: string;
-    requested_by?: string;
-}
-
-interface IncludedMrRow {
-    mr_no: string;
-    mr_date: string | Date | null;
-    department: string;
-    requested_by: string;
-}
-
-interface MrDetailData extends IncludedMrRow {
-    items: RfqRow[];
-}
-
-interface VendorInviteRow {
-    category: string;
-    selectedVendors: number[];
-}
-
 @Component({
     selector: 'app-rfq',
     standalone: true,
@@ -132,15 +98,19 @@ export class RfqComponent implements OnInit {
         });
     }
 
-    private loadSites(): void {
-        this.isLoadingProjects = true;
-        const payload = {
-            returnType: 'ACTIVEPROJECT',
-            returnValue: '',
-            username: '',
+    createDropdownPayload(returnType: string, retrunValue: string | null, userName: string| null): any {
+        return {
+            returnType: returnType,
+            returnValue: retrunValue?? '',
+            username: userName?? '',
             option1: this.companyId.toString(),
             option2: null
         };
+    }
+
+     loadSites(): void {
+        this.isLoadingProjects = true;
+        const payload = this.createDropdownPayload('ACTIVEPROJECT', null,null);
 
         this.inventoryService.getparameterbased(payload).subscribe({
             next: (res: any) => {
@@ -259,7 +229,7 @@ export class RfqComponent implements OnInit {
     private loadRfqItems(siteId: number): void {
         this.isLoadingItems = true;
         const payload = {
-            p_returntype: 'RFQITEMS',
+            p_returntype: 'PROJECTRFQ',
             p_returnvalue: siteId.toString(),
             p_username: this.userId
         };
@@ -310,7 +280,7 @@ export class RfqComponent implements OnInit {
         if (!selectedItemId) return;
 
         const payload = {
-            p_returntype: 'ITEMDETAILS',
+            p_returntype: 'ITEMWISE',
             p_returnvalue: selectedItemId.toString(),
             p_username: this.userId
         };
@@ -397,6 +367,40 @@ export class RfqComponent implements OnInit {
             this.mrDetailsMap[key] = value;
         });
     }
+
+onVendorCategoryChange(rowIndex: number): void {
+    const row = this.vendorInviteRows[rowIndex];
+    row.selectedVendors = [];
+    row.availableVendors = [];
+
+    if (!row.category) return;
+
+    const payload = {
+        p_returntype: 'CATEGORYVENDOR',
+        p_returnvalue: row.category,
+        p_username: this.userId
+    };
+
+    this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+        next: (res: any) => {
+            row.availableVendors = res.data || [];
+        },
+        error: () => {
+            row.availableVendors = [];
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Vendor load failed',
+                detail: 'Unable to fetch vendors for the selected category.',
+                life: 2500
+            });
+        }
+    });
+}
+
+getAvailableCategoryOptions(currentIndex: number): { label: string; value: string }[] {
+    const pickedElsewhere = this.vendorInviteRows.filter((_, i) => i !== currentIndex).map((r) => r.category).filter((c) => !!c);
+    return this.categoryOptions.filter((opt) => !pickedElsewhere.includes(opt.value));
+}
 
     openMrDetail(row: IncludedMrRow): void {
         this.selectedMrDetail = this.mrDetailsMap[row.mr_no] ?? {
