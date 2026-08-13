@@ -1,4 +1,4 @@
-interface RfqRow {
+export interface RfqRow {
     category: string;
     item: string;
     uom: string;
@@ -16,18 +16,18 @@ interface RfqRow {
     requested_by?: string;
 }
 
-interface IncludedMrRow {
+export interface IncludedMrRow {
     mr_no: string;
     mr_date: string | Date | null;
     department: string;
     requested_by: string;
 }
 
-interface MrDetailData extends IncludedMrRow {
+export interface MrDetailData extends IncludedMrRow {
     items: RfqRow[];
 }
 
-interface VendorInviteRow {
+export interface VendorInviteRow {
     category: string;
     selectedVendors: number[];
     availableVendors?: any[];

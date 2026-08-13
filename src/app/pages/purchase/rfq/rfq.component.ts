@@ -13,6 +13,7 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { TextareaModule } from 'primeng/textarea';
 import { DialogModule } from 'primeng/dialog';
 import { MultiSelectModule } from 'primeng/multiselect';
+import { RfqRow, IncludedMrRow, VendorInviteRow, MrDetailData } from '@/core/models/purchase.model';
 
 @Component({
     selector: 'app-rfq',
@@ -32,7 +33,7 @@ import { MultiSelectModule } from 'primeng/multiselect';
         MultiSelectModule
     ],
     templateUrl: './rfq.component.html',
-    styleUrl: './rfq.component.scss',
+    styleUrls: ['./rfq.component.scss'],
     providers: [MessageService]
 })
 export class RfqComponent implements OnInit {
