@@ -35,7 +35,8 @@ export const API_ENDPOINTS = {
         upsertworklisting: '/beeware/upsert_work_listing',
         upsertmaterialforecast: '/beeware/upsert_material_forecast',
         upsertpurchasedraft: '/beeware/upsert_po_draft',
-        upsertpurchaseorder: '/beeware/upsert_purchase_order'
+        upsertpurchaseorder: '/beeware/upsert_purchase_order',
+        upsertrfq: '/beeware/upsert_rfq'
     },
     sales: {
         getcalculatedMRP: '/beeware/getcalculatedMRP'

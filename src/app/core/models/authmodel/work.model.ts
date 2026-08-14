@@ -88,3 +88,21 @@ export interface PurchaseOrderPayload {
     p_items_json: PurchaseOrderItem[];
     p_loginuser: string;
 }
+
+export interface VendorInvitePayload {
+    categoryid: number | null;
+    vendorids: number[];
+}
+
+export interface UpsertRfqPayload {
+    p_companyid: number;
+    p_rfqid: number;            
+    p_site_id: number;
+    p_rfqdate: string | Date;  
+    p_rfq_description: string;
+    p_remarks: string;
+    p_attachment_path?: string | null;
+    p_status: string;       
+    p_user_id: number;
+    p_vendor_json?: VendorInvitePayload[] | null;
+}

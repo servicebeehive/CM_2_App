@@ -2,7 +2,7 @@ import { environment } from "@/environments/environment";
 import { HttpClient } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 import { ShareService } from "./shared.service";
-import { MaterialRequisitionPayload, PurchaseDraftPayload, PurchaseOrderPayload, UpserWorkList } from "../models/authmodel/work.model";
+import { MaterialRequisitionPayload, PurchaseDraftPayload, PurchaseOrderPayload, UpsertRfqPayload, UpserWorkList } from "../models/authmodel/work.model";
 import { catchError, Observable, throwError } from "rxjs";
 import { API_ENDPOINTS } from "../config/api-endpoints";
 
@@ -39,6 +39,14 @@ export class WorkService {
       upsertPurchaseOrder(payload:PurchaseOrderPayload):Observable<any>{
         let payloaddata = this.shareservice.GetApiBody(payload)
         let url = `${this.baseUrl}${API_ENDPOINTS.work.upsertpurchaseorder}`;
+        return this.http.post<any>(url,payloaddata).pipe(catchError(error=>{
+            return throwError(()=>error)
+        }))
+      }
+
+      upsertRFQ(payload:UpsertRfqPayload):Observable<any>{
+        let payloaddata = this.shareservice.GetApiBody(payload)
+        let url = `${this.baseUrl}${API_ENDPOINTS.work.upsertrfq}`;
         return this.http.post<any>(url,payloaddata).pipe(catchError(error=>{
             return throwError(()=>error)
         }))

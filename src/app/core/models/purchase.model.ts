@@ -29,6 +29,7 @@ export interface MrDetailData extends IncludedMrRow {
 
 export interface VendorInviteRow {
     category: string;
+    category_id: number | null;
     selectedVendors: number[];
     availableVendors?: any[];
 }

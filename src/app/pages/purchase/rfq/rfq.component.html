@@ -11,8 +11,8 @@
                 </span>
                 <p-dropdown
                     [options]="draftRfqOptions"
-                    optionLabel="rfq_no"
-                    optionValue="rfq_id"
+                    optionLabel="rfqno"
+                    optionValue="rfqid"
                     placeholder="Select Draft RFQ No"
                     filterPlaceholder="Search Draft RFQ No"
                     formControlName="p_draft_rfqno"
@@ -23,7 +23,7 @@
 
                 <button pButton type="button" label="Draft" class="p-button-outlined p-button-warning" (click)="submitDraft()" [disabled]="rfqForm.invalid || rfqList.length === 0"></button>
                 <button pButton type="button" label="View" class="p-button-outlined" (click)="openMaterialReqDialog()"></button>
-                <button pButton type="submit" label="Save" class="p-button-primary" [disabled]="rfqForm.invalid || rfqList.length === 0"></button>
+                <button pButton type="submit" label="Submit" class="p-button-primary" [disabled]="rfqForm.invalid || rfqList.length === 0"></button>
                 <button pButton type="button" label="Reset" class="p-button-secondary" (click)="onReset()"></button>
             </div>
         </div>
@@ -34,8 +34,8 @@
                     <label class="font-medium mb-1">RFQ No <span class="text-red-500">*</span></label>
                     <p-dropdown
                         [options]="rfqNoOptions"
-                        optionLabel="rfq_no"
-                        optionValue="rfq_id"
+                        optionLabel="rfqno"
+                        optionValue="rfqid"
                         placeholder="Select RFQ No"
                         formControlName="p_rfqno"
                         [filter]="true"
@@ -155,7 +155,7 @@
                         optionLabel="label"
                         optionValue="value"
                         placeholder="Select Category"
-                        [(ngModel)]="vRow.category"
+                        [(ngModel)]="vRow.category_id"
                         (ngModelChange)="onVendorCategoryChange(i)"
                         [ngModelOptions]="{ standalone: true }"
                     ></p-dropdown>
@@ -172,7 +172,7 @@
                     <button
                         pButton
                         type="button"
-                        icon="pi pi-trash"
+                        [icon]="rfqForm.get('p_status')?.value === 'SUBMITTED' ? 'pi pi-envelope' : 'pi pi-trash'"
                         class="p-button-text p-button-danger p-button-sm"
                         [disabled]="vendorInviteRows.length === 1"
                         (click)="removeVendorInviteRow(i)"
