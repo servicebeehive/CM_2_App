@@ -48,11 +48,14 @@ export class MaterialRequisitionComponent {
     ];
     costCenterOptions: any[] = [{ label: 'CC-001 - Civil Works', value: 'CC-001' }];
     itemDetailOptions: any[] = [];
+    requestedByOptions: any[] = [];
     workList: any[] = [];
     attachmentFile: File | null = null;
     attachmentFileName = '';
     approvedByName = '';
     approvedOnDate = '';
+    approved_on: Date | null = null;
+    approved_name = '';
     userId = '';
     companyId = '';
 
@@ -74,25 +77,23 @@ export class MaterialRequisitionComponent {
             p_mf_id: [null],
             p_requisitionno: [null],
             p_draft_requisitionno: [null],
-            p_mrdate: [this.today],
+            p_mrdate: [{ value: this.today, disabled: true }],
             p_project: [null, Validators.required],
             p_department: [null],
             p_work: [null, Validators.required],
             p_level: [null, Validators.required],
             p_pour: [null],
-            // p_period: [null, Validators.required],
             p_remarks: [''],
             p_itemdata: [null],
             status: [''],
             requestedBy: [''],
             approvedBy: [''],
             approvedOn: [null],
-            purpose: [''],
             costCenter: [''],
             priority: [null],
             reference: [''],
             p_priority:[null],
-            p_requested: [null, Validators.required],
+            p_requested: [null],
             p_requestedby: [null, Validators.required],
             p_requiredbydate: [null, Validators.required],
             p_items: this.fb.array([])
@@ -127,6 +128,22 @@ export class MaterialRequisitionComponent {
     get totalNetQuantity(): number {
         return this.itemArray.controls.reduce((sum, row) => sum + (Number(row.get('procure_qty')?.value) || 0), 0);
     }
+
+    get statusColor(): string {
+    const status = (this.forecastForm.get('status')?.value || '').toUpperCase();
+    switch (status) {
+        case 'APPROVED':
+            return 'green';
+        case 'SUBMITTED':
+            return 'blue';
+        case 'REJECTED':
+            return 'red';
+        case 'DRAFT':
+            return 'grey';
+        default:
+            return 'grey';
+    }
+}
 
     onAttachmentSelect(event: any) {
         const file = event.target.files[0];
@@ -180,10 +197,23 @@ export class MaterialRequisitionComponent {
         this.OnGetDepartment();
         this.onGetProject();
         // this.onGetPeriod();
+        this.onGetRequest();
     }
 
     onProjectChange(data: any) {
         this.OnGetWorkList(data);
+    }
+
+    onGetRequest(){
+         const paylaod = {
+            p_returntype: 'REQUESTEDBY',
+            p_returnvalue: this.companyId,
+            p_username: this.userId
+        };
+        this.inventoryService.Getreturndropdowndetails(paylaod).subscribe({
+            next: (res) => (this.requestedByOptions = res.data),
+            error: (err) => console.error(err)
+        });
     }
 
     OnGetItem(): void {
@@ -371,8 +401,8 @@ export class MaterialRequisitionComponent {
     }
 
     onDraftChange(data: any): void {
-        const fromRequisition = this.requisitionOptions.find((m: any) => m.mf_id === data.value);
-        const fromDraft = this.draftRequisitionOptions.find((m: any) => m.mf_id === data.value);
+        const fromRequisition = this.requisitionOptions.find((m: any) => String(m.mf_id) === String(data.value));
+        const fromDraft = this.draftRequisitionOptions.find((m: any) => String(m.mf_id) === String(data.value));
         const matched = fromRequisition ?? fromDraft;
 
         if (!matched) {
@@ -404,18 +434,24 @@ export class MaterialRequisitionComponent {
                         }, []);
 
                     const resolvedPour = header.pour_name ?? (this.pourOptions.length === 1 ? this.pourOptions[0].value : null);
-
+                    this.attachmentFileName = header.attachment ?? '';
+                    this.approved_on = header.approved_on ? new Date(header.approved_on) : null;
+                    this.approved_name = header.approved_name ?? '';
                     this.forecastForm.patchValue(
                         {
                             p_mf_id: header.mf_id,
-                            p_draft_requisitionno: header.mf_no,
+                            p_draft_requisitionno: header.mf_id,
                             p_project: header.project_id,
                             p_department: header.department_id,
                             p_work: header.tower_block_id,
                             p_level: header.level_name,
                             p_pour: resolvedPour,
-                            p_period: header.forecast_month,
+                            p_requestedby: header.requested_by,
+                            p_requiredbydate: header.required_by_date ? new Date(header.required_by_date) : null,
+                            p_priority: header.priority,
                             p_remarks: header.remarks ?? '',
+                            p_attachment: header.attachment ?? '',
+                            p_mrdate: header.created_on ? new Date(header.created_on) : this.today,
                             status: header.status
                         },
                         { emitEvent: false }
@@ -427,16 +463,16 @@ export class MaterialRequisitionComponent {
                         this.itemArray.push(
                             this.createItemRow({
                                 mfdetailid: row.mfdetailid,
-                                categoryid: row.item_category_id,
-                                item_category: row.categoryname ?? '',
+                                item_category_id: row.item_category_id,
+                                categoryname: row.categoryname ?? row.item_category ?? master?.item_category ?? '',
                                 itemid: row.item_id,
-                                itemname: master?.itemname ?? '',
-                                uomid: row.uom_id,
-                                uomname: row.uomname ?? '',
+                                item_description: row.itemname ?? master?.item_description ?? '',
+                                uom_id: row.uom_id,
+                                uomname: row.uomname ?? master?.uom ?? '',
                                 buffer_stock: row.buffer_stock,
                                 currentstock: row.available_stock,
                                 pending_qty: row.pending_qty,
-                                forecast_qty: row.forecast_qty,
+                                required_qty: row.required_qty,
                                 remarks: row.itemremark ?? ''
                             })
                         );
@@ -471,16 +507,16 @@ export class MaterialRequisitionComponent {
     }
     createItemRow(data?: any): FormGroup {
         const row = this.fb.group({
-            item_category_id: [data?.categoryid ?? null],
-            item_category: [data?.item_category ?? ''],
+            item_category_id: [data?.item_category_id ?? null],
+            item_category: [data?.categoryname ?? ''],
             item_id: [data?.itemid ?? null],
-            item_name: [data?.itemname ?? ''],
-            uom_id: [data?.uomid ?? null],
-            uom_name: [data?.uomname ?? ''],
+            item_description: [data?.item_description ?? ''],
+            uom_id: [data?.uom_id ?? null],
+            uom: [data?.uomname ?? ''],
             buffer_stock: [data?.buffer_stock ?? 0],
             available_stock: [data?.currentstock ?? 0],
             pending_qty: [data?.pending_qty ?? 0],
-            forecast_qty: [data?.forecast_qty ?? '', Validators.min(0)],
+            required_qty: [data?.required_qty ?? '', Validators.min(0)],
             procure_qty: [{ value: 0, disabled: true }],
             remarks: [data?.remarks ?? null]
         });
@@ -492,12 +528,12 @@ export class MaterialRequisitionComponent {
     }
 
     private wireProcureQtyCalc(row: FormGroup): void {
-        row.get('forecast_qty')?.valueChanges.subscribe(() => this.recalculateProcureQty(row));
+        row.get('required_qty')?.valueChanges.subscribe(() => this.recalculateProcureQty(row));
         row.get('pending_qty')?.valueChanges.subscribe(() => this.recalculateProcureQty(row));
     }
 
     private recalculateProcureQty(row: FormGroup): void {
-        const forecastQty = Number(row.get('forecast_qty')?.value) || 0;
+        const forecastQty = Number(row.get('required_qty')?.value) || 0;
         const pendingQty = Number(row.get('pending_qty')?.value) || 0;
         const availableQty = Number(row.get('available_stock')?.value) || 0;
 
@@ -532,7 +568,7 @@ export class MaterialRequisitionComponent {
                 const row = this.itemArray.at(index);
                 if (!row.get('uom_id')?.value) {
                     const first = res.data[0];
-                    row.patchValue({ uom_id: first.fieldid, uom_name: first.fieldname });
+                    row.patchValue({ uom_id: first.fieldid, uomname: first.fieldname });
                 }
             },
             error: (err) => console.error(err)
@@ -543,7 +579,7 @@ export class MaterialRequisitionComponent {
         const row = this.itemArray.at(index);
         const selectedUom = this.uomlist[index]?.find((u: any) => u.fieldid === event.value);
         if (!selectedUom) return;
-        row.patchValue({ uom_id: selectedUom.fieldid, uom_name: selectedUom.fieldname });
+        row.patchValue({ uom_id: selectedUom.fieldid, uomname: selectedUom.fieldname });
     }
 
     deleteBill(item: any, event: Event) {
@@ -570,7 +606,7 @@ export class MaterialRequisitionComponent {
     }
 
     isSubmitDisabled(): boolean {
-        return this.itemArray.length === 0 || !!this.forecastForm.get('p_project')?.invalid || !!this.forecastForm.get('p_work')?.invalid || !!this.forecastForm.get('p_level')?.invalid || !!this.forecastForm.get('p_period')?.invalid;
+        return this.itemArray.length === 0 || !!this.forecastForm.get('p_project')?.invalid || !!this.forecastForm.get('p_work')?.invalid || !!this.forecastForm.get('p_level')?.invalid;
     }
 
     private buildPayload(action: 'DRAFT' | 'SUBMIT', operation?: 'INSERT' | 'EDIT' | 'DELETE'): MaterialRequisitionPayload {
@@ -578,14 +614,19 @@ export class MaterialRequisitionComponent {
         return {
             p_action: action,
             p_operation: operation ?? (v.p_mf_id ? 'EDIT' : 'INSERT'),
-            p_mf_id: v.p_mf_id ?? null,
+            p_mf_id: v.p_mf_id ?? 0,
             p_project_id: v.p_project,
             p_department_id: v.p_department,
             p_tower_block_id: v.p_work,
             p_level_name: v.p_level,
-            p_forecast_month: v.p_period,
+            p_forecast_month: null,
             p_pour_name: v.p_pour,
             p_remarks: v.p_remarks || '',
+            p_mr_date: v.p_mrdate ? new Date(v.p_mrdate).toISOString().split('T')[0] : null,
+            p_required_by_date: v.p_requiredbydate ? new Date(v.p_requiredbydate).toISOString().split('T')[0] : null,
+            p_requested_by: v.p_requestedby ?? null,
+            p_priority: v.p_priority ?? null,
+            p_attachment: this.attachmentFileName || null,
             p_items: this.itemArray.controls.map((row: any) => ({
                 item_category_id: row.get('item_category_id')?.value ?? null,
                 item_id: row.get('item_id')?.value,
@@ -593,8 +634,9 @@ export class MaterialRequisitionComponent {
                 buffer_stock: row.get('buffer_stock')?.value ?? 0,
                 available_stock: row.get('available_stock')?.value ?? 0,
                 pending_qty: row.get('pending_qty')?.value ?? 0,
-                forecast_qty: row.get('forecast_qty')?.value ?? 0,
-                procure_qty: row.get('procure_qty')?.value ?? 0,
+                required_qty: row.get('required_qty')?.value ?? 0,
+                total_mr_qty: row.get('total_mr_qty')?.value ?? 0,
+                required_qty_net: row.get('required_qty_net')?.value ?? 0,
                 remarks: row.get('remarks')?.value || ''
             })),
             p_loginuser: this.authService.isLogIntType()?.userid
@@ -716,9 +758,10 @@ export class MaterialRequisitionComponent {
         });
     }
     onReset(): void {
-        this.forecastForm.reset();
+        this.forecastForm.reset({
+            p_mrdate: this.today
+        });
         this.itemArray.clear();
         this.uomlist = [];
-        this.forecastForm.get('p_period')?.setValue(null);
     }
 }

@@ -105,7 +105,8 @@ $gold-border: #e6d0a0;
 
 .checkbox-col {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  flex-direction: row;
 }
 
 .field-label {
@@ -160,7 +161,7 @@ $gold-border: #e6d0a0;
 
 .chk-item {
   display: flex;
-  align-items: center;
+  align-items: left;
   gap: 0.5rem;
 }
 

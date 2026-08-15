@@ -22,6 +22,11 @@ export interface MaterialRequisitionPayload {
     p_remarks: string | null;
     p_items: MaterialForecastItem[];
     p_loginuser: number | null;
+    p_mr_date?: string | Date | null;
+    p_required_by_date?: string | Date | null;
+    p_requested_by?: number | null;
+    p_priority?: string | null;
+    p_attachment?: string | null;
 }
 
 export interface MaterialForecastItem {
@@ -29,10 +34,11 @@ export interface MaterialForecastItem {
     item_id: number;
     uom_id: number;
     buffer_stock: number;
+    required_qty: number;
+    total_mr_qty: number;
     available_stock: number;
     pending_qty: number;
-    forecast_qty: number;
-    procure_qty: number;
+    required_qty_net: number;
     remarks: string;
 }
 

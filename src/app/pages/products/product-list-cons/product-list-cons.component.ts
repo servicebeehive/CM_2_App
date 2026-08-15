@@ -189,9 +189,9 @@ export class ProductListConsComponent {
             return;
         }
         const payload = {
-            p_returntype: 'ITEMWISE',
-            p_returnvalue: item || '',
-             p_username: category || ''
+            p_returntype: 'ITEMDETAILS',
+            p_returnvalue: category || '',
+             p_username: item || ''
         };
 
         this.showData = false;

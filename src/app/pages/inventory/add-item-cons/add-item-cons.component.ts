@@ -134,8 +134,8 @@ export class AddItemConsComponent {
     ngOnInit(): void {
         this.addForm = this.fb.group(
             {
-                itembarcode: ['', [Validators.required, Validators.maxLength(50)]],
-                itemCode: ['', [Validators.required, Validators.maxLength(50)]],
+                itembarcode: ['', [ Validators.maxLength(50)]],
+                itemCode: ['', [Validators.maxLength(50)]],
                 category: ['', Validators.required],
                 parentUOM: ['', Validators.required],
                 itemName: ['', [Validators.required, Validators.maxLength(500)]],
@@ -157,9 +157,7 @@ export class AddItemConsComponent {
                 subCategory: [''],
                 itemGroup: [''],
                 itemSubGroup: [''],
-                remarks: ['', Validators.maxLength(500)],
                 activeItem: [true],
-                gstItem: [true],
                 itemSearch: [''],
                 itemtype: [''],
                 p_tax: [''],
@@ -167,7 +165,7 @@ export class AddItemConsComponent {
             },
             { validators: this.mrpValidator }
         );
-
+        this.onGetTax();
         this.addForm.get('purchasePrice')?.valueChanges.subscribe(() => this.updateCostPerItem());
         this.addForm.get('qty')?.valueChanges.subscribe(() => this.updateCostPerItem());
 
@@ -222,6 +220,19 @@ export class AddItemConsComponent {
         }
     }
 
+    onGetTax(){
+        const payload = {
+            p_returntype: 'TAXDETAILS',
+                p_returnvalue: this.authService.isLogIntType()?.industry_type_id.toString(),
+                p_username: ''
+        }
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res) => {
+                this.taxOptions = res?.data || [];
+            }
+        })
+    }
+
     onItemSearch(event: any) {
         this.searchValue = event.filter || '';
     }
@@ -248,7 +259,6 @@ export class AddItemConsComponent {
         subCategory: itemData.subcategoryid ?? '',
         itemGroup: itemData.itemgroupid ?? '',
         itemSubGroup: itemData.itemsubgroupid ?? '',
-        remarks: itemData.remarks ?? '',
         location: itemData.location ?? '',
         p_tax: itemData.gstrate?.toString() ?? '',
         purchasePrice: itemData.purchaseprice ?? 0
@@ -266,7 +276,6 @@ export class AddItemConsComponent {
             category: itemData.categoryid,
             curStock: itemData.currentstock,
             p_expirydate: itemData.expirydate ? new Date(itemData.expirydate) : null,
-            gstItem: itemData.gstitem === 'Y',
             activeItem: itemData.isactive === 'Y',
             minStock: itemData.minimumstock,
             purchasePrice: this.mode == 'add' ? 0 : itemData.pruchaseprice.toFixed(2),
@@ -289,7 +298,6 @@ export class AddItemConsComponent {
         this.addForm.reset();
     this.addForm.enable();
     this.addForm.get('activeItem')?.setValue(true);
-    this.addForm.get('gstItem')?.setValue(true);
     this.addForm.get('transactionType')?.setValue('purchase');
     this.showCopyMessage = false;
     }
@@ -393,7 +401,7 @@ export class AddItemConsComponent {
         p_categoryid: Number(form.category),
         p_warrentyperiod: Number(form.warPeriod) || 0,
         p_expirydate: this.datePipe.transform(form.p_expirydate, 'dd/MM/yyyy'),
-        p_gstitem: form.gstItem ? 'Y' : 'N',
+        p_gstitem: 'Y',
         p_isactive: form.activeItem ? 'Y' : 'N',
         p_loginuser: this.shareservice.getUserData()?.username || this.authService.isLogIntType().userid.toString(),
         p_itembarcode: form.itembarcode,
@@ -410,7 +418,7 @@ export class AddItemConsComponent {
         p_subcategoryid: form.subCategory ? Number(form.subCategory) : null,
         p_itemgroupid: form.itemGroup ? Number(form.itemGroup) : null,
         p_itemsubgroupid: form.itemSubGroup ? Number(form.itemSubGroup) : null,
-        p_remarks: form.remarks ?? null,
+        p_remarks: null,
         p_industry: this.authService.isLogIntType()?.industry_type_id || null,
     };
 }
@@ -438,7 +446,6 @@ onSubmit() {
     resetForm() {
         this.addForm.reset();
         this.addForm.get('activeItem')?.setValue(true);
-        this.addForm.get('gstItem')?.setValue(true);
         this.addForm.get('transactionType')?.setValue('purchase');
         this.addForm.enable();
     }

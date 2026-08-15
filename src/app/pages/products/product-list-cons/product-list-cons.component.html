@@ -59,36 +59,28 @@
                         <ng-template pTemplate #header>
                             <tr class="bg-yellow-400">
                                 <th style="width: 4rem"><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
-                                <th>Item Name</th>
                                 <th class="!min-w-[120px]">Category</th>
+                                <th>Item Name</th>
+                                <th>UOM</th>
                                 <th>Available Stock</th>
                                 <th>Buffer Stock</th>
-                                <th>Req Qty</th>
-                                <th>Pending Qty</th>
-                                <th>Req Net Qty</th>
-                                <th>TotalMRP</th>
-                                <th>GST Item</th>
                                 <th>Active</th>
-                                <th>BarCode</th>
+                                <!-- <th>BarCode</th> -->
                                 <th class="text-center">Action</th>
                             </tr>
                         </ng-template>
                         <ng-template pTemplate="body" let-row let-i="rowIndex">
                             <tr>
                                 <td><p-tableCheckbox [value]="row" /></td>
+                               <td class="!min-w-[120px]">{{ row.categoryname }}</td>
                                 <td>{{ row.item_description }}</td>
-                                <td class="!min-w-[120px]">{{ row.categoryname }}</td>
+                                <td class="w-[60px]">{{ row.uomname }}</td>
                                 <td class="w-[60px]">{{ row.available_stock }}</td>
-                                <td class="w-[60px]">{{ row.buffer_stock }}</td>
-                                <td class="w-[60px]">{{ row.required_qty }}</td>
-                                <td class="w-[60px]">{{ row.pending_qty }}</td>
-                                <td class="w-[60px]">{{ row.required_qty_net }}</td>
-                                <td class="w-[60px]">{{ row.total_mr_qty }}</td>
-                                <td class="w-[60px]">{{ row.gstitem }}</td>
+                                <td class="w-[60px]">{{ row.buffer_stock }}</td>     
                                 <td class="w-[60px]">{{ row.isactive }}</td>
-                                <td class="w-[140px]">
+                                <!-- <td class="w-[140px]">
                                     <img [src]="generateBarcode(row.itembarcode)" alt="barcode" />
-                                </td>
+                                </td> -->
                                 <td class="text-center w-[60px]">
                                     <div class="flex g-2">
                                         <button pButton type="button" icon="pi pi-print" disabled class="p-button-text p-button-sm" (click)="printSingleBarcode(row)"></button>

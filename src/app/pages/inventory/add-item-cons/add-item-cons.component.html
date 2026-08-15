@@ -32,15 +32,13 @@
             </div>
 
             <div class="field-col">
-                <label class="field-label">Item SKU <span class="req">*</span></label>
+                <label class="field-label">Item SKU</label>
                 <input pInputText formControlName="itemCode" placeholder="Enter SKU code" (input)="toUppercase($event)" (blur)="onBlur($event)" />
-                <small class="err-msg" *ngIf="addForm.get('itemCode')?.touched && addForm.get('itemCode')?.errors?.['required']"> Item Code is required </small>
             </div>
 
             <div class="field-col">
-                <label class="field-label">Barcode <span class="req">*</span></label>
+                <label class="field-label">Barcode</label>
                 <input pInputText formControlName="itembarcode" placeholder="Enter barcode" (input)="toUppercase($event)" (blur)="onBlurBarCode($event)" />
-                <small class="err-msg" *ngIf="addForm.get('itembarcode')?.touched && addForm.get('itembarcode')?.errors?.['required']"> Barcode is required </small>
             </div>
 
             <div class="field-col">
@@ -79,6 +77,11 @@
                 <label class="field-label">HSN Code</label>
                 <input pInputText formControlName="hsnCode" placeholder="Enter HSN code" />
             </div>
+
+              <div class="field-col">
+                <label class="field-label">Expiry Date (if applicable)</label>
+                <p-datepicker fluid formControlName="p_expirydate" dateFormat="dd/mm/yy" [minDate]="dateTime" [showIcon]="true"></p-datepicker>
+            </div>
         </div>
     </div>
 
@@ -107,12 +110,9 @@
                 <input pInputText formControlName="warPeriod" placeholder="Enter warranty period" (keypress)="allowOnlyNumbers($event)" />
             </div>
 
-            <div class="field-col checkbox-col">
-                <label class="field-label">Is Active</label>
-                <div class="chk-item">
+            <div class="field-col mt-9 checkbox-col">
                     <p-checkbox formControlName="activeItem" [binary]="true"></p-checkbox>
                     <label>Is Active</label>
-                </div>
             </div>
         </div>
     </div>
@@ -145,16 +145,8 @@
 
             <div class="field-col">
                 <label class="field-label">GST Rate (%) <span class="req">*</span></label>
-                <p-dropdown [options]="taxOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search GST rate" formControlName="p_tax" placeholder="Select GST rate"> </p-dropdown>
+                <p-dropdown [options]="taxOptions" optionLabel="taxname" optionValue="taxid" [filter]="true" filterPlaceholder="Search GST rate" formControlName="p_tax" placeholder="Select GST rate"> </p-dropdown>
                 <small class="err-msg" *ngIf="addForm.get('p_tax')?.touched && addForm.get('p_tax')?.errors?.['required']"> GST Rate is required </small>
-            </div>
-
-            <div class="field-col checkbox-col">
-                <label class="field-label">GST Item </label>
-                <div class="chk-item">
-                    <p-checkbox formControlName="gstItem" [binary]="true"></p-checkbox>
-                    <label>Is GST Applicable</label>
-                </div>
             </div>
         </div>
     </div>
@@ -187,28 +179,6 @@
             <div class="field-col">
                 <label class="field-label">Item Sub Group</label>
                 <p-dropdown [options]="itemSubGroupOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search Item Sub Group" formControlName="itemSubGroup" placeholder="Select item sub group"> </p-dropdown>
-            </div>
-        </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════
-         OTHER DETAILS
-    ════════════════════════════════════════════ -->
-    <div class="section-card">
-        <div class="section-header">
-            <i class="pi pi-info-circle"></i>
-            <span>OTHER DETAILS</span>
-        </div>
-
-        <div class="fields-grid cols-4">
-            <div class="field-col">
-                <label class="field-label">Expiry Date (if applicable)</label>
-                <p-datepicker fluid formControlName="p_expirydate" dateFormat="dd/mm/yy" [minDate]="dateTime" [showIcon]="true"></p-datepicker>
-            </div>
-
-            <div class="field-col span-3">
-                <label class="field-label">Remarks</label>
-                <textarea pInputTextarea formControlName="remarks" placeholder="Enter any additional remarks" rows="2"></textarea>
             </div>
         </div>
     </div>

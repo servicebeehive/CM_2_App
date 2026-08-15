@@ -65,12 +65,12 @@ $radius: 10px;
 
 .mr-approval-info {
   display: flex;
-  gap: 10px;
+  gap: 15px;
 
   > div {
     display: flex;
-    flex-direction: column;
-    gap: 2px;
+    flex-direction: row;
+    gap: 5px;
   }
 }
 

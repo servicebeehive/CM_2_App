@@ -140,12 +140,11 @@ isLoadingRfqNo = false;
     private loadRfqNoOptions(): void {
     this.isLoadingRfqNo = true;
     const payload = {
-        p_returntype: 'RFQLIST', // ⬅️ confirm exact return type with backend
-        p_returnvalue: this.companyId.toString(),
-        username: ''
+        p_returntype: 'RFQID',
+        p_username: this.companyId.toString()
     };
 
-    this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+    this.inventoryService.getdropdowndetails(payload).subscribe({
         next: (res: any) => {
             this.rfqNoOptions = res.data || [];
             this.isLoadingRfqNo = false;
@@ -165,7 +164,7 @@ private loadItems(): void {
         username: ''
     };
 
-    this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+    this.inventoryService.getdropdowndetails(payload).subscribe({
         next: (res: any) => {
             this.itemOptions = (res.data || []).map((i: any) => ({
                 itemid: i.itemid ?? i.item_id,
@@ -189,7 +188,7 @@ private loadItems(): void {
             username: ''
         };
 
-        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+        this.inventoryService.getdropdowndetails(payload).subscribe({
             next: (res: any) => {
                 this.vendorOptions = (res.data || []).map((v: any) => ({
                     vendor_id: v.supplierid ?? v.vendor_id,

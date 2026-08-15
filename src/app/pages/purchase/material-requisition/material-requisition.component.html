@@ -8,7 +8,7 @@
             <div class="mr-form-footer">
                 <!-- Requisition No / Date row -->
                  <span class="text-xl font-bold mt-2">Status</span>
-                <span class="font-bold text-xl mt-2" [ngStyle]="{ color: forecastForm.get('status')?.value === 'SUBMITTED' ? 'green' : 'blue' }">
+                <span class="font-bold text-xl mt-2" [ngStyle]="{ color: statusColor }">
                     {{ forecastForm.get('status')?.value }}
                 </span>
                 <p-dropdown
@@ -36,12 +36,12 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-3">
                 <div class="flex flex-col">
                     <label class="font-medium mb-1">MR No<span class="text-red-500">*</span></label>
-                    <p-dropdown [options]="requisitionOptions" optionLabel="mf_no" optionValue="mf_id" placeholder="Select MR No" formControlName="p_requisitionno" [filter]="true" [showClear]="true" filterPlaceholder="Search MR No"></p-dropdown>
+                    <p-dropdown [options]="requisitionOptions" optionLabel="mf_no" optionValue="mf_id" placeholder="Select MR No" formControlName="p_requisitionno" [filter]="true" [showClear]="true" filterPlaceholder="Search MR No" (onChange)="onDraftChange($event)"></p-dropdown>
                 </div>
 
                 <div class="flex flex-col">
                     <label class="font-medium mb-1">MR Date <span class="text-red-500">*</span></label>
-                    <p-datePicker fluid [showIcon]="true" formControlName="p_mrdate" dateFormat="dd-mm-yy" placeholder="Select date"></p-datePicker>
+                    <p-datePicker fluid [showIcon]="true" formControlName="p_mrdate" dateFormat="dd-mm-yy" placeholder="Select date" [disabled]="true"></p-datePicker>
                 </div>
 
                 <div class="flex flex-col">
@@ -84,13 +84,13 @@
                 </div>
 
                 <div class="flex flex-col">
-                    <label class="font-medium mb-1">Pour<span class="text-red-500">*</span></label>
+                    <label class="font-medium mb-1">Pour</label>
                     <p-dropdown [options]="pourOptions" optionLabel="label" optionValue="value" placeholder="Select Pour" formControlName="p_pour" [filter]="true" [showClear]="true"></p-dropdown>
                 </div>
 
                 <div class="flex flex-col">
                     <label class="font-medium mb-1">Requested By <span class="text-red-500">*</span></label>
-                    <p-dropdown [options]="categoryOptions" optionLabel="user_name" optionValue="user_id" placeholder="Select requester" formControlName="p_requestedby" [filter]="true" [showClear]="true"></p-dropdown>
+                    <p-dropdown [options]="requestedByOptions" optionLabel="fullname" optionValue="userid" placeholder="Select requester" formControlName="p_requestedby" [filter]="true" [showClear]="true"></p-dropdown>
                 </div>
 
                 <div class="flex flex-col">
@@ -113,7 +113,7 @@
                     <div class="mr-file-input">
                         <label for="mrAttachment" class="mr-choose-btn"><i class="pi pi-upload"></i> Choose File</label>
                         <input id="mrAttachment" type="file" hidden (change)="onAttachmentSelect($event)" />
-                        <!-- <span class="mr-file-name">{{ attachmentFileName || 'No file chosen' }}</span> -->
+                        <span class="mr-file-name">{{ attachmentFileName || 'No file chosen' }}</span>
                     </div>
                 </div>
 
@@ -157,16 +157,12 @@
 
                 <div class="mr-approval-info">
                     <div>
-                        <span class="mr-meta-label">Approval Status</span>
-                        <!-- <span class="mr-status-badge" [ngClass]="approvalStatusClass">{{ forecastForm.get('status')?.value || 'Pending' }}</span> -->
+                        <span class="mr-meta-label">Approved By :</span>
+                        <span class="mr-meta-value">{{ approved_on | date:'dd/MM/yy' }}</span>
                     </div>
                     <div>
-                        <span class="mr-meta-label">Approved By</span>
-                        <!-- <span class="mr-meta-value">{{ approvedByName || '—' }}</span> -->
-                    </div>
-                    <div>
-                        <span class="mr-meta-label">Approved On</span>
-                        <!-- <span class="mr-meta-value">{{ approvedOnDate || '—' }}</span> -->
+                        <span class="mr-meta-label">Approved On :</span>
+                        <span class="mr-meta-value">{{ approved_name }}</span>
                     </div>
                 </div>
             </div>
@@ -180,10 +176,10 @@
                             <th>Item Description</th>
                             <th>UOM</th>
                             <th>Buffer Stock</th>
-                            <th class="text-right">Required Qty</th>
                             <th class="text-right">Available Stock</th>
                             <th class="text-right">Pending Qty</th>
                             <th class="text-right">Total MR Qty</th>
+                            <th class="text-right">Required Qty</th>
                             <th class="text-right">Required Qty (Net)</th>
                             <th *ngIf="!isReadOnlyView" class="text-center">Action</th>
                         </tr>
@@ -192,16 +188,16 @@
                     <ng-template pTemplate="body" let-row let-i="rowIndex">
                         <tr [formGroup]="row">
                             <td class="text-xs md:text-sm">{{ row.get('item_category')?.value }}</td>
-                            <td class="text-xs md:text-sm">{{ row.get('item_name')?.value }}</td>
-                            <td class="text-xs md:text-sm">{{ row.get('uom_name')?.value }}</td>
+                            <td class="text-xs md:text-sm">{{ row.get('item_description')?.value }}</td>
+                            <td class="text-xs md:text-sm">{{ row.get('uom')?.value }}</td>
                             <!-- <td><p-dropdown #uomDropdown [options]="uomlist[i]" optionLabel="fieldname" optionValue="fieldid" placeholder="UOM" formControlName="uom_id" [filter]="true" appendTo="body" (onChange)="UOMId($event, i)"></p-dropdown></td> -->
                             <td class="text-xs md:text-sm">{{ row.get('buffer_stock')?.value }}</td>
                             <td class="text-xs md:text-sm">{{ row.get('available_stock')?.value }}</td>
                             <td class="text-xs md:text-sm">{{ row.get('pending_qty')?.value }}</td>
                             <td class="text-xs md:text-sm">{{ row.get('pending_qty')?.value }}</td>
                             <td>
-                                <input *ngIf="!isReadOnlyView" pInputText type="number" formControlName="forecast_qty" placeholder="0" />
-                                <span *ngIf="isReadOnlyView" class="text-xs md:text-sm">{{ row.get('forecast_qty')?.value }}</span>
+                                <input *ngIf="!isReadOnlyView" pInputText type="number" formControlName="required_qty" placeholder="0" />
+                                <span *ngIf="isReadOnlyView" class="text-xs md:text-sm">{{ row.get('required_qty')?.value }}</span>
                             </td>
 
                             <td class="text-xs md:text-sm">{{ row.get('procure_qty')?.value }}</td>

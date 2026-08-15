@@ -113,6 +113,21 @@ export class RfqComponent implements OnInit {
         };
     }
 
+  onGetMRNumberist() {
+        const payload = {
+            p_returntype: 'MRNUMBER',
+            p_returnvalue: this.companyId,
+            p_username: this.userId
+        };
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res) => {
+                this.includedMrList = res.data;
+            },
+            error: (err) => console.error(err)
+        });
+    }
+
+
      loadSites(): void {
         this.isLoadingProjects = true;
         const payload = this.createDropdownPayload('ACTIVEPROJECT', null,null);
