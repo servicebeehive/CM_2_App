@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { ChipModule } from 'primeng/chip';
@@ -56,6 +56,7 @@ import { ToastModule } from 'primeng/toast';
     providers: [ConfirmationService, MessageService]
 })
 export class ProductListConsComponent {
+    @ViewChild(AddItemConsComponent) addItemComponent!: AddItemConsComponent;
     updateForm!: FormGroup;
 
     visibleDialog = false;
@@ -227,17 +228,22 @@ export class ProductListConsComponent {
        this.mode = 'add';
     this.selectedRow = null;
     this.visibleDialog = true;
+    this.addItemComponent?.enterAddModeReset();
     }
 
     onSave(updatedData: any) {
-        const message = updatedData?.message || 'Item saved successfully.';
+        const message = updatedData?.message;
         this.showSuccess(message);
-        this.Onreturndropdowndetails();
+       const category = this.updateForm.controls['category'].value;
+    const item = this.updateForm.controls['item'].value;
+    if (category || item) {
+        this.Onreturndropdowndetails(); 
+    }
     }
 
     closeDialog() {
         this.visibleDialog = false;
-        this.reset();
+        this.selectedRow = null;
     }
 
     reset() {

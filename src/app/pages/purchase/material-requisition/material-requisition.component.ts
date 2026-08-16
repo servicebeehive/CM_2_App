@@ -14,6 +14,7 @@ import { InventoryService } from '@/core/services/inventory.service';
 import { AuthService } from '@/core/services/auth.service';
 import { WorkService } from '@/core/services/work.service';
 import { MaterialRequisitionPayload } from '@/core/models/authmodel/work.model';
+import { environment } from '@/environments/environment';
 
 @Component({
     selector: 'app-material-requisition',
@@ -503,7 +504,7 @@ export class MaterialRequisitionComponent {
     }
 
     get isReadOnlyView(): boolean {
-        return this.forecastForm.get('status')?.value === 'SUBMITTED';
+        return this.forecastForm.get('status')?.value !== 'DRAFT' && this.forecastForm.get('status')?.value !== '';
     }
     createItemRow(data?: any): FormGroup {
         const row = this.fb.group({
@@ -672,6 +673,17 @@ export class MaterialRequisitionComponent {
         });
     }
 
+viewAttachment(){
+    if(!this.attachmentFileName) return;
+     if (this.attachmentFile) {
+        const localUrl = URL.createObjectURL(this.attachmentFile);
+        window.open(localUrl, '_blank');
+        return;
+    }
+    const fileUrl = `${environment.baseurl}/uploads/${this.attachmentFileName}`;
+    window.open(fileUrl, '_blank');
+}
+    
     onSubmit(): void {
         if (this.isSubmitDisabled()) {
             this.messageService.add({ severity: 'error', summary: 'Validation Failed', detail: 'Fill all required fields and add at least one item.', life: 2500 });

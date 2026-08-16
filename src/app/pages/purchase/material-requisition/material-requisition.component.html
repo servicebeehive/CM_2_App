@@ -15,13 +15,33 @@
                     [options]="draftRequisitionOptions"
                     optionLabel="mf_no"
                     optionValue="mf_id"
-                    placeholder="Select Draft MR No"
-                    filterPlaceholder="Search Draft MR No"
+                    placeholder="Draft MR No"
+                    filterPlaceholder="Draft MR No"
                     formControlName="p_draft_requisitionno"
                     [filter]="true"
                     [showClear]="true"
                     (onChange)="onDraftChange($event)"
-                ></p-dropdown>
+                >
+                    <ng-template pTemplate="selectedItem" let-item>
+                        <div class="flex items-center gap-2" *ngIf="item">
+                            <span>{{ item.mf_no }}</span>
+                        </div>
+                    </ng-template>
+
+                    <ng-template pTemplate="item" let-item>
+                        <div class="flex items-center justify-between gap-2 w-full">
+                            <span>{{ item.mf_no }}</span>
+                            <button
+                                pButton
+                                type="button"
+                                icon="pi pi-trash"
+                                class="p-button-text p-button-danger p-0"
+                                [attr.aria-label]="'Delete draft ' + item.mf_no"
+                                (click)="deleteDraftItem(item, $event)"
+                            ></button>
+                        </div>
+                    </ng-template>
+                </p-dropdown>
 
                 <button pButton type="submit" label="Submit" class="p-button-primary" *ngIf="!isReadOnlyView" [disabled]="forecastForm.invalid || isSubmitDisabled()"></button>
                 <button pButton type="button" label="Draft" class="p-button-outlined p-button-warning" *ngIf="!isReadOnlyView" (click)="submitDraft()" [disabled]="forecastForm.invalid || isSubmitDisabled()"></button>
@@ -114,6 +134,13 @@
                         <label for="mrAttachment" class="mr-choose-btn"><i class="pi pi-upload"></i> Choose File</label>
                         <input id="mrAttachment" type="file" hidden (change)="onAttachmentSelect($event)" />
                         <span class="mr-file-name">{{ attachmentFileName || 'No file chosen' }}</span>
+                        <i
+            *ngIf="attachmentFileName"
+            class="pi pi-eye mr-view-icon"
+            style="cursor: pointer; margin-left: 8px; color: var(--primary-color, #2196F3);"
+            title="View attachment"
+            (click)="viewAttachment()"
+        ></i>
                     </div>
                 </div>
 

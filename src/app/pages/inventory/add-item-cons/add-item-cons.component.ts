@@ -147,12 +147,12 @@ export class AddItemConsComponent {
                 curStock: [''],
                 purchasePrice: ['', [Validators.min(1)]],
                 qty: ['', [Validators.min(1)]],
-                minStock: ['', Validators.maxLength(3)],
-                reorderLevel: ['', Validators.maxLength(3)],
+                minStock: ['', [Validators.required, Validators.maxLength(3)]],
+                reorderLevel: ['', [Validators.required, Validators.maxLength(3)]],
                 warPeriod: ['', Validators.maxLength(2)],
                 p_expirydate: [null],
                 costPerItem: [''],
-                mrp: ['', [Validators.min(1)]],
+                // mrp: ['', [Validators.min(1)]],
                 materialType: [''],
                 subCategory: [''],
                 itemGroup: [''],
@@ -160,10 +160,9 @@ export class AddItemConsComponent {
                 activeItem: [true],
                 itemSearch: [''],
                 itemtype: [''],
-                p_tax: [''],
+                p_tax: ['', Validators.required],
                 transactionType: ['purchase'],
-            },
-            { validators: this.mrpValidator }
+            }
         );
         this.onGetTax();
         this.addForm.get('purchasePrice')?.valueChanges.subscribe(() => this.updateCostPerItem());
@@ -184,18 +183,6 @@ export class AddItemConsComponent {
             event.preventDefault();
         }
     }
-
-    mrpValidator: ValidatorFn = (group: AbstractControl): ValidationErrors | null => {
-        const costperitem = parseFloat(group.get('costPerItem')?.value);
-        const mrp = parseFloat(group.get('mrp')?.value);
-        if (isNaN(costperitem) || isNaN(mrp)) {
-            return null;
-        }
-        if (mrp < costperitem) {
-            return { mrpGreaterThanPurchase: true };
-        }
-        return null;
-    };
 
     blockMinus(event: KeyboardEvent) {
         if (event.key === '-' || event.key === 'Minus' || event.key === 'e') {
@@ -237,18 +224,18 @@ export class AddItemConsComponent {
         this.searchValue = event.filter || '';
     }
 
-   enterEditItemMode(itemData: any) {
+  enterEditItemMode(itemData: any) {
     this.addForm.patchValue({
         itembarcode: itemData.itembarcode ?? '',
-        itemCode: itemData.itemsku ?? itemData.itemid ?? '',
-        itemName: itemData.itemname ?? itemData.item_description ?? '',
+        itemCode: itemData.itemsku ?? '',
+        itemName: itemData.itemname ?? '',
+        description: itemData.itemdesc ?? '',
         category: itemData.categoryid ?? null,
         curStock: itemData.currentstock ?? itemData.available_stock ?? 0,
         p_expirydate: itemData.expirydate ? new Date(itemData.expirydate) : null,
-        gstItem: itemData.gstitem ? itemData.gstitem === 'Y' : true,
+        gstitem: itemData.gstitem ? itemData.gstitem === 'Y' : true,
         activeItem: itemData.isactive ? itemData.isactive === 'Y' : true,
         minStock: itemData.minimumstock ?? itemData.buffer_stock ?? '',
-        mrp: itemData.saleprice ?? '',
         parentUOM: itemData.uomid ?? itemData.uom ?? null,
         warPeriod: itemData.warrentyperiod ?? 0,
         brand: itemData.brand ?? '',
@@ -260,7 +247,7 @@ export class AddItemConsComponent {
         itemGroup: itemData.itemgroupid ?? '',
         itemSubGroup: itemData.itemsubgroupid ?? '',
         location: itemData.location ?? '',
-        p_tax: itemData.gstrate?.toString() ?? '',
+        p_tax: itemData.gstrate ?? '',
         purchasePrice: itemData.purchaseprice ?? 0
     });
 
@@ -279,7 +266,7 @@ export class AddItemConsComponent {
             activeItem: itemData.isactive === 'Y',
             minStock: itemData.minimumstock,
             purchasePrice: this.mode == 'add' ? 0 : itemData.pruchaseprice.toFixed(2),
-            mrp: itemData.saleprice,
+            // mrp: itemData.saleprice,
             parentUOM: itemData.uomid,
             qty: itemData.quantity,
             costPerItem: itemData.costprice.toFixed(5),
@@ -288,7 +275,7 @@ export class AddItemConsComponent {
 
         // this.disableItemRelatedControls();
         this.addForm.get('purchasePrice')?.enable();
-        this.addForm.get('mrp')?.enable();
+        // this.addForm.get('mrp')?.enable();
         this.addForm.get('qty')?.enable();
         this.addForm.get('itemSearch')?.enable();
     }
@@ -325,30 +312,30 @@ export class AddItemConsComponent {
     }
     }
 
-    onBlur(event: FocusEvent) {
-        const itemcodevalue = (event.target as HTMLInputElement).value.trim();
+    // onBlur(event: FocusEvent) {
+    //     const itemcodevalue = (event.target as HTMLInputElement).value.trim();
 
-        const payload = {
-            p_username: this.authService.isLogIntType().userid.toString(),
-            p_returntype: 'ITEMCODEVALIDATE',
-            p_returnvalue: itemcodevalue
-        };
+    //     const payload = {
+    //         p_username: this.authService.isLogIntType().userid.toString(),
+    //         p_returntype: 'ITEMCODEVALIDATE',
+    //         p_returnvalue: itemcodevalue
+    //     };
 
-        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-            next: (res) => {
-                this.itemCodeExists = res?.data?.[0]?.itemno === 1;
-                if (this.itemCodeExists) {
-                    this.messageService.add({
-                        severity: 'error',
-                        summary: 'Error',
-                        detail: 'Item Code is already exist.',
-                        life: 3000
-                    });
-                }
-            },
-            error: (err) => console.log(err)
-        });
-    }
+    //     this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+    //         next: (res) => {
+    //             this.itemCodeExists = res?.data?.[0]?.itemno === 1;
+    //             if (this.itemCodeExists) {
+    //                 this.messageService.add({
+    //                     severity: 'error',
+    //                     summary: 'Error',
+    //                     detail: 'Item Code is already exist.',
+    //                     life: 3000
+    //                 });
+    //             }
+    //         },
+    //         error: (err) => console.log(err)
+    //     });
+    // }
 
     onBlurBarCode(event: FocusEvent) {
         const itembarcodevalue = (event.target as HTMLInputElement).value;
@@ -394,7 +381,7 @@ export class AddItemConsComponent {
     return {
         p_companyid: this.authService.isLogIntType()?.companyid,
         p_itemid: this.mode === 'edit' ? Number(this.editData?.itemid ?? 0) : 0,
-        p_itemsku: form.itemCode,
+        p_itemsku: form.itemCode || '',
         p_itemname: form.itemName,
         p_location: form.location ?? '',
         p_minimumstock: Number(form.minStock) || 0,
@@ -404,15 +391,15 @@ export class AddItemConsComponent {
         p_gstitem: 'Y',
         p_isactive: form.activeItem ? 'Y' : 'N',
         p_loginuser: this.shareservice.getUserData()?.username || this.authService.isLogIntType().userid.toString(),
-        p_itembarcode: form.itembarcode,
+        p_itembarcode: form.itembarcode || '',
         p_uomid: Number(form.parentUOM),
-        p_itemdesc: form.description ?? null,
+        p_itemdesc: form.description ?? '',
         p_reorderlevel: Number(form.reorderLevel) || 0,
         p_brand: form.brand ?? null,
         p_model_size: form.model ?? null,
         p_hsncode: form.hsnCode ?? null,
         p_purchaseprice: Number(form.purchasePrice) || 0,
-        p_saleprice: Number(form.mrp) || 0,
+        p_saleprice: 0,
         p_gstrate: Number(form.p_tax) || 0,
         p_materialtypeid: form.materialType ? Number(form.materialType) : null,
         p_subcategoryid: form.subCategory ? Number(form.subCategory) : null,
@@ -429,6 +416,9 @@ onSubmit() {
         next: (res) => {
             const msg = res?.data?.message;
             this.save.emit({ message: msg, payload: this.addForm.getRawValue() });
+            if (this.mode === 'add') {
+                this.enterAddModeReset(); 
+            }
             this.close.emit();
         },
         error: (res) => {
