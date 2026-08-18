@@ -1,4 +1,5 @@
 import { CommonModule, DatePipe } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Component, ElementRef, ViewChild, ViewChildren, QueryList, inject } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -59,6 +60,7 @@ export class MaterialRequisitionComponent {
     approved_name = '';
     userId = '';
     companyId = '';
+    private requestedMrNo: string | null = null;
 
     constructor(
         private fb: FormBuilder,
@@ -66,12 +68,15 @@ export class MaterialRequisitionComponent {
         private confirmationService: ConfirmationService,
         private messageService: MessageService,
         private authService: AuthService,
-        private workService: WorkService
+        private workService: WorkService,
+        private route: ActivatedRoute,
+        public router: Router
     ) {}
 
     ngOnInit(): void {
         this.companyId = this.authService.isLogIntType().companyid.toString();
         this.userId = this.authService.isLogIntType().userid.toString();
+        this.requestedMrNo = this.route.snapshot.queryParamMap.get('mfNo');
         this.loadAllDropdowns();
 
         this.forecastForm = this.fb.group({
@@ -144,7 +149,11 @@ export class MaterialRequisitionComponent {
         default:
             return 'grey';
     }
-}
+    }
+
+    get isFromRfqView(): boolean {
+        return !!this.requestedMrNo;
+    }
 
     onAttachmentSelect(event: any) {
         const file = event.target.files[0];
@@ -268,6 +277,12 @@ export class MaterialRequisitionComponent {
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res) => {
                 this.requisitionOptions = res.data;
+                if (this.requestedMrNo) {
+                    const matched = this.requisitionOptions.find((item: any) => String(item.mf_no ?? item.mr_no) === this.requestedMrNo);
+                    if (matched) {
+                        this.onDraftChange({ value: matched.mf_id });
+                    }
+                }
             },
             error: (err) => console.error(err)
         });
@@ -402,6 +417,7 @@ export class MaterialRequisitionComponent {
     }
 
     onDraftChange(data: any): void {
+        this.onReset();
         const fromRequisition = this.requisitionOptions.find((m: any) => String(m.mf_id) === String(data.value));
         const fromDraft = this.draftRequisitionOptions.find((m: any) => String(m.mf_id) === String(data.value));
         const matched = fromRequisition ?? fromDraft;
@@ -441,6 +457,7 @@ export class MaterialRequisitionComponent {
                     this.forecastForm.patchValue(
                         {
                             p_mf_id: header.mf_id,
+                            p_requisitionno: header.mf_id,
                             p_draft_requisitionno: header.mf_id,
                             p_project: header.project_id,
                             p_department: header.department_id,

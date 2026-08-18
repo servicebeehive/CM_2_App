@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -13,7 +14,7 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { TextareaModule } from 'primeng/textarea';
 import { DialogModule } from 'primeng/dialog';
 import { MultiSelectModule } from 'primeng/multiselect';
-import { RfqRow, IncludedMrRow, VendorInviteRow, MrDetailData } from '@/core/models/purchase.model';
+import { RfqRow, VendorInviteRow } from '@/core/models/purchase.model';
 import { UpsertRfqPayload, VendorInvitePayload } from '@/core/models/authmodel/work.model';
 import { WorkService } from '@/core/services/work.service';
 
@@ -45,22 +46,21 @@ export class RfqComponent implements OnInit {
     projectOptions: any[] = [];
     itemOptions: any[] = [];
     vendorOptions: any[] = [];
-    statusOptions: { label: string; value: string }[] = [
-        { label: 'Draft', value: 'Draft' },
-        { label: 'Submitted', value: 'Submitted' }
-    ];
     categoryOptions: { label: string; value: number }[] = [];
     isLoadingProjects = false;
 
     rfqList: RfqRow[] = [];
-    includedMrList: IncludedMrRow[] = [];
+    includedMrList: any[] = [];
     vendorInviteRows: VendorInviteRow[] = [];
-    mrDetailsMap: Record<string, MrDetailData> = {};
+    mrDetailsMap: Record<string, any> = {};
     rfqVendorSelections: Record<number, number[]> = {};
+    private hasBackendMrList = false;
 
     showMrDialog = false;
-    selectedMrDetail: MrDetailData | null = null;
+    selectedMrDetail: any | null = null;
     showMaterialReqDialog = false;
+    showGmailReqDialog = false;
+    gmailVendorRows: { selected: boolean; vendor: string; category: string; count: number; vendorId: number | null }[] = [];
     attachmentFileName = '';
 
     isLoadingItems = false;
@@ -73,7 +73,8 @@ export class RfqComponent implements OnInit {
         private inventoryService: InventoryService,
         private authService: AuthService,
         private messageService: MessageService,
-        private workService: WorkService
+        private workService: WorkService,
+        private router: Router
     ) {}
 
     ngOnInit(): void {
@@ -112,21 +113,6 @@ export class RfqComponent implements OnInit {
             option2: null
         };
     }
-
-  onGetMRNumberist() {
-        const payload = {
-            p_returntype: 'MRNUMBER',
-            p_returnvalue: this.companyId,
-            p_username: this.userId
-        };
-        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-            next: (res) => {
-                this.includedMrList = res.data;
-            },
-            error: (err) => console.error(err)
-        });
-    }
-
 
      loadSites(): void {
         this.isLoadingProjects = true;
@@ -223,9 +209,9 @@ export class RfqComponent implements OnInit {
 
     onSiteChange(event: any): void {
         const siteId = event.value;
+        this.hasBackendMrList = false;
         if (!siteId) {
             this.rfqList = [];
-            this.includedMrList = [];
             this.mrDetailsMap = {};
             this.rebuildVendorInviteRows();
             return;
@@ -234,16 +220,29 @@ export class RfqComponent implements OnInit {
     }
 
     onRFQNoChange(data: any): void {
+        this.showGmailReqDialog = false;
+        this.gmailVendorRows = [];
+        this.hasBackendMrList = true;
+        this.includedMrList = [];
+        this.mrDetailsMap = {};
         const payload = {
             p_returntype: 'GETRFQ',
             p_returnvalue: data.value.toString(),
             p_username: this.userId
         };
+
         const payloadvendor = {
-            p_returntype: 'GETRFQVENDOR',
+        p_returntype: 'GETRFQVENDOR',
+        p_returnvalue: data.value.toString(),
+        p_username: this.userId
+    };
+
+        const payloadMr = {
+            p_returntype: 'PROJECTRFQ4MR',
             p_returnvalue: data.value.toString(),
             p_username: this.userId
         };
+
 
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res: any) => {
@@ -264,11 +263,47 @@ export class RfqComponent implements OnInit {
                     { emitEvent: false }
                 );
 
-                if (selected.site_id) {
-                    this.loadRfqItems(selected.site_id);
-                }
+                const rows: any[] = Array.isArray(res.data) ? res.data : [res.data];
+                this.rfqList = rows.map((row: any) => ({
+                    category: row.item_category ?? row.itemcategoryname ?? '',
+                    item: row.item_description ?? row.itemdescription ?? '',
+                    uom: row.uom ?? row.uomname ?? '',
+                    buffer_stock: Number(row.buffer_stock ?? 0),
+                    required_qty: Number(row.required_qty ?? 0),
+                    available_stock: Number(row.available_stock ?? 0),
+                    pending_qty: Number(row.pending_qty ?? 0),
+                    total_mr_qty: Number(row.total_mr_qty ?? 0),
+                    net_required_qty: Number(row.required_qty_net ?? 0),
+                    category_id: row.item_category_id ?? row.itemcategoryid ?? null,
+                    item_id: row.item_id ?? row.itemid ?? null
+                }));
 
+                this.rebuildVendorInviteRows();
                 this.loadRfqVendorSelections(payloadvendor);
+            }
+        });
+        this.loadMRList(payloadMr);
+    }
+
+    loadMRList(payloadMr: any): void {
+        this.inventoryService.Getreturndropdowndetails(payloadMr).subscribe({
+            next: (res: any) => {
+                const rows: any[] = Array.isArray(res.data) ? res.data : [];
+                this.mrDetailsMap = {};
+                this.includedMrList = rows.map((row: any) => {
+                    const mrRow = {
+                        mr_no: row.mr_no ?? row.mf_no ?? '',
+                        mf_id: row.mf_id ?? row.mrid ?? row.mr_id ?? null,
+                        mr_date: row.mr_date ?? row.mf_date ?? null,
+                        department: row.department ?? row.department_name ?? '',
+                        requested_by: row.requester ?? '',
+                        items: row.items ?? []
+                    };
+                    if (mrRow.mr_no) {
+                        this.mrDetailsMap[mrRow.mr_no] = mrRow;
+                    }
+                    return mrRow;
+                });
             }
         });
     }
@@ -297,11 +332,7 @@ export class RfqComponent implements OnInit {
                     }
                 });
 
-                this.vendorInviteRows.forEach((row) => {
-                    if (row.category_id != null && this.rfqVendorSelections[row.category_id]) {
-                        row.selectedVendors = this.rfqVendorSelections[row.category_id];
-                    }
-                });
+                this.applyRfqVendorSelections();
             },
             error: () => {
                 this.rfqVendorSelections = {};
@@ -321,34 +352,39 @@ export class RfqComponent implements OnInit {
             next: (res: any) => {
                 const rows: any[] = res.data || [];
                 this.rfqList = rows.map((r) => ({
-                    category: r.item_category,
-                    item: r.item_description,
-                    uom: r.uom,
+                    category: r.item_category ?? r.itemcategoryname ?? '',
+                    item: r.item_description ?? r.itemdescription ?? '',
+                    uom: r.uom ?? r.uomname ?? '',
                     buffer_stock: Number(r.buffer_stock ?? 0),
                     required_qty: Number(r.required_qty ?? 0),
                     available_stock: Number(r.available_stock ?? 0),
                     pending_qty: Number(r.pending_qty ?? 0),
                     total_mr_qty: Number(r.total_mr_qty ?? 0),
                     net_required_qty: Number(r.required_qty_net ?? 0),
-                    category_id: r.item_category_id ?? null
+                    category_id: r.item_category_id ?? r.itemcategoryid ?? null,
+                    item_id: r.item_id ?? r.itemid ?? null
                 }));
 
                 this.buildIncludedMrData();
                 this.rebuildVendorInviteRows();
+                this.applyRfqVendorSelections();
                 this.isLoadingItems = false;
             },
             error: (err) => {
                 console.error('Error fetching RFQ items:', err);
-                this.rfqList = [];
-                this.includedMrList = [];
-                this.mrDetailsMap = {};
-                this.rebuildVendorInviteRows();
-                this.isLoadingItems = false;
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Failed to load items',
                     life: 2500
                 });
+            }
+        });
+    }
+
+    private applyRfqVendorSelections(): void {
+        this.vendorInviteRows.forEach((row) => {
+            if (row.category_id != null && this.rfqVendorSelections[row.category_id]) {
+                row.selectedVendors = this.rfqVendorSelections[row.category_id];
             }
         });
     }
@@ -401,6 +437,7 @@ export class RfqComponent implements OnInit {
                     }
                 ];
 
+                this.buildIncludedMrData();
                 this.rebuildVendorInviteRows();
                 this.rfqForm.get('p_item')?.setValue(null, { emitEvent: false });
             },
@@ -416,7 +453,11 @@ export class RfqComponent implements OnInit {
     }
 
     private buildIncludedMrData(): void {
-        const grouped = new Map<string, MrDetailData>();
+        if (this.hasBackendMrList) {
+            return;
+        }
+
+        const grouped = new Map<string, any>();
 
         this.rfqList.forEach((row) => {
             if (!row.mr_no) return;
@@ -485,14 +526,6 @@ getAvailableCategoryOptions(currentIndex: number): { label: string; value: numbe
     return this.categoryOptions.filter((opt) => !pickedElsewhere.includes(opt.value));
 }
 
-    openMrDetail(row: IncludedMrRow): void {
-        this.selectedMrDetail = this.mrDetailsMap[row.mr_no] ?? {
-            ...row,
-            items: []
-        };
-        this.showMrDialog = true;
-    }
-
  private rebuildVendorInviteRows(): void {
     const previousSelection = new Map<number, number[]>();
     this.vendorInviteRows.forEach((row) => {
@@ -540,9 +573,114 @@ getAvailableCategoryOptions(currentIndex: number): { label: string; value: numbe
         this.vendorInviteRows = this.vendorInviteRows.filter((_, i) => i !== index);
     }
 
+    get isRfqSubmitted(): boolean {
+        return String(this.rfqForm?.get('p_status')?.value ?? '').toUpperCase() === 'SUBMITTED';
+    }
+
+    get hasRfqValue(): boolean {
+        return this.rfqForm?.get('p_rfqno')?.value != null && this.rfqForm.get('p_rfqno')?.value !== '';
+    }
+
+    get hasValidVendorSelection(): boolean {
+        const completeInvite = this.vendorInviteRows.some((row) => row.category_id != null && row.selectedVendors.length > 0);
+        const incompleteInvite = this.vendorInviteRows.some((row) => (row.category_id != null && row.selectedVendors.length === 0) || (row.category_id == null && row.selectedVendors.length > 0));
+        return completeInvite && !incompleteInvite;
+    }
+
     openMaterialReqDialog(): void {
         this.showMaterialReqDialog = true;
     }
+
+    openMaterialRequisition(row: any): void {
+        this.showMaterialReqDialog = false;
+        this.router.navigate(['/layout/purchase/material-requisition'], {
+            queryParams: { mfNo: row.mr_no, mfId: row.mf_id ?? row.mr_id ?? null }
+        });
+    }
+
+    openGmailReqDialog(): void {
+        const rfqId = this.rfqForm.get('p_rfqno')?.value;
+        if (!rfqId) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Select RFQ No',
+                detail: 'Select an RFQ before opening Gmail.',
+                life: 2500
+            });
+            return;
+        }
+
+        const payload = {
+            p_returntype: 'GETRFQMAIL',
+            p_returnvalue: String(rfqId),
+            p_username: ''
+        };
+
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res: any) => {
+                const rows: any[] = Array.isArray(res.data) ? res.data : [];
+                this.gmailVendorRows = rows.map((row: any) => ({
+                    selected: false,
+                    vendor: row.suppliername,
+                    category: row.categoryname,
+                    count: Number(row.attempt_count ?? 0),
+                    vendorId: row.vendorid ?? row.supplierid ?? row.vendor_id ?? null
+                }));
+                this.showGmailReqDialog = true;
+            },
+            error: () => {
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Gmail data load failed',
+                    detail: 'Unable to load vendors for this RFQ.',
+                    life: 2500
+                });
+            }
+        });
+    }
+
+    sendVendorRfq(): void {
+    const selectedRows = this.gmailVendorRows.filter((r) => r.selected);
+
+    if (!selectedRows.length) {
+        this.messageService.add({
+            severity: 'warn',
+            summary: 'Select vendor',
+            detail: 'Select at least one vendor before sending the RFQ email.',
+            life: 2500
+        });
+        return;
+    }
+
+    const rfqId = this.rfqForm.get('p_rfqno')?.value;
+    const payload = {
+        p_rfqid: rfqId,
+        p_username: this.userId,
+        p_vendor_ids: selectedRows
+            .map((r) => r.vendorId)
+            .filter((id): id is number => id != null)
+    };
+
+    // this.workService.sendRfqMail(payload).subscribe({
+    //     next: (res: any) => {
+    //         this.messageService.add({
+    //             severity: 'success',
+    //             summary: 'RFQ email queued',
+    //             detail: `RFQ shared with ${selectedRows.length} vendor(s).`,
+    //             life: 2500
+    //         });
+    //         this.showGmailReqDialog = false;
+    //     },
+    //     error: (err) => {
+    //         this.messageService.add({
+    //             severity: 'error',
+    //             summary: 'Send failed',
+    //             detail: err.message,
+    //             life: 2500
+    //         });
+    //     }
+    // });
+}
 
     onDraftChange(event: any): void {
         const selected = this.draftRfqOptions.find((d: any) => d.rfq_id === event.value);
@@ -668,6 +806,7 @@ getAvailableCategoryOptions(currentIndex: number): { label: string; value: numbe
     }
 
     onReset(): void {
+        this.hasBackendMrList = false;
         this.rfqForm.reset({
             p_rfq_id: null,
             p_rfqno: null,
@@ -689,6 +828,23 @@ getAvailableCategoryOptions(currentIndex: number): { label: string; value: numbe
         this.mrDetailsMap = {};
     }
 
+    private hasValidVendorInvites(): boolean {
+        const hasCompleteInvite = this.vendorInviteRows.some((row) => row.category_id != null && row.selectedVendors.length > 0);
+        const hasIncompleteInvite = this.vendorInviteRows.some((row) => (row.category_id != null && row.selectedVendors.length === 0) || (row.category_id == null && row.selectedVendors.length > 0));
+
+        if (!hasCompleteInvite || hasIncompleteInvite) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Vendor selection required',
+                detail: 'Select at least one category and one vendor. Every selected category must have a vendor.',
+                life: 3000
+            });
+            return false;
+        }
+
+        return true;
+    }
+
     onSubmit(): void {
         if (this.rfqForm.invalid || this.rfqList.length === 0) {
             this.messageService.add({
@@ -697,6 +853,10 @@ getAvailableCategoryOptions(currentIndex: number): { label: string; value: numbe
                 detail: 'Fill required fields and add at least one item.',
                 life: 2500
             });
+            return;
+        }
+
+        if (!this.hasValidVendorInvites()) {
             return;
         }
 
@@ -729,7 +889,7 @@ getAvailableCategoryOptions(currentIndex: number): { label: string; value: numbe
                 this.rfqForm.patchValue({
                     p_rfq_id: rfqId,
                     p_rfqno: rfqId,
-                    p_status: res.data.status
+                    p_status: res.data.status || 'SUBMITTED'
                 });
                 this.messageService.add({ severity: 'success', summary: res.data.msg });
             } else {

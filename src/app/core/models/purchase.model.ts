@@ -16,17 +16,6 @@ export interface RfqRow {
     requested_by?: string;
 }
 
-export interface IncludedMrRow {
-    mr_no: string;
-    mr_date: string | Date | null;
-    department: string;
-    requested_by: string;
-}
-
-export interface MrDetailData extends IncludedMrRow {
-    items: RfqRow[];
-}
-
 export interface VendorInviteRow {
     category: string;
     category_id: number | null;
