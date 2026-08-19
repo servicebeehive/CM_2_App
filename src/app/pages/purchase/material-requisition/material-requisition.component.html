@@ -46,7 +46,7 @@
                 <button pButton type="submit" label="Submit" class="p-button-primary" *ngIf="!isReadOnlyView" [disabled]="forecastForm.invalid || isSubmitDisabled() || isFromRfqView"></button>
                 <button pButton type="button" label="Draft" class="p-button-outlined p-button-warning" *ngIf="!isReadOnlyView" (click)="submitDraft()" [disabled]="forecastForm.invalid || isSubmitDisabled() || isFromRfqView"></button>
                 <button pButton type="button" label="Reset" class="p-button-secondary" (click)="onReset()"></button>
-                <button pButton type="button" label="Back" icon="pi pi-arrow-left" class="p-button-outlined" (click)="router.navigate(['/layout/purchase/rfq'])"></button>
+                <button *ngIf="showRfqBackButton" pButton type="button" label="Back" icon="pi pi-arrow-left" class="p-button-outlined" (click)="router.navigate(['/layout/purchase/rfq'])"></button>
             </div>
         </div>
 
@@ -186,11 +186,11 @@
                 <div class="mr-approval-info">
                     <div>
                         <span class="mr-meta-label">Approved By :</span>
-                        <span class="mr-meta-value">{{ approved_on | date:'dd/MM/yy' }}</span>
+                       <span class="mr-meta-value">{{ approved_name }}</span>
                     </div>
                     <div>
-                        <span class="mr-meta-label">Approved On :</span>
-                        <span class="mr-meta-value">{{ approved_name }}</span>
+                        <span class="mr-meta-label">Approved On :</span> 
+                         <span class="mr-meta-value">{{ approved_on | date:'dd/MM/yy' }}</span>
                     </div>
                 </div>
             </div>

@@ -67,7 +67,6 @@ export class VendorComparisonComponent implements OnInit {
     filterForm!: FormGroup;
 
     projectOptions: any[] = [];
-    isLoadingProjects = false;
 
     vendorOptions: VendorRef[] = [];
     isLoadingVendors = false;
@@ -109,14 +108,13 @@ isLoadingRfqNo = false;
         this.filterForm = this.fb.group({
            p_rfqno: [''],
        p_rfqdate: [{ value: '', disabled: true }],
-        p_project: [null],
+        p_project: [{ value: null, disabled: true }],
         p_item: [null]
         });
     }
 
     // ── Load Project dropdown ───────────────────────────────────────────
     private loadProjects(): void {
-        this.isLoadingProjects = true;
         const payload = {
             returnType: 'ACTIVEPROJECT',
             returnValue: '',
@@ -128,11 +126,6 @@ isLoadingRfqNo = false;
         this.inventoryService.getparameterbased(payload).subscribe({
             next: (res: any) => {
                 this.projectOptions = res.data || [];
-                this.isLoadingProjects = false;
-            },
-            error: (err) => {
-                console.error('Error fetching projects:', err);
-                this.isLoadingProjects = false;
             }
         });
     }
@@ -203,46 +196,6 @@ private loadItems(): void {
         });
     }
 
-    // ── On project select: load item rows for the table ─────────────────
-    onProjectChange(event: any): void {
-        const projectId = event.value;
-        this.comparisonRows = [];
-        this.materialReqRows = [];
-        if (!projectId) {
-            this.filterForm.patchValue({ p_rfqno: '', p_rfqdate: '' }, { emitEvent: false });
-            return;
-        }
-        this.loadItemsForProject(projectId);
-    }
-
-    private loadItemsForProject(projectId: number): void {
-        this.isLoadingItems = true;
-        const payload = {
-            p_returntype: 'MFAPPROVED', // ⬅️ confirm the correct return type for "items for this project"
-            p_returnvalue: projectId.toString(),
-            username: ''
-        };
-
-        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-            next: (res: any) => {
-                const rows: any[] = res.data || [];
-                this.comparisonRows = rows.map((r) => this.buildEmptyRow(r));
-                this.patchRfqHeader(rows);
-                this.isLoadingItems = false;
-            },
-            error: (err) => {
-                console.error('Error fetching items for project:', err);
-                this.comparisonRows = [];
-                this.isLoadingItems = false;
-                this.messageService.add({
-                    severity: 'error',
-                    summary: 'Failed to load items',
-                    life: 2500
-                });
-            }
-        });
-    }
-
     private buildEmptyRow(r: any): ComparisonRow {
         const row: ComparisonRow = {
             category: r.categoryname ?? r.category ?? '',
@@ -274,30 +227,40 @@ private loadItems(): void {
     }
 
 onRfqNoChange(event: any): void {
-    const rfq = this.rfqNoOptions.find((r) => r.rfq_id === event.value);
-    if (!rfq) return;
+    // const rfq = this.rfqNoOptions.find((r) => r.rfq_id === event.value);
+    // if (!rfq) return;
 
-    this.filterForm.patchValue(
-        { p_rfqdate: this.formatDisplayDate(rfq.rfq_date ?? rfq.rfqdate) },
-        { emitEvent: false }
-    );
+    // this.filterForm.patchValue(
+    //     { p_rfqdate: this.formatDisplayDate(rfq.rfq_date ?? rfq.rfqdate) },
+    //     { emitEvent: false }
+    // );
 
-    const invitedVendorIds: number[] = rfq.vendor_ids ?? [];
-    this.selectedVendors = this.vendorOptions.filter((v) => invitedVendorIds.includes(v.vendor_id));
-    this.filterForm.get('p_vendors')?.setValue(invitedVendorIds, { emitEvent: false });
+    // const invitedVendorIds: number[] = rfq.vendor_ids ?? [];
+    // this.selectedVendors = this.vendorOptions.filter((v) => invitedVendorIds.includes(v.vendor_id));
+    // this.filterForm.get('p_vendors')?.setValue(invitedVendorIds, { emitEvent: false });
 
-    this.comparisonRows.forEach((row) => {
-        const updated: { [vendorId: number]: any } = {};
-        this.selectedVendors.forEach((v) => {
-            updated[v.vendor_id] = row.vendorData[v.vendor_id] ?? { price: null, quantity: null, paymentTerm: '' };
-        });
-        row.vendorData = updated;
-    });
+    // this.comparisonRows.forEach((row) => {
+    //     const updated: { [vendorId: number]: any } = {};
+    //     this.selectedVendors.forEach((v) => {
+    //         updated[v.vendor_id] = row.vendorData[v.vendor_id] ?? { price: null, quantity: null, paymentTerm: '' };
+    //     });
+    //     row.vendorData = updated;
+    // });
 
-    if (rfq.project_id) {
-        this.filterForm.patchValue({ p_project: rfq.project_id }, { emitEvent: false });
-        this.loadItemsForProject(rfq.project_id);
+    // if (rfq.project_id) {
+    //     this.filterForm.patchValue({ p_project: rfq.project_id }, { emitEvent: false });
+    // }
+    const payload = {
+        p_returntype: 'VENDORCOMPARISON',
+            p_returnvalue: event.value.toString(),
+            p_username: ''
     }
+
+    this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+        next: (res) => {
+           this.rfqNoOptions = res.data || [];
+        }
+    });
 }
 
     private patchRfqHeader(rows: any[]): void {

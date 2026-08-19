@@ -594,7 +594,7 @@ getAvailableCategoryOptions(currentIndex: number): { label: string; value: numbe
     openMaterialRequisition(row: any): void {
         this.showMaterialReqDialog = false;
         this.router.navigate(['/layout/purchase/material-requisition'], {
-            queryParams: { mfNo: row.mr_no, mfId: row.mf_id ?? row.mr_id ?? null }
+            queryParams: { mfNo: row.mr_no, mfId: row.mf_id ?? row.mr_id ?? null, fromRfqView: true }
         });
     }
 

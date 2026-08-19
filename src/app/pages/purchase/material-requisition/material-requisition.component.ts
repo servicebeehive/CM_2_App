@@ -61,6 +61,7 @@ export class MaterialRequisitionComponent {
     userId = '';
     companyId = '';
     private requestedMrNo: string | null = null;
+    private fromRfqView = false;
 
     constructor(
         private fb: FormBuilder,
@@ -77,6 +78,7 @@ export class MaterialRequisitionComponent {
         this.companyId = this.authService.isLogIntType().companyid.toString();
         this.userId = this.authService.isLogIntType().userid.toString();
         this.requestedMrNo = this.route.snapshot.queryParamMap.get('mfNo');
+        this.fromRfqView = this.route.snapshot.queryParamMap.get('fromRfqView') === 'true';
         this.loadAllDropdowns();
 
         this.forecastForm = this.fb.group({
@@ -153,6 +155,10 @@ export class MaterialRequisitionComponent {
 
     get isFromRfqView(): boolean {
         return !!this.requestedMrNo;
+    }
+
+    get showRfqBackButton(): boolean {
+        return this.fromRfqView;
     }
 
     onAttachmentSelect(event: any) {

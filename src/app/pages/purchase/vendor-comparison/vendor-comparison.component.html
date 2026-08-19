@@ -58,9 +58,7 @@
                         formControlName="p_project"
                         [filter]="true"
                         filterPlaceholder="Search Site"
-                        (onChange)="onProjectChange($event)"
-                        [showClear]="true"
-                        [loading]="isLoadingProjects"
+                        [disabled]="true"
                     ></p-dropdown>
                 </div>
 
