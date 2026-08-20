@@ -18,8 +18,27 @@
                     formControlName="p_draft_rfqno"
                     [filter]="true"
                     [showClear]="true"
-                    (onChange)="onDraftChange($event)"
-                ></p-dropdown>
+                    (onChange)="onDraftChange($event)">
+                 <ng-template pTemplate="selectedItem" let-item>
+                        <div class="flex items-center gap-2" *ngIf="item">
+                            <span>{{ item.rfqno }}</span>
+                        </div>
+                    </ng-template>
+
+                    <ng-template pTemplate="item" let-item>
+                        <div class="flex items-center justify-between gap-2 w-full">
+                            <span>{{ item.rfqno }}</span>
+                            <button
+                                pButton
+                                type="button"
+                                icon="pi pi-trash"
+                                class="p-button-text p-button-danger p-0"
+                                [attr.aria-label]="'Delete draft ' + item.mf_no"
+                                (click)="deleteDraftItem(item, $event)"
+                            ></button>
+                        </div>
+                    </ng-template>
+                </p-dropdown>
 
                 <button pButton type="button" label="Draft" class="p-button-outlined p-button-warning" (click)="submitDraft()" [disabled]="hasRfqValue || rfqForm.invalid || rfqList.length === 0"></button>
                 <button pButton type="button" label="View" class="p-button-outlined" (click)="openMaterialReqDialog()"></button>
@@ -315,4 +334,5 @@
             </ng-template>
         </p-table>
     </p-dialog>
+      <p-confirmDialog></p-confirmDialog>
 </div>

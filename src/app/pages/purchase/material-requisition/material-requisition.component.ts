@@ -531,11 +531,11 @@ export class MaterialRequisitionComponent {
     }
     createItemRow(data?: any): FormGroup {
         const row = this.fb.group({
-            item_category_id: [data?.item_category_id ?? null],
+            item_category_id: [data?.categoryid ?? null],
             item_category: [data?.categoryname ?? ''],
             item_id: [data?.itemid ?? null],
             item_description: [data?.item_description ?? ''],
-            uom_id: [data?.uom_id ?? null],
+            uom_id: [data?.uomid ?? null],
             uom: [data?.uomname ?? ''],
             buffer_stock: [data?.buffer_stock ?? 0],
             available_stock: [data?.currentstock ?? 0],
@@ -646,7 +646,7 @@ export class MaterialRequisitionComponent {
             p_forecast_month: null,
             p_pour_name: v.p_pour,
             p_remarks: v.p_remarks || '',
-            p_mr_date: v.p_mrdate ? new Date(v.p_mrdate).toISOString().split('T')[0] : null,
+            p_mr_date: v.p_mrdate ? new Date(v.p_mrdate).toISOString().split('T')[0] : this.today.toISOString().split('T')[0],
             p_required_by_date: v.p_requiredbydate ? new Date(v.p_requiredbydate).toISOString().split('T')[0] : null,
             p_requested_by: v.p_requestedby ?? null,
             p_priority: v.p_priority ?? null,

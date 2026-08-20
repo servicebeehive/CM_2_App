@@ -7,7 +7,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { InventoryService } from '@/core/services/inventory.service';
 import { AuthService } from '@/core/services/auth.service';
 import { DatePickerModule } from 'primeng/datepicker';
@@ -17,6 +17,7 @@ import { MultiSelectModule } from 'primeng/multiselect';
 import { RfqRow, VendorInviteRow } from '@/core/models/purchase.model';
 import { UpsertRfqPayload, VendorInvitePayload } from '@/core/models/authmodel/work.model';
 import { WorkService } from '@/core/services/work.service';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
 @Component({
     selector: 'app-rfq',
@@ -33,11 +34,12 @@ import { WorkService } from '@/core/services/work.service';
         DatePickerModule,
         TextareaModule,
         DialogModule,
-        MultiSelectModule
+        MultiSelectModule,
+        ConfirmDialogModule
     ],
     templateUrl: './rfq.component.html',
     styleUrls: ['./rfq.component.scss'],
-    providers: [MessageService]
+    providers: [MessageService, ConfirmationService]
 })
 export class RfqComponent implements OnInit {
     rfqForm!: FormGroup;
@@ -74,7 +76,8 @@ export class RfqComponent implements OnInit {
         private authService: AuthService,
         private messageService: MessageService,
         private workService: WorkService,
-        private router: Router
+        private router: Router,
+        private confirmationService: ConfirmationService
     ) {}
 
     ngOnInit(): void {
@@ -901,4 +904,31 @@ getAvailableCategoryOptions(currentIndex: number): { label: string; value: numbe
         }
     });
 }
+
+  deleteDraftItem(item: any, event: Event): void {
+        event.stopPropagation();
+
+        this.confirmationService.confirm({
+            message: `Delete draft ${item.rfqno}? This cannot be undone.`,
+            header: 'Confirm Delete',
+            acceptLabel: 'Yes',
+            rejectLabel: 'Cancel',
+            acceptButtonStyleClass: 'p-button-danger',
+            rejectButtonStyleClass: 'p-button-secondary',
+            accept: () => {
+                // this.workService.upsertMaterialForecast(this.buildDeletePayload(item.mf_id)).subscribe({
+                //     next: (res) => {
+                //         this.messageService.add({ severity: 'success', summary: res.data.message, life: 2000 });
+                        
+                //     },
+                //     error: (err) => {
+                //         console.error(err);
+                //         const detail = err?.error?.message || 'Failed to delete draft';
+                //         this.messageService.add({ severity: 'error', summary: detail, life: 2500 });
+                //     }
+                // });
+            }
+        });
+    }
+
 }

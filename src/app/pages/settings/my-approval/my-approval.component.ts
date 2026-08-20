@@ -73,7 +73,7 @@ export class MyApprovalComponent {
     showData: boolean = false;
     rejectComment: string = '';
     submitted: boolean = false;
-
+    industryTypeId: string = '';
     typeOptions: any[] = [];
     requestOptions: any[] = [
         { fieldid: 'APPROVED', fieldname: 'APPROVED' },
@@ -96,6 +96,7 @@ export class MyApprovalComponent {
     ) {}
 
     ngOnInit(): void {
+        this.industryTypeId = this.authService.isLogIntType()?.industry_type_id.toString() || '';
         this.customerForm = this.fb.group({
             p_type: [null],
             p_request: ['PENDING']
@@ -141,7 +142,7 @@ export class MyApprovalComponent {
 
     createDropdownPayload(returnType: string) {
         return {
-            p_username: this.authService.isLogIntType().industrytype,
+            p_username: this.industryTypeId,
             p_returntype: returnType
         };
     }
@@ -162,7 +163,7 @@ export class MyApprovalComponent {
     onGetApprovalList() {
         const payload = {
             p_username: this.authService.isLogIntType()?.userid.toString(),
-            p_returntype: 'MYAPPROVALENTRY',
+            p_returntype:  this.industryTypeId === '3' ? 'MYAPPROVALENTRY' : 'MYAPPROVALENTRYCONST',
             p_returnvalue: this.authService.isLogIntType()?.usertypeid.toString()
         };
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
