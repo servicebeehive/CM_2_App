@@ -486,37 +486,33 @@
     </ng-template>
 </p-dialog>
 
-<p-dialog header="Material Requisition Details" [(visible)]="showMrDialog" [modal]="true" [style]="{ width: '78rem', maxWidth: '95vw' }" [draggable]="false" [resizable]="false">
-    <p-table [value]="mrPopupRows" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" [loading]="isLoadingMrPopup" class="p-datatable-gridlines p-datatable-sm">
+<p-dialog header="Material Requisitions Included" [(visible)]="showMrDialog" [modal]="true" [style]="{ width: '60rem', maxWidth: '95vw' }" [draggable]="false" [resizable]="false">
+    <p-table [value]="includedMrList" [responsiveLayout]="'scroll'" [loading]="isLoadingMrPopup" class="p-datatable-gridlines p-datatable-sm">
         <ng-template pTemplate="header">
             <tr class="bg-yellow-400">
                 <th>MR No</th>
-                <th>Item Category</th>
-                <th>Item</th>
-                <th>UOM</th>
-                <th class="text-right">Forecast Qty</th>
-                <th class="text-right">Available Stock</th>
-                <th class="text-right">Pending PO Qty</th>
-                <th class="text-right">Required Qty</th>
+                <th>MR Date</th>
+                <th>Department</th>
+                <th>Requested By</th>
+                <th class="text-center">View</th>
             </tr>
         </ng-template>
 
         <ng-template pTemplate="body" let-row>
             <tr>
-                <td>{{ row.mf_no || '—' }}</td>
-                <td>{{ row.categoryname || '—' }}</td>
-                <td>{{ row.itemname || '—' }}</td>
-                <td>{{ row.uomname || '—' }}</td>
-                <td class="text-right">{{ row.forecast_qty || 0 }}</td>
-                <td class="text-right">{{ row.available_stock || 0 }}</td>
-                <td class="text-right">{{ row.pending_qty || 0 }}</td>
-                <td class="text-right">{{ ((row.forecast_qty || 0) - (row.pending_qty || 0) - (row.available_stock || 0)) > 0 ? ((row.forecast_qty || 0) - (row.pending_qty || 0) - (row.available_stock || 0)) : 0 }}</td>
+                <td>{{ row.mr_no || '—' }}</td>
+                <td>{{ row.mr_date | date: 'dd-MM-yyyy' }}</td>
+                <td>{{ row.department || '—' }}</td>
+                <td>{{ row.requested_by || '—' }}</td>
+                <td class="text-center">
+                    <button pButton type="button" label="View" class="p-button-text p-button-sm" (click)="openMaterialRequisition(row)"></button>
+                </td>
             </tr>
         </ng-template>
 
         <ng-template pTemplate="emptymessage">
             <tr>
-                <td colspan="8" class="text-center text-400 italic py-6 text-sm">No material requisition rows found for selected site.</td>
+                <td colspan="5" class="text-center text-400 italic py-6 text-sm">No material requisitions found for selected site.</td>
             </tr>
         </ng-template>
     </p-table>

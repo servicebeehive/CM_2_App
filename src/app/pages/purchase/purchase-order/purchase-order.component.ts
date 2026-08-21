@@ -1,5 +1,6 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { ChipModule } from 'primeng/chip';
@@ -98,6 +99,7 @@ export class PurchaseOrderComponent implements OnInit {
     grandTotal = 0;
     isLoadingMrPopup = false;
     mrPopupRows: any[] = [];
+    includedMrList: any[] = [];
     paymentHistory: PaymentEntry[] = [];
     totalPaid = 0;
 
@@ -115,7 +117,8 @@ export class PurchaseOrderComponent implements OnInit {
         private messageService: MessageService,
         private authService: AuthService,
         private datePipe: DatePipe,
-        private workService: WorkService
+        private workService: WorkService,
+        private router: Router
     ) {}
 
     // ── Lifecycle ──────────────────────────────────────────────────────────────
@@ -177,18 +180,27 @@ export class PurchaseOrderComponent implements OnInit {
 
     // ── Load all dropdowns ─────────────────────────────────────────────────────
     private loadDropdowns(): void {
+        this.onGetPONo();
         this.onGetProject();
         this.onGetDraftPO();
-        this.onGetPO();
         this.loadVendorMaster();
     }
 
+    private onGetPONo(): void {
+        const payload = this.createReturnPayload('PONO', this.authService.isLogIntType().userid.toString(), this.companyId.toString());
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res: any) => {
+                this.generatedPONos = res.data ?? [];
+            },
+            error: (err: any) => {
+                console.error('Error fetching PO numbers:', err);
+                this.generatedPONos = [];
+            }
+        });
+    }
+
     private loadVendorMaster(): void {
-        const payload = {
-            p_returntype: 'VENDORLIST',
-            p_returnvalue: this.companyId.toString(),
-            username: ''
-        };
+        const payload = this.createReturnPayload('VENDORLIST', this.companyId.toString());
 
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res: any) => {
@@ -245,22 +257,6 @@ export class PurchaseOrderComponent implements OnInit {
         };
     }
 
-onGetPO(){
- const payload = {
-            p_returntype: 'PONO',
-            p_returnvalue: this.companyId.toString(),
-            username: ''
-        };
-  this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-    next: (res: any) => {
-      this.generatedPONos = res.data;
-    },
-    error: (err: any) => {
-      console.error('Error fetching PO numbers:', err);
-    }
-  });
-}
-
 onGetDraftPO() {
    const payload = {
             p_returntype: 'PODRAFT',
@@ -275,6 +271,14 @@ onGetDraftPO() {
       console.error('Error fetching PO numbers:', err);
     }
   });
+}
+
+createReturnPayload(returnType: string, returnValue: string | null = null, username?: string): any {
+    return {
+        p_returntype: returnType,
+        p_returnvalue: returnValue ?? this.companyId.toString(),
+        p_username: username ?? ''
+    };
 }
 
     onGetProject(): void {
@@ -303,20 +307,48 @@ onGetDraftPO() {
     });
 
     if (selectedProjectId) {
-        this.loadItemsForProject(selectedProjectId);
+        this.loadTableData(selectedProjectId);
     } else {
         this.poItemArray.clear();
         this.recalcGrandTotal();
     }
 }
 
-private loadItemsForProject(projectId: number): void {
-    const payload = {
-        p_returntype: 'MFAPPROVED',       // ⬅️ confirm this is the right return type for your API
-        p_returnvalue: projectId.toString(),
-        username: ''
-    };
+private loadTableData(projectId: number): void {
+   const payload =  this.createReturnPayload('PROJECTRFQ4PO', projectId.toString(), this.authService.isLogIntType()?.userid.toString());
+   this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+    next: (res: any) => {
+        const rows: any[] = res.data || [];
 
+        if (rows.length === 0) {
+            this.poItemArray.clear();
+            this.recalcGrandTotal();
+            this.messageService.add({
+                severity: 'info',
+                summary: 'No Data',
+                detail: 'No RFQ items found for this site.',
+                life: 2500
+            });
+            return;
+        }
+
+        this.mapProjectRfqItemsToFormArray(rows);
+    },
+    error: (err: any) => {
+        console.error('Error fetching RFQ items for project:', err);
+        this.poItemArray.clear();
+        this.recalcGrandTotal();
+        this.messageService.add({
+            severity: 'error',
+            summary: 'Failed to load items for this site',
+            life: 2500
+        });
+    }
+   })
+}
+
+private loadItemsForProject(projectId: number): void {
+    const payload = this.createReturnPayload('MFAPPROVED', projectId.toString());
     this.inventoryService.Getreturndropdowndetails(payload).subscribe({
         next: (res: any) => {
             const rows: any[] = res.data || [];
@@ -541,9 +573,6 @@ private buildItemsPayload(): PurchaseOrderItem[] {
         po_qty: row.get('poQty')?.value ?? 0,
         rate: row.get('rate')?.value ?? 0,
         amount: row.get('amount')?.value ?? 0,
-        tax_id: row.get('tax_id')?.value ?? null,
-        tax_percent: row.get('taxPercent')?.value ?? 0,
-        total_amount: row.get('totalAmount')?.value ?? 0,
         remarks: row.get('remarks')?.value ?? ''
     }));
 }
@@ -685,6 +714,43 @@ submitDraft(): void {
                 mfdetailid: [it.mfdetailid ?? null],
                 department_id: [it.department_id ?? null],
                 vendor_id: [it.supplierid],
+                item_category_id: [it.item_category_id ?? null],
+                item_id: [it.item_id ?? null],
+                uom_id: [it.uom_id ?? null]
+            })
+        );
+    });
+    this.syncSelectedVendors();
+    this.recalcGrandTotal();
+}
+
+   private mapProjectRfqItemsToFormArray(items: any[]): void {
+    this.poItemArray.clear();
+    items.forEach((it) => {
+        this.poItemArray.push(
+            this.fb.group({
+                department: [''],
+                mf_no: [''],
+                category: [it.item_category ?? ''],
+                item: [it.item_description ?? ''],
+                uom: [it.uom ?? ''],
+                forecastQty: [it.required_qty ?? 0],
+                availableStock: [it.available_stock ?? 0],
+                pendingPOQty: [it.pending_qty ?? 0],
+                requiredQty: [it.required_qty_net ?? 0],
+                poQty: [null],
+                vendorName: [''],
+                rate: [null],
+                amount: [null],
+                tax_id: [''],
+                taxPercent: [''],
+                totalAmount: [null],
+                remarks: [''],
+
+                mf_id: [null],
+                mfdetailid: [null],
+                department_id: [null],
+                vendor_id: [null],
                 item_category_id: [it.item_category_id ?? null],
                 item_id: [it.item_id ?? null],
                 uom_id: [it.uom_id ?? null]
@@ -839,32 +905,25 @@ private vendorFilterReturnTypeMap: Record<string, string> = {
     }
 
     openMrDialog(): void {
-        const projectId = this.poForm.get('p_project')?.value;
-        if (!projectId) {
-            this.messageService.add({ severity: 'warn', summary: 'Select a site first', life: 2500 });
+        const poId = this.poForm.get('p_pono')?.value;
+        if (!poId) {
+            this.messageService.add({ severity: 'warn', summary: 'Select a pono first', life: 2500 });
             return;
         }
-
         this.showMrDialog = true;
-        this.loadMrPopupRows(projectId);
-    }
-
-    private loadMrPopupRows(projectId: number): void {
         this.isLoadingMrPopup = true;
-        const payload = {
-            p_returntype: 'MFAPPROVED',
-            p_returnvalue: projectId.toString(),
-            username: ''
-        };
+        const payload = this.createReturnPayload('PROJECTRFQ4MR', poId.toString(), this.authService.isLogIntType()?.userid.toString());
 
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res: any) => {
                 this.mrPopupRows = res.data ?? [];
+                this.includedMrList = this.buildIncludedMrList(this.mrPopupRows);
                 this.isLoadingMrPopup = false;
             },
             error: (err: any) => {
                 console.error('Error fetching MR popup rows:', err);
                 this.mrPopupRows = [];
+                this.includedMrList = [];
                 this.isLoadingMrPopup = false;
                 this.messageService.add({
                     severity: 'error',
@@ -872,6 +931,32 @@ private vendorFilterReturnTypeMap: Record<string, string> = {
                     life: 2500
                 });
             }
+        });
+    }
+
+    private buildIncludedMrList(rows: any[]): any[] {
+        const grouped = new Map<string, any>();
+
+        rows.forEach((row) => {
+            const key = row.mf_no ?? '';
+            if (!key || grouped.has(key)) return;
+            grouped.set(key, {
+                mr_no: key,
+                mf_id: row.mf_id ?? null,
+                mr_date: row.mf_date ?? row.forecast_month ?? null,
+                department: row.department_name ?? '',
+                requested_by: row.requester ?? ''
+            });
+        });
+
+        return Array.from(grouped.values());
+    }
+
+    // ── View click: same navigation flow as RFQ's included MR list ─────────────
+    openMaterialRequisition(row: any): void {
+        this.showMrDialog = false;
+        this.router.navigate(['/layout/purchase/material-requisition'], {
+            queryParams: { mfNo: row.mr_no, mfId: row.mf_id ?? null, fromRfqView: true }
         });
     }
 
