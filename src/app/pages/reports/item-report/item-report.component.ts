@@ -162,7 +162,7 @@ export class ItemReportComponent {
     categoryRelavantItem(id: any) {
         this.itemOptions = [];
         const payload = {
-            p_username: this.authService.isLogIntType().userid.toString(),
+            p_username: this.authService.isLogIntType().industry_type_id.toString(),
             p_returntype: 'CATEGORY',
             p_returnvalue: id.toString()
         };
@@ -196,7 +196,7 @@ export class ItemReportComponent {
 
     createDropdownPayload(returnType: string) {
         return {
-            p_username: this.authService.isLogIntType().userid.toString(),
+            p_username: this.authService.isLogIntType().industry_type_id.toString(),
             p_returntype: returnType
         };
     }

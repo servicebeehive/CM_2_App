@@ -2,75 +2,43 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
-import { ChipModule } from 'primeng/chip';
-import { EditorModule } from 'primeng/editor';
-import { FileUploadModule } from 'primeng/fileupload';
-import { FluidModule } from 'primeng/fluid';
 import { InputTextModule } from 'primeng/inputtext';
-import { AutoCompleteModule } from 'primeng/autocomplete';
-import { RippleModule } from 'primeng/ripple';
-import { SelectModule } from 'primeng/select';
 import { DropdownModule } from 'primeng/dropdown';
-import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { TableModule } from 'primeng/table';
 import { TextareaModule } from 'primeng/textarea';
 import { MessageModule } from 'primeng/message';
-import { DatePickerModule } from 'primeng/datepicker';
 import { DialogModule } from 'primeng/dialog';
-import { StockIn } from '@/types/stockin.model';
 import { InventoryService } from '@/core/services/inventory.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { CheckboxModule } from 'primeng/checkbox';
 import { AuthService } from '@/core/services/auth.service';
-import { Card } from 'primeng/card';
-import { Divider } from 'primeng/divider';
-import { Tag } from 'primeng/tag';
 import * as XLSX from 'xlsx';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
     selector: 'app-my-approval',
     imports: [
         CommonModule,
-        EditorModule,
         ReactiveFormsModule,
         TextareaModule,
         TableModule,
         InputTextModule,
         FormsModule,
-        FileUploadModule,
         ButtonModule,
-        SelectModule,
         DropdownModule,
-        ToggleSwitchModule,
-        RippleModule,
-        ChipModule,
-        FluidModule,
         MessageModule,
-        DatePickerModule,
         DialogModule,
-        AutoCompleteModule,
-        ConfirmDialogModule,
-        CheckboxModule,
-        Card,
-        Divider,
-        Tag
+        ConfirmDialogModule
     ],
     templateUrl: './my-approval.component.html',
     styleUrl: './my-approval.component.scss',
     providers: [ConfirmationService, DatePipe]
 })
 export class MyApprovalComponent {
-    customerForm!: FormGroup;
-    visibleDialog = false;
+    approvalForm!: FormGroup;
+    logForm!: FormGroup;
     selectedRow: any = null;
-    selection: boolean = true;
-    first: number = 0;
-    rowsPerPage: number = 5;
-    globalFilter: string = '';
     rejectiondetails: boolean = false;
-    showData: boolean = false;
     rejectComment: string = '';
     submitted: boolean = false;
     industryTypeId: string = '';
@@ -83,7 +51,7 @@ export class MyApprovalComponent {
 
     products: any[] = [];
     filteredProducts: any[] = [];
-    columns: any[] = [];
+    logDetailsVisible = false;
 
     constructor(
         private fb: FormBuilder,
@@ -92,16 +60,28 @@ export class MyApprovalComponent {
         private messageService: MessageService,
         private datePipe: DatePipe,
         private confirmationService: ConfirmationService,
-        private router:Router
+        private router:Router,
+        private route: ActivatedRoute
     ) {}
 
     ngOnInit(): void {
         this.industryTypeId = this.authService.isLogIntType()?.industry_type_id.toString() || '';
-        this.customerForm = this.fb.group({
-            p_type: [null],
+        this.approvalForm = this.fb.group({
+            p_type: [null, Validators.required],
             p_request: ['PENDING']
         });
+        this.logForm = this.fb.group({
+            mfNo: [''],
+            requestedBy: ['']
+        });
+        this.approvalForm.patchValue({
+            p_type: this.route.snapshot.queryParamMap.get('p_type'),
+            p_request: this.route.snapshot.queryParamMap.get('p_request') || 'PENDING'
+        });
         this.loadAllDropdowns();
+        if (this.approvalForm.get('p_type')?.value) {
+            this.onGetApprovalList();
+        }
     }
 
     blockMinus(event: KeyboardEvent) {
@@ -111,33 +91,39 @@ export class MyApprovalComponent {
         }
     }
 
-    display() {
-        this.applyFilter();
+    onTypeChange(): void {
+        if (!this.approvalForm.get('p_type')?.value) {
+            this.products = [];
+            this.filteredProducts = [];
+            return;
+        }
+        this.onGetApprovalList();
     }
 
     applyFilter() {
-        const selectedRequest = this.customerForm.get('p_request')?.value;
-        const selectedType = this.customerForm.get('p_type')?.value;
+        const selectedRequest = this.approvalForm.get('p_request')?.value;
+        const selectedType = this.approvalForm.get('p_type')?.value;
+        if (!selectedType) {
+            this.filteredProducts = [];
+            return;
+        }
+        const selectedTypeName = this.typeOptions.find((type) => String(type.rule_id) === String(selectedType))?.rule_name;
         this.filteredProducts = this.products.filter((row) => {
             const matchRequest = selectedRequest ? row.status === selectedRequest : true;
-            const matchType = selectedType ? row.request_type === selectedType : true;
+            const matchType = selectedType ? row.request_type === (selectedTypeName || selectedType) : true;
             return matchRequest && matchType;
         });
     }
 
-    onPageChange(event: any) {
-        this.first = event.first;
-        this.rowsPerPage = event.rows;
-    }
-
     reset() {
-        this.customerForm.reset({
+        this.approvalForm.reset({
             p_type: null,
             p_request: 'PENDING'
         });
-        this.filteredProducts = [...this.products];
-        this.showData = false;
+        this.products = [];
+        this.filteredProducts = [];
         this.selectedRow = null;
+        this.logDetailsVisible = false;
     }
 
     createDropdownPayload(returnType: string) {
@@ -150,20 +136,30 @@ export class MyApprovalComponent {
     OnGetType() {
         const payload = this.createDropdownPayload('RULENAME');
         this.inventoryService.getdropdowndetailsPublic(payload).subscribe({
-            next: (res) => (this.typeOptions = res.data),
+            next: (res) => {
+                this.typeOptions = (res.data || []).map((type: any) => ({
+                    ...type,
+                    rule_id: String(type.rule_id)
+                }));
+                if (this.products.length) this.applyFilter();
+            },
             error: (err) => console.log(err)
         });
     }
 
     loadAllDropdowns() {
         this.OnGetType();
-        this.onGetApprovalList();
     }
 
     onGetApprovalList() {
+        if (!this.approvalForm.get('p_type')?.value) {
+            this.products = [];
+            this.filteredProducts = [];
+            return;
+        }
         const payload = {
-            p_username: this.authService.isLogIntType()?.userid.toString(),
-            p_returntype:  this.industryTypeId === '3' ? 'MYAPPROVALENTRY' : 'MYAPPROVALENTRYCONST',
+            p_username: this.authService.isLogIntType()?.companyid.toString(),
+            p_returntype:  this.industryTypeId === '3' ? 'MYAPPROVALENTRY' : 'MYAPPROVALENTRYCONST_MR',
             p_returnvalue: this.authService.isLogIntType()?.usertypeid.toString()
         };
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
@@ -196,14 +192,12 @@ export class MyApprovalComponent {
         }
 
         const excelData = this.filteredProducts.map((item) => ({
-            'Req Id': item.request_id,
-            'Invoice No': item.invoice_no,
-            Type: item.request_type,
-            Requester: item.customer_name,
-            Mobile: '',
-            Date: this.datePipe.transform(item.request_date, 'dd/MM/yyyy') || '',
-            Amount: item.amount,
-            Status: item.status
+            Project : item.project_name,
+            'MF No': item.mf_no,
+            'Request Date': this.datePipe.transform(item.request_date, 'dd/MM/yyyy') || '',
+            'Requested By': item.fullname,
+            Level :  item.level_no,
+            Status: item.status,
         }));
 
         const ws = XLSX.utils.json_to_sheet(excelData);
@@ -232,12 +226,37 @@ onViewPO(poValue: string): void {
     console.log('View PO:', poValue);
 }
 
-onViewMF(mfValue: string): void {
-    if (!mfValue) return;
-    // Add your view/navigation logic here
-    console.log('View MF:', mfValue);
+onViewMF(row: any): void {
+    const mfNo = row?.mf_no ;
+    if (!mfNo) return;
+
+    this.router.navigate(['/layout/purchase/material-requisition'], {
+        queryParams: {
+            mfNo,
+            fromApprovalView: true,
+            p_type: this.approvalForm.get('p_type')?.value,
+            p_request: this.approvalForm.get('p_request')?.value
+        }
+    });
 }
 
+    log(row: any): void {
+        this.logForm.patchValue({
+            mfNo: row?.mf_no,
+            requestedBy: row?.fullname
+        });
+
+        const history = row?.approval_history ?? row?.history;
+        this.approvalHistory = Array.isArray(history) && history.length
+            ? history
+            : [{
+                  level: row?.level_no ?? '',
+                  approvedBy: row?.approved_by ?? row?.approver ?? row?.fullname ?? '',
+                  approvedOn: row?.approved_on ?? row?.approvedOn ?? row?.request_date ?? null,
+                  status: row?.status ?? ''
+              }];
+        this.logDetailsVisible = true;
+    }
 
     approved(row: any) {
         this.confirmationService.confirm({

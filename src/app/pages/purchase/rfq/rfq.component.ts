@@ -87,8 +87,6 @@ export class RfqComponent implements OnInit {
         this.loadSites();
         this.loadRfqNumberOptions();
         this.loadDraftList();
-        this.loadItemOptions();
-        this.loadVendorOptions();
         this.ensureDefaultVendorInviteRows();
     }
 
@@ -174,40 +172,6 @@ export class RfqComponent implements OnInit {
         } else {
             options.unshift(option);
         }
-    }
-
-    private loadItemOptions(): void {
-        const payload = {
-            p_returntype: 'ITEMALL',
-            p_returnvalue: this.companyId,
-            p_username: this.userId
-        };
-
-        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-            next: (res: any) => {
-                this.itemOptions = res.data || [];
-            },
-            error: () => {
-                this.itemOptions = [];
-            }
-        });
-    }
-
-    private loadVendorOptions(): void {
-        const payload = {
-            p_returntype: 'SUPPLIERMASTER',
-            p_returnvalue: this.companyId,
-            p_username: this.userId
-        };
-
-        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-            next: (res: any) => {
-                this.vendorOptions = res.data || [];
-            },
-            error: () => {
-                this.vendorOptions = [];
-            }
-        });
     }
 
     onSiteChange(event: any): void {

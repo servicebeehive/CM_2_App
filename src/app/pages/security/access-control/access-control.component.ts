@@ -41,8 +41,8 @@ export class AccessControlComponent {
     ngOnInit() {
         this.companyId = this.authService.isLogIntType()?.companyid.toString();
         this.industryType = this.authService.isLogIntType()?.industry_type_id.toString();
-        this.loadDropdown('ACCESSPERMISSION', 'allPermissions', this.selectedAccess);
-        this.loadDropdown('USERTYPEALL', 'roleOptions', this.industryType);
+        this.loadDropdown('ACCESSPERMISSION', 'allPermissions', this.selectedAccess, this.industryType);
+        this.loadDropdown('USERTYPEALL', 'roleOptions', this.industryType, this.authService.isLogIntType()?.userid.toString());
         this.availablePermissions = JSON.parse(JSON.stringify(this.allPermissions));
     }
 
@@ -50,13 +50,13 @@ export class AccessControlComponent {
         this.allPermissions = [];
         this.restrictPermissions = [];
         this.availablePermissions = [];
-        this.loadDropdown('ACCESSPERMISSION', 'allPermissions', this.selectedAccess);
+        this.loadDropdown('ACCESSPERMISSION', 'allPermissions', this.selectedAccess, this.industryType);
     }
-    loadDropdown(type: string, key: 'roleOptions' | 'allPermissions' | 'restrictPermissions', value: string) {
+    loadDropdown(type: string, key: 'roleOptions' | 'allPermissions' | 'restrictPermissions', value: string, pusername: string) {
         const payload: any = {
             p_returntype: type,
             p_returnvalue: value,
-            p_username: this.industryType,
+            p_username: pusername,
         };
 
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
@@ -67,7 +67,7 @@ export class AccessControlComponent {
                     if (this.selectedRole) {
                         const selectedUser = this.roleOptions.find((r) => r.usertypeid === this.selectedRole);
                         const value = selectedUser.usertypecode;
-                        this.loadDropdown('ACCESSCONTROL', 'restrictPermissions', value);
+                        this.loadDropdown('ACCESSCONTROL', 'restrictPermissions', value, this.industryType);
                     }
                 }
                 if (type === 'ACCESSCONTROL') {
@@ -83,7 +83,7 @@ export class AccessControlComponent {
         const value = selectedUser.usertypecode;
         this.restrictPermissions = [];
         this.availablePermissions = this.clonePermissions(this.allPermissions);
-        this.loadDropdown('ACCESSCONTROL', 'restrictPermissions', value);
+        this.loadDropdown('ACCESSCONTROL', 'restrictPermissions', value, this.industryType);
         console.log('rest',this.restrictPermissions, this.allPermissions)
     }
 

@@ -65,7 +65,7 @@
                 <!-- User Role -->
                 <div class="flex flex-col">
                     <label class="font-medium mb-1">User Role <span class="text-red-500">*</span></label>
-                    <p-dropdown [options]="userRoleOptions" optionLabel="fieldname" optionValue="fieldid" formControlName="p_utypeid" placeholder="Select Role"></p-dropdown>
+                    <p-dropdown [options]="userRoleOptions" optionLabel="usertypename" optionValue="usertypeid" formControlName="p_utypeid" placeholder="Select Role"></p-dropdown>
                     <small class="text-red-500 mt-1" *ngIf="userForm.get('p_utypeid')?.touched && userForm.get('p_utypeid')?.invalid"> User Role is required </small>
                 </div>
 

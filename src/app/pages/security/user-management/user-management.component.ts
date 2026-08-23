@@ -40,6 +40,7 @@ export class UserManagementComponent {
     userRoleOptions: any[] = [];
     loggedInUserName: string = '';
     loggedInUserRole: string = '';
+    industryType: string = '';
 
     constructor(
         private fb: FormBuilder,
@@ -52,6 +53,7 @@ export class UserManagementComponent {
 
     ngOnInit() {
         this.initForm();
+        this.industryType = this.authService.isLogIntType()?.industry_type_id.toString();
         this.onGetUserRole();
         this.onGetProjectList();
         this.filteredUser = [...this.user];
@@ -258,16 +260,17 @@ export class UserManagementComponent {
         }
     }
 
-    createDropdownPayload(returnType: string) {
-        const username = this.authService.isLogIntType().industrytype;
+    createDropdownPayload(returnType: string, returnValue: string = ''){
+        const username = this.authService.isLogIntType()?.userid.toString();
         return {
-            p_username: username,
-            p_returntype: returnType
+            p_returntype: returnType,
+            p_returnvalue: returnValue,
+            p_username: username
         };
     }
     onGetUserRole() {
-        const payload = this.createDropdownPayload('USERTYPE');
-        this.inventoryService.getdropdowndetails(payload).subscribe({
+        const payload = this.createDropdownPayload('USERTYPEALL', this.industryType);
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res) => (this.userRoleOptions = res.data),
             error: (err) => console.log(err)
         });

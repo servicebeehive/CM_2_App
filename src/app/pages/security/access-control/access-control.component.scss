@@ -1,0 +1,13 @@
+.permission-pane {
+	display: flex;
+	flex: 1 1 0;
+	flex-direction: column;
+	height: 28rem;
+	min-height: 28rem;
+}
+
+.permission-pane__list {
+	flex: 1 1 auto;
+	overflow-y: auto;
+	padding-right: 0.5rem;
+}

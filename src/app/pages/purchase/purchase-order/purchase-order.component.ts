@@ -7,7 +7,7 @@ import { ChipModule } from 'primeng/chip';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DatePickerModule } from 'primeng/datepicker';
 import { DialogModule } from 'primeng/dialog';
-import { DropdownModule } from 'primeng/dropdown';
+import { SelectModule } from 'primeng/select';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { RadioButtonModule } from 'primeng/radiobutton';
@@ -17,7 +17,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { InventoryService } from '@/core/services/inventory.service';
 import { AuthService } from '@/core/services/auth.service';
 import { FileUploadModule } from 'primeng/fileupload';
-import { TabViewModule } from 'primeng/tabview';
+import { TabsModule } from 'primeng/tabs';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { WorkService } from '@/core/services/work.service';
 import { PurchaseDraftPayload, PurchaseOrderItem, PurchaseOrderPayload } from '@/core/models/authmodel/work.model';
@@ -42,13 +42,13 @@ export interface PaymentEntry {
         ConfirmDialogModule,
         DatePickerModule,
         DialogModule,
-        DropdownModule,
+        SelectModule,
         InputNumberModule,
         InputTextModule,
         RadioButtonModule,
         TableModule,
         TooltipModule,
-        TabViewModule,
+        TabsModule,
         FileUploadModule,
         MultiSelectModule
     ],
@@ -83,12 +83,13 @@ export class PurchaseOrderComponent implements OnInit {
     selectedVendorNames: string[] = [];
     generatedPONos:any[]=[];
     vendorMasterOptions: any[] = [];
+    vendorOptionsByRow: any[][] = [];
 
     showVendorDialog = false;
     showMrDialog = false;
     vendorDialogItem: AbstractControl | null = null;
     vendorDialogIndex: number | null = null;
-    vendorFilter: 'lowest' | 'fastest' | 'preferred' = 'lowest';
+    vendorFilter: 'lowest' | 'fastest' | 'preferred' = 'preferred';
     allVendorList:any[] = [];
     filteredVendorList: any[] = [];
     selectedVendor: any | null = null;
@@ -124,6 +125,7 @@ export class PurchaseOrderComponent implements OnInit {
     // ── Lifecycle ──────────────────────────────────────────────────────────────
     ngOnInit(): void {
         this.companyId= this.authService.isLogIntType()?.companyid;
+        this.userId = this.authService.isLogIntType()?.userid?.toString() ?? '';
         this.initForm();
         this.loadDropdowns();
     }
@@ -688,6 +690,7 @@ submitDraft(): void {
 
    private mapItemsToFormArray(items: any[]): void {
     this.poItemArray.clear();
+    this.vendorOptionsByRow = [];
     items.forEach((it) => {
         console.log(it)
         this.poItemArray.push(
@@ -726,6 +729,7 @@ submitDraft(): void {
 
    private mapProjectRfqItemsToFormArray(items: any[]): void {
     this.poItemArray.clear();
+    this.vendorOptionsByRow = [];
     items.forEach((it) => {
         this.poItemArray.push(
             this.fb.group({
@@ -776,7 +780,7 @@ submitDraft(): void {
             return;
         }
 
-        const vendor = this.vendorMasterOptions.find((v) => v.supplierid === vendorId);
+        const vendor = (this.vendorOptionsByRow[index] ?? this.vendorMasterOptions).find((v) => v.supplierid === vendorId);
         row.patchValue(
             {
                 vendorName: vendor?.suppliername ?? null,
@@ -788,6 +792,10 @@ submitDraft(): void {
 
         this.recalcRow(index);
         this.syncSelectedVendors();
+    }
+
+    getVendorOptions(index: number): any[] {
+        return this.vendorOptionsByRow[index] ?? [];
     }
 
     onPoQtyChange(i: number): void {
@@ -825,38 +833,40 @@ submitDraft(): void {
     // VENDOR COMPARISON DIALOG
     // ──────────────────────────────────────────────────────────────────────────
 
-private vendorFilterReturnTypeMap: Record<string, string> = {
-    lowest: 'VENDORRATE',
-    fastest: 'VENDORFAST',
-    preferred: 'VENDORPREF'
-};
+    openVendorDialog(index: number = 0): void {
+        if (!this.poItemArray.at(index)) return;
 
-    openVendorDialog(row: AbstractControl, index: number): void {
-        this.vendorDialogItem = row;
         this.vendorDialogIndex = index;
-        this.vendorFilter = 'lowest';
+        this.vendorDialogItem = this.poItemArray.at(index);
+        this.vendorFilter = 'preferred';
         this.selectedVendor = null;
-       
+
         this.showVendorDialog = true;
-        this.fetchVendorsForFilter(row)
+        this.fetchVendorsForFilter();
     }
 
     onVendorFilterChange(filter: 'lowest' | 'fastest' | 'preferred'): void {
     this.vendorFilter = filter;
     if (this.vendorDialogItem) {
-        this.fetchVendorsForFilter(this.vendorDialogItem);
+        this.fetchVendorsForFilter();
     }
 }
 
-    private fetchVendorsForFilter(row:AbstractControl):void{
-        const returnType = this.vendorFilterReturnTypeMap[this.vendorFilter]??'VENDORRATE';
+    private fetchVendorsForFilter():void{
+        const categoryId = this.vendorDialogItem?.get('item_category_id')?.value;
+        if (categoryId == null) {
+            this.allVendorList = [];
+            this.filteredVendorList = [];
+            return;
+        }
+
         const payload = {
-            p_returntype: returnType,
-            p_returnvalue: this.companyId.toString(),
-            username:''
+            p_returntype: 'VENDORALL',
+            p_returnvalue: categoryId.toString(),
+            p_username: this.userId
         };
 
-        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+        this.inventoryService.getdropdowndetails(payload).subscribe({
             next:(res:any)=>{
                 console.log(res.data)
                 this.allVendorList = res.data ?? [];
@@ -876,12 +886,15 @@ private vendorFilterReturnTypeMap: Record<string, string> = {
         const v = this.selectedVendor as any;
         const row = this.poItemArray.at(this.vendorDialogIndex);
         const qty = Number(row.get('poQty')?.value || 0);
+        const vendorId = v.supplierid ?? v.vendorid ?? v.vendor_id ?? null;
+        const vendorName = v.suppliername ?? v.vendorname ?? v.vendor_name ?? '';
+        const rate = v.lastrate ?? v.last_rate ?? 0;
 
         row.patchValue({
-            vendorName: v.suppliername,
-            vendor_id: v.supplierid ?? null,
-            rate: v.lastrate,
-            amount: qty ? +(qty * v.lastrate).toFixed(2) : null
+            vendorName,
+            vendor_id: vendorId,
+            rate,
+            amount: qty ? +(qty * rate).toFixed(2) : null
         });
 
         this.recalcGrandTotal();
@@ -891,7 +904,7 @@ private vendorFilterReturnTypeMap: Record<string, string> = {
         this.messageService.add({
             severity: 'success',
             summary: 'Vendor Selected',
-            detail: `${v.suppliername} assigned to ${row.get('item')?.value}`,
+            detail: `${vendorName} assigned to ${row.get('item')?.value}`,
             life: 2000
         });
     }
@@ -956,7 +969,7 @@ private vendorFilterReturnTypeMap: Record<string, string> = {
     openMaterialRequisition(row: any): void {
         this.showMrDialog = false;
         this.router.navigate(['/layout/purchase/material-requisition'], {
-            queryParams: { mfNo: row.mr_no, mfId: row.mf_id ?? null, fromRfqView: true }
+            queryParams: { mfNo: row.mr_no, mfId: row.mf_id ?? null, fromPurchaseOrderView: true }
         });
     }
 

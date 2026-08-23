@@ -38,6 +38,7 @@ export class RuleDetailComponent {
     allGroupedRows: Map<number, any[]> = new Map();
     selectedUserRow: any = null;
     isActiveChecked: boolean = false;
+    industryTypeId: string = '';
 
     constructor(
         private fb: FormBuilder,
@@ -49,6 +50,7 @@ export class RuleDetailComponent {
 
     ngOnInit() {
         this.initForm();
+        this.industryTypeId = this.authService.isLogIntType().industry_type_id.toString();
         this.onGetDropdown();
         this.filteredUser = [...this.user];
     }
@@ -62,9 +64,8 @@ export class RuleDetailComponent {
 
     createDropdownPayload(returnType: string, username:string) {
         return {
-            // p_username: this.authService.isLogIntType()?.username,
             p_username: username,
-            p_returntype: returnType,
+            p_returntype: returnType
         };
     }
 
@@ -90,8 +91,7 @@ export class RuleDetailComponent {
     }
 
     onGetRuleName() {
-        const industrytype = this.authService.isLogIntType().industrytype;
-        const payload = this.createDropdownPayload('RULENAME', industrytype);
+        const payload = this.createDropdownPayload('RULENAME', this.industryTypeId);
         this.inventoryService.getdropdowndetailsPublic(payload).subscribe({
             next: (res) => (this.ruleOptions = res.data || []),
             error: (err) => console.log(err)
@@ -99,8 +99,7 @@ export class RuleDetailComponent {
     }
 
     onGetUserProfile() {
-        const industrytype = this.authService.isLogIntType().industrytype;
-        const payload = this.createDropdownPayload('APPUSERTYPE',industrytype );
+        const payload = this.createDropdownPayload('APPUSERTYPE', this.industryTypeId);
         this.inventoryService.getdropdowndetails(payload).subscribe({
             next: (res) => (this.usernameOptions = res.data || []),
             error: (err) => console.log(err)

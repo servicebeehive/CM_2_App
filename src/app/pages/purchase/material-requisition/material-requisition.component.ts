@@ -62,6 +62,10 @@ export class MaterialRequisitionComponent {
     companyId = '';
     private requestedMrNo: string | null = null;
     private fromRfqView = false;
+    private fromApprovalView = false;
+    private fromPurchaseOrderView = false;
+    private approvalType: string | null = null;
+    private approvalRequest: string | null = null;
 
     constructor(
         private fb: FormBuilder,
@@ -79,6 +83,10 @@ export class MaterialRequisitionComponent {
         this.userId = this.authService.isLogIntType().userid.toString();
         this.requestedMrNo = this.route.snapshot.queryParamMap.get('mfNo');
         this.fromRfqView = this.route.snapshot.queryParamMap.get('fromRfqView') === 'true';
+        this.fromApprovalView = this.route.snapshot.queryParamMap.get('fromApprovalView') === 'true';
+        this.fromPurchaseOrderView = this.route.snapshot.queryParamMap.get('fromPurchaseOrderView') === 'true';
+        this.approvalType = this.route.snapshot.queryParamMap.get('p_type');
+        this.approvalRequest = this.route.snapshot.queryParamMap.get('p_request');
         this.loadAllDropdowns();
 
         this.forecastForm = this.fb.group({
@@ -158,7 +166,19 @@ export class MaterialRequisitionComponent {
     }
 
     get showRfqBackButton(): boolean {
-        return this.fromRfqView;
+        return this.fromRfqView || this.fromApprovalView || this.fromPurchaseOrderView;
+    }
+
+    get backRoute(): string[] {
+        if (this.fromApprovalView) return ['/layout/settings/my-approval'];
+        if (this.fromPurchaseOrderView) return ['/layout/purchase/purchase-order'];
+        return ['/layout/purchase/rfq'];
+    }
+
+    get backQueryParams(): Record<string, string> {
+        return this.fromApprovalView
+            ? { p_type: this.approvalType ?? '', p_request: this.approvalRequest ?? 'PENDING' }
+            : {};
     }
 
     onAttachmentSelect(event: any) {
@@ -794,7 +814,8 @@ viewAttachment(){
     }
     onReset(): void {
         this.forecastForm.reset({
-            p_mrdate: this.today
+            p_mrdate: this.today,
+            status: ''
         });
         this.itemArray.clear();
         this.uomlist = [];

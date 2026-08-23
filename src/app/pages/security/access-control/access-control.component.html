@@ -19,14 +19,16 @@
     </div>
 </div>
 
-    <div class="flex gap-8 mt-4">
+    <div class="flex gap-8 mt-4 items-stretch">
         <!-- LEFT BOX -->
-        <div class="border rounded-md p-4 w-1/2">
+        <div class="border rounded-md p-4 w-1/2 permission-pane">
             <h3 class="font-semibold mb-3">Available Permissions</h3>
 
+            <div class="permission-pane__list">
             <div *ngFor="let item of availablePermissions" class="flex items-center gap-2 mb-2">
                 <p-checkbox [(ngModel)]="item.selected" [binary]="true"></p-checkbox>
                 <span [pTooltip]="item.access_desc" tooltipPosition="top">{{ item.access_name }}</span>
+            </div>
             </div>
         </div>
 
@@ -39,12 +41,14 @@
         </div>
 
         <!-- RIGHT BOX -->
-        <div class="border rounded-md p-4 w-1/2">
+        <div class="border rounded-md p-4 w-1/2 permission-pane">
             <h3 class="font-semibold mb-3">Restrict Permissions</h3>
 
+            <div class="permission-pane__list">
             <div *ngFor="let item of restrictPermissions" class="flex items-center gap-2 mb-2">
                 <p-checkbox [(ngModel)]="item.selected" [binary]="true"></p-checkbox>
                 <span [pTooltip]="item.access_desc" tooltipPosition="top">  {{ item.access_name }} </span>
+            </div>
             </div>
         </div>
     </div>

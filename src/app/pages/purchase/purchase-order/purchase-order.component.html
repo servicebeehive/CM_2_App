@@ -8,7 +8,7 @@
 
             <div class="flex flex-wrap gap-2 md:gap-3 w-full md:w-auto">
                 <!-- PO No Dropdown (submitted POs) -->
-                <p-dropdown
+                <p-select
                     [options]="poList"
                     optionLabel="draft_no"
                     optionValue="draft_id"
@@ -18,10 +18,11 @@
                     filterPlaceholder="Search Draft PO No."
                     [showClear]="true"
                     (onChange)="onPOSelect($event)"
-                ></p-dropdown>
+                ></p-select>
 
                 <!-- Draft PO -->
                 <button pButton type="button" label="Draft PO" class="p-button-warning w-full md:w-auto" (click)="submitDraft()" [disabled]="poForm.invalid || isSubmitDisabled()"></button>
+                <button pButton type="button" label="Vendor" class="p-button-warning" pTooltip="Vendor comparison" tooltipPosition="top" (click)="openVendorDialog()"></button>
 
                 <button pButton type="button" label="View" class="p-button-outlined w-full md:w-auto" (click)="openMrDialog()"></button>
 
@@ -46,7 +47,7 @@
             <!-- PO No (Auto Generated per vendor) -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">PO No.</label>
-                <p-dropdown [options]="generatedPONos" optionLabel="po_no" optionValue="po_id" placeholder="Auto Generated" formControlName="p_pono" [showClear]="true"></p-dropdown>
+                <p-select [options]="generatedPONos" optionLabel="po_no" optionValue="po_id" placeholder="Auto Generated" formControlName="p_pono" [showClear]="true"></p-select>
             </div>
 
             <!-- PO Date -->
@@ -58,23 +59,23 @@
                 <small class="text-red-500 mt-1 text-xs" *ngIf="poForm.get('p_podate')?.touched && poForm.get('p_deliverydate')?.touched && poForm.errors?.['poDateAfterDelivery']"> PO date cannot be after delivery date </small>
             </div>
 
-             <!-- Delivery Date -->
+            <!-- Delivery Date -->
             <div class="flex flex-col">
                 <label class="font-medium">Delivery Date</label>
                 <p-datePicker fluid formControlName="p_deliverydate" placeholder="Select date" dateFormat="dd/mm/yy" [showIcon]="true" [minDate]="today"></p-datePicker>
                 <small class="text-red-500 mt-1 text-xs" *ngIf="poForm.get('p_podate')?.touched && poForm.get('p_deliverydate')?.touched && poForm.errors?.['deliveryBeforePO']"> Delivery date cannot be before PO date </small>
             </div>
 
-              <!-- Remarks -->
+            <!-- Remarks -->
             <div class="flex flex-col">
                 <label class="font-medium">Remarks</label>
                 <input pInputText type="text" formControlName="p_remarks" placeholder="Optional remarks" />
             </div>
 
             <!-- Site -->
-             <div class="flex flex-col">
+            <div class="flex flex-col">
                 <label class="font-medium mb-1">Site <span class="text-red-500">*</span></label>
-                <p-dropdown
+                <p-select
                     [options]="projectOptions"
                     optionLabel="project_name"
                     optionValue="project_id"
@@ -85,21 +86,21 @@
                     (onChange)="onSiteChange($event)"
                     [showClear]="true"
                     [loading]="isLoadingProjects"
-                ></p-dropdown>
+                ></p-select>
                 <small class="text-red-500 mt-1 text-xs" *ngIf="poForm.get('p_project')?.touched && poForm.get('p_project')?.errors?.['required']">Site is required </small>
             </div>
 
-             <!-- Delivery Location -->
+            <!-- Delivery Location -->
             <div class="flex flex-col">
                 <label class="font-medium">Delivery Location</label>
-                <input pInputText type="text" formControlName="p_deliverylocation" placeholder="Delivery Location" [disabled]="true" />
+                <input pInputText type="text" formControlName="p_deliverylocation" placeholder="Delivery Location" />
             </div>
 
             <!-- Vendor (auto-filled from item vendor selections) -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Vendor</label>
                 <!-- <p-multiSelect [options]="selectedVendorNames" formControlName="p_vendor"  display="chip" styleClass="w-full surface-100"></p-multiSelect> -->
-                <input pInputText type="text" formControlName="p_vendor" placeholder="Assigned via vendor icon ↓" [disabled]="true" />
+                <input pInputText type="text" formControlName="p_vendor" placeholder="Assigned via vendor icon ↓" />
             </div>
 
             <!-- Payment Terms -->
@@ -108,16 +109,22 @@
                 <!-- <p-dropdown [options]="paymentTermsOptions" optionLabel="label" optionValue="value" placeholder="Select terms" formControlName="p_paymentterms" [filter]="true" filterPlaceholder="Search terms" [showClear]="true"></p-dropdown> -->
                 <input pInputText type="text" formControlName="p_paymentterms" placeholder="Select terms" />
             </div>
-
         </div>
 
         <!-- ================================
      ITEMS TABLE TAB (always visible)
 ================================= -->
         <div class="mt-4 md:mt-6">
-            <p-tabView>
-                <!-- ── TAB 0: ITEMS (always visible) ──────────────── -->
-                <p-tabPanel header="Items">
+            <p-tabs value="0">
+                <p-tablist>
+                    <p-tab value="0">Items</p-tab>
+                    <p-tab value="1" [disabled]="!submitted">Performa</p-tab>
+                    <p-tab value="2" [disabled]="!submitted">Invoice</p-tab>
+                    <p-tab value="3" [disabled]="!submitted">Payment</p-tab>
+                </p-tablist>
+                <p-tabpanels>
+                    <!-- ── TAB 0: ITEMS (always visible) ──────────────── -->
+                <p-tabpanel value="0">
                     <p-table [value]="poItemArray.controls" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" appendTo="body" class="p-datatable-gridlines p-datatable-sm purchase-order">
                         <ng-template pTemplate="header">
                             <tr class="bg-yellow-400">
@@ -134,7 +141,6 @@
                                 <th class="text-right">Amount</th>
                                 <th class="text-right">Tax %</th>
                                 <th class="text-right">Total Amount / Bill</th>
-                                <th class="text-center">Action</th>
                             </tr>
                         </ng-template>
 
@@ -150,20 +156,11 @@
                                 <td>
                                     <p-inputNumber formControlName="poQty" [min]="0" [useGrouping]="false" [inputStyle]="{ width: '90px' }" (onInput)="onPoQtyChange(i)"></p-inputNumber>
                                 </td>
-                                <td style="padding: 4px; min-width: 180px">
-                                    <p-dropdown
-                                        formControlName="vendor_id"
-                                        [options]="vendorMasterOptions"
-                                        optionLabel="suppliername"
-                                        optionValue="supplierid"
-                                        placeholder="Select Vendor"
-                                        [filter]="true"
-                                        filterPlaceholder="Search Vendor"
-                                        [showClear]="true"
-                                        appendTo="body"
-                                        styleClass="w-full"
-                                        (onChange)="onVendorDropdownChange(i, $event.value)"
-                                    ></p-dropdown>
+                                <td style="padding: 4px; min-width: 180px" class="text-sm">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <span>{{ row.get('vendorName')?.value || 'Not selected' }}</span>
+                                        <button pButton type="button" icon="pi pi-users" class="p-button-text p-button-sm" pTooltip="Select vendor" tooltipPosition="top" (click)="$event.stopPropagation(); openVendorDialog(i)"></button>
+                                    </div>
                                 </td>
                                 <td style="padding: 4px">
                                     <p-inputNumber formControlName="rate" [min]="0" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" [inputStyle]="{ width: '90px' }" (onInput)="onRateChange(i)"></p-inputNumber>
@@ -174,9 +171,6 @@
                                 <td class="text-right text-sm">{{ row.get('taxPercent')?.value || 0 }}</td>
                                 <td class="text-right text-sm font-semibold text-blue-700">
                                     {{ row.get('totalAmount')?.value ? '₹' + (row.get('totalAmount')?.value | number: '1.2-2') : '' }}
-                                </td>
-                                <td class="text-center">
-                                    <button pButton type="button" icon="pi pi-building" class="p-button-text p-button-info p-button-sm" pTooltip="Vendor comparison" tooltipPosition="top" (click)="openVendorDialog(row, i)"></button>
                                 </td>
                             </tr>
                         </ng-template>
@@ -195,10 +189,10 @@
                             <div class="text-sm font-semibold">Grand Total: ₹{{ grandTotal | number: '1.2-2' }}</div>
                         </ng-template>
                     </p-table>
-                </p-tabPanel>
+                </p-tabpanel>
 
                 <!-- ── TAB 1: PERFORMA (only after submit) ─────────── -->
-                <p-tabPanel header="Performa" [disabled]="!submitted">
+                <p-tabpanel value="1">
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-4 p-3">
                         <div class="col-span-1 sm:col-span-2 lg:col-span-4">
                             <span class="font-semibold text-base text-surface-800">Performa Details</span>
@@ -223,10 +217,10 @@
                             <button pButton type="button" label="Save Performa" icon="pi pi-save" class="p-button-primary p-button-sm" (click)="savePerforma()"></button>
                         </div>
                     </div>
-                </p-tabPanel>
+                </p-tabpanel>
 
                 <!-- ── TAB 2: INVOICE (only after submit) ──────────── -->
-                <p-tabPanel header="Invoice" [disabled]="!submitted">
+                <p-tabpanel value="2">
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-4 p-3">
                         <div class="col-span-1 sm:col-span-2 lg:col-span-4">
                             <span class="font-semibold text-base text-surface-800">Invoice Details</span>
@@ -265,9 +259,9 @@
                             <button pButton type="button" label="Save Invoice" icon="pi pi-save" class="p-button-primary p-button-sm" (click)="saveInvoice()"></button>
                         </div>
                     </div>
-                </p-tabPanel>
+                </p-tabpanel>
 
-                <p-tabPanel header="Payment" [disabled]="!submitted">
+                <p-tabpanel value="3">
                     <div class="p-3">
                         <!-- ── Summary Cards ── -->
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
@@ -357,7 +351,7 @@
                                     </td>
 
                                     <td>
-                                        <p-dropdown
+                                        <p-select
                                             [options]="paymentModeOptions"
                                             optionLabel="label"
                                             optionValue="value"
@@ -366,7 +360,7 @@
                                             [ngModelOptions]="{ standalone: true }"
                                             appendTo="body"
                                             styleClass="w-full"
-                                        ></p-dropdown>
+                                        ></p-select>
                                     </td>
 
                                     <td>
@@ -421,8 +415,9 @@
                             <button pButton type="button" label="Save Payment" icon="pi pi-save" class="p-button-primary p-button-sm" (click)="savePayment()" [disabled]="paymentHistory.length === 0"></button>
                         </div>
                     </div>
-                </p-tabPanel>
-            </p-tabView>
+                </p-tabpanel>
+                </p-tabpanels>
+            </p-tabs>
         </div>
     </form>
 
@@ -441,16 +436,16 @@
     <!-- Filter radio buttons -->
     <div class="flex gap-6 mb-3">
         <label class="flex items-center gap-2 text-sm cursor-pointer">
+            <p-radioButton name="vendorFilter" value="preferred" [(ngModel)]="vendorFilter" (onClick)="onVendorFilterChange('preferred')"></p-radioButton>
+            Preferred Vendor
+        </label>
+        <label class="flex items-center gap-2 text-sm cursor-pointer">
             <p-radioButton name="vendorFilter" value="lowest" [(ngModel)]="vendorFilter" (onClick)="onVendorFilterChange('lowest')"></p-radioButton>
             Lowest Rate
         </label>
         <label class="flex items-center gap-2 text-sm cursor-pointer">
             <p-radioButton name="vendorFilter" value="fastest" [(ngModel)]="vendorFilter" (onClick)="onVendorFilterChange('fastest')"></p-radioButton>
             Fastest Delivery
-        </label>
-        <label class="flex items-center gap-2 text-sm cursor-pointer">
-            <p-radioButton name="vendorFilter" value="preferred" [(ngModel)]="vendorFilter" (onClick)="onVendorFilterChange('preferred')"></p-radioButton>
-            Preferred Vendor
         </label>
     </div>
 
@@ -472,7 +467,7 @@
                     <p-tableRadioButton [value]="vendor"></p-tableRadioButton>
                 </td>
                 <td class="font-semibold text-sm">{{ vendor.suppliername }}</td>
-                <td class="text-right text-sm" [ngClass]="{ 'text-green-600 font-bold': vendorFilter === 'lowest' && i === 0 }">₹{{ vendor.lastrate | number: '1.2-2' }}</td>
+                <td class="text-right text-sm" [ngClass]="{ 'text-green-600 font-bold': vendorFilter === 'preferred' && i === 0 }">₹{{ vendor.lastrate | number: '1.2-2' }}</td>
                 <td class="text-sm">{{ vendor.paymentterm }}</td>
                 <td class="text-sm text-500">{{ vendor.lastOrder }}</td>
                 <td class="text-sm text-500">{{ vendor.lastOrder }}</td>
