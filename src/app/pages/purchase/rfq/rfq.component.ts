@@ -18,6 +18,7 @@ import { RfqRow, VendorInviteRow } from '@/core/models/purchase.model';
 import { UpsertRfqPayload, VendorInvitePayload } from '@/core/models/authmodel/work.model';
 import { WorkService } from '@/core/services/work.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { environment } from '@/environments/environment';
 
 @Component({
     selector: 'app-rfq',
@@ -63,7 +64,9 @@ export class RfqComponent implements OnInit {
     showMaterialReqDialog = false;
     showGmailReqDialog = false;
     gmailVendorRows: { selected: boolean; vendor: string; category: string; count: number; vendorId: number | null }[] = [];
+    attachmentFile: File | null = null;
     attachmentFileName = '';
+    attachmentBase64 = '';
 
     isLoadingItems = false;
     today: Date = new Date();
@@ -215,6 +218,8 @@ export class RfqComponent implements OnInit {
             next: (res: any) => {
                 const selected = Array.isArray(res.data) ? res.data[0] : res.data;
                 if (!selected) return;
+
+                this.setAttachment(selected.attachment ?? selected.attachment_path ?? '');
 
                 this.rfqVendorSelections = {};
                 this.rfqForm.patchValue(
@@ -665,6 +670,7 @@ getAvailableCategoryOptions(currentIndex: number): { label: string; value: numbe
                 if (!rows.length) return;
 
                 const header = rows[0];
+                this.setAttachment(header.attachment ?? header.attachment_path ?? '');
                 this.rfqForm.patchValue(
                     {
                         p_rfq_id: header.rfq_id ?? null,
@@ -768,8 +774,58 @@ getAvailableCategoryOptions(currentIndex: number): { label: string; value: numbe
     onAttachmentSelect(event: Event): void {
         const input = event.target as HTMLInputElement;
         const file = input.files?.[0] ?? null;
+        this.attachmentFile = file;
         this.attachmentFileName = file?.name ?? '';
+        this.attachmentBase64 = '';
         this.rfqForm.patchValue({ p_attachment: file });
+    }
+
+    viewAttachment(): void {
+        if (!this.attachmentFileName) return;
+
+        if (this.attachmentFile) {
+            window.open(URL.createObjectURL(this.attachmentFile), '_blank');
+            return;
+        }
+
+        if (this.attachmentBase64) {
+            const blobUrl = this.base64DataUriToBlobUrl(this.attachmentBase64);
+            if (blobUrl) window.open(blobUrl, '_blank');
+            return;
+        }
+
+        if (this.attachmentFileName.startsWith('http')) {
+            window.open(this.attachmentFileName, '_blank');
+            return;
+        }
+
+        const apiUrl = environment.baseurl.replace(/\/api\/?$/, '');
+        window.open(`${apiUrl}/uploads/${encodeURIComponent(this.attachmentFileName)}`, '_blank');
+    }
+
+    private setAttachment(attachment: string): void {
+        if (attachment?.startsWith('data:')) {
+            this.attachmentBase64 = attachment;
+            this.attachmentFileName = 'Attached file';
+        } else {
+            this.attachmentBase64 = '';
+            this.attachmentFileName = attachment ?? '';
+        }
+        this.attachmentFile = null;
+    }
+
+    private base64DataUriToBlobUrl(dataUri: string): string | null {
+        try {
+            const [meta, base64] = dataUri.split(',');
+            const mimeType = meta.match(/data:(.*?);base64/)?.[1] ?? 'application/pdf';
+            const byteString = atob(base64);
+            const byteArray = new Uint8Array(byteString.length);
+            for (let i = 0; i < byteString.length; i++) byteArray[i] = byteString.charCodeAt(i);
+            return URL.createObjectURL(new Blob([byteArray], { type: mimeType }));
+        } catch (error) {
+            console.error('Failed to convert base64 attachment to blob:', error);
+            return null;
+        }
     }
 
     onReset(): void {
@@ -787,6 +843,8 @@ getAvailableCategoryOptions(currentIndex: number): { label: string; value: numbe
             p_attachment: null
         });
         this.attachmentFileName = '';
+        this.attachmentFile = null;
+        this.attachmentBase64 = '';
         this.rfqList = [];
         this.includedMrList = [];
         this.vendorInviteRows = [];

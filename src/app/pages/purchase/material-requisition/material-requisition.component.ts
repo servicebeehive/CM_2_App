@@ -54,6 +54,7 @@ export class MaterialRequisitionComponent {
     workList: any[] = [];
     attachmentFile: File | null = null;
     attachmentFileName = '';
+    attachmentBase64 = '';
     approvedByName = '';
     approvedOnDate = '';
     approved_on: Date | null = null;
@@ -108,7 +109,7 @@ export class MaterialRequisitionComponent {
             costCenter: [''],
             priority: [null],
             reference: [''],
-            p_priority:[null],
+            p_priority: [null],
             p_requested: [null],
             p_requestedby: [null, Validators.required],
             p_requiredbydate: [null, Validators.required],
@@ -146,19 +147,19 @@ export class MaterialRequisitionComponent {
     }
 
     get statusColor(): string {
-    const status = (this.forecastForm.get('status')?.value || '').toUpperCase();
-    switch (status) {
-        case 'APPROVED':
-            return 'green';
-        case 'SUBMITTED':
-            return 'blue';
-        case 'REJECTED':
-            return 'red';
-        case 'DRAFT':
-            return 'grey';
-        default:
-            return 'grey';
-    }
+        const status = (this.forecastForm.get('status')?.value || '').toUpperCase();
+        switch (status) {
+            case 'APPROVED':
+                return 'green';
+            case 'SUBMITTED':
+                return 'blue';
+            case 'REJECTED':
+                return 'red';
+            case 'DRAFT':
+                return 'grey';
+            default:
+                return 'grey';
+        }
     }
 
     get isFromRfqView(): boolean {
@@ -176,14 +177,25 @@ export class MaterialRequisitionComponent {
     }
 
     get backQueryParams(): Record<string, string> {
-        return this.fromApprovalView
-            ? { p_type: this.approvalType ?? '', p_request: this.approvalRequest ?? 'PENDING' }
-            : {};
+        return this.fromApprovalView ? { p_type: this.approvalType ?? '', p_request: this.approvalRequest ?? 'PENDING' } : {};
     }
 
     onAttachmentSelect(event: any) {
-        const file = event.target.files[0];
-        if (file) this.attachmentFileName = file.name;
+        const file = event.target.files[0] as File | undefined;
+        if (!file) return;
+
+        this.attachmentFile = file;
+        this.attachmentFileName = file.name; // clean name for display
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            this.attachmentBase64 = reader.result as string; // base64 data, used only for submit
+        };
+        reader.onerror = (err) => {
+            console.error('Failed to read file:', err);
+            this.messageService.add({ severity: 'error', summary: 'Could not read file', life: 2000 });
+        };
+        reader.readAsDataURL(file);
     }
 
     onBarcodeScan(event: Event) {
@@ -240,8 +252,8 @@ export class MaterialRequisitionComponent {
         this.OnGetWorkList(data);
     }
 
-    onGetRequest(){
-         const paylaod = {
+    onGetRequest() {
+        const paylaod = {
             p_returntype: 'REQUESTEDBY',
             p_returnvalue: this.companyId,
             p_username: this.userId
@@ -477,7 +489,15 @@ export class MaterialRequisitionComponent {
                         }, []);
 
                     const resolvedPour = header.pour_name ?? (this.pourOptions.length === 1 ? this.pourOptions[0].value : null);
-                    this.attachmentFileName = header.attachment ?? '';
+                    if (header.attachment && header.attachment.startsWith('data:')) {
+                        // old rows saved before the split — base64 stored directly in DB
+                        this.attachmentBase64 = header.attachment;
+                        this.attachmentFileName = 'Attached file'; // clean placeholder, since real name isn't stored
+                    } else {
+                        // new rows — attachment is a normal filename or server URL
+                        this.attachmentFileName = header.attachment ?? '';
+                        this.attachmentBase64 = '';
+                    }
                     this.approved_on = header.approved_on ? new Date(header.approved_on) : null;
                     this.approved_name = header.approved_name ?? '';
                     this.forecastForm.patchValue(
@@ -670,7 +690,7 @@ export class MaterialRequisitionComponent {
             p_required_by_date: v.p_requiredbydate ? new Date(v.p_requiredbydate).toISOString().split('T')[0] : null,
             p_requested_by: v.p_requestedby ?? null,
             p_priority: v.p_priority ?? null,
-            p_attachment: this.attachmentFileName || null,
+            p_attachment: this.attachmentBase64 || this.attachmentFileName || null,
             p_items: this.itemArray.controls.map((row: any) => ({
                 item_category_id: row.get('item_category_id')?.value ?? null,
                 item_id: row.get('item_id')?.value,
@@ -716,17 +736,51 @@ export class MaterialRequisitionComponent {
         });
     }
 
-viewAttachment(){
-    if(!this.attachmentFileName) return;
-     if (this.attachmentFile) {
-        const localUrl = URL.createObjectURL(this.attachmentFile);
-        window.open(localUrl, '_blank');
-        return;
+    viewAttachment(): void {
+        if (!this.attachmentFileName) return;
+
+        if (this.attachmentFile) {
+            window.open(URL.createObjectURL(this.attachmentFile), '_blank');
+            return;
+        }
+
+        if (this.attachmentBase64) {
+            const blobUrl = this.base64DataUriToBlobUrl(this.attachmentBase64);
+            if (blobUrl) window.open(blobUrl, '_blank');
+            return;
+        }
+
+        if (this.attachmentFileName.startsWith('http')) {
+            window.open(this.attachmentFileName, '_blank'); // already a full URL from backend
+            return;
+        }
+
+        // legacy fallback for any old bare-filename rows saved before this fix
+        const apiUrl = environment.baseurl.replace(/\/api\/?$/, '');
+        const fileUrl = `${apiUrl}/uploads/${encodeURIComponent(this.attachmentFileName)}`;
+        window.open(fileUrl, '_blank');
     }
-    const fileUrl = `${environment.baseurl}/uploads/${this.attachmentFileName}`;
-    window.open(fileUrl, '_blank');
-}
-    
+
+    private base64DataUriToBlobUrl(dataUri: string): string | null {
+        try {
+            const [meta, base64] = dataUri.split(',');
+            const mimeMatch = meta.match(/data:(.*?);base64/);
+            const mimeType = mimeMatch ? mimeMatch[1] : 'application/pdf';
+
+            const byteString = atob(base64);
+            const byteArray = new Uint8Array(byteString.length);
+            for (let i = 0; i < byteString.length; i++) {
+                byteArray[i] = byteString.charCodeAt(i);
+            }
+
+            const blob = new Blob([byteArray], { type: mimeType });
+            return URL.createObjectURL(blob);
+        } catch (err) {
+            console.error('Failed to convert base64 attachment to blob:', err);
+            return null;
+        }
+    }
+
     onSubmit(): void {
         if (this.isSubmitDisabled()) {
             this.messageService.add({ severity: 'error', summary: 'Validation Failed', detail: 'Fill all required fields and add at least one item.', life: 2500 });
@@ -819,5 +873,8 @@ viewAttachment(){
         });
         this.itemArray.clear();
         this.uomlist = [];
+        this.attachmentFile = null;
+        this.attachmentFileName = '';
+        this.attachmentBase64 = '';
     }
 }

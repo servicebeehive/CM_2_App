@@ -92,6 +92,14 @@
                         <label for="rfqAttachment" class="mr-choose-btn"><i class="pi pi-upload"></i> Choose File</label>
                         <input id="rfqAttachment" type="file" hidden (change)="onAttachmentSelect($event)" />
                         <span class="mr-file-name">{{ attachmentFileName || 'No file chosen' }}</span>
+                        <i
+                            *ngIf="attachmentFileName"
+                            class="pi pi-eye mr-view-icon"
+                            style="cursor: pointer; margin-left: 8px; color: var(--primary-color, #2196F3);"
+                            title="View attachment"
+                            aria-label="View attachment"
+                            (click)="viewAttachment()"
+                        ></i>
                     </div>
                 </div>
 
