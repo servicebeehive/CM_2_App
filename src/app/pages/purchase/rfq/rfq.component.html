@@ -220,6 +220,7 @@
                 <th class="text-center">Select</th>
                 <th>Vendor</th>
                 <th>Category</th>
+                <th>Email</th>
                 <th class="text-right">Count</th>
             </tr>
         </ng-template>
@@ -230,6 +231,7 @@
                 </td>
                 <td>{{ row.vendor }}</td>
                 <td>{{ row.category || '—' }}</td>
+                <td>{{ row.email || 'No email on file' }}</td>
                 <td class="text-right">{{ row.count }}</td>
             </tr>
         </ng-template>

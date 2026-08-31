@@ -51,4 +51,28 @@ export class WorkService {
             return throwError(()=>error)
         }))
       }
+
+      sendRfqMail(payload:any):Observable<any>{
+        let payloaddata = this.shareservice.GetApiBody(payload)
+        let url = `${this.baseUrl}${API_ENDPOINTS.work.sendrfqmail}`;
+        return this.http.post<any>(url,payloaddata).pipe(catchError(error=>{
+            return throwError(()=>error)
+        }))
+      }
+
+      upsertRfqVendorComparison(payload: any): Observable<any> {
+    let payloaddata = this.shareservice.GetApiBody(payload);
+    let url = `${this.baseUrl}${API_ENDPOINTS.work.upsertrfqvendorcomparison}`;
+    return this.http.post<any>(url, payloaddata).pipe(
+        catchError((error) => throwError(() => error))
+    );
+}
+
+getRfqVendorComparison(payload: any): Observable<any> {
+    let payloaddata = this.shareservice.GetApiBody(payload);
+    let url = `${this.baseUrl}${API_ENDPOINTS.work.getrfqvendorcomparison}`;
+    return this.http.post<any>(url, payloaddata).pipe(
+        catchError((error) => throwError(() => error))
+    );
+}
 }

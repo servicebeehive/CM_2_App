@@ -75,7 +75,7 @@ $radius: 10px;
 	display: grid;
 	grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
 	gap: 16px;
-    align-items: start;
+	align-items: start;
 }
 
 .rfq-grid > .mr-card {
@@ -88,11 +88,30 @@ $radius: 10px;
 	margin-bottom: 0.75rem;
 }
 
+// ── Vendor invite row: category dropdown | vendor multiselect | delete btn ──
 .vendor-grid {
 	display: flex;
+	align-items: center;
 	gap: 6px;
 	width: 100%;
 	margin-bottom: 0.85rem;
+
+	// Category dropdown: fixed width, never shrinks below it
+	> p-dropdown {
+		flex: 0 0 140px;
+		min-width: 0;
+	}
+
+	// Vendor multiselect: takes remaining space, allowed to shrink
+	> p-multiselect {
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+
+	// Delete button: fixed, never shrinks
+	> button {
+		flex: 0 0 auto;
+	}
 }
 
 .vendor-category {
@@ -103,6 +122,36 @@ $radius: 10px;
 
 .mr-dialog-wrap {
 	padding-top: 0.25rem;
+}
+
+// ── PrimeNG overrides: keep selected-items label from colliding with icons ──
+::ng-deep {
+	.vendor-grid {
+		.p-dropdown,
+		.p-multiselect {
+			width: 100%;
+			min-width: 0;
+		}
+
+		.p-multiselect-label,
+		.p-dropdown-label {
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			padding-right: 4px;
+		}
+
+		// Reserve space so text never runs under the clear (×) icon
+		.p-multiselect-clear-icon {
+			right: 2.25rem;
+		}
+
+		// Reserve space so text never runs under the dropdown chevron
+		.p-multiselect-trigger,
+		.p-dropdown-trigger {
+			flex-shrink: 0;
+		}
+	}
 }
 
 @media (max-width: 1024px) {
@@ -118,5 +167,17 @@ $radius: 10px;
 @media (max-width: 640px) {
 	.mr-fields-grid.cols-4 {
 		grid-template-columns: 1fr;
+	}
+
+	.vendor-grid {
+		flex-wrap: wrap;
+
+		> p-dropdown {
+			flex: 1 1 100%;
+		}
+
+		> p-multiselect {
+			flex: 1 1 100%;
+		}
 	}
 }

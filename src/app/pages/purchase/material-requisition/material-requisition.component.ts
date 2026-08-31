@@ -489,15 +489,9 @@ export class MaterialRequisitionComponent {
                         }, []);
 
                     const resolvedPour = header.pour_name ?? (this.pourOptions.length === 1 ? this.pourOptions[0].value : null);
-                    if (header.attachment && header.attachment.startsWith('data:')) {
-                        // old rows saved before the split — base64 stored directly in DB
-                        this.attachmentBase64 = header.attachment;
-                        this.attachmentFileName = 'Attached file'; // clean placeholder, since real name isn't stored
-                    } else {
-                        // new rows — attachment is a normal filename or server URL
-                        this.attachmentFileName = header.attachment ?? '';
-                        this.attachmentBase64 = '';
-                    }
+                    const { name, base64 } = this.extractDisplayFileName(header.attachment ?? '');
+                    this.attachmentFileName = name;
+                    this.attachmentBase64 = base64;
                     this.approved_on = header.approved_on ? new Date(header.approved_on) : null;
                     this.approved_name = header.approved_name ?? '';
                     this.forecastForm.patchValue(
@@ -569,27 +563,28 @@ export class MaterialRequisitionComponent {
     get isReadOnlyView(): boolean {
         return this.forecastForm.get('status')?.value !== 'DRAFT' && this.forecastForm.get('status')?.value !== '';
     }
-    createItemRow(data?: any): FormGroup {
-        const row = this.fb.group({
-            item_category_id: [data?.categoryid ?? null],
-            item_category: [data?.categoryname ?? ''],
-            item_id: [data?.itemid ?? null],
-            item_description: [data?.item_description ?? ''],
-            uom_id: [data?.uomid ?? null],
-            uom: [data?.uomname ?? ''],
-            buffer_stock: [data?.buffer_stock ?? 0],
-            available_stock: [data?.currentstock ?? 0],
-            pending_qty: [data?.pending_qty ?? 0],
-            required_qty: [data?.required_qty ?? '', Validators.min(0)],
-            procure_qty: [{ value: 0, disabled: true }],
-            remarks: [data?.remarks ?? null]
-        });
+    
+   createItemRow(data?: any): FormGroup {
+    const row = this.fb.group({
+        item_category_id: [data?.categoryid ?? data?.item_category_id ?? null],
+        item_category: [data?.categoryname ?? ''],
+        item_id: [data?.itemid ?? data?.item_id ?? null],
+        item_description: [data?.item_description ?? ''],
+        uom_id: [data?.uomid ?? data?.uom_id ?? null],
+        uom: [data?.uomname ?? ''],
+        buffer_stock: [data?.buffer_stock ?? 0],
+        available_stock: [data?.currentstock ?? 0],
+        pending_qty: [data?.pending_qty ?? 0],
+        required_qty: [data?.required_qty ?? '', Validators.min(0)],
+        procure_qty: [{ value: 0, disabled: true }],
+        remarks: [data?.remarks ?? null]
+    });
 
-        this.wireProcureQtyCalc(row);
-        this.recalculateProcureQty(row);
+    this.wireProcureQtyCalc(row);
+    this.recalculateProcureQty(row);
 
-        return row;
-    }
+    return row;
+}
 
     private wireProcureQtyCalc(row: FormGroup): void {
         row.get('required_qty')?.valueChanges.subscribe(() => this.recalculateProcureQty(row));
@@ -876,5 +871,20 @@ export class MaterialRequisitionComponent {
         this.attachmentFile = null;
         this.attachmentFileName = '';
         this.attachmentBase64 = '';
+    }
+
+    private extractDisplayFileName(raw: string): { name: string; base64: string } {
+        if (!raw) return { name: '', base64: '' };
+
+        const base64Index = raw.indexOf('data:');
+        if (base64Index !== -1) {
+            // there's embedded base64 somewhere in the string — treat it as an attached file
+            return { name: 'Attached file', base64: raw.substring(base64Index) };
+        }
+
+        // otherwise treat it as a path/URL — just take the last segment
+        const cleanPath = raw.split('?')[0];
+        const segments = cleanPath.split('/');
+        return { name: segments[segments.length - 1] || 'Attached file', base64: '' };
     }
 }

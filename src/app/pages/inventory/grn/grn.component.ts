@@ -23,7 +23,6 @@ import { Router } from '@angular/router';
 import { StockIn } from '@/types/stockin.model';
 import { InventoryService } from '@/core/services/inventory.service';
 import { AuthService } from '@/core/services/auth.service';
-import { DrowdownDetails } from '@/core/models/inventory.model';
 import { ShareService } from '@/core/services/shared.service';
 
 @Component({
@@ -51,8 +50,7 @@ import { ShareService } from '@/core/services/shared.service';
 export class GrnComponent implements OnInit {
 
     // ── Auth ───────────────────────────────────────────────────────────────
-    public authService = inject(AuthService);
-
+ 
     // ── Form ───────────────────────────────────────────────────────────────
     productForm!: FormGroup;
 
@@ -98,7 +96,8 @@ export class GrnComponent implements OnInit {
 
     // ── Dropdown options ───────────────────────────────────────────────────
     vendorOptions: any[]              = [];
-    vendorNameOptions: DrowdownDetails[] = [];
+    ponoOptions: any[]                = [];
+    vendorNameOptions: any[] = [];
     uomOptions: any[]                 = [];
     categoryOptions: any[]            = [];
     itemOptions: any[]                = [];
@@ -119,13 +118,14 @@ export class GrnComponent implements OnInit {
         public datePipe: DatePipe,
         private messageService: MessageService,
         private sharedService: ShareService,
-        private route: Router
+        private route: Router,
+        private authService: AuthService,
+        private inventoryService: InventoryService
     ) {}
 
     // ── Lifecycle ──────────────────────────────────────────────────────────
     ngOnInit(): void {
         this.initForm();
-        this.OnGetDropdown();
         this.loadAllDropdowns();
         this.onGetStockIn();
 
@@ -178,33 +178,33 @@ export class GrnComponent implements OnInit {
     }
 
     // ── PO Number change: unlock tabs & auto-fill PO fields ───────────────
-    onPOChange(event: any): void {
-        if (!event.value) {
-            this.poSelected    = false;
-            this.itemOptionslist = [];
-            return;
-        }
+    // onPOChange(event: any): void {
+    //     if (!event.value) {
+    //         this.poSelected    = false;
+    //         this.itemOptionslist = [];
+    //         return;
+    //     }
 
-        this.poSelected    = true;
-        this.addItemEnabled = true;
+    //     this.poSelected    = true;
+    //     this.addItemEnabled = true;
 
-        // ── Mock: auto-fill PO fields ──────────────────────────────────────
-        this.productForm.patchValue({
-            p_podate:  new Date('2026-05-15'),
-            p_project: 'Project A',
-            p_worklocation: 'Main Site',
-            p_totalpoamount: '524548.81',
-            p_deliveryterms: 'For Destination',
-            p_paymentterms: '30 Days Credit',
-            p_poreference: 'RFQ/2024-25/0001',
-            p_contactperson: 'Rakesh Sharma',
-            p_contactno: '9876543210'
-        });
-        this.mapItemsFromPO([
-            { categoryname: 'Cement & Concrete', itemname: 'OPC 53 Grade Cement', uomname: 'Bag', poqty: 550, receivedqty: 200, rate: 420, rowremarks: '' },
-            { categoryname: 'Steel', itemname: 'TMT Bar 12mm', uomname: 'Kg', poqty: 1200, receivedqty: 500, rate: 68, rowremarks: 'Minor bend' }
-        ]);
-    }
+    //     // ── Mock: auto-fill PO fields ──────────────────────────────────────
+    //     this.productForm.patchValue({
+    //         p_podate:  new Date('2026-05-15'),
+    //         p_project: 'Project A',
+    //         p_worklocation: 'Main Site',
+    //         p_totalpoamount: '524548.81',
+    //         p_deliveryterms: 'For Destination',
+    //         p_paymentterms: '30 Days Credit',
+    //         p_poreference: 'RFQ/2024-25/0001',
+    //         p_contactperson: 'Rakesh Sharma',
+    //         p_contactno: '9876543210'
+    //     });
+    //     this.mapItemsFromPO([
+    //         { categoryname: 'Cement & Concrete', itemname: 'OPC 53 Grade Cement', uomname: 'Bag', poqty: 550, receivedqty: 200, rate: 420, rowremarks: '' },
+    //         { categoryname: 'Steel', itemname: 'TMT Bar 12mm', uomname: 'Kg', poqty: 1200, receivedqty: 500, rate: 68, rowremarks: 'Minor bend' }
+    //     ]);
+    // }
 
     /** Map PO items to the table */
     private mapItemsFromPO(items: any[]): void {
@@ -405,17 +405,34 @@ export class GrnComponent implements OnInit {
         return { p_username: this.authService.isLogIntType().userid.toString(), p_returntype: returnType };
     }
 
-    OnGetDropdown(): void {
-        this.stockInService.getdropdowndetails({ p_username: this.authService.isLogIntType().userid.toString(), p_returntype: 'ITEM' }).subscribe({
-            next:  res => { this.vendorNameOptions = res.data; },
-            error: err => console.error(err)
-        });
-    }
+    // OnGetDropdown(): void {
+    //     this.stockInService.getdropdowndetails({ p_username: this.authService.isLogIntType().userid.toString(), p_returntype: 'ITEM' }).subscribe({
+    //         next:  res => { this.vendorNameOptions = res.data; },
+    //         error: err => console.error(err)
+    //     });
+    // }
 
     loadAllDropdowns(): void {
-        this.OnGetItem(); this.OnGetCategory();
-        this.OnGetUOM();  this.OnGetVendor();
+        // this.OnGetDropdown();
+        this.OnGetVendor();
+        this.onGetPONO();
+        this.OnGetItem(); 
+        this.OnGetCategory();
+        this.OnGetUOM(); 
         this.OnGetPurchaseId();
+    }
+
+     onGetPONO(){
+        const payload = {
+            p_returntype: 'PONO',
+            p_returnvalue: this.authService.isLogIntType().companyid.toString(),
+            p_username: this.authService.isLogIntType().userid.toString()
+        };
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: res => {
+                this.ponoOptions = res.data;
+            }
+        })
     }
 
     OnGetItem(): void {
@@ -434,15 +451,97 @@ export class GrnComponent implements OnInit {
         });
     }
     OnGetVendor(): void {
-        this.stockInService.getdropdowndetails(this.createDropdownPayload('VENDOR')).subscribe({
-            next: res => this.vendorOptions = res.data, error: err => console.error(err)
-        });
-    }
+    this.stockInService.getdropdowndetails(this.createDropdownPayload('VENDORALL')).subscribe({
+        next: res => { this.vendorNameOptions = res.data ?? []; },
+        error: err => {
+            console.error('Error fetching vendors:', err);
+            this.vendorNameOptions = [];
+        }
+    });
+}
     OnGetPurchaseId(): void {
         this.stockInService.getdropdowndetails(this.createDropdownPayload('PURCHASEID')).subscribe({
             next: res => this.purchaseIdOptions = res.data, error: err => console.error(err)
         });
     }
+
+    onPOChange(event: any): void {
+    const poId = event.value;
+    if (!poId) {
+        this.poSelected = false;
+        this.itemOptionslist = [];
+        return;
+    }
+
+    const po = this.ponoOptions.find((p) => p['po_id'] === poId);
+    if (!po) return;
+
+    const payload = {
+        p_returntype: 'PODETAILS',
+        p_returnvalue: po['po_no'],
+        p_username: this.authService.isLogIntType().userid.toString()
+    };
+
+    this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+        next: (res: any) => this.applyPODetailsToForm(res.data ?? []),
+        error: (err: any) => {
+            console.error('Error fetching PO details:', err);
+            this.messageService.add({ severity: 'error', summary: 'Failed to load PO details', life: 2500 });
+        }
+    });
+}
+
+private applyPODetailsToForm(rows: any[]): void {
+    if (!rows.length) {
+        this.poSelected = false;
+        this.itemOptionslist = [];
+        return;
+    }
+
+    const header = rows[0];
+    const vendor = this.vendorNameOptions.find((v: any) => v['supplierid'] === header.vendor_id);
+
+    this.productForm.patchValue({
+    p_podate: header.po_date ? new Date(header.po_date) : null,
+    p_project: header.project_id ?? '',
+    p_vendor: header.vendor_id ?? null,
+    p_paymentterms: header.payment_terms ?? '',
+    p_totalpoamount: this.calculatePoTotal(rows).toFixed(2)
+});
+
+    this.mapItemsFromPODetails(rows);
+
+    this.poSelected = true;
+    this.addItemEnabled = true;
+}
+
+private calculatePoTotal(rows: any[]): number {
+    return rows.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+}
+
+private mapItemsFromPODetails(rows: any[]): void {
+    this.itemOptionslist = rows.map((row) => {
+        const orderedqty = Number(row.po_qty || 0);
+        const previouslyreceived = 0; // not returned by PODETAILS — swap in a real field if your API has one
+        const pendingqty = orderedqty - previouslyreceived;
+
+        return {
+            purchasedetailid: row.po_detail_id,
+            categoryname: row.category_name ?? row.item_category_id ?? '',
+            itemname: row.item_name ?? row.item_id ?? '',
+            uomname: row.uom_name ?? row.uom_id ?? '',
+            orderedqty,
+            previouslyreceived,
+            pendingqty,
+            receivedqty: null,
+            acceptedqty: null,
+            rejectedqty: null,
+            qualityreport: 'N',
+            rate: Number(row.rate || 0),
+            rowremarks: row.detail_remarks ?? ''
+        };
+    });
+}
 
     // ── Delete item ────────────────────────────────────────────────────────
     deleteItem(product: any): void {

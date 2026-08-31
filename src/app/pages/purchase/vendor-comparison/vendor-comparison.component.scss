@@ -36,6 +36,10 @@ $radius: 10px;
     &.cols-4 {
         grid-template-columns: repeat(4, minmax(0, 1fr));
     }
+
+    &.cols-6 {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
 }
 
 .mr-form-footer {
@@ -57,10 +61,6 @@ $radius: 10px;
     }
 }
 
-.mr-fields-grid.cols-6 {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-}
-
 .vendors-invited-inline {
     text-align: right;
     font-size: 12px;
@@ -78,17 +78,81 @@ $radius: 10px;
         padding-left: 16px;
         text-align: left;
         color: #444;
+        max-height: 90px;
+        overflow-y: auto;
+        padding-right: 4px;
 
         li {
             font-size: 12px;
             line-height: 1.4;
+            margin-bottom: 5px;
         }
     }
 }
 
+// ── Comparison summary / vendors invited / criteria / remarks row ───────
+.comparison-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+    align-items: start;
+}
+
+.summary-list,
+.criteria-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    li {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 0;
+        font-size: 13px;
+        border-bottom: 1px dashed $border;
+
+        &:last-child {
+            border-bottom: none;
+        }
+    }
+}
+
+.summary-label {
+    color: #555;
+}
+
+.summary-value {
+    font-weight: 600;
+    color: #333;
+}
+
+.criteria-total {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 700;
+    font-size: 13px;
+    padding-top: 8px;
+    margin-top: 4px;
+    border-top: 1px solid $border;
+}
+
+.text-green {
+    color: #16a34a;
+}
+
+.text-red {
+    color: #dc2626;
+}
+
+// ── Responsive breakpoints ────────────────────────────────────────────
 @media (max-width: 1024px) {
     .mr-fields-grid.cols-4,
     .mr-fields-grid.cols-6 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .comparison-summary-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
@@ -96,6 +160,10 @@ $radius: 10px;
 @media (max-width: 640px) {
     .mr-fields-grid.cols-4,
     .mr-fields-grid.cols-6 {
+        grid-template-columns: 1fr;
+    }
+
+    .comparison-summary-grid {
         grid-template-columns: 1fr;
     }
 }

@@ -63,7 +63,7 @@ export class PurchaseOrderComponent implements OnInit {
     isLoadingProjects = false;
     isLoadingLocations = false;
     showForecastError = false;
-    poList: { pono: string; [key: string]: any }[] = [];
+    onPODraftOptions:any[] = [];
     projectOptions:any[]=[];
 
     paymentTermsOptions: { label: string; value: string }[] = [
@@ -81,7 +81,7 @@ export class PurchaseOrderComponent implements OnInit {
     ];
 
     selectedVendorNames: string[] = [];
-    generatedPONos:any[]=[];
+    ponoOptions:any[]=[];
     vendorMasterOptions: any[] = [];
     vendorOptionsByRow: any[][] = [];
 
@@ -189,14 +189,14 @@ export class PurchaseOrderComponent implements OnInit {
     }
 
     private onGetPONo(): void {
-        const payload = this.createReturnPayload('PONO', this.authService.isLogIntType().userid.toString(), this.companyId.toString());
+        const payload = this.createReturnPayload('PONO', this.companyId.toString(), this.authService.isLogIntType().userid.toString());
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res: any) => {
-                this.generatedPONos = res.data ?? [];
+                this.ponoOptions = res.data ?? [];
             },
             error: (err: any) => {
                 console.error('Error fetching PO numbers:', err);
-                this.generatedPONos = [];
+                this.ponoOptions = [];
             }
         });
     }
@@ -263,11 +263,11 @@ onGetDraftPO() {
    const payload = {
             p_returntype: 'PODRAFT',
             p_returnvalue: this.companyId.toString(),
-            username: ''
+            username: this.authService.isLogIntType().userid.toString()
         };
   this.inventoryService.Getreturndropdowndetails(payload).subscribe({
     next: (res: any) => {
-      this.poList = res.data;
+      this.onPODraftOptions = res.data;
     },
     error: (err: any) => {
       console.error('Error fetching PO numbers:', err);
@@ -390,23 +390,110 @@ private loadItemsForProject(projectId: number): void {
         return +(this.getRemainingPayment() - (this.newPayment.amount ?? 0)).toFixed(2);
     }
 
-    // ── PO dropdown: load a previously submitted PO into the form ─────────────
-    onPOSelect(event: any): void {
-        // const po = this.poList.find(p => p.pono === event.value);
-        // if (!po) return;
-        // this.poForm.patchValue({
-        //   p_podate:           po.poDate ? new Date(po.poDate) : null,
-        //   p_project:          po.project,
-        //   p_vendor:           po.vendor,
-        //   p_deliverylocation: po.deliveryLocation,
-        //   p_deliverydate:     po.deliveryDate ? new Date(po.deliveryDate) : null,
-        //   p_paymentterms:     po.paymentTerms,
-        //   p_remarks:          po.remarks
-        // });
-        // this.selectedMFNos = po.forecastRefNo ? po.forecastRefNo.split(', ') : [];
-        // this.mapItemsToFormArray(po.items || []);
-        // this.submitted = true;
-    }
+onPOChange(event: any): void {
+    const poId = event.value;
+    if (!poId) return;
+
+    const po = this.ponoOptions.find((p) => p['po_id'] === poId);
+    if (!po) return;
+
+    const payload = {
+        p_returntype: 'PODETAILS',
+        p_returnvalue: po['po_no'],
+        p_username: this.userId
+    };
+
+    this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+        next: (res: any) => this.applyPORowsToForm(res.data ?? [], false),
+        error: (err: any) => {
+            console.error('Error fetching PO details:', err);
+            this.messageService.add({ severity: 'error', summary: 'Failed to load PO details', life: 2500 });
+        }
+    });
+}
+
+onPODraftChange(event: any): void {
+    const draftId = event.value;
+    if (!draftId) return;
+
+    const draft = this.onPODraftOptions.find((p) => p['draft_id'] === draftId);
+    if (!draft) return;
+
+    const payload = {
+        p_returntype: 'PODRAFTDETAILS',
+        p_returnvalue: draft['draft_no'],
+        p_username: this.userId
+    };
+
+    this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+        next: (res: any) => this.applyPORowsToForm(res.data ?? [], true),
+        error: (err: any) => {
+            console.error('Error fetching draft PO details:', err);
+            this.messageService.add({ severity: 'error', summary: 'Failed to load draft details', life: 2500 });
+        }
+    });
+}
+
+private applyPORowsToForm(rows: any[], isDraft: boolean): void {
+    if (!rows.length) return;
+
+    const header = rows[0];
+
+    this.poForm.patchValue({
+        p_pono: isDraft ? header.draft_id : header.po_id,
+        p_podate: header.po_date ? new Date(header.po_date) : null,
+        p_project: header.project_id ?? null,
+        p_deliverylocation: header.delivery_location ?? '',
+        p_deliverydate: header.delivery_date ? new Date(header.delivery_date) : null,
+        p_paymentterms: header.payment_terms ?? null,
+        p_remarks: header.remarks ?? ''
+    });
+
+    this.mapPODetailRowsToFormArray(rows, header.vendor_id);
+    this.submitted = true;
+}
+
+private mapPODetailRowsToFormArray(rows: any[], headerVendorId: number | null): void {
+    this.poItemArray.clear();
+    this.vendorOptionsByRow = [];
+
+    const vendor = this.vendorMasterOptions.find((v) => v.supplierid === headerVendorId);
+
+    rows.forEach((row) => {
+        this.poItemArray.push(
+            this.fb.group({
+                department: [''],
+                mf_no: [''],
+                category: [row.category_name ?? ''],
+                item: [row.item_name ?? ''],
+                uom: [row.uom_name ?? ''],
+                forecastQty: [row.forecast_qty ?? 0],
+                availableStock: [row.available_stock ?? 0],
+                pendingPOQty: [row.pending_po_qty ?? 0],
+                requiredQty: [row.required_qty ?? 0],
+                poQty: [row.po_qty ?? null],
+                vendorName: [vendor?.suppliername ?? ''],
+                rate: [row.rate ?? null],
+                amount: [row.amount ?? null],
+                tax_id: [row.tax_id ?? '18'],
+                taxPercent: [Number(row.tax_percent ?? 18)],
+                totalAmount: [row.total_amount ?? row.amount ?? null],
+                remarks: [row.detail_remarks ?? ''],
+
+                mf_id: [row.mf_id ?? null],
+                mfdetailid: [row.mfdetailid ?? null],
+                department_id: [row.department_id ?? null],
+                vendor_id: [headerVendorId ?? null],
+                item_category_id: [row.item_category_id ?? null],
+                item_id: [row.item_id ?? null],
+                uom_id: [row.uom_id ?? null]
+            })
+        );
+    });
+
+    this.syncSelectedVendors();
+    this.recalcGrandTotal();
+}
 
     // ── Disable submit when no items ───────────────────────────────────────────
     isSubmitDisabled(): boolean {
@@ -452,7 +539,7 @@ private loadItemsForProject(projectId: number): void {
             if (data.success) {
                 const pos = data.data as any[];
 
-                   this.generatedPONos = pos.map((po) => ({
+                   this.ponoOptions = pos.map((po) => ({
                     po_id: po.po_id,
                     po_no: po.po_no
                 }));
@@ -461,7 +548,7 @@ private loadItemsForProject(projectId: number): void {
                     p_pono: pos[0]?.po_id ?? null,
                 });
 
-                this.poList = [...this.poList, ...pos];
+                this.onPODraftOptions = [...this.onPODraftOptions, ...pos];
                 this.submitted = true;
 
                 this.messageService.add({
@@ -642,7 +729,9 @@ submitDraft(): void {
 
     // ── Reset ──────────────────────────────────────────────────────────────────
     onReset(): void {
-        this.poForm.reset();
+        this.poForm.reset({
+            p_podate: this.today
+        });
         this.poItemArray.clear();
         this.submitted = false;
         this.showForecastError = false;
@@ -981,8 +1070,8 @@ submitDraft(): void {
     //     const uniqueVendors = [...new Set(this.poItemArray.controls.map((row) => row.get('vendorName')?.value as string).filter((name) => !!name))];
 
     //     // 2. Generate one PO No per vendor (preserve existing mapping if already generated)
-    //     const existingMap = new Map(this.generatedPONos.map((p) => [p.label, p.value]));
-    //     this.generatedPONos = uniqueVendors.map((vendorName) => {
+    //     const existingMap = new Map(this.ponoOptions.map((p) => [p.label, p.value]));
+    //     this.ponoOptions = uniqueVendors.map((vendorName) => {
     //         const existing = existingMap.get(vendorName);
     //         return {
     //             label: `${vendorName}`, // display: "Vendor A — PO-00125"
@@ -991,7 +1080,7 @@ submitDraft(): void {
     //     });
 
     //     // Better label with PO No visible
-    //     this.generatedPONos = uniqueVendors.map((vendorName) => {
+    //     this.ponoOptions = uniqueVendors.map((vendorName) => {
     //         const existing = existingMap.get(vendorName);
     //         const poNo = existing ?? this.generatePONo();
     //         existingMap.set(vendorName, poNo);
@@ -1003,8 +1092,8 @@ submitDraft(): void {
     //     this.poForm.get('p_vendor')?.setValue(uniqueVendors);
 
     //     // 4. Auto-select first PO if only one vendor
-    //     if (this.generatedPONos.length === 1) {
-    //         this.poForm.patchValue({ p_pono: this.generatedPONos[0].value });
+    //     if (this.ponoOptions.length === 1) {
+    //         this.poForm.patchValue({ p_pono: this.ponoOptions[0].value });
     //     }
     // }
 
@@ -1047,7 +1136,7 @@ submitDraft(): void {
     //     this.submitted = false;
     //     this.showForecastError = false;
     //     this.grandTotal = 0;
-    //     this.generatedPONos = [];
+    //     this.ponoOptions = [];
     //     this.selectedVendorNames = [];
     //     this.paymentHistory = [];
     //     this.totalPaid = 0;

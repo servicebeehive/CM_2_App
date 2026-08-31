@@ -15,7 +15,7 @@ import { TextareaModule } from 'primeng/textarea';
 import { DialogModule } from 'primeng/dialog';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { RfqRow, VendorInviteRow } from '@/core/models/purchase.model';
-import { UpsertRfqPayload, VendorInvitePayload } from '@/core/models/authmodel/work.model';
+import { GmailVendorRow, UpsertRfqPayload, VendorInvitePayload } from '@/core/models/authmodel/work.model';
 import { WorkService } from '@/core/services/work.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { environment } from '@/environments/environment';
@@ -23,21 +23,7 @@ import { environment } from '@/environments/environment';
 @Component({
     selector: 'app-rfq',
     standalone: true,
-    imports: [
-        CommonModule,
-        FormsModule,
-        ReactiveFormsModule,
-        ButtonModule,
-        DropdownModule,
-        TableModule,
-        InputTextModule,
-        ToastModule,
-        DatePickerModule,
-        TextareaModule,
-        DialogModule,
-        MultiSelectModule,
-        ConfirmDialogModule
-    ],
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, ButtonModule, DropdownModule, TableModule, InputTextModule, ToastModule, DatePickerModule, TextareaModule, DialogModule, MultiSelectModule, ConfirmDialogModule],
     templateUrl: './rfq.component.html',
     styleUrls: ['./rfq.component.scss'],
     providers: [MessageService, ConfirmationService]
@@ -58,12 +44,13 @@ export class RfqComponent implements OnInit {
     mrDetailsMap: Record<string, any> = {};
     rfqVendorSelections: Record<number, number[]> = {};
     private hasBackendMrList = false;
+    vendorEmailMap: Record<number, string> = {};
 
     showMrDialog = false;
     selectedMrDetail: any | null = null;
     showMaterialReqDialog = false;
     showGmailReqDialog = false;
-    gmailVendorRows: { selected: boolean; vendor: string; category: string; count: number; vendorId: number | null }[] = [];
+    gmailVendorRows: GmailVendorRow[] = [];
     attachmentFile: File | null = null;
     attachmentFileName = '';
     attachmentBase64 = '';
@@ -108,19 +95,19 @@ export class RfqComponent implements OnInit {
         });
     }
 
-    createDropdownPayload(returnType: string, retrunValue: string | null, userName: string| null): any {
+    createDropdownPayload(returnType: string, retrunValue: string | null, userName: string | null): any {
         return {
             returnType: returnType,
-            returnValue: retrunValue?? '',
-            username: userName?? '',
+            returnValue: retrunValue ?? '',
+            username: userName ?? '',
             option1: this.companyId.toString(),
             option2: null
         };
     }
 
-     loadSites(): void {
+    loadSites(): void {
         this.isLoadingProjects = true;
-        const payload = this.createDropdownPayload('ACTIVEPROJECT', null,null);
+        const payload = this.createDropdownPayload('ACTIVEPROJECT', null, null);
 
         this.inventoryService.getparameterbased(payload).subscribe({
             next: (res: any) => {
@@ -202,10 +189,10 @@ export class RfqComponent implements OnInit {
         };
 
         const payloadvendor = {
-        p_returntype: 'GETRFQVENDOR',
-        p_returnvalue: data.value.toString(),
-        p_username: this.userId
-    };
+            p_returntype: 'GETRFQVENDOR',
+            p_returnvalue: data.value.toString(),
+            p_username: this.userId
+        };
 
         const payloadMr = {
             p_returntype: 'PROJECTRFQ4MR',
@@ -213,15 +200,16 @@ export class RfqComponent implements OnInit {
             p_username: this.userId
         };
 
-
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res: any) => {
                 const selected = Array.isArray(res.data) ? res.data[0] : res.data;
                 if (!selected) return;
-
-                this.setAttachment(selected.attachment ?? selected.attachment_path ?? '');
-
                 this.rfqVendorSelections = {};
+                this.rfqVendorSelections = {};
+                const { name, base64 } = this.extractDisplayFileName(selected.attachment_path ?? '');
+                this.attachmentFileName = name;
+                this.attachmentBase64 = base64;
+                this.attachmentFile = null;
                 this.rfqForm.patchValue(
                     {
                         p_rfq_id: selected.rfqid ?? null,
@@ -230,15 +218,16 @@ export class RfqComponent implements OnInit {
                         p_site: selected.site_id ?? null,
                         p_rfq_desc: selected.rfq_description ?? '',
                         p_remarks: selected.remarks ?? '',
-                        p_status: selected.status ?? 'Draft'
+                        p_status: selected.status ?? 'Draft',
+                        p_attachment: this.attachmentFileName || null
                     },
                     { emitEvent: false }
                 );
 
                 const rows: any[] = Array.isArray(res.data) ? res.data : [res.data];
                 this.rfqList = rows.map((row: any) => ({
-                    category: row.item_category ?? row.itemcategoryname ?? '',
-                    item: row.item_description ?? row.itemdescription ?? '',
+                    category: row.item_category ?? row.itemcategoryname ?? row.categoryname ?? row.category ?? '',
+                    item: row.item_description ?? row.itemdescription ?? row.itemname ?? row.item ?? '',
                     uom: row.uom ?? row.uomname ?? '',
                     buffer_stock: Number(row.buffer_stock ?? 0),
                     required_qty: Number(row.required_qty ?? 0),
@@ -247,7 +236,11 @@ export class RfqComponent implements OnInit {
                     total_mr_qty: Number(row.total_mr_qty ?? 0),
                     net_required_qty: Number(row.required_qty_net ?? 0),
                     category_id: row.item_category_id ?? row.itemcategoryid ?? null,
-                    item_id: row.item_id ?? row.itemid ?? null
+                    item_id: row.item_id ?? row.itemid ?? null,
+                    mr_no: row.mr_no ?? row.mf_no ?? '',
+                    mr_date: row.mr_date ?? row.mf_date ?? null,
+                    department: row.departmentname ?? row.department ?? row.department_name ?? '',
+                    requested_by: row.requested_by ?? row.requester ?? row.user_name ?? ''
                 }));
 
                 this.rebuildVendorInviteRows();
@@ -287,20 +280,17 @@ export class RfqComponent implements OnInit {
                 this.rfqVendorSelections = {};
 
                 rows.forEach((row: any) => {
-                    const categoryId = Number(row.categoryid ?? row.itemcategoryid ?? row.item_category_id ?? row.category_id);
-                    const vendorId = Number(row.vendorid ?? row.supplierid ?? row.vendor_id ?? row.supplier_id);
+                    const categoryId = Number(row.itemcategoryid);
+                    const vendorId = Number(row.vendorid);
                     const vendorIds = Array.isArray(row.vendorids) ? row.vendorids : [vendorId];
+                    const email = row.supplieremail ?? null;
+                    if (!Number.isNaN(vendorId) && email) {
+                        this.vendorEmailMap[vendorId] = email;
+                    }
 
                     if (!Number.isNaN(categoryId)) {
-                        const selectedVendorIds = vendorIds
-                            .map((id: any) => Number(id))
-                            .filter((id: number) => !Number.isNaN(id));
-                        this.rfqVendorSelections[categoryId] = [
-                            ...new Set([
-                                ...(this.rfqVendorSelections[categoryId] ?? []),
-                                ...selectedVendorIds
-                            ])
-                        ];
+                        const selectedVendorIds = vendorIds.map((id: any) => Number(id)).filter((id: number) => !Number.isNaN(id));
+                        this.rfqVendorSelections[categoryId] = [...new Set([...(this.rfqVendorSelections[categoryId] ?? []), ...selectedVendorIds])];
                     }
                 });
 
@@ -459,74 +449,98 @@ export class RfqComponent implements OnInit {
         });
     }
 
-onVendorCategoryChange(rowIndex: number): void {
-    const row = this.vendorInviteRows[rowIndex];
-    row.availableVendors = [];
+    onVendorCategoryChange(rowIndex: number): void {
+        const row = this.vendorInviteRows[rowIndex];
+        row.availableVendors = [];
 
-    if (row.category_id == null) {
-        row.selectedVendors = [];
-        row.category = '';
-        return;
+        if (row.category_id == null) {
+            row.selectedVendors = [];
+            row.category = '';
+            return;
+        }
+
+        row.category = this.categoryOptions.find((o) => o.value === row.category_id)?.label ?? '';
+
+        const payload = {
+            p_returntype: 'CATEGORYVENDOR',
+            p_returnvalue: row.category_id.toString(),
+            p_username: this.userId
+        };
+
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res: any) => {
+                row.availableVendors = res.data || [];
+                (res.data || []).forEach((v: any) => {
+                    const email = v.supplieremail ?? null;
+                    if (v.supplierid != null && email) {
+                        this.vendorEmailMap[v.supplierid] = email;
+                    }
+                });
+            },
+            error: () => {
+                row.availableVendors = [];
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Vendor load failed',
+                    detail: 'Unable to fetch vendors for the selected category.',
+                    life: 2500
+                });
+            }
+        });
     }
 
-    row.category = this.categoryOptions.find((o) => o.value === row.category_id)?.label ?? '';
+    private extractDisplayFileName(raw: string): { name: string; base64: string } {
+        if (!raw) return { name: '', base64: '' };
 
-    const payload = {
-        p_returntype: 'CATEGORYVENDOR',
-        p_returnvalue: row.category_id.toString(),
-        p_username: this.userId
-    };
-
-    this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-        next: (res: any) => {
-            row.availableVendors = res.data || [];
-        },
-        error: () => {
-            row.availableVendors = [];
-            this.messageService.add({
-                severity: 'error',
-                summary: 'Vendor load failed',
-                detail: 'Unable to fetch vendors for the selected category.',
-                life: 2500
-            });
+        const base64Index = raw.indexOf('data:');
+        if (base64Index !== -1) {
+            // kahin bhi base64 mila to use hi treat karo as attached file
+            return { name: 'Attached file', base64: raw.substring(base64Index) };
         }
-    });
-}
 
-getAvailableCategoryOptions(currentIndex: number): { label: string; value: number }[] {
-    const pickedElsewhere = this.vendorInviteRows.filter((_, i) => i !== currentIndex).map((r) => r.category_id).filter((id): id is number => id != null);
-    return this.categoryOptions.filter((opt) => !pickedElsewhere.includes(opt.value));
-}
-
- private rebuildVendorInviteRows(): void {
-    const previousSelection = new Map<number, number[]>();
-    this.vendorInviteRows.forEach((row) => {
-        if (row.category_id != null) previousSelection.set(row.category_id, row.selectedVendors);
-    });
-
-    const seen = new Map<number, string>();
-    this.rfqList.forEach((r) => {
-        if (r.category_id != null && !seen.has(r.category_id)) {
-            seen.set(r.category_id, r.category);
-        }
-    });
-
-    this.categoryOptions = Array.from(seen.entries()).map(([id, name]) => ({ label: name, value: id }));
-
-    if (!this.categoryOptions.length) {
-        this.ensureDefaultVendorInviteRows();
-        return;
+        // warna path/URL treat karo — sirf last segment (filename) nikaalo
+        const cleanPath = raw.split('?')[0];
+        const segments = cleanPath.split('/');
+        return { name: segments[segments.length - 1] || 'Attached file', base64: '' };
     }
 
-    this.vendorInviteRows = Array.from(seen.entries()).map(([id, name]) => ({
-        category: name,
-        category_id: id,
-        selectedVendors: previousSelection.get(id) ?? this.rfqVendorSelections[id] ?? [],
-        availableVendors: []
-    }));
+    getAvailableCategoryOptions(currentIndex: number): { label: string; value: number }[] {
+        const pickedElsewhere = this.vendorInviteRows
+            .filter((_, i) => i !== currentIndex)
+            .map((r) => r.category_id)
+            .filter((id): id is number => id != null);
+        return this.categoryOptions.filter((opt) => !pickedElsewhere.includes(opt.value));
+    }
 
-    this.vendorInviteRows.forEach((_, i) => this.onVendorCategoryChange(i));
-}
+    private rebuildVendorInviteRows(): void {
+        const previousSelection = new Map<number, number[]>();
+        this.vendorInviteRows.forEach((row) => {
+            if (row.category_id != null) previousSelection.set(row.category_id, row.selectedVendors);
+        });
+
+        const seen = new Map<number, string>();
+        this.rfqList.forEach((r) => {
+            if (r.category_id != null && !seen.has(r.category_id)) {
+                seen.set(r.category_id, r.category);
+            }
+        });
+
+        this.categoryOptions = Array.from(seen.entries()).map(([id, name]) => ({ label: name, value: id }));
+
+        if (!this.categoryOptions.length) {
+            this.ensureDefaultVendorInviteRows();
+            return;
+        }
+
+        this.vendorInviteRows = Array.from(seen.entries()).map(([id, name]) => ({
+            category: name,
+            category_id: id,
+            selectedVendors: previousSelection.get(id) ?? this.rfqVendorSelections[id] ?? [],
+            availableVendors: []
+        }));
+
+        this.vendorInviteRows.forEach((_, i) => this.onVendorCategoryChange(i));
+    }
 
     private ensureDefaultVendorInviteRows(): void {
         if (this.vendorInviteRows.length === 0) {
@@ -596,7 +610,15 @@ getAvailableCategoryOptions(currentIndex: number): { label: string; value: numbe
                     vendor: row.suppliername,
                     category: row.categoryname,
                     count: Number(row.attempt_count ?? 0),
-                    vendorId: row.vendorid ?? row.supplierid ?? row.vendor_id ?? null
+                    vendorId: row.vendorid ?? null,
+                    email: row.vendor_email ?? null,
+                    ccEmail: row.cc_email ?? null,
+                    bccEmail: row.bcc_email ?? null,
+                    subject: row.mail_subject ?? '',
+                    body1: row.mail_body1 ?? '',
+                    body2: row.mail_body2 ?? '',
+                    attachmentPath: row.attachment_path ?? null,
+                    mailLogId: row.mail_log_id ?? null
                 }));
                 this.showGmailReqDialog = true;
             },
@@ -611,56 +633,124 @@ getAvailableCategoryOptions(currentIndex: number): { label: string; value: numbe
         });
     }
 
-    sendVendorRfq(): void {
-    const selectedRows = this.gmailVendorRows.filter((r) => r.selected);
+    private sendMailToVendors(rfqId: any): void {
+        const payload = {
+            p_returntype: 'GETRFQMAIL',
+            p_returnvalue: String(rfqId),
+            p_username: ''
+        };
 
-    if (!selectedRows.length) {
-        this.messageService.add({
-            severity: 'warn',
-            summary: 'Select vendor',
-            detail: 'Select at least one vendor before sending the RFQ email.',
-            life: 2500
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res: any) => {
+                const rows: any[] = Array.isArray(res.data) ? res.data : [];
+
+                const readyRows = rows.filter((r) => r.vendor_email);
+                const missingEmail = rows.filter((r) => !r.vendor_email);
+
+                if (!readyRows.length) {
+                    this.messageService.add({ severity: 'warn', summary: 'No vendor emails found', life: 2500 });
+                    return;
+                }
+
+                const mailPayload = {
+                    p_rfqid: rfqId,
+                    p_username: this.userId,
+                    p_mails: readyRows.map((r) => ({
+                        vendorId: r.vendorid ?? null,
+                        email: r.vendor_email,
+                        ccEmail: r.cc_email ?? null,
+                        bccEmail: r.bcc_email ?? null,
+                        subject: r.mail_subject ?? '',
+                        body: `${r.mail_body1 ?? ''}${r.mail_body2 ?? ''}`,
+                        attachmentPath: r.attachment_path ?? null,
+                        mailLogId: r.mail_log_id ?? null
+                    }))
+                };
+
+                this.workService.sendRfqMail(mailPayload).subscribe({
+                    next: () => {
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'RFQ emails sent',
+                            detail: `RFQ shared with ${readyRows.length} vendor(s).`,
+                            life: 2500
+                        });
+                        if (missingEmail.length) {
+                            this.messageService.add({
+                                severity: 'warn',
+                                summary: 'Some vendors skipped',
+                                detail: `${missingEmail.map((r) => r.suppliername).join(', ')} has no email on file.`,
+                                life: 3000
+                            });
+                        }
+                    },
+                    error: (err) => {
+                        this.messageService.add({ severity: 'error', summary: 'Mail send failed', detail: err.message, life: 2500 });
+                    }
+                });
+            },
+            error: () => {
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Vendor mail data load failed',
+                    life: 2500
+                });
+            }
         });
-        return;
     }
 
-    const rfqId = this.rfqForm.get('p_rfqno')?.value;
-    const payload = {
-        p_rfqid: rfqId,
-        p_username: this.userId,
-        p_vendor_ids: selectedRows
-            .map((r) => r.vendorId)
-            .filter((id): id is number => id != null)
-    };
+    sendVendorRfq(): void {
+        const selectedRows = this.gmailVendorRows.filter((r) => r.selected);
 
-    // this.workService.sendRfqMail(payload).subscribe({
-    //     next: (res: any) => {
-    //         this.messageService.add({
-    //             severity: 'success',
-    //             summary: 'RFQ email queued',
-    //             detail: `RFQ shared with ${selectedRows.length} vendor(s).`,
-    //             life: 2500
-    //         });
-    //         this.showGmailReqDialog = false;
-    //     },
-    //     error: (err) => {
-    //         this.messageService.add({
-    //             severity: 'error',
-    //             summary: 'Send failed',
-    //             detail: err.message,
-    //             life: 2500
-    //         });
-    //     }
-    // });
-}
+        if (!selectedRows.length) {
+            this.messageService.add({ severity: 'warn', summary: 'Select vendor', detail: 'Select at least one vendor before sending the RFQ email.', life: 2500 });
+            return;
+        }
 
+        const missingEmail = selectedRows.filter((r) => !r.email);
+        if (missingEmail.length) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Missing email',
+                detail: `${missingEmail.map((r) => r.vendor).join(', ')} has no email on file.`,
+                life: 3000
+            });
+            return;
+        }
+
+        const rfqId = this.rfqForm.get('p_rfqno')?.value;
+        const payload = {
+            p_rfqid: rfqId,
+            p_username: this.userId,
+            p_mails: selectedRows.map((r) => ({
+                vendorId: r.vendorId,
+                email: r.email,
+                ccEmail: r.ccEmail,
+                bccEmail: r.bccEmail,
+                subject: r.subject,
+                body: `${r.body1}${r.body2}`,
+                attachmentPath: r.attachmentPath,
+                mailLogId: r.mailLogId
+            }))
+        };
+
+        this.workService.sendRfqMail(payload).subscribe({
+            next: (res: any) => {
+                this.messageService.add({ severity: 'success', summary: 'RFQ email sent', detail: `RFQ shared with ${selectedRows.length} vendor(s).`, life: 2500 });
+                this.showGmailReqDialog = false;
+            },
+            error: (err) => {
+                this.messageService.add({ severity: 'error', summary: 'Send failed', detail: err.message, life: 2500 });
+            }
+        });
+    }
     onDraftChange(event: any): void {
-        const selected = this.draftRfqOptions.find((d: any) => d.rfq_id === event.value);
+        const selected = this.draftRfqOptions.find((d: any) => String(d.rfqid) === String(event.value));
         if (!selected) return;
 
         const payload = {
             p_returntype: 'RFQDETAILS',
-            p_returnvalue: selected.rfq_no,
+            p_returnvalue: selected.rfqno,
             p_username: this.userId
         };
 
@@ -670,7 +760,10 @@ getAvailableCategoryOptions(currentIndex: number): { label: string; value: numbe
                 if (!rows.length) return;
 
                 const header = rows[0];
-                this.setAttachment(header.attachment ?? header.attachment_path ?? '');
+                const { name, base64 } = this.extractDisplayFileName(selected.attachment_path ?? '');
+                this.attachmentFileName = name;
+                this.attachmentBase64 = base64;
+                this.attachmentFile = null;
                 this.rfqForm.patchValue(
                     {
                         p_rfq_id: header.rfq_id ?? null,
@@ -680,7 +773,8 @@ getAvailableCategoryOptions(currentIndex: number): { label: string; value: numbe
                         p_site: header.project_id ?? null,
                         p_rfq_desc: header.rfq_desc ?? '',
                         p_remarks: header.remarks ?? '',
-                        p_status: header.status ?? 'Draft'
+                        p_status: header.status ?? 'Draft',
+                        p_attachment: this.attachmentFileName ?? null
                     },
                     { emitEvent: false }
                 );
@@ -718,66 +812,77 @@ getAvailableCategoryOptions(currentIndex: number): { label: string; value: numbe
     }
 
     submitDraft(): void {
-    if (!this.rfqForm.get('p_site')?.value || this.rfqList.length === 0) {
-        this.messageService.add({
-            severity: 'warn',
-            summary: 'Cannot save draft',
-            detail: 'Select a site and add at least one item before saving as draft.',
-            life: 2500
-        });
-        return;
-    }
-
-    const vendorJson: VendorInvitePayload[] = this.vendorInviteRows
-        .filter((r) => r.category_id != null)
-        .map((r) => ({
-            categoryid: r.category_id as number,
-            vendorids: r.selectedVendors
-        }));
-
-    const payload: UpsertRfqPayload = {
-        p_companyid: Number(this.companyId),
-        p_rfqid: this.rfqForm.get('p_rfq_id')?.value ?? 0,
-        p_site_id: this.rfqForm.get('p_site')?.value,
-        p_rfqdate: this.rfqForm.get('p_rfqdate')?.value,
-        p_rfq_description: this.rfqForm.get('p_rfq_desc')?.value ?? '',
-        p_remarks: this.rfqForm.get('p_remarks')?.value ?? '',
-        p_attachment_path: this.attachmentFileName || null,
-        p_status: 'DRAFT',
-        p_user_id: Number(this.userId),
-        p_vendor_json: vendorJson.length ? vendorJson : null
-    };
-
-    this.workService.upsertRFQ(payload).subscribe({
-        next: (res: any) => {
-           
-            if (res.data?.success) {
-                const rfqId = res.data.rfqid;
-                const rfqNo = res.data.rfqno;
-                this.upsertRfqDropdownOption(this.draftRfqOptions, rfqId, rfqNo);
-                this.rfqForm.patchValue({
-                    p_rfq_id: rfqId,
-                    p_draft_rfqno: rfqId,
-                    p_status: res.data.status
-                });
-                this.messageService.add({ severity: 'success', summary: res.data.msg });
-                this.loadDraftList();
-            } else {
-                this.messageService.add({ severity: 'error', summary: res.data.msg });
-            }
-        },
-        error: (err) => {
-            this.messageService.add({ severity: 'error', summary: 'Draft save failed', detail: err.message, life: 2500 });
+        if (!this.rfqForm.get('p_site')?.value || this.rfqList.length === 0) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Cannot save draft',
+                detail: 'Select a site and add at least one item before saving as draft.',
+                life: 2500
+            });
+            return;
         }
-    });
-}
+
+        const vendorJson: VendorInvitePayload[] = this.vendorInviteRows
+            .filter((r) => r.category_id != null)
+            .map((r) => ({
+                categoryid: r.category_id as number,
+                vendorids: r.selectedVendors
+            }));
+
+        const payload: UpsertRfqPayload = {
+            p_companyid: Number(this.companyId),
+            p_rfqid: this.rfqForm.get('p_rfq_id')?.value ?? 0,
+            p_site_id: this.rfqForm.get('p_site')?.value,
+            p_rfqdate: this.rfqForm.get('p_rfqdate')?.value,
+            p_rfq_description: this.rfqForm.get('p_rfq_desc')?.value ?? '',
+            p_remarks: this.rfqForm.get('p_remarks')?.value ?? '',
+            p_attachment_path: this.attachmentBase64 || this.attachmentFileName || null,
+            p_status: 'DRAFT',
+            p_user_id: Number(this.userId),
+            p_vendor_json: vendorJson.length ? vendorJson : null
+        };
+
+        this.workService.upsertRFQ(payload).subscribe({
+            next: (res: any) => {
+                if (res.data?.success) {
+                    const rfqId = res.data.rfqid;
+                    const rfqNo = res.data.rfqno;
+                    this.upsertRfqDropdownOption(this.draftRfqOptions, rfqId, rfqNo);
+                    this.rfqForm.patchValue({
+                        p_rfq_id: rfqId,
+                        p_draft_rfqno: rfqId,
+                        p_status: res.data.status
+                    });
+                    this.messageService.add({ severity: 'success', summary: res.data.msg });
+                    this.loadDraftList();
+                } else {
+                    this.messageService.add({ severity: 'error', summary: res.data.msg });
+                }
+            },
+            error: (err) => {
+                this.messageService.add({ severity: 'error', summary: 'Draft save failed', detail: err.message, life: 2500 });
+            }
+        });
+    }
     onAttachmentSelect(event: Event): void {
         const input = event.target as HTMLInputElement;
         const file = input.files?.[0] ?? null;
+        if (!file) return;
         this.attachmentFile = file;
         this.attachmentFileName = file?.name ?? '';
         this.attachmentBase64 = '';
         this.rfqForm.patchValue({ p_attachment: file });
+
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            this.attachmentBase64 = reader.result as string;
+        };
+        reader.onerror = () => {
+            this.messageService.add({ severity: 'error', summary: 'Could not read attachment', life: 2500 });
+        };
+        reader.readAsDataURL(file);
     }
 
     viewAttachment(): void {
@@ -800,30 +905,26 @@ getAvailableCategoryOptions(currentIndex: number): { label: string; value: numbe
         }
 
         const apiUrl = environment.baseurl.replace(/\/api\/?$/, '');
-        window.open(`${apiUrl}/uploads/${encodeURIComponent(this.attachmentFileName)}`, '_blank');
-    }
-
-    private setAttachment(attachment: string): void {
-        if (attachment?.startsWith('data:')) {
-            this.attachmentBase64 = attachment;
-            this.attachmentFileName = 'Attached file';
-        } else {
-            this.attachmentBase64 = '';
-            this.attachmentFileName = attachment ?? '';
-        }
-        this.attachmentFile = null;
+        const fileUrl = `${apiUrl}/uploads/${encodeURIComponent(this.attachmentFileName)}`;
+        window.open(fileUrl, '_blank');
     }
 
     private base64DataUriToBlobUrl(dataUri: string): string | null {
         try {
             const [meta, base64] = dataUri.split(',');
-            const mimeType = meta.match(/data:(.*?);base64/)?.[1] ?? 'application/pdf';
+            const mimeMatch = meta.match(/data:(.*?);base64/);
+            const mimeType = mimeMatch ? mimeMatch[1] : 'application/pdf';
+
             const byteString = atob(base64);
             const byteArray = new Uint8Array(byteString.length);
-            for (let i = 0; i < byteString.length; i++) byteArray[i] = byteString.charCodeAt(i);
-            return URL.createObjectURL(new Blob([byteArray], { type: mimeType }));
-        } catch (error) {
-            console.error('Failed to convert base64 attachment to blob:', error);
+            for (let i = 0; i < byteString.length; i++) {
+                byteArray[i] = byteString.charCodeAt(i);
+            }
+
+            const blob = new Blob([byteArray], { type: mimeType });
+            return URL.createObjectURL(blob);
+        } catch (err) {
+            console.error('Failed to convert base64 attachment to blob:', err);
             return null;
         }
     }
@@ -885,49 +986,50 @@ getAvailableCategoryOptions(currentIndex: number): { label: string; value: numbe
             return;
         }
 
- const vendorJson: VendorInvitePayload[] = this.vendorInviteRows
-        .filter((r) => r.category_id != null)
-        .map((r) => ({
-            categoryid: r.category_id as number,
-            vendorids: r.selectedVendors
-        }));
+        const vendorJson: VendorInvitePayload[] = this.vendorInviteRows
+            .filter((r) => r.category_id != null)
+            .map((r) => ({
+                categoryid: r.category_id as number,
+                vendorids: r.selectedVendors
+            }));
 
         const payload: UpsertRfqPayload = {
-        p_companyid: Number(this.companyId),
-        p_rfqid: this.rfqForm.get('p_rfq_id')?.value ?? 0,
-        p_site_id: this.rfqForm.get('p_site')?.value,
-        p_rfqdate: this.rfqForm.get('p_rfqdate')?.value,
-        p_rfq_description: this.rfqForm.get('p_rfq_desc')?.value ?? '',
-        p_remarks: this.rfqForm.get('p_remarks')?.value ?? '',
-        p_attachment_path: this.attachmentFileName || null,
-        p_status: 'Submitted',
-        p_user_id: Number(this.userId),
-        p_vendor_json: vendorJson.length ? vendorJson : null
-    };
+            p_companyid: Number(this.companyId),
+            p_rfqid: this.rfqForm.get('p_rfq_id')?.value ?? 0,
+            p_site_id: this.rfqForm.get('p_site')?.value,
+            p_rfqdate: this.rfqForm.get('p_rfqdate')?.value,
+            p_rfq_description: this.rfqForm.get('p_rfq_desc')?.value ?? '',
+            p_remarks: this.rfqForm.get('p_remarks')?.value ?? '',
+            p_attachment_path: this.attachmentBase64 || this.attachmentFileName || null,
+            p_status: 'Submitted',
+            p_user_id: Number(this.userId),
+            p_vendor_json: vendorJson.length ? vendorJson : null
+        };
 
-    this.workService.upsertRFQ(payload).subscribe({
-    next: (res: any) => {
-            if (res.data?.success) {
-                const rfqId = res.data.rfqid;
-                const rfqNo = res.data.rfqno;
-                this.upsertRfqDropdownOption(this.rfqNoOptions, rfqId, rfqNo);
-                this.rfqForm.patchValue({
-                    p_rfq_id: rfqId,
-                    p_rfqno: rfqId,
-                    p_status: res.data.status || 'SUBMITTED'
-                });
-                this.messageService.add({ severity: 'success', summary: res.data.msg });
-            } else {
-                this.messageService.add({ severity: 'error', summary: res.data.msg });
+        this.workService.upsertRFQ(payload).subscribe({
+            next: (res: any) => {
+                if (res.data?.success) {
+                    const rfqId = res.data.rfqid;
+                    const rfqNo = res.data.rfqno;
+                    this.upsertRfqDropdownOption(this.rfqNoOptions, rfqId, rfqNo);
+                    this.rfqForm.patchValue({
+                        p_rfq_id: rfqId,
+                        p_rfqno: rfqId,
+                        p_status: res.data.status || 'SUBMITTED'
+                    });
+                    this.messageService.add({ severity: 'success', summary: res.data.msg });
+                    this.sendMailToVendors(rfqId);
+                } else {
+                    this.messageService.add({ severity: 'error', summary: res.data.msg });
+                }
+            },
+            error: (err) => {
+                this.messageService.add({ severity: 'error', summary: 'Save failed', detail: err.message, life: 2500 });
             }
-        },
-        error: (err) => {
-            this.messageService.add({ severity: 'error', summary: 'Save failed', detail: err.message, life: 2500 });
-        }
-    });
-}
+        });
+    }
 
-  deleteDraftItem(item: any, event: Event): void {
+    deleteDraftItem(item: any, event: Event): void {
         event.stopPropagation();
 
         this.confirmationService.confirm({
@@ -941,7 +1043,6 @@ getAvailableCategoryOptions(currentIndex: number): { label: string; value: numbe
                 // this.workService.upsertMaterialForecast(this.buildDeletePayload(item.mf_id)).subscribe({
                 //     next: (res) => {
                 //         this.messageService.add({ severity: 'success', summary: res.data.message, life: 2000 });
-                        
                 //     },
                 //     error: (err) => {
                 //         console.error(err);
@@ -952,5 +1053,4 @@ getAvailableCategoryOptions(currentIndex: number): { label: string; value: numbe
             }
         });
     }
-
 }

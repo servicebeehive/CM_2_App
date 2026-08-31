@@ -109,3 +109,45 @@ export interface UpsertRfqPayload {
     p_user_id: number;
     p_vendor_json?: VendorInvitePayload[] | null;
 }
+
+export interface GmailVendorRow {
+    selected: boolean;
+    vendor: string;
+    category: string;
+    count: number;
+    vendorId: number | null;
+    email: string | null;
+    ccEmail: string | null;
+    bccEmail: string | null;
+    subject: string;
+    body1: string;
+    body2: string;
+    attachmentPath: string | null;
+    mailLogId: number | null;
+}
+
+export interface VendorEntry {
+    price: number | null;
+    quantity: number | null;
+    paymentTerm: string;
+    quality_score?: number | null;
+    payment_terms_days?: number | null;
+    delivery_terms_days?: number | null;
+    total_score?: number | null;
+    vendor_rank?: number | null;
+    is_recommended?: boolean;
+    remarks?: string;
+}
+
+export interface ComparisonRow {
+    category: string;
+    item: string;
+    required_qty: number;
+    item_id?: number;
+    category_id?: number;
+    uom_id?: number;
+    uom_name?: string;
+    vendorData: { [vendorId: number]: VendorEntry };
+    _searchText?: string;
+    weightage?: number;
+}

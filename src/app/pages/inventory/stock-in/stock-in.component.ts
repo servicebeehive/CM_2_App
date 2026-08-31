@@ -25,29 +25,8 @@ import { ConfirmationService } from 'primeng/api';
 import { CheckboxModule } from 'primeng/checkbox';
 import { Router } from '@angular/router';
 import { AuthService } from '@/core/services/auth.service';
-import { DrowdownDetails } from '@/core/models/inventory.model';
 import { MessageService } from 'primeng/api';
 import { ShareService } from '@/core/services/shared.service';
-
-interface Product {
-    name: string;
-    price: string;
-    code: string;
-    sku: string;
-    status: string;
-    tags: string[];
-    category: string;
-    colors: string[];
-    stock: string;
-    inStock: boolean;
-    description: string;
-    images: Image[];
-}
-
-interface Image {
-    name: string;
-    objectURL: string;
-}
 
 @Component({
     selector: 'app-stock-in',
@@ -106,7 +85,7 @@ export class StockInComponent {
 
     invoiceNoOptions = [];
 
-    vendorNameOptions: DrowdownDetails[] = [];
+    vendorNameOptions:any[] = [];
 
     categoryOptions = [];
 

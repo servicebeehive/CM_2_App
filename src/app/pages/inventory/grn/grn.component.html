@@ -50,7 +50,7 @@
             <!-- PO Number -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">PO Number <span class="text-red-500">*</span></label>
-                <p-dropdown [options]="vendorOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search PO No" formControlName="p_vendorid" placeholder="Select PO No" (onChange)="onPOChange($event)"></p-dropdown>
+                <p-dropdown [options]="ponoOptions" optionLabel="po_no" optionValue="po_id" [filter]="true" filterPlaceholder="Search PO No" formControlName="p_vendorid" placeholder="Select PO No" (onChange)="onPOChange($event)"></p-dropdown>
                 <small class="text-red-500 mt-1 text-xs" *ngIf="productForm.get('p_vendorid')?.touched && productForm.get('p_vendorid')?.errors?.['required']"> PO Number is required </small>
             </div>
 
@@ -87,7 +87,7 @@
                     <!-- Vendor -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Vendor <span class="text-red-500">*</span></label>
-                        <p-dropdown [options]="vendorNameOptions" optionLabel="fieldname" optionValue="fieldid" [filter]="true" filterPlaceholder="Search Vendor" formControlName="p_vendor" placeholder="Select Vendor"></p-dropdown>
+                        <p-dropdown [options]="vendorNameOptions" optionLabel="suppliername" optionValue="supplierid" [filter]="true" filterPlaceholder="Search Vendor" formControlName="p_vendor" placeholder="Select Vendor"></p-dropdown>
                         <small class="text-red-500 mt-1 text-xs" *ngIf="productForm.get('p_vendor')?.touched && productForm.get('p_vendor')?.errors?.['required']"> Vendor is required </small>
                     </div>
 

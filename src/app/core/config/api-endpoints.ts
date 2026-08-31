@@ -36,7 +36,10 @@ export const API_ENDPOINTS = {
         upsertmaterialforecast: '/beeware/upsert_material_forecast',
         upsertpurchasedraft: '/beeware/upsert_po_draft',
         upsertpurchaseorder: '/beeware/upsert_purchase_order',
-        upsertrfq: '/beeware/upsert_rfq'
+        upsertrfq: '/beeware/upsert_rfq',
+        sendrfqmail: '/beeware/send_rfq_mail',
+        upsertrfqvendorcomparison: '/beeware/upsert_rfq_vendor_comparison',
+        getrfqvendorcomparison: '/beeware/get_rfq_vendor_comparison'
     },
     sales: {
         getcalculatedMRP: '/beeware/getcalculatedMRP'

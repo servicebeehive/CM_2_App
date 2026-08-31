@@ -7,7 +7,7 @@
             <span class="block text-surface-900 font-bold text-lg md:text-xl">Material Requisition</span>
             <div class="mr-form-footer">
                 <!-- Requisition No / Date row -->
-                 <span class="text-xl font-bold mt-2">Status</span>
+                <span class="text-xl font-bold mt-2">Status</span>
                 <span class="font-bold text-xl mt-2" [ngStyle]="{ color: statusColor }">
                     {{ forecastForm.get('status')?.value }}
                 </span>
@@ -31,14 +31,7 @@
                     <ng-template pTemplate="item" let-item>
                         <div class="flex items-center justify-between gap-2 w-full">
                             <span>{{ item.mf_no }}</span>
-                            <button
-                                pButton
-                                type="button"
-                                icon="pi pi-trash"
-                                class="p-button-text p-button-danger p-0"
-                                [attr.aria-label]="'Delete draft ' + item.mf_no"
-                                (click)="deleteDraftItem(item, $event)"
-                            ></button>
+                            <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-0" [attr.aria-label]="'Delete draft ' + item.mf_no" (click)="deleteDraftItem(item, $event)"></button>
                         </div>
                     </ng-template>
                 </p-dropdown>
@@ -57,7 +50,17 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-3">
                 <div class="flex flex-col">
                     <label class="font-medium mb-1">MR No<span class="text-red-500">*</span></label>
-                    <p-dropdown [options]="requisitionOptions" optionLabel="mf_no" optionValue="mf_id" placeholder="Select MR No" formControlName="p_requisitionno" [filter]="true" [showClear]="true" filterPlaceholder="Search MR No" (onChange)="onDraftChange($event)"></p-dropdown>
+                    <p-dropdown
+                        [options]="requisitionOptions"
+                        optionLabel="mf_no"
+                        optionValue="mf_id"
+                        placeholder="Select MR No"
+                        formControlName="p_requisitionno"
+                        [filter]="true"
+                        [showClear]="true"
+                        filterPlaceholder="Search MR No"
+                        (onChange)="onDraftChange($event)"
+                    ></p-dropdown>
                 </div>
 
                 <div class="flex flex-col">
@@ -129,19 +132,13 @@
                     <input pInputText formControlName="p_remarks" placeholder="e.g. Concrete work for Column C1 & C2" />
                 </div>
 
-                 <div class="flex flex-col">
+                <div class="flex flex-col">
                     <label class="font-medium mb-1">Attachment</label>
                     <div class="mr-file-input">
                         <label for="mrAttachment" class="mr-choose-btn"><i class="pi pi-upload"></i> Choose File</label>
                         <input id="mrAttachment" type="file" hidden (change)="onAttachmentSelect($event)" />
                         <span class="mr-file-name">{{ attachmentFileName || 'No file chosen' }}</span>
-                        <i
-            *ngIf="attachmentFileName"
-            class="pi pi-eye mr-view-icon"
-            style="cursor: pointer; margin-left: 8px; color: var(--primary-color, #2196F3);"
-            title="View attachment"
-            (click)="viewAttachment()"
-        ></i>
+                        <i *ngIf="attachmentFileName" class="pi pi-eye mr-view-icon" style="cursor: pointer; margin-left: 8px; color: var(--primary-color, #2196f3)" title="View attachment" (click)="viewAttachment()"></i>
                     </div>
                 </div>
 
@@ -186,11 +183,11 @@
                 <div class="mr-approval-info">
                     <div>
                         <span class="mr-meta-label">Approved By :</span>
-                       <span class="mr-meta-value">{{ approved_name }}</span>
+                        <span class="mr-meta-value">{{ approved_name }}</span>
                     </div>
                     <div>
-                        <span class="mr-meta-label">Approved On :</span> 
-                         <span class="mr-meta-value">{{ approved_on | date:'dd/MM/yy' }}</span>
+                        <span class="mr-meta-label">Approved On :</span>
+                        <span class="mr-meta-value">{{ approved_on | date: 'dd/MM/yy' }}</span>
                     </div>
                 </div>
             </div>

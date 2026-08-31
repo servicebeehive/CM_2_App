@@ -11,10 +11,7 @@ export interface StockHeader {
     clientcode: string;
     'x-access-token'?: string;
 }
-export interface DrowdownDetails {
-    fieldid: number;
-    fieldname: string;
-}
+
 export interface SaleHeader {
     uname: string;
     p_transactiontype: 'SALE' | 'RETURN' | string;
