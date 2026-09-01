@@ -93,10 +93,11 @@ export class MaterialIssueComponent implements OnInit {
     /** Submitted MIN records for the top dropdown */
     minOptions: { minno: string; [key: string]: any }[] = [];
 
-    projectOptions: { label: string; value: string }[] = [];
-    towerOptions:   { label: string; value: string }[] = [];
+    projectOptions: any[] = [];
+    towerOptions: any[] = [];
     levelOptions: { label: string; value: string }[] = [];
-    pourOptions:  { label: string; value: string }[] = [];
+    pourOptions: { label: string; value: string }[] = [];
+    workList: any[] = [];
     storeOptions: { label: string; value: string }[] = [];
     requestReferenceOptions: { label: string; value: string }[] = [];
     requestedByOptions: { label: string; value: string }[] = [];
@@ -104,6 +105,8 @@ export class MaterialIssueComponent implements OnInit {
 
     // ── MIN counter (replace with backend auto-increment) ──────────────────
     private minCounter = 0;
+    private companyId = '';
+    private userId = '';
 
     constructor(
         private fb: FormBuilder,
@@ -115,6 +118,8 @@ export class MaterialIssueComponent implements OnInit {
 
     // ── Lifecycle ──────────────────────────────────────────────────────────
     ngOnInit(): void {
+        this.companyId = this.authService.isLogIntType()?.companyid?.toString() ?? '';
+        this.userId = this.authService.isLogIntType()?.userid?.toString() ?? '';
         this.initForm();
         this.loadDropdowns();
     }
@@ -186,12 +191,8 @@ duplicateForm(): void {
     private loadDropdowns(): void {
         this.loadMINList();
         this.loadProjects();
-        this.loadTowers();
-        this.loadFloors();
         this.loadRequestedBy();
         this.loadItems();
-        this.loadLevels();
-        this.loadPours();
         this.loadStoreOptions();
         this.loadRequestReferenceOptions();
     }
@@ -215,117 +216,57 @@ duplicateForm(): void {
      * Replace with your real API call.
      */
     private loadProjects(): void {
-        // this.inventoryService.getdropdowndetails({ p_returntype: 'PROJECT' }).subscribe({
-        //   next: res => {
-        //     this.projectOptions = res.data.map((d: any) => ({ label: d.projectname, value: d.projectid }));
-        //   },
-        //   error: err => console.error(err)
-        // });
-
-        // ── Static mock ───────────────────────────────────────────────────
-        this.projectOptions = [
-            { label: 'Project A', value: 'PA' },
-            { label: 'Project B', value: 'PB' },
-            { label: 'Project C', value: 'PC' }
-        ];
+        const payload = { returnType: 'ACTIVEPROJECT', returnValue: '', username: '', option1: this.companyId, option2: null };
+        this.inventoryService.getparameterbased(payload).subscribe({ next: (res: any) => (this.projectOptions = res.data ?? []), error: (err) => console.error(err) });
     }
 
-    /**
-     * Load towers/blocks.
-     * Replace with your real API call.
-     */
-    private loadTowers(): void {
-        // this.inventoryService.getdropdowndetails({ p_returntype: 'TOWER' }).subscribe({
-        //   next: res => {
-        //     this.towerOptions = res.data.map((d: any) => ({ label: d.towername, value: d.towerid }));
-        //   },
-        //   error: err => console.error(err)
-        // });
+    onProjectChange(event: any): void {
+        const projectId = event.value;
+        this.workList = [];
+        this.towerOptions = [];
+        this.levelOptions = [];
+        this.pourOptions = [];
+        this.minForm.patchValue({ p_tower: null, p_level: null, p_pour: null }, { emitEvent: false });
+        if (!projectId) return;
 
-        // ── Static mock ───────────────────────────────────────────────────
-        this.towerOptions = [
-            { label: 'Tower A', value: 'TA' },
-            { label: 'Tower B', value: 'TB' },
-            { label: 'Block C', value: 'BC' }
-        ];
+        const payload = { p_returntype: 'WORKLISTDD', p_returnvalue: String(projectId), p_username: this.userId };
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res: any) => {
+                this.workList = res.data ?? [];
+                const towers = new Map<number, any>();
+                this.workList.forEach((work) => towers.set(work.tower_block_id, { tower_id: work.tower_block_id, tower_name: work.tower_name }));
+                this.towerOptions = Array.from(towers.values());
+            },
+            error: (err) => console.error(err)
+        });
     }
 
-    /**
-     * Load floors/zones.
-     * Replace with your real API call.
-     */
-    private loadFloors(): void {
-        // this.inventoryService.getdropdowndetails({ p_returntype: 'FLOOR' }).subscribe({
-        //   next: res => {
-        //     this.floorOptions = res.data.map((d: any) => ({ label: d.floorname, value: d.floorid }));
-        //   },
-        //   error: err => console.error(err)
-        // });
-
-        // ── Static mock ───────────────────────────────────────────────────
+    onTowerChange(event: any): void {
+        const towerId = event.value;
+        this.levelOptions = this.workList.filter((work) => work.tower_block_id === towerId).reduce((levels: any[], work) => {
+            if (!levels.some((level) => level.value === work.level_name)) levels.push({ label: work.level_name, value: work.level_name });
+            return levels;
+        }, []);
+        this.pourOptions = [];
+        this.minForm.patchValue({ p_level: null, p_pour: null }, { emitEvent: false });
     }
 
-private loadLevels(): void {
-    // Replace with your real API call:
-    // this.inventoryService.getdropdowndetails({ p_returntype: 'LEVEL' }).subscribe({
-    //   next: res => {
-    //     this.levelOptions = res.data.map((d: any) => ({ label: d.levelname, value: d.levelid }));
-    //   }
-    // });
-
-    // ── Static mock ───────────────────────────────────────────────────────
-    this.levelOptions = [
-        { label: 'Basement',   value: 'B'  },
-        { label: 'Ground (G)', value: 'G'  },
-        { label: 'Level 1',    value: 'L1' },
-        { label: 'Level 2',    value: 'L2' },
-        { label: 'Level 3',    value: 'L3' },
-        { label: 'Level 4',    value: 'L4' },
-        { label: 'Level 5',    value: 'L5' },
-        { label: 'Terrace',    value: 'TR' },
-    ];
-}
-
-private loadPours(): void {
-    // Replace with your real API call:
-    // this.inventoryService.getdropdowndetails({ p_returntype: 'POUR' }).subscribe({
-    //   next: res => {
-    //     this.pourOptions = res.data.map((d: any) => ({ label: d.pourname, value: d.pourid }));
-    //   }
-    // });
-
-    // ── Static mock ───────────────────────────────────────────────────────
-    this.pourOptions = [
-        { label: 'Pour 1',    value: 'P1' },
-        { label: 'Pour 2',    value: 'P2' },
-        { label: 'Pour 3',    value: 'P3' },
-        { label: 'Pour 4',    value: 'P4' },
-        { label: 'Slab Pour', value: 'SP' },
-        { label: 'Column',    value: 'CL' },
-        { label: 'Beam',      value: 'BM' },
-        { label: 'Footing',   value: 'FT' },
-    ];
-}
+    onLevelChange(event: any): void {
+        const towerId = this.minForm.get('p_tower')?.value;
+        this.pourOptions = this.workList.filter((work) => work.tower_block_id === towerId && work.level_name === event.value).reduce((pours: any[], work) => {
+            if (!pours.some((pour) => pour.value === work.pour_name)) pours.push({ label: work.pour_name, value: work.pour_name });
+            return pours;
+        }, []);
+        this.minForm.patchValue({ p_pour: null }, { emitEvent: false });
+    }
 
     /**
      * Load requesters (site engineers, supervisors).
      * Replace with your real API call.
      */
     private loadRequestedBy(): void {
-        // this.inventoryService.getdropdowndetails({ p_returntype: 'SITE_USERS' }).subscribe({
-        //   next: res => {
-        //     this.requestedByOptions = res.data.map((d: any) => ({ label: d.username, value: d.userid }));
-        //   },
-        //   error: err => console.error(err)
-        // });
-
-        // ── Static mock ───────────────────────────────────────────────────
-        this.requestedByOptions = [
-            { label: 'Rajesh Kumar', value: 'rajesh' },
-            { label: 'Amit Sharma',  value: 'amit' },
-            { label: 'Suresh Patel', value: 'suresh' },
-            { label: 'Priya Nair',   value: 'priya' }
-        ];
+        const payload = { p_returntype: 'REQUESTEDBY', p_returnvalue: this.companyId, p_username: this.userId };
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({ next: (res: any) => (this.requestedByOptions = res.data ?? []), error: (err) => console.error(err) });
     }
 
     /**

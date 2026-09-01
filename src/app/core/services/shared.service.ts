@@ -1,5 +1,12 @@
 import { Injectable } from '@angular/core';
+import { NavigationExtras, Router } from '@angular/router';
 import { BehaviorSubject, filter } from 'rxjs';
+
+export interface ReturnViewState {
+  route: string[];
+  queryParams?: Record<string, string>;
+  state: Record<string, unknown>;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -134,6 +141,27 @@ clearTransactionState(){
 
   private stockFilterState=new BehaviorSubject<any>(null);
   stockFilterSate$ = this.stockFilterState.asObservable();
+
+  private returnViewState: ReturnViewState | null = null;
+
+  setReturnView(state: ReturnViewState): void {
+    this.returnViewState = state;
+  }
+
+  getReturnView(): ReturnViewState | null {
+    return this.returnViewState;
+  }
+
+  returnToSavedView(router: Router, fallbackRoute: string[], fallbackQueryParams: Record<string, string> = {}): void {
+    const returnView = this.returnViewState;
+    this.returnViewState = null;
+
+    const extras: NavigationExtras = {
+      queryParams: returnView?.queryParams ?? fallbackQueryParams,
+      state: returnView?.state
+    };
+    router.navigate(returnView?.route ?? fallbackRoute, extras);
+  }
   
 }
 

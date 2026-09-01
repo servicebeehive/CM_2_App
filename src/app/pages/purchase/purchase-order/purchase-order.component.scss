@@ -38,6 +38,20 @@
     min-width: 100px;
     max-width: 110px;
   }
+
+  .p-datatable-thead > tr > .action-column,
+  .p-datatable-tbody > tr > .action-column {
+    position: sticky;
+    right: 0;
+    z-index: 100;
+    min-width: 72px;
+    background: var(--surface-overlay, #fff);
+    box-shadow: -1px 0 0 var(--surface-border);
+  }
+
+  .p-datatable-thead > tr > .action-column {
+    z-index: 101;
+  }
 }
 /* Force paginator rows-per-page dropdown to behave like appendTo="body" */
 .p-paginator .p-dropdown-panel {

@@ -16,6 +16,7 @@ import { AuthService } from '@/core/services/auth.service';
 import { WorkService } from '@/core/services/work.service';
 import { MaterialRequisitionPayload } from '@/core/models/authmodel/work.model';
 import { environment } from '@/environments/environment';
+import { ShareService } from '@/core/services/shared.service';
 
 @Component({
     selector: 'app-material-requisition',
@@ -65,6 +66,7 @@ export class MaterialRequisitionComponent {
     private fromRfqView = false;
     private fromApprovalView = false;
     private fromPurchaseOrderView = false;
+    private fromComparisonView = false;
     private approvalType: string | null = null;
     private approvalRequest: string | null = null;
 
@@ -76,7 +78,8 @@ export class MaterialRequisitionComponent {
         private authService: AuthService,
         private workService: WorkService,
         private route: ActivatedRoute,
-        public router: Router
+        public router: Router,
+        private sharedService: ShareService
     ) {}
 
     ngOnInit(): void {
@@ -86,6 +89,7 @@ export class MaterialRequisitionComponent {
         this.fromRfqView = this.route.snapshot.queryParamMap.get('fromRfqView') === 'true';
         this.fromApprovalView = this.route.snapshot.queryParamMap.get('fromApprovalView') === 'true';
         this.fromPurchaseOrderView = this.route.snapshot.queryParamMap.get('fromPurchaseOrderView') === 'true';
+        this.fromComparisonView = this.route.snapshot.queryParamMap.get('fromComparisonView') === 'true';
         this.approvalType = this.route.snapshot.queryParamMap.get('p_type');
         this.approvalRequest = this.route.snapshot.queryParamMap.get('p_request');
         this.loadAllDropdowns();
@@ -167,17 +171,22 @@ export class MaterialRequisitionComponent {
     }
 
     get showRfqBackButton(): boolean {
-        return this.fromRfqView || this.fromApprovalView || this.fromPurchaseOrderView;
+        return this.fromRfqView || this.fromApprovalView || this.fromPurchaseOrderView || this.fromComparisonView;
     }
 
     get backRoute(): string[] {
         if (this.fromApprovalView) return ['/layout/settings/my-approval'];
         if (this.fromPurchaseOrderView) return ['/layout/purchase/purchase-order'];
+        if (this.fromComparisonView) return ['/layout/purchase/vendor-comparison'];
         return ['/layout/purchase/rfq'];
     }
 
     get backQueryParams(): Record<string, string> {
         return this.fromApprovalView ? { p_type: this.approvalType ?? '', p_request: this.approvalRequest ?? 'PENDING' } : {};
+    }
+
+    returnToSource(): void {
+        this.sharedService.returnToSavedView(this.router, this.backRoute, this.backQueryParams);
     }
 
     onAttachmentSelect(event: any) {

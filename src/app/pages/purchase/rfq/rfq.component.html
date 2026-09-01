@@ -40,9 +40,9 @@
                     </ng-template>
                 </p-dropdown>
 
-                <button pButton type="button" label="Draft" class="p-button-outlined p-button-warning" (click)="submitDraft()" [disabled]="hasRfqValue || rfqForm.invalid || rfqList.length === 0"></button>
-                <button pButton type="button" label="View" class="p-button-outlined" (click)="openMaterialReqDialog()"></button>
-                <button *ngIf="rfqForm.get('p_rfqno')?.value" pButton type="button" label="Mail" class="p-button-outlined" (click)="openGmailReqDialog()"></button>
+                <button pButton type="button" label="Draft" class="p-button-warning" (click)="submitDraft()" [disabled]="hasRfqValue || rfqForm.invalid || rfqList.length === 0"></button>
+                <button pButton type="button" label="View" class="p-button-warning" (click)="openMaterialReqDialog()"></button>
+                <button *ngIf="rfqForm.get('p_rfqno')?.value" pButton type="button" label="Mail" class="p-button-warning" (click)="openGmailReqDialog()"></button>
                 <button pButton type="submit" label="Submit" class="p-button-primary" [disabled]="hasRfqValue || rfqForm.invalid || rfqList.length === 0 || !hasValidVendorSelection"></button>
                 <button pButton type="button" label="Reset" class="p-button-secondary" (click)="onReset()"></button>
             </div>
@@ -117,9 +117,15 @@
 
         <div class="rfq-grid">
             <div class="mr-card">
-                <div class="mr-card-header">
-                    <i class="pi pi-list"></i>
-                    <span>RFQ Items (Consolidated - Site Wise)</span>
+                <div class="mr-card-header flex justify-between">
+                   <div class="flex gap-2 items-center"> <i class="pi pi-list"></i>
+                    <span>RFQ Items</span>
+                    </div>
+                     <button pButton type="button" label="Pull MR" icon="pi pi-cog" class="p-button-outlined" (click)="openPullMrDialog()"></button>
+                </div>
+
+                <div class=" mb-3">
+                   
                 </div>
 
                 <p-table
@@ -254,6 +260,40 @@
          <button pButton type="button" label="Cancel" class="p-button-text" (click)="showGmailReqDialog = false"></button>
     </ng-template>
 </p-dialog>
+
+    <p-dialog [(visible)]="showPullMrDialog" [modal]="true" [style]="{ width: '72rem', maxWidth: '95vw' }" [draggable]="false" [resizable]="false" header="Pull Material Requisitions">
+        <p-table [value]="pullMrRows" [responsiveLayout]="'scroll'" [loading]="isLoadingPullMr" class="p-datatable-gridlines p-datatable-sm">
+            <ng-template pTemplate="header">
+                <tr class="bg-yellow-400">
+                    <th class="text-center">Select</th>
+                    <th>Category</th>
+                    <th>MR No</th>
+                    <th>Department</th>
+                    <th>MR Date</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-row>
+                <tr>
+                    <td class="text-center">
+                        <input type="checkbox" [(ngModel)]="row.selected" [ngModelOptions]="{ standalone: true }" [attr.aria-label]="'Select ' + (row.mr_no || row.mf_no || 'MR item')" />
+                    </td>
+                    <td>{{ row.item_category || row.itemcategoryname || row.categoryname || '—' }}</td>
+                    <td>{{ row.mr_no || row.mf_no || '—' }}</td>
+                    <td>{{ row.departmentname || row.department || row.department_name || '—' }}</td>
+                    <td>{{ (row.mr_date || row.mf_date) ? ((row.mr_date || row.mf_date) | date: 'dd-MM-yyyy') : '—' }}</td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="5" class="text-center">No material requisition items found for the selected site.</td>
+                </tr>
+            </ng-template>
+        </p-table>
+        <ng-template pTemplate="footer">
+            <button pButton type="button" label="Add Selected" icon="pi pi-check" (click)="addSelectedMrItems()"></button>
+            <button pButton type="button" label="Cancel" class="p-button-text" (click)="showPullMrDialog = false"></button>
+        </ng-template>
+    </p-dialog>
 
     <p-dialog [(visible)]="showMrDialog" [modal]="true" [style]="{ width: '75rem', maxWidth: '95vw' }" [draggable]="false" [resizable]="false" header="MR Detail View">
         <div *ngIf="selectedMrDetail" class="mr-dialog-wrap">

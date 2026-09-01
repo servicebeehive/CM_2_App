@@ -1,12 +1,6 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
-import {
-    FormBuilder,
-    FormGroup,
-    FormsModule,
-    ReactiveFormsModule,
-    Validators
-} from '@angular/forms';
+import { Component, OnInit } from '@angular/core';
+import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DatePickerModule } from 'primeng/datepicker';
@@ -20,7 +14,6 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { Router } from '@angular/router';
 
-import { StockIn } from '@/types/stockin.model';
 import { InventoryService } from '@/core/services/inventory.service';
 import { AuthService } from '@/core/services/auth.service';
 import { ShareService } from '@/core/services/shared.service';
@@ -48,36 +41,14 @@ import { ShareService } from '@/core/services/shared.service';
     providers: [ConfirmationService, DatePipe]
 })
 export class GrnComponent implements OnInit {
-
-    // ── Auth ───────────────────────────────────────────────────────────────
- 
-    // ── Form ───────────────────────────────────────────────────────────────
     productForm!: FormGroup;
-
-    /** True once the user selects a PO number — unlocks all tabs */
     poSelected = false;
-
-    // ── Dialog / item state ────────────────────────────────────────────────
     public transationid: any;
-    visibleDialog   = false;
-    selectedRow: any = null;
-    mode: 'add' | 'edit' = 'add';
-    addItemEnabled  = false;
     backshow        = false;
     childUomDialog  = false;
     childUOMList: any[] = [];
-    childUomStatus  = false;
-
-    pagedProducts: StockIn[] = [];
-    first        = 0;
-    rowsPerPage  = 10;
-    products: StockIn[] = [];
     itemOptionslist: any[] = [];
-
-    // ── Date cap ───────────────────────────────────────────────────────────
     dateTime = new Date();
-
-    // ── File upload state ──────────────────────────────────────────────────
     fileNames: { challan: string; material: string; qualityreport: string; other: string } = {
         challan: '', material: '', qualityreport: '', other: ''
     };
@@ -93,23 +64,12 @@ export class GrnComponent implements OnInit {
         { label: 'N', value: 'N' },
         { label: 'P', value: 'P' }
     ];
-
-    // ── Dropdown options ───────────────────────────────────────────────────
-    vendorOptions: any[]              = [];
     ponoOptions: any[]                = [];
-    vendorNameOptions: any[] = [];
     uomOptions: any[]                 = [];
     categoryOptions: any[]            = [];
     itemOptions: any[]                = [];
     purchaseIdOptions: any[]          = [];
     indentNoOptions: any[]            = [];
-
-    storeLocationOptions: { label: string; value: string }[] = [
-        { label: 'Main Warehouse',    value: 'Main Warehouse' },
-        { label: 'Site Store A',      value: 'Site Store A' },
-        { label: 'Site Store B',      value: 'Site Store B' },
-        { label: 'Temporary Storage', value: 'Temporary Storage' }
-    ];
 
     constructor(
         private fb: FormBuilder,
@@ -127,12 +87,10 @@ export class GrnComponent implements OnInit {
     ngOnInit(): void {
         this.initForm();
         this.loadAllDropdowns();
-        this.onGetStockIn();
 
         const navigation = history.state;
         if (navigation?.stockData && navigation?.itemsData) {
             this.backshow = true;
-            this.mode     = navigation.mode || 'edit';
             this.populateStockForm(navigation.stockData, navigation.itemsData);
         }
 
@@ -237,7 +195,6 @@ export class GrnComponent implements OnInit {
         });
 
         this.poSelected     = true;
-        this.addItemEnabled = true;
     }
 
     // ── File upload ────────────────────────────────────────────────────────
@@ -405,16 +362,7 @@ export class GrnComponent implements OnInit {
         return { p_username: this.authService.isLogIntType().userid.toString(), p_returntype: returnType };
     }
 
-    // OnGetDropdown(): void {
-    //     this.stockInService.getdropdowndetails({ p_username: this.authService.isLogIntType().userid.toString(), p_returntype: 'ITEM' }).subscribe({
-    //         next:  res => { this.vendorNameOptions = res.data; },
-    //         error: err => console.error(err)
-    //     });
-    // }
-
     loadAllDropdowns(): void {
-        // this.OnGetDropdown();
-        this.OnGetVendor();
         this.onGetPONO();
         this.OnGetItem(); 
         this.OnGetCategory();
@@ -450,15 +398,7 @@ export class GrnComponent implements OnInit {
             next: res => this.uomOptions = res.data, error: err => console.error(err)
         });
     }
-    OnGetVendor(): void {
-    this.stockInService.getdropdowndetails(this.createDropdownPayload('VENDORALL')).subscribe({
-        next: res => { this.vendorNameOptions = res.data ?? []; },
-        error: err => {
-            console.error('Error fetching vendors:', err);
-            this.vendorNameOptions = [];
-        }
-    });
-}
+
     OnGetPurchaseId(): void {
         this.stockInService.getdropdowndetails(this.createDropdownPayload('PURCHASEID')).subscribe({
             next: res => this.purchaseIdOptions = res.data, error: err => console.error(err)
@@ -499,7 +439,6 @@ private applyPODetailsToForm(rows: any[]): void {
     }
 
     const header = rows[0];
-    const vendor = this.vendorNameOptions.find((v: any) => v['supplierid'] === header.vendor_id);
 
     this.productForm.patchValue({
     p_podate: header.po_date ? new Date(header.po_date) : null,
@@ -512,7 +451,6 @@ private applyPODetailsToForm(rows: any[]): void {
     this.mapItemsFromPODetails(rows);
 
     this.poSelected = true;
-    this.addItemEnabled = true;
 }
 
 private calculatePoTotal(rows: any[]): number {
@@ -568,11 +506,6 @@ private mapItemsFromPODetails(rows: any[]): void {
     }
 
     // ── Child UOM ──────────────────────────────────────────────────────────
-    onChildUom(status: boolean): boolean {
-        this.childUomStatus = status;
-        return this.childUomStatus;
-    }
-
     viewItem(id: number): void {
         const payload = { p_username: this.authService.isLogIntType().userid.toString(), p_returntype: 'CHILDUOM', p_returnvalue: id.toString() };
         this.stockInService.Getreturndropdowndetails(payload).subscribe({
@@ -586,11 +519,6 @@ private mapItemsFromPODetails(rows: any[]): void {
     }
 
     // ── Misc ───────────────────────────────────────────────────────────────
-    onGetStockIn(): void {
-        this.products = this.stockInService.productItem;
-        this.products.forEach(p => (p.selection = true));
-    }
-
     populateStockForm(data: any, itemsData: any[]): void {
         this.transationid = data.purchaseid;
         this.poSelected   = true;
@@ -629,10 +557,8 @@ private mapItemsFromPODetails(rows: any[]): void {
         this.productForm.reset(
             {p_grndate:this.dateTime}
         );
-        this.products        = [];
         this.itemOptionslist = [];
         this.poSelected      = false;
-        this.addItemEnabled  = false;
         this.backshow        = false;
         this.fileNames       = { challan: '', material: '', qualityreport: '', other: '' };
         this.uploadedFiles   = { challan: null, material: null, qualityreport: null, other: null };

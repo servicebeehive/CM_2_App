@@ -20,6 +20,7 @@ import { FileUploadModule } from 'primeng/fileupload';
 import { TabsModule } from 'primeng/tabs';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { WorkService } from '@/core/services/work.service';
+import { ShareService } from '@/core/services/shared.service';
 import { PurchaseDraftPayload, PurchaseOrderItem, PurchaseOrderPayload } from '@/core/models/authmodel/work.model';
 
 export interface PaymentEntry {
@@ -119,7 +120,8 @@ export class PurchaseOrderComponent implements OnInit {
         private authService: AuthService,
         private datePipe: DatePipe,
         private workService: WorkService,
-        private router: Router
+        private router: Router,
+        private sharedService: ShareService
     ) {}
 
     // ── Lifecycle ──────────────────────────────────────────────────────────────
@@ -127,6 +129,7 @@ export class PurchaseOrderComponent implements OnInit {
         this.companyId= this.authService.isLogIntType()?.companyid;
         this.userId = this.authService.isLogIntType()?.userid?.toString() ?? '';
         this.initForm();
+        this.restoreViewState();
         this.loadDropdowns();
     }
 
@@ -169,6 +172,18 @@ export class PurchaseOrderComponent implements OnInit {
         this.poForm.get('p_podate')?.valueChanges.subscribe(() => {
             this.poForm.get('p_deliverydate')?.updateValueAndValidity();
         });
+    }
+
+    private restoreViewState(): void {
+        const state = history.state?.returnViewState;
+        if (!state) return;
+
+        this.poForm.patchValue(state.formValue ?? {}, { emitEvent: false });
+        this.poItemArray.clear();
+        (state.items ?? []).forEach((item: any) => this.poItemArray.push(this.fb.group(item)));
+        this.selectedVendorNames = state.selectedVendorNames ?? [];
+        this.grandTotal = state.grandTotal ?? 0;
+        this.submitted = state.submitted ?? false;
     }
 
     // ── FormArray accessor ─────────────────────────────────────────────────────
@@ -444,7 +459,7 @@ private applyPORowsToForm(rows: any[], isDraft: boolean): void {
         p_podate: header.po_date ? new Date(header.po_date) : null,
         p_project: header.project_id ?? null,
         p_deliverylocation: header.delivery_location ?? '',
-        p_deliverydate: header.delivery_date ? new Date(header.delivery_date) : null,
+        p_deliverydate: (header.delivery_date) ? new Date(header.delivery_date) : null,
         p_paymentterms: header.payment_terms ?? null,
         p_remarks: header.remarks ?? ''
     });
@@ -477,7 +492,7 @@ private mapPODetailRowsToFormArray(rows: any[], headerVendorId: number | null): 
                 amount: [row.amount ?? null],
                 tax_id: [row.tax_id ?? '18'],
                 taxPercent: [Number(row.tax_percent ?? 18)],
-                totalAmount: [row.total_amount ?? row.amount ?? null],
+                totalAmount: [row.total_amount ?? row.totalAmount ?? row.amount ?? null],
                 remarks: [row.detail_remarks ?? ''],
 
                 mf_id: [row.mf_id ?? null],
@@ -491,6 +506,13 @@ private mapPODetailRowsToFormArray(rows: any[], headerVendorId: number | null): 
         );
     });
 
+    this.syncSelectedVendors();
+    this.recalcGrandTotal();
+}
+
+removePoItem(index: number): void {
+    this.poItemArray.removeAt(index);
+    this.vendorOptionsByRow.splice(index, 1);
     this.syncSelectedVendors();
     this.recalcGrandTotal();
 }
@@ -1057,6 +1079,18 @@ submitDraft(): void {
     // ── View click: same navigation flow as RFQ's included MR list ─────────────
     openMaterialRequisition(row: any): void {
         this.showMrDialog = false;
+        this.sharedService.setReturnView({
+            route: ['/layout/purchase/purchase-order'],
+            state: {
+                returnViewState: {
+                    formValue: this.poForm.getRawValue(),
+                    items: this.poItemArray.getRawValue(),
+                    selectedVendorNames: this.selectedVendorNames,
+                    grandTotal: this.grandTotal,
+                    submitted: this.submitted
+                }
+            }
+        });
         this.router.navigate(['/layout/purchase/material-requisition'], {
             queryParams: { mfNo: row.mr_no, mfId: row.mf_id ?? null, fromPurchaseOrderView: true }
         });

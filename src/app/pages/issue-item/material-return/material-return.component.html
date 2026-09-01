@@ -33,14 +33,24 @@
 
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Site <span class="text-red-500">*</span></label>
-                <p-dropdown [options]="projectOptions" optionLabel="label" optionValue="value" placeholder="Select Site" formControlName="p_project" [filter]="true" filterPlaceholder="Search Site" [showClear]="true"></p-dropdown>
+                <p-dropdown [options]="projectOptions" optionLabel="project_name" optionValue="project_id" placeholder="Select Site" formControlName="p_project" [filter]="true" filterPlaceholder="Search Site" [showClear]="true" (onChange)="onProjectChange($event)"></p-dropdown>
                 <small class="text-red-500 mt-1 text-xs" *ngIf="minForm.get('p_project')?.touched && minForm.get('p_project')?.errors?.['required']"> Site is required </small>
             </div>
 
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Tower / Block <span class="text-red-500">*</span></label>
-                <p-dropdown [options]="towerOptions" optionLabel="label" optionValue="value" placeholder="Select Tower/Block" formControlName="p_tower" [filter]="true" filterPlaceholder="Search Tower/Block" [showClear]="true"></p-dropdown>
+                <p-dropdown [options]="towerOptions" optionLabel="tower_name" optionValue="tower_id" placeholder="Select Tower/Block" formControlName="p_tower" [filter]="true" filterPlaceholder="Search Tower/Block" [showClear]="true" (onChange)="onTowerChange($event)"></p-dropdown>
                 <small class="text-red-500 mt-1 text-xs" *ngIf="minForm.get('p_tower')?.touched && minForm.get('p_tower')?.errors?.['required']"> Tower/Block is required </small>
+            </div>
+
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Level</label>
+                <p-dropdown [options]="levelOptions" optionLabel="label" optionValue="value" placeholder="Select Level" formControlName="p_level" [filter]="true" filterPlaceholder="Search Level" [showClear]="true" (onChange)="onLevelChange($event)"></p-dropdown>
+            </div>
+
+            <div class="flex flex-col">
+                <label class="font-medium mb-1">Pour</label>
+                <p-dropdown [options]="pourOptions" optionLabel="label" optionValue="value" placeholder="Select Pour" formControlName="p_pour" [filter]="true" filterPlaceholder="Search Pour" [showClear]="true"></p-dropdown>
             </div>
 
             <div class="flex flex-col">
@@ -74,7 +84,7 @@
 
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Requested By <span class="text-red-500">*</span></label>
-                <p-dropdown [options]="requestedByOptions" optionLabel="label" optionValue="value" placeholder="Select Requester" formControlName="p_requestedby" [filter]="true" filterPlaceholder="Search" [showClear]="true"></p-dropdown>
+                <p-dropdown [options]="requestedByOptions" optionLabel="fullname" optionValue="userid" placeholder="Select Requester" formControlName="p_requestedby" [filter]="true" filterPlaceholder="Search" [showClear]="true"></p-dropdown>
                 <small class="text-red-500 mt-1 text-xs" *ngIf="minForm.get('p_requestedby')?.touched && minForm.get('p_requestedby')?.errors?.['required']"> Requested By is required </small>
             </div>
 

@@ -37,9 +37,9 @@
                 </p-dropdown>
 
                 <button pButton type="submit" label="Submit" class="p-button-primary" *ngIf="!isReadOnlyView" [disabled]="forecastForm.invalid || isSubmitDisabled() || isFromRfqView"></button>
-                <button pButton type="button" label="Draft" class="p-button-outlined p-button-warning" *ngIf="!isReadOnlyView" (click)="submitDraft()" [disabled]="forecastForm.invalid || isSubmitDisabled() || isFromRfqView"></button>
+                <button pButton type="button" label="Draft" class="p-button-warning" *ngIf="!isReadOnlyView" (click)="submitDraft()" [disabled]="forecastForm.invalid || isSubmitDisabled() || isFromRfqView"></button>
                 <button pButton type="button" label="Reset" class="p-button-secondary" (click)="onReset()"></button>
-                <button *ngIf="showRfqBackButton" pButton type="button" label="Back" icon="pi pi-arrow-left" class="p-button-outlined" (click)="router.navigate(backRoute, { queryParams: backQueryParams })"></button>
+                <button *ngIf="showRfqBackButton" pButton type="button" label="Back" icon="pi pi-arrow-left" class="p-button-outlined" (click)="returnToSource()"></button>
             </div>
         </div>
 

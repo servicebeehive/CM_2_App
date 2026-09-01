@@ -19,6 +19,7 @@ import { GmailVendorRow, UpsertRfqPayload, VendorInvitePayload } from '@/core/mo
 import { WorkService } from '@/core/services/work.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { environment } from '@/environments/environment';
+import { ShareService } from '@/core/services/shared.service';
 
 @Component({
     selector: 'app-rfq',
@@ -49,6 +50,9 @@ export class RfqComponent implements OnInit {
     showMrDialog = false;
     selectedMrDetail: any | null = null;
     showMaterialReqDialog = false;
+    showPullMrDialog = false;
+    isLoadingPullMr = false;
+    pullMrRows: any[] = [];
     showGmailReqDialog = false;
     gmailVendorRows: GmailVendorRow[] = [];
     attachmentFile: File | null = null;
@@ -67,13 +71,15 @@ export class RfqComponent implements OnInit {
         private messageService: MessageService,
         private workService: WorkService,
         private router: Router,
-        private confirmationService: ConfirmationService
+        private confirmationService: ConfirmationService,
+        private sharedService: ShareService
     ) {}
 
     ngOnInit(): void {
         this.companyId = this.authService.isLogIntType()?.companyid?.toString() ?? '';
         this.userId = this.authService.isLogIntType()?.userid?.toString() ?? '';
         this.initForm();
+        this.restoreViewState();
         this.loadSites();
         this.loadRfqNumberOptions();
         this.loadDraftList();
@@ -93,6 +99,16 @@ export class RfqComponent implements OnInit {
             p_item: [null],
             p_attachment: [null]
         });
+    }
+
+    private restoreViewState(): void {
+        const state = history.state?.returnViewState;
+        if (!state) return;
+
+        this.rfqForm.patchValue(state.formValue ?? {}, { emitEvent: false });
+        this.rfqList = state.rfqList ?? [];
+        this.vendorInviteRows = state.vendorInviteRows ?? [];
+        this.includedMrList = state.includedMrList ?? [];
     }
 
     createDropdownPayload(returnType: string, retrunValue: string | null, userName: string | null): any {
@@ -173,7 +189,72 @@ export class RfqComponent implements OnInit {
             this.rebuildVendorInviteRows();
             return;
         }
-        this.loadRfqItems(siteId);
+        this.rfqList = [];
+        this.includedMrList = [];
+        this.mrDetailsMap = {};
+        this.rebuildVendorInviteRows();
+    }
+
+    openPullMrDialog(): void {
+        const siteId = this.rfqForm.get('p_site')?.value;
+        if (!siteId) {
+            this.messageService.add({ severity: 'warn', summary: 'Select Site', detail: 'Select a site before pulling material requisitions.', life: 2500 });
+            return;
+        }
+
+        this.showPullMrDialog = true;
+        this.isLoadingPullMr = true;
+        const payload = {
+            p_returntype: 'PROJECTRFQ',
+            p_returnvalue: String(siteId),
+            p_username: this.userId
+        };
+
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res: any) => {
+                this.pullMrRows = (res.data ?? []).map((row: any) => ({ ...row, selected: false }));
+                this.isLoadingPullMr = false;
+            },
+            error: () => {
+                this.pullMrRows = [];
+                this.isLoadingPullMr = false;
+                this.messageService.add({ severity: 'error', summary: 'MR load failed', detail: 'Unable to load material requisitions for the selected site.', life: 2500 });
+            }
+        });
+    }
+
+    addSelectedMrItems(): void {
+        const selectedRows = this.pullMrRows.filter((row) => row.selected);
+        if (!selectedRows.length) {
+            this.messageService.add({ severity: 'warn', summary: 'Select MR items', detail: 'Select at least one item to add to the RFQ.', life: 2500 });
+            return;
+        }
+
+        const existingKeys = new Set(this.rfqList.map((row) => `${row.mr_no ?? ''}-${row.item_id ?? ''}`));
+        const newRows = selectedRows
+            .map((row): RfqRow => ({
+                category: row.item_category ?? row.itemcategoryname ?? row.categoryname ?? '',
+                item: row.item_description ?? row.itemdescription ?? row.itemname ?? '',
+                uom: row.uom ?? row.uomname ?? '',
+                buffer_stock: Number(row.buffer_stock ?? 0),
+                required_qty: Number(row.required_qty ?? 0),
+                available_stock: Number(row.available_stock ?? 0),
+                pending_qty: Number(row.pending_qty ?? 0),
+                total_mr_qty: Number(row.total_mr_qty ?? 0),
+                net_required_qty: Number(row.required_qty_net ?? 0),
+                category_id: row.item_category_id ?? row.itemcategoryid ?? null,
+                item_id: row.item_id ?? row.itemid ?? null,
+                mr_no: row.mr_no ?? row.mf_no ?? '',
+                mr_date: row.mr_date ?? row.mf_date ?? null,
+                department: row.departmentname ?? row.department ?? row.department_name ?? '',
+                requested_by: row.requested_by ?? row.requester ?? ''
+            }))
+            .filter((row) => !existingKeys.has(`${row.mr_no ?? ''}-${row.item_id ?? ''}`));
+
+        this.rfqList = [...this.rfqList, ...newRows];
+        this.buildIncludedMrData();
+        this.rebuildVendorInviteRows();
+        this.showPullMrDialog = false;
     }
 
     onRFQNoChange(data: any): void {
@@ -579,6 +660,17 @@ export class RfqComponent implements OnInit {
 
     openMaterialRequisition(row: any): void {
         this.showMaterialReqDialog = false;
+        this.sharedService.setReturnView({
+            route: ['/layout/purchase/rfq'],
+            state: {
+                returnViewState: {
+                    formValue: this.rfqForm.getRawValue(),
+                    rfqList: this.rfqList,
+                    vendorInviteRows: this.vendorInviteRows,
+                    includedMrList: this.includedMrList
+                }
+            }
+        });
         this.router.navigate(['/layout/purchase/material-requisition'], {
             queryParams: { mfNo: row.mr_no, mfId: row.mf_id ?? row.mr_id ?? null, fromRfqView: true }
         });

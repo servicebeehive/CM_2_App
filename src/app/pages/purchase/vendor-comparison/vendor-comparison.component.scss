@@ -50,19 +50,38 @@ $radius: 10px;
     flex-wrap: wrap;
 }
 
-.vendor-comparison-table {
-    .border-l-2 {
-        border-left: 2px solid var(--surface-300);
+.vendor-comparison-grid {
+    border: 1px solid var(--surface-300);
+
+    th,
+    td {
+        border: 1px solid var(--surface-300);
+        text-align: center;
+        vertical-align: middle;
     }
 
-    .cell-pad {
-        padding: 4px;
-        min-width: 130px;
+    th {
+        white-space: nowrap;
+    }
+
+    .item-description-cell {
+        text-align: left;
+        min-width: 180px;
+    }
+
+    p-inputNumber {
+        display: inline-block;
+    }
+
+    th:nth-child(4n + 4),
+    td:nth-child(4n + 4) {
+        border-left-width: 2px;
+        border-left-color: var(--surface-400);
     }
 }
 
 .vendors-invited-inline {
-    text-align: right;
+    text-align: left;
     font-size: 12px;
 
     .vendors-invited-title {
@@ -88,6 +107,28 @@ $radius: 10px;
             margin-bottom: 5px;
         }
     }
+}
+
+.vendor-attachment-list {
+    display: grid;
+    gap: 10px;
+}
+
+.vendor-attachment-row {
+    display: flex;
+    justify-content: space-between;
+    padding-bottom: 10px;
+    border-bottom: 1px solid $border;
+
+    &:last-child {
+        padding-bottom: 0;
+        border-bottom: 0;
+    }
+}
+
+.vendor-name {
+    font-weight: 600;
+    color: #444;
 }
 
 // ── Comparison summary / vendors invited / criteria / remarks row ───────
@@ -166,4 +207,8 @@ $radius: 10px;
     .comparison-summary-grid {
         grid-template-columns: 1fr;
     }
+
+    .recommended-vendor-panel {
+    transform: translateY(-100%) !important;
+}
 }

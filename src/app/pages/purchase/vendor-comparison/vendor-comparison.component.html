@@ -30,8 +30,8 @@
                         </div>
                     </ng-template>
                 </p-dropdown>
-                <button pButton type="button" label="Draft" class="p-button-outlined p-button-warning" (click)="onSaveDraft()"></button>
-                <button pButton type="button" label="View" class="p-button-outlined" (click)="openMaterialReqDialog()"></button>
+                <button pButton type="button" label="Draft" class="p-button-warning" (click)="onSaveDraft()"></button>
+                <button pButton type="button" label="View" class="p-button-warning" (click)="openMaterialReqDialog()"></button>
                 <button pButton type="submit" label="Finalize Comparison" class="p-button-primary" [disabled]="comparisonRows.length === 0 || selectedVendors.length === 0"></button>
                 <button pButton type="button" label="Reset" class="p-button-secondary" (click)="onReset()"></button>
             </div>
@@ -119,7 +119,7 @@
                         </tr>
                         <tr class="bg-yellow-400">
                             <ng-container *ngFor="let v of selectedVendors">
-                                <th style="padding: 4px; border-left: 2px solid #fff">Quoted Price (INR)</th>
+                                <th style="padding: 4px; border-left: 2px solid #fff">Unit Price</th>
                                 <th style="padding: 4px">Quality (1–10)</th>
                                 <th style="padding: 4px">Payment Term (Days)</th>
                                 <th style="padding: 4px">Score</th>
@@ -129,9 +129,9 @@
                     <tbody>
                         <tr *ngFor="let row of filteredRows; let i = index" style="border-bottom: 1px solid #eee">
                             <td style="padding: 6px">{{ i + 1 }}</td>
-                            <td style="padding: 6px">
+                            <td class="item-description-cell" style="padding: 6px">
                                 {{ row.item }}<br />
-                                <span style="font-size: 0.75rem; color: #888">{{ row.uom_name }} | {{ row.required_qty }}</span>
+                                <span style="font-size: 0.75rem;">{{ row.uom_name }} | {{ row.required_qty }}</span>
                             </td>
                             <td style="padding: 6px; text-align: center">
                                 <input pInputText type="number" [(ngModel)]="row.weightage" [ngModelOptions]="{ standalone: true }" style="width: 60px; text-align: center" />
@@ -207,9 +207,25 @@
                 <div class="mr-card">
                     <div class="vendors-invited-inline">
                         <span class="vendors-invited-title">Vendors Invited ({{ selectedVendors.length }})</span>
-                        <ul class="vendors-list-inline">
-                            <li *ngFor="let v of selectedVendors">{{ v.vendor_name }}</li>
-                        </ul>
+                        <div class="vendor-attachment-list">
+                            <div class="vendor-attachment-row" *ngFor="let v of selectedVendors">
+                                <span class="vendor-name">{{ v.vendor_name }}</span>
+                                <div class="mr-file-input">
+                                    <label [for]="'vendorAttachment-' + v.vendor_id" class="mr-choose-btn"><i class="pi pi-upload"></i> Choose File</label>
+                                    <input [id]="'vendorAttachment-' + v.vendor_id" type="file" hidden (change)="onVendorAttachmentSelect($event, v.vendor_id)" />
+                                    <span class="mr-file-name">{{ vendorAttachmentNames[v.vendor_id]}}</span>
+                                    <button
+                                        *ngIf="vendorAttachmentNames[v.vendor_id]"
+                                        pButton
+                                        type="button"
+                                        icon="pi pi-times"
+                                        class="p-button-text p-button-danger p-button-sm"
+                                        [attr.aria-label]="'Remove attachment for ' + v.vendor_name"
+                                        (click)="removeVendorAttachment(v.vendor_id)"
+                                    ></button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -229,21 +245,6 @@
                 </div>
             </div>
 
-            <!-- ================================
-     ATTACHMENTS
-================================= -->
-            <div class="mr-card mt-4">
-                <div class="mr-card-header">
-                    <i class="pi pi-paperclip"></i>
-                    <span>Attachments</span>
-                </div>
-                <div class="mr-file-input">
-                    <label for="comparisonAttachment" class="mr-choose-btn"><i class="pi pi-upload"></i> Choose File</label>
-                    <input id="comparisonAttachment" type="file" hidden (change)="onAttachmentSelect($event)" />
-                    <span class="mr-file-name">{{ attachmentFileName || 'No file chosen' }}</span>
-                    <i *ngIf="attachmentFileName" class="pi pi-times mr-remove-icon" style="cursor: pointer; margin-left: 8px; color: #d32f2f" title="Remove attachment" aria-label="Remove attachment" (click)="removeAttachment()"></i>
-                </div>
-            </div>
         </div>
     </form>
 
