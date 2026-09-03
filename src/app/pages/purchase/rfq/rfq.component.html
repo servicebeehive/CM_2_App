@@ -11,7 +11,7 @@
                 </span>
                 <p-dropdown
                     [options]="draftRfqOptions"
-                    optionLabel="rfqno"
+                    optionLabel="rfqdraftno"
                     optionValue="rfqid"
                     placeholder="Draft RFQ No"
                     filterPlaceholder="Draft RFQ No"
@@ -21,13 +21,13 @@
                     (onChange)="onDraftChange($event)">
                  <ng-template pTemplate="selectedItem" let-item>
                         <div class="flex items-center gap-2" *ngIf="item">
-                            <span>{{ item.rfqno }}</span>
+                            <span>{{ item.rfqdraftno }}</span>
                         </div>
                     </ng-template>
 
                     <ng-template pTemplate="item" let-item>
                         <div class="flex items-center justify-between gap-2 w-full">
-                            <span>{{ item.rfqno }}</span>
+                            <span>{{ item.rfqdraftno }}</span>
                             <button
                                 pButton
                                 type="button"
@@ -51,7 +51,7 @@
         <div class="mr-card mb-4">
             <div class="mr-fields-grid cols-4">
                 <div class="flex flex-col">
-                    <label class="font-medium mb-1">RFQ No <span class="text-red-500">*</span></label>
+                    <label class="font-medium mb-1">RFQ No</label>
                     <p-dropdown
                         [options]="rfqNoOptions"
                         optionLabel="rfqno"
@@ -70,7 +70,7 @@
                     <p-datePicker fluid [showIcon]="true" formControlName="p_rfqdate" dateFormat="dd-mm-yy" placeholder="Select date"></p-datePicker>
                 </div>
 
-                <div class="flex flex-col">
+                <!-- <div class="flex flex-col">
                     <label class="font-medium mb-1">Site <span class="text-red-500">*</span></label>
                     <p-dropdown
                         [options]="projectOptions"
@@ -84,13 +84,13 @@
                         [loading]="isLoadingProjects"
                         (onChange)="onSiteChange($event)"
                     ></p-dropdown>
-                </div>
+                </div> -->
 
                  <div class="flex flex-col">
                     <label class="font-medium mb-1">Attachment</label>
                     <div class="mr-file-input">
                         <label for="rfqAttachment" class="mr-choose-btn"><i class="pi pi-upload"></i> Choose File</label>
-                        <input id="rfqAttachment" type="file" hidden (change)="onAttachmentSelect($event)" />
+                        <input #rfqAttachment id="rfqAttachment" type="file" hidden (change)="onAttachmentSelect($event)" />
                         <span class="mr-file-name">{{ attachmentFileName || 'No file chosen' }}</span>
                         <i
                             *ngIf="attachmentFileName"
@@ -103,14 +103,14 @@
                     </div>
                 </div>
 
-                <div class="flex flex-col span-2">
+                <!-- <div class="flex flex-col span-2">
                     <label class="font-medium mb-1">RFQ Description</label>
-                    <textarea pInputTextarea rows="3" formControlName="p_rfq_desc" placeholder="Enter RFQ scope or description"></textarea>
-                </div>
+                    <textarea pInputTextarea rows="1" formControlName="p_rfq_desc" placeholder="Enter RFQ scope or description"></textarea>
+                </div> -->
 
                 <div class="flex flex-col span-2">
                     <label class="font-medium mb-1">Remarks</label>
-                    <textarea pInputTextarea rows="3" formControlName="p_remarks" placeholder="Additional remarks"></textarea>
+                    <textarea pInputTextarea rows="1" formControlName="p_remarks" placeholder="Additional remarks"></textarea>
                 </div>
             </div>
         </div>
@@ -129,7 +129,7 @@
                 </div>
 
                 <p-table
-                    [value]="rfqList"
+                    [value]="distinctRfqList"
                     dataKey="item_id"
                     [responsiveLayout]="'scroll'"
                     [paginator]="true"
@@ -262,30 +262,30 @@
 </p-dialog>
 
     <p-dialog [(visible)]="showPullMrDialog" [modal]="true" [style]="{ width: '72rem', maxWidth: '95vw' }" [draggable]="false" [resizable]="false" header="Pull Material Requisitions">
-        <p-table [value]="pullMrRows" [responsiveLayout]="'scroll'" [loading]="isLoadingPullMr" class="p-datatable-gridlines p-datatable-sm">
+        <p-table [value]="pullMrRows" dataKey="mf_no"  [responsiveLayout]="'scroll'" [loading]="isLoadingPullMr" class="p-datatable-gridlines p-datatable-sm">
             <ng-template pTemplate="header">
                 <tr class="bg-yellow-400">
-                    <th class="text-center">Select</th>
+                    <th class="text-center"><p-checkbox [ngModel]="isAllPullMrSelected()" (ngModelChange)="toggleAllPullMr($event)" [binary]="true"></p-checkbox></th>
                     <th>Category</th>
+                    <th>Site</th>
                     <th>MR No</th>
-                    <th>Department</th>
                     <th>MR Date</th>
+                    <th>Department</th>
                 </tr>
             </ng-template>
             <ng-template pTemplate="body" let-row>
                 <tr>
-                    <td class="text-center">
-                        <input type="checkbox" [(ngModel)]="row.selected" [ngModelOptions]="{ standalone: true }" [attr.aria-label]="'Select ' + (row.mr_no || row.mf_no || 'MR item')" />
-                    </td>
-                    <td>{{ row.item_category || row.itemcategoryname || row.categoryname || '—' }}</td>
-                    <td>{{ row.mr_no || row.mf_no || '—' }}</td>
-                    <td>{{ row.departmentname || row.department || row.department_name || '—' }}</td>
-                    <td>{{ (row.mr_date || row.mf_date) ? ((row.mr_date || row.mf_date) | date: 'dd-MM-yyyy') : '—' }}</td>
+                    <td><p-checkbox [(ngModel)]="row.selected" [binary]="true"></p-checkbox></td>
+                    <td>{{ row.item_category || '—' }}</td>
+                    <td>{{ row.project_name || '—' }}</td>
+                    <td>{{ row.mf_no || '—' }}</td>
+                    <td>{{ row.mr_date ? (row.mr_date  | date: 'dd-MM-yyyy') : '—' }}</td>
+                    <td>{{ row.department_name || '—' }}</td>
                 </tr>
             </ng-template>
             <ng-template pTemplate="emptymessage">
                 <tr>
-                    <td colspan="5" class="text-center">No material requisition items found for the selected site.</td>
+                    <td colspan="6" class="text-center">No material requisition items found for the selected site.</td>
                 </tr>
             </ng-template>
         </p-table>
@@ -347,11 +347,11 @@
         </div>
     </p-dialog>
 
-        <p-dialog [(visible)]="showMaterialReqDialog" [modal]="true" [style]="{ width: '70rem', maxWidth: '95vw' }" [draggable]="false" [resizable]="false" header="Material Requisitions Included">
+        <p-dialog [(visible)]="showMaterialReqDialog" [modal]="true" [style]="{ width: '70rem', maxWidth: '95vw' }" [draggable]="false" [resizable]="false" header="Material Requisition">
         <div class="mr-card-header justify-between mb-2">
             <div class="mr-card-header-left">
                 <i class="pi pi-file"></i>
-                <span>Material Requisitions Included</span>
+                <span>Material Requisitions List</span>
             </div>
             <div class="text-xs md:text-sm text-gray-600">Total MR(s): {{ includedMrList.length }}</div>
         </div>

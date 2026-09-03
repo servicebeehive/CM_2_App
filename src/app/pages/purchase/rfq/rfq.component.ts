@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
@@ -14,8 +14,9 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { TextareaModule } from 'primeng/textarea';
 import { DialogModule } from 'primeng/dialog';
 import { MultiSelectModule } from 'primeng/multiselect';
+import { CheckboxModule } from 'primeng/checkbox';
 import { RfqRow, VendorInviteRow } from '@/core/models/purchase.model';
-import { GmailVendorRow, UpsertRfqPayload, VendorInvitePayload } from '@/core/models/authmodel/work.model';
+import { GmailVendorRow, ItemDetail, UpsertRfqPayload, VendorInvitePayload } from '@/core/models/authmodel/work.model';
 import { WorkService } from '@/core/services/work.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { environment } from '@/environments/environment';
@@ -24,12 +25,14 @@ import { ShareService } from '@/core/services/shared.service';
 @Component({
     selector: 'app-rfq',
     standalone: true,
-    imports: [CommonModule, FormsModule, ReactiveFormsModule, ButtonModule, DropdownModule, TableModule, InputTextModule, ToastModule, DatePickerModule, TextareaModule, DialogModule, MultiSelectModule, ConfirmDialogModule],
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, ButtonModule, DropdownModule, TableModule, InputTextModule, ToastModule, DatePickerModule, TextareaModule, DialogModule, MultiSelectModule, ConfirmDialogModule, CheckboxModule],
     templateUrl: './rfq.component.html',
     styleUrls: ['./rfq.component.scss'],
     providers: [MessageService, ConfirmationService]
 })
 export class RfqComponent implements OnInit {
+    @ViewChild('rfqAttachment') rfqAttachmentInput?: ElementRef<HTMLInputElement>;
+
     rfqForm!: FormGroup;
     rfqNoOptions: any[] = [];
     draftRfqOptions: any[] = [];
@@ -81,7 +84,7 @@ export class RfqComponent implements OnInit {
         this.initForm();
         this.restoreViewState();
         this.loadSites();
-        this.loadRfqNumberOptions();
+        this.loadRfqNo();
         this.loadDraftList();
         this.ensureDefaultVendorInviteRows();
     }
@@ -92,8 +95,8 @@ export class RfqComponent implements OnInit {
             p_rfqno: [null],
             p_draft_rfqno: [null],
             p_rfqdate: [this.today, Validators.required],
-            p_site: [null, Validators.required],
-            p_rfq_desc: [''],
+            // p_site: [null, Validators.required],
+            // p_rfq_desc: [''],
             p_remarks: [''],
             p_status: ['Draft'],
             p_item: [null],
@@ -109,6 +112,17 @@ export class RfqComponent implements OnInit {
         this.rfqList = state.rfqList ?? [];
         this.vendorInviteRows = state.vendorInviteRows ?? [];
         this.includedMrList = state.includedMrList ?? [];
+        this.rebuildCategoryOptions();
+    }
+
+    private rebuildCategoryOptions(): void {
+        const seen = new Map<number, string>();
+        this.rfqList.forEach((r) => {
+            if (r.category_id != null && !seen.has(r.category_id)) {
+                seen.set(r.category_id, r.category);
+            }
+        });
+        this.categoryOptions = Array.from(seen.entries()).map(([id, name]) => ({ label: name, value: id }));
     }
 
     createDropdownPayload(returnType: string, retrunValue: string | null, userName: string | null): any {
@@ -137,7 +151,7 @@ export class RfqComponent implements OnInit {
         });
     }
 
-    private loadRfqNumberOptions(): void {
+    private loadRfqNo(): void {
         const payload = {
             p_returntype: 'RFQID',
             p_username: this.companyId
@@ -169,44 +183,39 @@ export class RfqComponent implements OnInit {
         });
     }
 
-    private upsertRfqDropdownOption(options: any[], rfqId: number, rfqNo: string): void {
-        const option = { rfqid: rfqId, rfqno: rfqNo };
-        const existingIndex = options.findIndex((item: any) => item.rfqid === rfqId);
+    // private upsertRfqDropdownOption(options: any[], rfqId: number, rfqNo: string): void {
+    //     const option = { rfqid: rfqId, rfqdraftno: rfqNo };
+    //     const existingIndex = options.findIndex((item: any) => item.rfqid === rfqId);
 
-        if (existingIndex >= 0) {
-            options[existingIndex] = { ...options[existingIndex], ...option };
-        } else {
-            options.unshift(option);
-        }
-    }
+    //     if (existingIndex >= 0) {
+    //         options[existingIndex] = { ...options[existingIndex], ...option };
+    //     } else {
+    //         options.unshift(option);
+    //     }
+    // }
 
-    onSiteChange(event: any): void {
-        const siteId = event.value;
-        this.hasBackendMrList = false;
-        if (!siteId) {
-            this.rfqList = [];
-            this.mrDetailsMap = {};
-            this.rebuildVendorInviteRows();
-            return;
-        }
-        this.rfqList = [];
-        this.includedMrList = [];
-        this.mrDetailsMap = {};
-        this.rebuildVendorInviteRows();
-    }
+    // onSiteChange(event: any): void {
+    //     const siteId = event.value;
+    //     this.hasBackendMrList = false;
+    //     if (!siteId) {
+    //         this.rfqList = [];
+    //         this.mrDetailsMap = {};
+    //         this.rebuildVendorInviteRows();
+    //         return;
+    //     }
+    //     this.rfqList = [];
+    //     this.includedMrList = [];
+    //     this.mrDetailsMap = {};
+    //     this.rebuildVendorInviteRows();
+    // }
 
     openPullMrDialog(): void {
-        const siteId = this.rfqForm.get('p_site')?.value;
-        if (!siteId) {
-            this.messageService.add({ severity: 'warn', summary: 'Select Site', detail: 'Select a site before pulling material requisitions.', life: 2500 });
-            return;
-        }
-
+       this.pullMrRows = [];
         this.showPullMrDialog = true;
         this.isLoadingPullMr = true;
         const payload = {
             p_returntype: 'PROJECTRFQ',
-            p_returnvalue: String(siteId),
+            p_returnvalue: '',
             p_username: this.userId
         };
 
@@ -223,6 +232,70 @@ export class RfqComponent implements OnInit {
         });
     }
 
+    private aggregateRfqList(): (ItemDetail & { mrNos: string[] })[] {
+    const grouped = new Map<string, ItemDetail & { mrNos: Set<string> }>();
+
+    this.rfqList.forEach((row) => {
+        const key = `${row.item_id ?? 'null'}-${row.category_id ?? 'null'}-${row.uom_id ?? 'null'}`;
+
+        if (!grouped.has(key)) {
+            grouped.set(key, {
+                item_id: row.item_id ?? null,
+                category_id: row.category_id ?? null,
+                category: row.category,
+                item: row.item,
+                uom_id: row.uom_id ?? null,
+                uom: row.uom,
+                buffer_stock: 0,
+                required_qty: 0,
+                available_stock: 0,
+                pending_qty: 0,
+                total_mr_qty: 0,
+                net_required_qty: 0,
+                mr_no: '',
+                mrNos: new Set<string>()
+            });
+        }
+
+        const entry = grouped.get(key)!;
+        entry.buffer_stock += Number(row.buffer_stock ?? 0);
+        entry.required_qty += Number(row.required_qty ?? 0);
+        entry.available_stock += Number(row.available_stock ?? 0);
+        entry.pending_qty += Number(row.pending_qty ?? 0);
+        entry.total_mr_qty += Number(row.total_mr_qty ?? 0);
+        entry.net_required_qty += Number(row.net_required_qty ?? 0);
+
+        if (row.mr_no) entry.mrNos.add(row.mr_no);
+    });
+
+    return Array.from(grouped.values()).map((entry) => ({
+        ...entry,
+        mrNos: Array.from(entry.mrNos)
+    }));
+}
+
+// For display in the RFQ Items table — one row per distinct item/category/uom
+get distinctRfqList(): (ItemDetail & { mrNos: string[] })[] {
+    return this.aggregateRfqList();
+}
+
+// For the submit payload — item data only
+private buildItemJson(): ItemDetail[] {
+    return this.aggregateRfqList().map(({ mrNos, mr_no, ...item }) => item);
+}
+
+private buildMrNoPayload(): string {
+    return Array.from(new Set(this.rfqList.map((row) => row.mr_no).filter((mrNo): mrNo is string => Boolean(mrNo)))).join(', ');
+}
+
+    isAllPullMrSelected(): boolean {
+        return this.pullMrRows.length > 0 && this.pullMrRows.every((row) => row.selected);
+    }
+
+    toggleAllPullMr(checked: boolean): void {
+        this.pullMrRows = this.pullMrRows.map((row) => ({ ...row, selected: checked }));
+    }
+
     addSelectedMrItems(): void {
         const selectedRows = this.pullMrRows.filter((row) => row.selected);
         if (!selectedRows.length) {
@@ -235,6 +308,7 @@ export class RfqComponent implements OnInit {
             .map((row): RfqRow => ({
                 category: row.item_category ?? row.itemcategoryname ?? row.categoryname ?? '',
                 item: row.item_description ?? row.itemdescription ?? row.itemname ?? '',
+                uom_id: row.uom_id ?? null,
                 uom: row.uom ?? row.uomname ?? '',
                 buffer_stock: Number(row.buffer_stock ?? 0),
                 required_qty: Number(row.required_qty ?? 0),
@@ -258,6 +332,7 @@ export class RfqComponent implements OnInit {
     }
 
     onRFQNoChange(data: any): void {
+        this.rfqForm.patchValue({p_draft_rfqno: ""});
         this.showGmailReqDialog = false;
         this.gmailVendorRows = [];
         this.hasBackendMrList = true;
@@ -296,8 +371,8 @@ export class RfqComponent implements OnInit {
                         p_rfq_id: selected.rfqid ?? null,
                         p_rfqno: selected.rfqid ?? null,
                         p_rfqdate: selected.rfqdate ? new Date(selected.rfqdate) : this.today,
-                        p_site: selected.site_id ?? null,
-                        p_rfq_desc: selected.rfq_description ?? '',
+                        // p_site: selected.site_id ?? null,
+                        // p_rfq_desc: selected.rfq_description ?? '',
                         p_remarks: selected.remarks ?? '',
                         p_status: selected.status ?? 'Draft',
                         p_attachment: this.attachmentFileName || null
@@ -383,46 +458,46 @@ export class RfqComponent implements OnInit {
         });
     }
 
-    private loadRfqItems(siteId: number): void {
-        this.isLoadingItems = true;
-        const payload = {
-            p_returntype: 'PROJECTRFQ',
-            p_returnvalue: siteId.toString(),
-            p_username: this.userId
-        };
+    // private loadRfqItems(siteId: number): void {
+    //     this.isLoadingItems = true;
+    //     const payload = {
+    //         p_returntype: 'PROJECTRFQ',
+    //         p_returnvalue: siteId.toString(),
+    //         p_username: this.userId
+    //     };
 
-        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-            next: (res: any) => {
-                const rows: any[] = res.data || [];
-                this.rfqList = rows.map((r) => ({
-                    category: r.item_category ?? r.itemcategoryname ?? '',
-                    item: r.item_description ?? r.itemdescription ?? '',
-                    uom: r.uom ?? r.uomname ?? '',
-                    buffer_stock: Number(r.buffer_stock ?? 0),
-                    required_qty: Number(r.required_qty ?? 0),
-                    available_stock: Number(r.available_stock ?? 0),
-                    pending_qty: Number(r.pending_qty ?? 0),
-                    total_mr_qty: Number(r.total_mr_qty ?? 0),
-                    net_required_qty: Number(r.required_qty_net ?? 0),
-                    category_id: r.item_category_id ?? r.itemcategoryid ?? null,
-                    item_id: r.item_id ?? r.itemid ?? null
-                }));
+    //     this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+    //         next: (res: any) => {
+    //             const rows: any[] = res.data || [];
+    //             this.rfqList = rows.map((r) => ({
+    //                 category: r.item_category ?? r.itemcategoryname ?? '',
+    //                 item: r.item_description ?? r.itemdescription ?? '',
+    //                 uom: r.uom ?? r.uomname ?? '',
+    //                 buffer_stock: Number(r.buffer_stock ?? 0),
+    //                 required_qty: Number(r.required_qty ?? 0),
+    //                 available_stock: Number(r.available_stock ?? 0),
+    //                 pending_qty: Number(r.pending_qty ?? 0),
+    //                 total_mr_qty: Number(r.total_mr_qty ?? 0),
+    //                 net_required_qty: Number(r.required_qty_net ?? 0),
+    //                 category_id: r.item_category_id ?? r.itemcategoryid ?? null,
+    //                 item_id: r.item_id ?? r.itemid ?? null
+    //             }));
 
-                this.buildIncludedMrData();
-                this.rebuildVendorInviteRows();
-                this.applyRfqVendorSelections();
-                this.isLoadingItems = false;
-            },
-            error: (err) => {
-                console.error('Error fetching RFQ items:', err);
-                this.messageService.add({
-                    severity: 'error',
-                    summary: 'Failed to load items',
-                    life: 2500
-                });
-            }
-        });
-    }
+    //             this.buildIncludedMrData();
+    //             this.rebuildVendorInviteRows();
+    //             this.applyRfqVendorSelections();
+    //             this.isLoadingItems = false;
+    //         },
+    //         error: (err) => {
+    //             console.error('Error fetching RFQ items:', err);
+    //             this.messageService.add({
+    //                 severity: 'error',
+    //                 summary: 'Failed to load items',
+    //                 life: 2500
+    //             });
+    //         }
+    //     });
+    // }
 
     private applyRfqVendorSelections(): void {
         this.vendorInviteRows.forEach((row) => {
@@ -599,21 +674,14 @@ export class RfqComponent implements OnInit {
             if (row.category_id != null) previousSelection.set(row.category_id, row.selectedVendors);
         });
 
-        const seen = new Map<number, string>();
-        this.rfqList.forEach((r) => {
-            if (r.category_id != null && !seen.has(r.category_id)) {
-                seen.set(r.category_id, r.category);
-            }
-        });
-
-        this.categoryOptions = Array.from(seen.entries()).map(([id, name]) => ({ label: name, value: id }));
+        this.rebuildCategoryOptions();
 
         if (!this.categoryOptions.length) {
             this.ensureDefaultVendorInviteRows();
             return;
         }
 
-        this.vendorInviteRows = Array.from(seen.entries()).map(([id, name]) => ({
+        this.vendorInviteRows = this.categoryOptions.map(({ value: id, label: name }) => ({
             category: name,
             category_id: id,
             selectedVendors: previousSelection.get(id) ?? this.rfqVendorSelections[id] ?? [],
@@ -839,10 +907,17 @@ export class RfqComponent implements OnInit {
     onDraftChange(event: any): void {
         const selected = this.draftRfqOptions.find((d: any) => String(d.rfqid) === String(event.value));
         if (!selected) return;
-
+        this.rfqForm.patchValue({p_rfqno: ""});
+        this.rfqVendorSelections = {};
+        this.vendorInviteRows = [];
         const payload = {
-            p_returntype: 'RFQDETAILS',
-            p_returnvalue: selected.rfqno,
+            p_returntype: 'GETRFQ',
+            p_returnvalue: event.value.toString(),
+            p_username: this.userId
+        };
+        const payloadVendor = {
+            p_returntype: 'GETRFQVENDOR',
+            p_returnvalue: event.value.toString(),
             p_username: this.userId
         };
 
@@ -852,18 +927,18 @@ export class RfqComponent implements OnInit {
                 if (!rows.length) return;
 
                 const header = rows[0];
-                const { name, base64 } = this.extractDisplayFileName(selected.attachment_path ?? '');
+                const { name, base64 } = this.extractDisplayFileName(header.attachment_path ?? selected.attachment_path ?? '');
                 this.attachmentFileName = name;
                 this.attachmentBase64 = base64;
                 this.attachmentFile = null;
                 this.rfqForm.patchValue(
                     {
-                        p_rfq_id: header.rfq_id ?? null,
-                        p_rfqno: header.rfq_id ?? null,
-                        p_draft_rfqno: header.rfq_id ?? null,
-                        p_rfqdate: header.rfq_date ? new Date(header.rfq_date) : this.today,
-                        p_site: header.project_id ?? null,
-                        p_rfq_desc: header.rfq_desc ?? '',
+                        p_rfq_id: header.rfqid ?? header.rfq_id ?? null,
+                        p_rfqno: null,
+                        p_draft_rfqno: header.rfqid ?? header.rfq_id ?? null,
+                        p_rfqdate: header.rfqdate ?? header.rfq_date ? new Date(header.rfqdate ?? header.rfq_date) : this.today,
+                        // p_site: header.project_id ?? null,
+                        // p_rfq_desc: header.rfq_desc ?? '',
                         p_remarks: header.remarks ?? '',
                         p_status: header.status ?? 'Draft',
                         p_attachment: this.attachmentFileName ?? null
@@ -872,17 +947,18 @@ export class RfqComponent implements OnInit {
                 );
 
                 this.rfqList = rows.map((r) => ({
-                    category: r.categoryname ?? r.category ?? '',
-                    item: r.itemname ?? r.item ?? '',
+                    category: r.itemcategoryname ?? r.category ?? '',
+                    item: r.itemdescription ?? r.item ?? '',
+                    uom_id: r.uomid ?? r.uom_id ?? null,
                     uom: r.uomname ?? r.uom ?? '',
                     buffer_stock: Number(r.buffer_stock ?? 0),
                     required_qty: Number(r.required_qty ?? 0),
                     available_stock: Number(r.available_stock ?? 0),
                     pending_qty: Number(r.pending_qty ?? 0),
                     total_mr_qty: Number(r.total_mr_qty ?? r.required_qty ?? 0),
-                    net_required_qty: Number(r.net_required_qty ?? 0),
-                    category_id: r.category_id ?? r.item_category_id ?? null,
-                    item_id: r.item_id ?? null,
+                    net_required_qty: Number(r.required_qty_net ?? r.net_required_qty ?? 0),
+                    category_id: r.itemcategoryid ?? r.category_id ?? r.item_category_id ?? null,
+                    item_id: r.itemid ?? r.item_id ?? null,
                     mr_no: r.mr_no ?? r.mf_no ?? '',
                     mr_date: r.mr_date ?? null,
                     department: r.departmentname ?? r.department ?? '',
@@ -891,6 +967,7 @@ export class RfqComponent implements OnInit {
 
                 this.buildIncludedMrData();
                 this.rebuildVendorInviteRows();
+                this.loadRfqVendorSelections(payloadVendor);
             },
             error: () => {
                 this.messageService.add({
@@ -904,15 +981,15 @@ export class RfqComponent implements OnInit {
     }
 
     submitDraft(): void {
-        if (!this.rfqForm.get('p_site')?.value || this.rfqList.length === 0) {
-            this.messageService.add({
-                severity: 'warn',
-                summary: 'Cannot save draft',
-                detail: 'Select a site and add at least one item before saving as draft.',
-                life: 2500
-            });
-            return;
-        }
+        // if (!this.rfqForm.get('p_site')?.value || this.rfqList.length === 0) {
+        //     this.messageService.add({
+        //         severity: 'warn',
+        //         summary: 'Cannot save draft',
+        //         detail: 'Select a site and add at least one item before saving as draft.',
+        //         life: 2500
+        //     });
+        //     return;
+        // }
 
         const vendorJson: VendorInvitePayload[] = this.vendorInviteRows
             .filter((r) => r.category_id != null)
@@ -923,25 +1000,26 @@ export class RfqComponent implements OnInit {
 
         const payload: UpsertRfqPayload = {
             p_companyid: Number(this.companyId),
-            p_rfqid: this.rfqForm.get('p_rfq_id')?.value ?? 0,
-            p_site_id: this.rfqForm.get('p_site')?.value,
+            p_rfqid: this.rfqForm.get('p_draft_rfqno')?.value ?? 0,
+            p_site_id: this.rfqForm.get('p_site')?.value ?? 0,
             p_rfqdate: this.rfqForm.get('p_rfqdate')?.value,
             p_rfq_description: this.rfqForm.get('p_rfq_desc')?.value ?? '',
             p_remarks: this.rfqForm.get('p_remarks')?.value ?? '',
             p_attachment_path: this.attachmentBase64 || this.attachmentFileName || null,
             p_status: 'DRAFT',
             p_user_id: Number(this.userId),
-            p_vendor_json: vendorJson.length ? vendorJson : null
+            p_mr_no: this.buildMrNoPayload(),
+            p_vendor_json: vendorJson.length ? vendorJson : null,
+            p_item_json: this.buildItemJson()
         };
 
         this.workService.upsertRFQ(payload).subscribe({
             next: (res: any) => {
                 if (res.data?.success) {
                     const rfqId = res.data.rfqid;
-                    const rfqNo = res.data.rfqno;
-                    this.upsertRfqDropdownOption(this.draftRfqOptions, rfqId, rfqNo);
+                   
                     this.rfqForm.patchValue({
-                        p_rfq_id: rfqId,
+                        // p_rfq_id: rfqId,
                         p_draft_rfqno: rfqId,
                         p_status: res.data.status
                     });
@@ -1028,8 +1106,8 @@ export class RfqComponent implements OnInit {
             p_rfqno: null,
             p_draft_rfqno: null,
             p_rfqdate: this.today,
-            p_site: null,
-            p_rfq_desc: '',
+            // p_site: null,
+            // p_rfq_desc: '',
             p_remarks: '',
             p_status: 'Draft',
             p_item: null,
@@ -1038,6 +1116,9 @@ export class RfqComponent implements OnInit {
         this.attachmentFileName = '';
         this.attachmentFile = null;
         this.attachmentBase64 = '';
+        if (this.rfqAttachmentInput) {
+            this.rfqAttachmentInput.nativeElement.value = '';
+        }
         this.rfqList = [];
         this.includedMrList = [];
         this.vendorInviteRows = [];
@@ -1088,14 +1169,16 @@ export class RfqComponent implements OnInit {
         const payload: UpsertRfqPayload = {
             p_companyid: Number(this.companyId),
             p_rfqid: this.rfqForm.get('p_rfq_id')?.value ?? 0,
-            p_site_id: this.rfqForm.get('p_site')?.value,
+            p_site_id: this.rfqForm.get('p_site')?.value ?? 0,
             p_rfqdate: this.rfqForm.get('p_rfqdate')?.value,
             p_rfq_description: this.rfqForm.get('p_rfq_desc')?.value ?? '',
             p_remarks: this.rfqForm.get('p_remarks')?.value ?? '',
             p_attachment_path: this.attachmentBase64 || this.attachmentFileName || null,
             p_status: 'Submitted',
             p_user_id: Number(this.userId),
-            p_vendor_json: vendorJson.length ? vendorJson : null
+            p_mr_no: this.buildMrNoPayload(),
+            p_vendor_json: vendorJson.length ? vendorJson : null,
+            p_item_json: this.buildItemJson()
         };
 
         this.workService.upsertRFQ(payload).subscribe({
@@ -1103,12 +1186,15 @@ export class RfqComponent implements OnInit {
                 if (res.data?.success) {
                     const rfqId = res.data.rfqid;
                     const rfqNo = res.data.rfqno;
-                    this.upsertRfqDropdownOption(this.rfqNoOptions, rfqId, rfqNo);
+                    
+                    const rfq = this.rfqNoOptions.find(option => option.rfqid === rfqId);
+                    console.log("jhhjj",rfq)
                     this.rfqForm.patchValue({
                         p_rfq_id: rfqId,
                         p_rfqno: rfqId,
                         p_status: res.data.status || 'SUBMITTED'
                     });
+                    this.loadRfqNo();
                     this.messageService.add({ severity: 'success', summary: res.data.msg });
                     this.sendMailToVendors(rfqId);
                 } else {

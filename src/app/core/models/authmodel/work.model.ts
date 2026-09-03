@@ -107,9 +107,26 @@ export interface UpsertRfqPayload {
     p_attachment_path?: string | null;
     p_status: string;       
     p_user_id: number;
+    p_mr_no?: string | null;
     p_vendor_json?: VendorInvitePayload[] | null;
+    p_item_json?: ItemDetail[] | null;
 }
 
+export interface ItemDetail {
+    item_id: number | null;
+    category_id: number | null;
+    category: string;
+    item: string;
+    uom_id: number | null;
+    uom: string;
+    buffer_stock: number;
+    required_qty: number;
+    available_stock: number;
+    pending_qty: number;
+    total_mr_qty: number;
+    mr_no?: string;
+    net_required_qty: number;
+}
 export interface GmailVendorRow {
     selected: boolean;
     vendor: string;

@@ -13,8 +13,9 @@ import { MessageService } from 'primeng/api';
 import { InventoryService } from '@/core/services/inventory.service';
 import { AuthService } from '@/core/services/auth.service';
 import { WorkService } from '@/core/services/work.service';
-import { ComparisonRow, VendorEntry } from '@/core/models/authmodel/work.model';
+import { ComparisonRow } from '@/core/models/authmodel/work.model';
 import { DatePickerModule } from 'primeng/datepicker';
+import { TextareaModule } from 'primeng/textarea';
 import { Router } from '@angular/router';
 import { ShareService } from '@/core/services/shared.service';
 
@@ -33,7 +34,7 @@ interface MaterialReqRow {
 @Component({
     selector: 'app-vendor-comparison',
     standalone: true,
-    imports: [CommonModule, FormsModule, ReactiveFormsModule, ButtonModule, DropdownModule, MultiSelectModule, TableModule, InputTextModule, InputNumberModule, DialogModule, ToastModule, DatePickerModule],
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, ButtonModule, DropdownModule, MultiSelectModule, TableModule, InputTextModule, InputNumberModule, DialogModule, ToastModule, DatePickerModule, TextareaModule],
     templateUrl: './vendor-comparison.component.html',
     styleUrl: './vendor-comparison.component.scss',
     providers: [MessageService]
@@ -41,17 +42,12 @@ interface MaterialReqRow {
 export class VendorComparisonComponent implements OnInit {
     filterForm!: FormGroup;
 
-    projectOptions: any[] = [];
-
-    vendorOptions: VendorRef[] = [];
-    isLoadingVendors = false;
+    // projectOptions: any[] = [];
 
     selectedVendors: VendorRef[] = [];
     comparisonRows: ComparisonRow[] = [];
     isLoadingItems = false;
     isLoadingMrRows = false;
-    itemOptions: any[] = [];
-    isLoadingItemOptions = false;
     rfqNoOptions: any[] = [];
     draftOptions: any[] = [];
     vcNoOptions: any[] = [];
@@ -61,14 +57,17 @@ export class VendorComparisonComponent implements OnInit {
     showMaterialReqDialog = false;
     materialReqRows: MaterialReqRow[] = [];
 
-    showGlobalSearch = true;
     globalFilter = '';
     companyId = '';
     vendorAttachmentFiles: Record<number, File | null> = {};
     vendorAttachmentNames: Record<number, string> = {};
+    vendorAttachmentPaths: Record<number, string> = {};
+    isViewingComparison = false;
+    approvedByNameValue: string | null = null;
+    approvedOnDateValue: string | null = null;
 
     evaluationCriteria: { label: string; weight: number }[] = [
-        { label: 'Quoted Price', weight: 60 },
+        { label: 'Unit Price', weight: 60 },
         { label: 'Quality', weight: 20 },
         { label: 'Payment Terms', weight: 10 },
         { label: 'Delivery Terms', weight: 10 }
@@ -88,7 +87,7 @@ export class VendorComparisonComponent implements OnInit {
         this.companyId = this.authService.isLogIntType()?.companyid;
         this.initForm();
         this.restoreViewState();
-        this.loadProjects();
+        // this.loadProjects();
         this.loadRfqNoOptions();
         this.onGetVCNo();
         this.onGetDraftNo();
@@ -99,7 +98,7 @@ export class VendorComparisonComponent implements OnInit {
             p_rfqno: [''],
             p_draft_vcno: [''],
             p_rfqdate: [{ value: '', disabled: true }],
-            p_project: [{ value: null, disabled: true }],
+            // p_project: [{ value: null, disabled: true }],
             p_item: [null],
             p_vcno: [''],
             p_vcdate: [{ value: new Date(), disabled: true }],
@@ -120,21 +119,21 @@ export class VendorComparisonComponent implements OnInit {
     }
 
     // ── Load Project dropdown ───────────────────────────────────────────
-    private loadProjects(): void {
-        const payload = {
-            returnType: 'ACTIVEPROJECT',
-            returnValue: '',
-            username: '',
-            option1: this.companyId.toString(),
-            option2: null
-        };
+    // private loadProjects(): void {
+    //     const payload = {
+    //         returnType: 'ACTIVEPROJECT',
+    //         returnValue: '',
+    //         username: '',
+    //         option1: this.companyId.toString(),
+    //         option2: null
+    //     };
 
-        this.inventoryService.getparameterbased(payload).subscribe({
-            next: (res: any) => {
-                this.projectOptions = res.data || [];
-            }
-        });
-    }
+    //     this.inventoryService.getparameterbased(payload).subscribe({
+    //         next: (res: any) => {
+    //             this.projectOptions = res.data || [];
+    //         }
+    //     });
+    // }
 
     private loadRfqNoOptions(): void {
         this.isLoadingRfqNo = true;
@@ -188,30 +187,21 @@ export class VendorComparisonComponent implements OnInit {
     }
 
     // ── On vendor selection change: add/remove vendor input columns ─────
-    onVendorChange(event: any): void {
-        const newSelectedIds: number[] = event.value || [];
-        this.selectedVendors = this.vendorOptions.filter((v) => newSelectedIds.includes(v.vendor_id));
-
-        // Preserve already-entered data for vendors still selected; init blank for new ones
-        this.comparisonRows.forEach((row) => {
-            const updated: { [vendorId: number]: VendorEntry } = {};
-            this.selectedVendors.forEach((v) => {
-                updated[v.vendor_id] = row.vendorData[v.vendor_id] ?? { price: null, quantity: null, paymentTerm: '' };
-            });
-            row.vendorData = updated;
-        });
-    }
-
-    onVcNoChange(event: any): void {
+    onVcNoChange(event: any, source: 'DRAFT' | 'SUBMITTED'): void {
         const comparisonId = event.value;
         if (!comparisonId) {
             this.comparisonRows = [];
             this.selectedVendors = [];
             this.rfqHeader = null;
+            this.isViewingComparison = false;
+            this.filterForm.patchValue(source === 'DRAFT' ? { p_vcno: '' } : { p_draft_vcno: '' }, { emitEvent: false });
             return;
         }
 
         this.isLoadingItems = true;
+        this.isViewingComparison = true;
+        this.comparisonRows = [];
+        this.selectedVendors = [];
         const payload = {
             comparison_id: comparisonId,
             companyid: this.companyId
@@ -230,8 +220,14 @@ export class VendorComparisonComponent implements OnInit {
                 }
 
                 this.buildComparisonFromApi(rows);
-                // buildComparisonFromApi doesn't capture comparison_id, so add it on afterward
-                this.rfqHeader.comparison_id = rows[0].comparison_id;
+                const loadedComparisonId = rows[0].comparison_id ?? rows[0].comparisondraft_id ?? comparisonId;
+                this.rfqHeader.comparison_id = loadedComparisonId;
+                this.filterForm.patchValue(
+                    source === 'DRAFT'
+                        ? { p_draft_vcno: loadedComparisonId, p_vcno: '' }
+                        : { p_vcno: loadedComparisonId, p_draft_vcno: '' },
+                    { emitEvent: false }
+                );
             },
             error: (err) => {
                 this.isLoadingItems = false;
@@ -242,6 +238,8 @@ export class VendorComparisonComponent implements OnInit {
 
     onRfqNoChange(event: any): void {
         this.isLoadingItems = true;
+        this.isViewingComparison = false;
+        this.filterForm.patchValue({ 'p_vcno': '' });
         const payload = {
             p_returntype: 'VENDORCOMPARISON',
             p_returnvalue: event.value.toString(),
@@ -270,6 +268,9 @@ export class VendorComparisonComponent implements OnInit {
 
     private buildComparisonFromApi(rows: any[]): void {
         const first = rows[0];
+        this.vendorAttachmentFiles = {};
+        this.vendorAttachmentNames = {};
+        this.vendorAttachmentPaths = {};
         this.rfqHeader = {
             rfqid: first.rfqid,
             rfqno: first.rfqno,
@@ -282,8 +283,8 @@ export class VendorComparisonComponent implements OnInit {
             {
                 p_rfqno: first.rfqid,
                 p_rfqdate: first.rfqdate ? this.formatDisplayDate(first.rfqdate) : '',
-                p_project: first.site_id ?? null,
-                p_recommendedvendor: first.recommended_vendorid ?? null
+                p_remarks: first.remarks ?? '',
+                // p_project: first.site_id ?? null
             },
             { emitEvent: false }
         );
@@ -293,6 +294,11 @@ export class VendorComparisonComponent implements OnInit {
         rows.forEach((r) => {
             if (r.vendorid != null && !vendorMap.has(r.vendorid)) {
                 vendorMap.set(r.vendorid, { vendor_id: r.vendorid, vendor_name: r.suppliername });
+            }
+            const attachmentPath = this.normalizeAttachmentPath(r.file_attachment ?? r.attachment_path);
+            if (r.vendorid != null && attachmentPath && !this.vendorAttachmentPaths[r.vendorid]) {
+                this.vendorAttachmentPaths[r.vendorid] = attachmentPath;
+                this.vendorAttachmentNames[r.vendorid] = this.getAttachmentName(attachmentPath);
             }
         });
         this.selectedVendors = Array.from(vendorMap.values());
@@ -341,6 +347,9 @@ export class VendorComparisonComponent implements OnInit {
         // Row-wise weightage evenly distribute karo (equal split, editable rahega)
         const evenWeight = this.comparisonRows.length ? Math.round((100 / this.comparisonRows.length) * 100) / 100 : 0;
         this.comparisonRows.forEach((row) => (row.weightage = evenWeight));
+
+        // Rank 1 vendor ko default recommended vendor bana do jab tak backend ne apna value na diya ho
+        this.filterForm.patchValue({ p_recommendedvendor: this.bestOverallVendor?.vendor_id ?? null }, { emitEvent: false });
     }
 
     deleteDraftItem(item: any, event: Event): void {
@@ -363,6 +372,31 @@ export class VendorComparisonComponent implements OnInit {
     removeVendorAttachment(vendorId: number): void {
         delete this.vendorAttachmentFiles[vendorId];
         delete this.vendorAttachmentNames[vendorId];
+        delete this.vendorAttachmentPaths[vendorId];
+    }
+
+    viewVendorAttachment(vendorId: number): void {
+        const file = this.vendorAttachmentFiles[vendorId];
+        const path = this.vendorAttachmentPaths[vendorId];
+        if (file) {
+            window.open(URL.createObjectURL(file), '_blank');
+        } else if (path) {
+            window.open(path, '_blank');
+        }
+    }
+
+    private normalizeAttachmentPath(value: unknown): string {
+        if (typeof value === 'string') return value;
+        if (value && typeof value === 'object') {
+            const attachment = value as { file_attachment?: unknown; attachment_path?: unknown; path?: unknown };
+            return [attachment.file_attachment, attachment.attachment_path, attachment.path].find((path): path is string => typeof path === 'string') ?? '';
+        }
+        return '';
+    }
+
+    private getAttachmentName(path: string): string {
+        if (path.startsWith('data:')) return 'Attached file';
+        return path.split('?')[0].split('/').pop() || 'Attached file';
     }
 
     get rankedVendors(): { vendor: VendorRef; rank: number; total: number }[] {
@@ -373,26 +407,23 @@ export class VendorComparisonComponent implements OnInit {
         return this.rankedVendors[0]?.vendor ?? null;
     }
 
-    get secondBestVendor(): VendorRef | null {
-        return this.rankedVendors[1]?.vendor ?? null;
+    get approvedVendorName(): string {
+        return this.bestOverallVendor?.vendor_name ?? '—';
     }
 
-    get thirdBestVendor(): VendorRef | null {
-        return this.rankedVendors[2]?.vendor ?? null;
+    get recommendedVendorName(): string {
+        const id = this.filterForm.get('p_recommendedvendor')?.value;
+        const vendor = this.selectedVendors.find((v) => v.vendor_id === id) ?? this.bestOverallVendor;
+        return vendor?.vendor_name ?? '';
     }
 
-    get vendorQuotedTotals(): { vendorId: number; vendorName: string; total: number }[] {
-        return this.selectedVendors.map((v) => {
-            const total = this.comparisonRows.reduce((sum, row) => sum + (Number(row.vendorData[v.vendor_id]?.price) || 0), 0);
-            return { vendorId: v.vendor_id, vendorName: v.vendor_name, total };
-        });
-    }
+   get approvedByName(): string {
+    return this.approvedByNameValue ?? '';
+}
 
-    get lowestQuotedVendor(): VendorRef | null {
-        if (!this.vendorQuotedTotals.length) return null;
-        const min = [...this.vendorQuotedTotals].sort((a, b) => a.total - b.total)[0];
-        return this.selectedVendors.find((v) => v.vendor_id === min.vendorId) ?? null;
-    }
+get approvedOnDate(): string {
+    return this.approvedOnDateValue ?? '';
+}
 
     private formatDisplayDate(value: string | Date): string {
         const date = value instanceof Date ? value : new Date(value);
@@ -401,10 +432,6 @@ export class VendorComparisonComponent implements OnInit {
         const month = `${date.getMonth() + 1}`.padStart(2, '0');
         const year = date.getFullYear();
         return `${day}-${month}-${year}`;
-    }
-
-    get totalRequestedQty(): number {
-        return this.comparisonRows.reduce((sum, row) => sum + (Number(row.required_qty) || 0), 0);
     }
 
     get totalVisibleItems(): number {
@@ -547,14 +574,14 @@ export class VendorComparisonComponent implements OnInit {
     }
 
     onSubmit(): void {
-        this.saveComparison('SUBMIT');
+        this.saveComparison('SUBMITTED');
     }
 
     onSaveDraft(): void {
         this.saveComparison('DRAFT');
     }
 
-    private saveComparison(operationType: 'SUBMIT' | 'DRAFT'): void {
+    private async saveComparison(operationType: 'SUBMITTED' | 'DRAFT'): Promise<void> {
         if (!this.rfqHeader) {
             this.messageService.add({ severity: 'warn', summary: 'Select an RFQ first', life: 2500 });
             return;
@@ -570,12 +597,11 @@ export class VendorComparisonComponent implements OnInit {
             this.selectedVendors.forEach((v) => {
                 const data = row.vendorData[v.vendor_id];
                 comparisonJson.push({
-                    comparison_id: this.rfqHeader.comparison_id ?? null, // null = new record, backend inserts; else updates existing draft/comparison
                     rfqid: this.rfqHeader.rfqid,
                     rfqno: this.rfqHeader.rfqno,
                     rfqdate: this.rfqHeader.rfqdate,
-                    site_id: this.rfqHeader.site_id,
-                    project_name: this.rfqHeader.project_name,
+                    site_id: this.rfqHeader.site_id ?? 0,
+                    project_name: this.rfqHeader.project_name ?? '',
 
                     vendorid: v.vendor_id,
                     suppliername: v.vendor_name,
@@ -607,16 +633,26 @@ export class VendorComparisonComponent implements OnInit {
                     total_score: data?.total_score ?? 0,
 
                     vendor_rank: data?.vendor_rank ?? 0,
-                    is_recommended: data?.is_recommended ?? false,
-                    remarks: data?.remarks ?? ''
+                    is_recommended: data?.is_recommended ? 'Y' : 'N',
+                    comparison_status: operationType,
                 });
             });
         });
 
+        let attachmentJson: { vendorid: number; file_attachment: string }[];
+        try {
+            attachmentJson = await this.buildAttachmentJson();
+        } catch {
+            this.messageService.add({ severity: 'error', summary: 'Attachment read failed', detail: 'Unable to read one or more vendor attachments.', life: 3000 });
+            return;
+        }
+
         const payload = {
             p_operationtype: operationType,
             p_username: this.authService.isLogIntType()?.userid?.toString() ?? '',
-            p_comparison_json: comparisonJson
+            p_comparison_json: comparisonJson,
+            p_attachment_json: attachmentJson.length ? attachmentJson : null,
+            p_remarks: this.filterForm.get('p_remarks')?.value ?? ''
         };
 
         this.workService.upsertRfqVendorComparison(payload).subscribe({
@@ -633,7 +669,29 @@ export class VendorComparisonComponent implements OnInit {
         });
     }
 
-    private handleSaveSuccess(res: any, operationType: 'SUBMIT' | 'DRAFT'): void {
+    private async buildAttachmentJson(): Promise<{ vendorid: number; file_attachment: string }[]> {
+        const attachments = await Promise.all(
+            Object.entries(this.vendorAttachmentFiles)
+                .filter(([, file]) => file != null)
+                .map(async ([vendorId, file]) => ({
+                    vendorid: Number(vendorId),
+                    file_attachment: await this.readFileAsDataUrl(file as File)
+                }))
+        );
+
+        return attachments.filter((attachment) => !Number.isNaN(attachment.vendorid));
+    }
+
+    private readFileAsDataUrl(file: File): Promise<string> {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(file);
+        });
+    }
+
+    private handleSaveSuccess(res: any, operationType: 'SUBMITTED' | 'DRAFT'): void {
         this.messageService.add({
             severity: 'success',
             summary: res.data.message,
@@ -690,6 +748,12 @@ export class VendorComparisonComponent implements OnInit {
         this.selectedVendors = [];
         this.comparisonRows = [];
         this.rfqHeader = null;
+        this.isViewingComparison = false;
+        this.vendorAttachmentFiles = {};
+        this.vendorAttachmentNames = {};
+        this.vendorAttachmentPaths = {};
         this.globalFilter = '';
+         this.approvedByNameValue = null;  
+    this.approvedOnDateValue = null;  
     }
 }

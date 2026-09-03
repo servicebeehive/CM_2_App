@@ -83,14 +83,6 @@ $radius: 10px;
 .vendors-invited-inline {
     text-align: left;
     font-size: 12px;
-
-    .vendors-invited-title {
-        font-weight: 600;
-        color: $blue;
-        display: block;
-        margin-bottom: 4px;
-    }
-
     .vendors-list-inline {
         list-style: disc;
         margin: 0;
@@ -134,7 +126,7 @@ $radius: 10px;
 // ── Comparison summary / vendors invited / criteria / remarks row ───────
 .comparison-summary-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 16px;
     margin-top: 16px;
     align-items: start;
