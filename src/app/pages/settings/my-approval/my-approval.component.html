@@ -12,17 +12,41 @@
 
     <form [formGroup]="approvalForm" class="space-y-8">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-x-8 gap-y-4 w-full">
-             <!-- Type -->
+            <!-- Type -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Type <span class="text-red-500">*</span></label>
-                <p-dropdown [options]="typeOptions" optionValue="rule_id" optionLabel="rule_name" [filter]="true" [showClear]="true" filterPlaceholder="Search Type" formControlName="p_type" placeholder="Type" class="w-full" (onChange)="onTypeChange()"> </p-dropdown>
+                <p-dropdown
+                    [options]="typeOptions"
+                    optionValue="rule_id"
+                    optionLabel="rule_name"
+                    [filter]="true"
+                    [showClear]="true"
+                    filterPlaceholder="Search Type"
+                    formControlName="p_type"
+                    placeholder="Type"
+                    class="w-full"
+                    (onChange)="onTypeChange()"
+                >
+                </p-dropdown>
                 <small *ngIf="approvalForm.get('p_type')?.touched && approvalForm.get('p_type')?.invalid" class="p-error">Type is required.</small>
             </div>
 
             <!-- Request -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Request</label>
-                <p-dropdown [options]="requestOptions" optionValue="fieldid" optionLabel="fieldname" [filter]="true" [showClear]="true" filterPlaceholder="Search Request" formControlName="p_request" placeholder="Request" class="w-full" (onChange)="applyFilter()"> </p-dropdown>
+                <p-dropdown
+                    [options]="requestOptions"
+                    optionValue="fieldid"
+                    optionLabel="fieldname"
+                    [filter]="true"
+                    [showClear]="true"
+                    filterPlaceholder="Search Request"
+                    formControlName="p_request"
+                    placeholder="Request"
+                    class="w-full"
+                    (onChange)="applyFilter()"
+                >
+                </p-dropdown>
             </div>
         </div>
 
@@ -38,7 +62,7 @@
                 <ng-template pTemplate="header">
                     <tr class="bg-yellow-400">
                         <th>Project</th>
-                        <th>MF No</th>
+                        <th>{{ isVendorApproval ? 'Comparison No' : 'MF No' }}</th>
                         <th>Request Date</th>
                         <th>Requested By</th>
                         <th>Level</th>
@@ -50,18 +74,19 @@
                 <ng-template pTemplate="body" let-row let-i="rowIndex">
                     <tr>
                         <td>{{ row.project_name }}</td>
-                        <td>{{ row.mf_no }}</td>
+                        <td>{{ isVendorApproval ? row.comparison_no : row.mf_no }}</td>
                         <td>{{ row.request_date | date: 'dd/MM/yyyy' }}</td>
                         <td>{{ row.fullname }}</td>
                         <td>{{ row.level_no }}</td>
                         <td>{{ row.status }}</td>
                         <td class="text-center w-[60px]">
                             <div class="flex g-2">
-                                <button pButton type="button" icon="pi pi-check-square" class="p-button-text p-button-sm p-button-success" (click)="approved(row)" [disabled]="row.status !== 'PENDING'"></button>
-                                <button pButton type="button" icon="pi pi-ban" class="p-button-text p-button-sm p-button-danger" (click)="reject(row)" [disabled]="row.status !== 'PENDING'"></button>
-                                 <!-- <ng-container *ngIf="row.request_type === 'Write-off'"> -->
+                                <button pButton type="button" icon="pi pi-check-square" class="p-button-text p-button-sm p-button-success" (click)="approved(row)" [disabled]="isApprovalActionDisabled(row)"></button>
+                                <button pButton type="button" icon="pi pi-ban" class="p-button-text p-button-sm p-button-danger" (click)="reject(row)" [disabled]="isApprovalActionDisabled(row)"></button>
+                                <button pButton type="button" icon="pi pi-reply" class="p-button-text p-button-sm p-button-warning" (click)="sendBack(row)" [disabled]="isApprovalActionDisabled(row)" pTooltip="Send Back"></button>
+                                <!-- <ng-container *ngIf="row.request_type === 'Write-off'"> -->
                                 <button pButton type="button" icon="pi pi-eye" class="p-button-text p-button-sm p-button-info" (click)="onViewMF(row)"></button>
-                                <button pButton type="button" icon="pi pi-file" class="p-button-text p-button-sm p-button-warning" (click)="log(row)"></button>
+                                <button pButton type="button" icon="pi pi-file" class="p-button-text p-button-sm p-button-help" (click)="log(row)"></button>
                                 <!-- </ng-container> -->
                             </div>
                         </td>
@@ -78,7 +103,7 @@
     <p-dialog header="Approval Log" [(visible)]="logDetailsVisible" [modal]="true" [style]="{ width: '800px' }" [closable]="true">
         <form [formGroup]="logForm" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
             <div class="flex flex-col">
-                <label for="log-mf-no" class="font-medium mb-1">MF No</label>
+                <label for="log-mf-no" class="font-medium mb-1">{{ isVendorApproval ? 'Comparison No' : 'MF No' }}</label>
                 <input id="log-mf-no" pInputText formControlName="mfNo" readonly />
             </div>
             <div class="flex flex-col">
@@ -100,13 +125,13 @@
                 <tr>
                     <td>{{ history.level ?? history.level_no }}</td>
                     <td>{{ history.approvedBy ?? history.approved_by ?? history.approver }}</td>
-                    <td>{{ (history.approvedOn ?? history.approved_on) | date: 'dd/MM/yyyy' }}</td>
+                    <td>{{ history.approvedOn ?? history.approved_on | date: 'dd/MM/yyyy' }}</td>
                     <td>{{ history.status }}</td>
                 </tr>
             </ng-template>
         </p-table>
     </p-dialog>
-    
+
     <p-dialog header="Reject Approval" [(visible)]="rejectiondetails" [modal]="true" [style]="{ width: '600px' }" [closable]="true">
         <div class="p-fluid">
             <label class="mb-2 block"> Please provide a reason for rejection: </label>
@@ -125,6 +150,26 @@
             <button pButton label="Cancel" class="p-button-secondary" (click)="rejectiondetails = false"></button>
 
             <button pButton label="Submit" class="p-button-danger" (click)="submitReject()" [disabled]="!rejectComment || rejectComment.trim().length === 0"></button>
+        </ng-template>
+    </p-dialog>
+
+    <p-dialog [header]="rejectDialogHeader" [(visible)]="rejectiondetails" [modal]="true" [style]="{ width: '600px' }" [closable]="true">
+        <div class="p-fluid">
+            <label class="mb-2 block">{{ actionPromptText }}</label>
+
+            <div class="mb-3">
+                <label for="comment"
+                    ><b>{{ actionCommentLabel }}</b></label
+                >
+                <textarea id="comment" pInputTextarea [(ngModel)]="rejectComment" [ngModelOptions]="{ standalone: true }" rows="4" class="w-full" [ngClass]="{ 'ng-invalid ng-dirty': submitted && isCommentMandatory && !rejectComment }"> </textarea>
+            </div>
+
+            <p-message *ngIf="submitted && isCommentMandatory && !rejectComment" severity="error" text="Comment is required."></p-message>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <button pButton label="Cancel" class="p-button-secondary" (click)="rejectiondetails = false"></button>
+            <button pButton [label]="submitButtonLabel" [ngClass]="submitButtonClass" (click)="submitReject()" [disabled]="isSubmitDisabled"></button>
         </ng-template>
     </p-dialog>
     <p-confirmDialog></p-confirmDialog>

@@ -4,6 +4,7 @@
 
         <div class="flex gap-4">
             <button pButton type="button" label="{{ addButtonLabel }}" icon="pi pi-plus" class="p-button-warning"  [disabled]="masterForm.get('master')?.value === 'taxmaster'" (click)="openUserDialog()"></button>
+            <button pButton type="button" label="Download" class="p-button-warning" (click)="onDownloadClick()"></button>
         </div>
     </div>
 
@@ -361,7 +362,7 @@
                         <!-- Preferred Vendor -->
                         <div class="flex gap-3">
                             <p-checkbox formControlName="preferred_vendor" [binary]="true"></p-checkbox>
-                            <label class="font-medium">Preferred Vendor</label>
+                            <label class="font-medium">Preferred through VC</label>
                         </div>
 
                         <!-- Active -->

@@ -5,6 +5,10 @@
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <span class="block text-surface-900 font-bold text-lg md:text-xl">Vendor Comparison</span>
             <div class="mr-form-footer">
+                  <span class="text-xl font-bold mt-2">Status</span>
+                <span class="font-bold text-xl mt-2" [ngStyle]="{ color: statusColor }">
+                    {{ filterForm.get('status')?.value }}
+                </span>
                 <!-- <button pButton type="button" label="Export to Excel" class="p-button-outlined"></button> -->
                 <p-dropdown
                     [options]="draftOptions"
@@ -32,7 +36,8 @@
                 </p-dropdown>
                 <button pButton type="button" label="Draft" class="p-button-warning" (click)="onSaveDraft()"></button>
                 <button pButton type="button" label="View" class="p-button-warning" (click)="openMaterialReqDialog()"></button>
-                <button pButton type="submit" label="Finalize Comparison" class="p-button-primary" [disabled]="comparisonRows.length === 0 || selectedVendors.length === 0"></button>
+                <button pButton type="submit" label="Finalize Comparison" class="p-button-primary" [disabled]="comparisonRows.length === 0 || selectedVendors.length === 0 || isTableIncomplete"></button>
+                <button *ngIf="showApprovalBackButton" pButton type="button" label="Back" icon="pi pi-arrow-left" class="p-button-outlined" (click)="returnToApproval()"></button>
                 <button pButton type="button" label="Reset" class="p-button-secondary" (click)="onReset()"></button>
             </div>
         </div>
@@ -119,7 +124,7 @@
                         </tr>
                         <tr class="bg-yellow-400">
                             <ng-container *ngFor="let v of selectedVendors">
-                                <th style="padding: 4px; border-left: 2px solid #fff">Unit Price</th>
+                                <th style="padding: 4px; border-left: 2px solid #fff">Unit Price <span class="text-red-500">*</span></th>
                                 <th style="padding: 4px">Quality (1–10)</th>
                                 <th style="padding: 4px">Payment Term (Days)</th>
                                 <th style="padding: 4px">Score</th>
@@ -141,6 +146,7 @@
                                     <p-inputNumber
                                         [(ngModel)]="row.vendorData[v.vendor_id].price"
                                         [ngModelOptions]="{ standalone: true }"
+                                        required
                                         mode="decimal"
                                         [minFractionDigits]="2"
                                         [maxFractionDigits]="2"
@@ -149,10 +155,21 @@
                                     ></p-inputNumber>
                                 </td>
                                 <td style="padding: 4px">
-                                    <p-inputNumber [(ngModel)]="row.vendorData[v.vendor_id].quality_score" [ngModelOptions]="{ standalone: true }" [min]="1" [max]="10" [inputStyle]="{ width: '60px' }"></p-inputNumber>
+                                    <p-inputNumber
+                                        [(ngModel)]="row.vendorData[v.vendor_id].quality_score"
+                                        [ngModelOptions]="{ standalone: true }"
+                                        (ngModelChange)="onQualityScoreChange(row, v.vendor_id, $event)"
+                                        [inputStyle]="{ width: '60px' }"
+                                    ></p-inputNumber>
                                 </td>
                                 <td style="padding: 4px">
-                                    <p-inputNumber [(ngModel)]="row.vendorData[v.vendor_id].payment_terms_days" [ngModelOptions]="{ standalone: true }" [min]="0" [inputStyle]="{ width: '60px' }"></p-inputNumber>
+                                    <p-inputNumber
+                                        [(ngModel)]="row.vendorData[v.vendor_id].payment_terms_days"
+                                        [ngModelOptions]="{ standalone: true }"
+                                        (ngModelChange)="onPaymentTermsChange(v.vendor_id, $event)"
+                                        [min]="0"
+                                        [inputStyle]="{ width: '60px' }"
+                                    ></p-inputNumber>
                                 </td>
                                 <td style="padding: 4px; text-align: center; font-weight: 600" [ngStyle]="{ color: getVendorScore(row, v.vendor_id) >= 80 ? 'green' : getVendorScore(row, v.vendor_id) >= 70 ? '#d97706' : 'red' }">
                                     {{ getVendorScore(row, v.vendor_id) | number: '1.2-2' }}
@@ -243,7 +260,7 @@
 
                 <div class="mr-card">
                     <div class="mr-card-header">
-                        <i class="pi pi-sliders-h"></i>
+                        <i class="pi pi-check"></i>
                         <span>Vendor Approver</span>
                     </div>
                     <ul class="criteria-list">
@@ -258,7 +275,7 @@
                     </ul>
                     <div class="criteria-total">
                         <span>Approved Vendor</span>
-                        <span>{{ approvedVendorName }}</span>
+                        <span>{{ getapprovedVendor }}</span>
                     </div>
                 </div>
 
@@ -273,7 +290,7 @@
                     </div>
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Recommended Vendor</label>
-                        <input pInputText type="text" [value]="recommendedVendorName" placeholder="Recommended Vendor" readonly />
+                        <input pInputText type="text" [value]="approvedVendorName" placeholder="Recommended Vendor" readonly />
                     </div>
                 </div>
             </div>

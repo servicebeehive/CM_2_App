@@ -39,7 +39,10 @@ export const API_ENDPOINTS = {
         upsertrfq: '/beeware/upsert_rfq',
         sendrfqmail: '/beeware/send_rfq_mail',
         upsertrfqvendorcomparison: '/beeware/upsert_rfq_vendor_comparison',
-        getrfqvendorcomparison: '/beeware/get_rfq_vendor_comparison'
+        getrfqvendorcomparison: '/beeware/get_rfq_vendor_comparison',
+        upsertpoperforma: '/beeware/upsert_po_performa',
+        upsertpoinvoice: '/beeware/upsert_po_invoice',
+        upsertpopayment: '/beeware/upsert_po_payment'
     },
     sales: {
         getcalculatedMRP: '/beeware/getcalculatedMRP'

@@ -14,6 +14,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { AuthService } from '@/core/services/auth.service';
 import * as XLSX from 'xlsx';
 import { ActivatedRoute, Router } from '@angular/router';
+import { ShareService } from '@/core/services/shared.service';
 
 @Component({
     selector: 'app-my-approval',
@@ -48,10 +49,11 @@ export class MyApprovalComponent {
         { fieldid: 'PENDING', fieldname: 'PENDING' },
         { fieldid: 'REJECTED', fieldname: 'REJECTED' }
     ];
-
+    approvalHistory: any[] = [];
     products: any[] = [];
     filteredProducts: any[] = [];
     logDetailsVisible = false;
+    actionType: 'APPROVE' | 'REJECT' | 'SENDBACK' = 'REJECT';
 
     constructor(
         private fb: FormBuilder,
@@ -61,7 +63,8 @@ export class MyApprovalComponent {
         private datePipe: DatePipe,
         private confirmationService: ConfirmationService,
         private router:Router,
-        private route: ActivatedRoute
+        private route: ActivatedRoute,
+        private sharedService: ShareService
     ) {}
 
     ngOnInit(): void {
@@ -78,10 +81,20 @@ export class MyApprovalComponent {
             p_type: this.route.snapshot.queryParamMap.get('p_type'),
             p_request: this.route.snapshot.queryParamMap.get('p_request') || 'PENDING'
         });
+        this.restoreViewState();
         this.loadAllDropdowns();
-        if (this.approvalForm.get('p_type')?.value) {
+        if (this.approvalForm.get('p_type')?.value && !this.products.length) {
             this.onGetApprovalList();
         }
+    }
+
+    private restoreViewState(): void {
+        const state = history.state?.returnViewState;
+        if (!state) return;
+
+        this.approvalForm.patchValue(state.formValue ?? {}, { emitEvent: false });
+        this.products = state.products ?? [];
+        this.filteredProducts = state.filteredProducts ?? [];
     }
 
     blockMinus(event: KeyboardEvent) {
@@ -99,6 +112,15 @@ export class MyApprovalComponent {
         }
         this.onGetApprovalList();
     }
+
+    get selectedTypeName(): string {
+    const selectedType = this.approvalForm.get('p_type')?.value;
+    return (this.typeOptions.find((type) => String(type.rule_id) === String(selectedType))?.rule_name || '').trim().toUpperCase();
+}
+
+get isVendorApproval(): boolean {
+    return this.selectedTypeName === 'VENDOR APPROVAL';
+}
 
     applyFilter() {
         const selectedRequest = this.approvalForm.get('p_request')?.value;
@@ -157,9 +179,10 @@ export class MyApprovalComponent {
             this.filteredProducts = [];
             return;
         }
+        let type = this.typeOptions.find(i=> i.rule_id === this.approvalForm.get('p_type')?.value);
         const payload = {
             p_username: this.authService.isLogIntType()?.companyid.toString(),
-            p_returntype:  this.industryTypeId === '3' ? 'MYAPPROVALENTRY' : 'MYAPPROVALENTRYCONST_MR',
+            p_returntype:  this.industryTypeId !== '3' ? (type.rule_name === 'Material Requisition' ? 'MYAPPROVALENTRYCONST_MR' : 'MYAPPROVALENTRYCONST_VC') : 'MYAPPROVALENTRY',
             p_returnvalue: this.authService.isLogIntType()?.usertypeid.toString()
         };
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
@@ -220,13 +243,36 @@ export class MyApprovalComponent {
         this.downloadExcel();
     }
 
-onViewPO(poValue: string): void {
-    if (!poValue) return;
-    // Add your view/navigation logic here
-    console.log('View PO:', poValue);
-}
+    onViewMF(row: any): void {
+    if (this.isVendorApproval) {
+        const comparisonId = row?.comparison_id ?? row?.comparisondraft_id ?? row?.comparison_no;
+        if (!comparisonId) return;
 
-onViewMF(row: any): void {
+        this.sharedService.setReturnView({
+            route: ['/layout/settings/my-approval'],
+            queryParams: {
+                p_type: this.approvalForm.get('p_type')?.value ?? '',
+                p_request: this.approvalForm.get('p_request')?.value ?? 'PENDING'
+            },
+            state: {
+                returnViewState: {
+                    formValue: this.approvalForm.getRawValue(),
+                    products: this.products,
+                    filteredProducts: this.filteredProducts
+                }
+            }
+        });
+        this.router.navigate(['/layout/purchase/vendor-comparison'], {
+            queryParams: {
+                comparisonId,
+                fromApprovalView: true,
+                p_type: this.approvalForm.get('p_type')?.value,
+                p_request: this.approvalForm.get('p_request')?.value
+            }
+        });
+        return;
+    }
+
     const mfNo = row?.mf_no ;
     if (!mfNo) return;
 
@@ -240,9 +286,14 @@ onViewMF(row: any): void {
     });
 }
 
+    isApprovalActionDisabled(row: any): boolean {
+        const status = String(row?.status ?? '').trim().toUpperCase();
+        return status !== 'PENDING' || ['APPROVED', 'REJECTED', 'SENDBACK'].includes(status);
+    }
+
     log(row: any): void {
         this.logForm.patchValue({
-            mfNo: row?.mf_no,
+            mfNo: this.isVendorApproval ? row?.comparison_no : row?.mf_no,
             requestedBy: row?.fullname
         });
 
@@ -258,83 +309,105 @@ onViewMF(row: any): void {
         this.logDetailsVisible = true;
     }
 
-    approved(row: any) {
-        this.confirmationService.confirm({
-            message: 'Are you sure you want to approve the request?',
-            header: 'Confirm',
-            acceptLabel: 'Yes',
-            rejectLabel: 'Cancel',
-            rejectButtonStyleClass: 'p-button-secondary',
-            accept: () => {
-                const payload = {
-                    p_request_id: row.request_id,
-                    p_user_id: this.authService.isLogIntType().userid,
-                    p_usertype_id: this.authService.isLogIntType().usertypeid,
-                    p_action: 'APPROVE',
-                    p_remarks: ''
-                };
+  approved(row: any) {
+    this.selectedRow = row;
+    this.actionType = 'APPROVE';
+    this.rejectComment = '';
+    this.submitted = false;
+    this.rejectiondetails = true;
+}
 
-                this.inventoryService.approverequest(payload).subscribe({
-                    next: (res) => {
-                        this.showSuccess(res.data.msg);
-                        this.onGetApprovalList();
-                    }
-                });
-            }
-        });
+reject(row: any) {
+    this.selectedRow = row;
+    this.actionType = 'REJECT';
+    this.rejectComment = '';
+    this.submitted = false;
+    this.rejectiondetails = true;
+}
+
+sendBack(row: any) {
+    this.selectedRow = row;
+    this.actionType = 'SENDBACK';
+    this.rejectComment = '';
+    this.submitted = false;
+    this.rejectiondetails = true;
+}
+
+get isCommentMandatory(): boolean {
+    return this.actionType !== 'APPROVE';
+}
+
+get rejectDialogHeader(): string {
+    switch (this.actionType) {
+        case 'APPROVE': return 'Approve';
+        case 'SENDBACK': return 'Send Back';
+        default: return 'Reject';
     }
-    approvalHistory = [
-        {
-            level: 'L1',
-            approver: 'Manager',
-            status: 'Approved',
-            date: '19-Mar-2026',
-            comment: 'Looks good.'
-        },
-        {
-            level: 'L2',
-            approver: 'Finance',
-            status: 'Rejected',
-            date: '20-Mar-2026',
-            comment: 'Pricing is too low.'
-        }
-    ];
+}
 
-    reject(event: any) {
-        this.selectedRow = event;
-        this.rejectiondetails = true;
-        if (this.rejectComment === '') {
-            this.submitted = false;
-        } else {
-            this.submitted = true;
-        }
+get actionCommentLabel(): string {
+    return this.isCommentMandatory ? 'Comment *' : 'Comment (optional)';
+}
+
+get actionPromptText(): string {
+    switch (this.actionType) {
+        case 'APPROVE': return 'Add a comment:';
+        case 'SENDBACK': return 'Please provide a reason for sending back:';
+        default: return 'Please provide a reason for rejection:';
+    }
+}
+
+get submitButtonLabel(): string {
+    switch (this.actionType) {
+        case 'APPROVE': return 'Approve';
+        case 'SENDBACK': return 'Send Back';
+        default: return 'Reject';
+    }
+}
+
+get submitButtonClass(): string {
+    switch (this.actionType) {
+        case 'APPROVE': return 'p-button-success';
+        case 'SENDBACK': return 'p-button-warning';
+        default: return 'p-button-danger';
+    }
+}
+
+get isSubmitDisabled(): boolean {
+    return this.isCommentMandatory && (!this.rejectComment || this.rejectComment.trim().length === 0);
+}
+
+ submitReject() {
+    if (this.isCommentMandatory && (!this.rejectComment || this.rejectComment.trim().length === 0)) {
+        this.submitted = true;
+        return;
+    }
+    if (!this.selectedRow) {
+        console.error('No row selected');
+        return;
     }
 
-    submitReject() {
-        if (!this.rejectComment || this.rejectComment.trim().length === 0) {
-            return;
-        }
-        if (!this.selectedRow) {
-            console.error('No row selected');
-            return;
-        }
-        const payload = {
-            p_request_id: this.selectedRow.request_id,
-            p_user_id: this.authService.isLogIntType()?.userid,
-            p_usertype_id: this.authService.isLogIntType()?.usertypeid,
-            p_action: 'REJECT',
-            p_remarks: this.rejectComment
-        };
+    const actionMap = { APPROVE: 'APPROVE', REJECT: 'REJECT', SENDBACK: 'SENDBACK' };
 
-        this.inventoryService.approverequest(payload).subscribe({
-            next: (res) => {
-                this.showSuccess(res.data.msg);
-                this.onGetApprovalList();
-            }
-        });
-        this.rejectiondetails = false;
-        console.log('Submitted:', this.rejectComment);
-    }
+    const payload = {
+        p_request_id: this.selectedRow.request_id,
+        p_user_id: this.authService.isLogIntType()?.userid,
+        p_usertype_id: this.authService.isLogIntType()?.usertypeid,
+        p_action: actionMap[this.actionType],
+        p_remarks: this.rejectComment || ''
+    };
+
+    this.inventoryService.approverequest(payload).subscribe({
+        next: (res) => {
+            this.showSuccess(res.data.msg);
+            this.onGetApprovalList();
+        }
+    });
+
+    this.rejectiondetails = false;
+    this.rejectComment = '';
+    this.submitted = false;
+}
 
     showSuccess(message: string) {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });

@@ -69,4 +69,11 @@
     .p-multiselect.p-disabled {
         background-color: #dae2eb !important; 
     }
+
+    .mr-form-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 0.5rem;
+}
 }

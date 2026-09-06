@@ -94,11 +94,11 @@ export class RfqComponent implements OnInit {
             p_rfq_id: [null],
             p_rfqno: [null],
             p_draft_rfqno: [null],
-            p_rfqdate: [this.today, Validators.required],
+            p_rfqdate: [{ value: this.today, disabled: true }, Validators.required],
             // p_site: [null, Validators.required],
             // p_rfq_desc: [''],
             p_remarks: [''],
-            p_status: ['Draft'],
+            p_status: [''],
             p_item: [null],
             p_attachment: [null]
         });
@@ -181,6 +181,22 @@ export class RfqComponent implements OnInit {
                 this.draftRfqOptions = [];
             }
         });
+    }
+
+     get statusColor(): string {
+        const status = (this.rfqForm.get('p_status')?.value || '').toUpperCase();
+        switch (status) {
+            case 'APPROVED':
+                return 'green';
+            case 'SUBMITTED':
+                return 'blue';
+            case 'REJECTED':
+                return 'red';
+            case 'DRAFT':
+                return 'grey';
+            default:
+                return 'grey';
+        }
     }
 
     // private upsertRfqDropdownOption(options: any[], rfqId: number, rfqNo: string): void {
@@ -374,7 +390,7 @@ private buildMrNoPayload(): string {
                         // p_site: selected.site_id ?? null,
                         // p_rfq_desc: selected.rfq_description ?? '',
                         p_remarks: selected.remarks ?? '',
-                        p_status: selected.status ?? 'Draft',
+                        p_status: selected.status ?? '',
                         p_attachment: this.attachmentFileName || null
                     },
                     { emitEvent: false }
@@ -940,7 +956,7 @@ private buildMrNoPayload(): string {
                         // p_site: header.project_id ?? null,
                         // p_rfq_desc: header.rfq_desc ?? '',
                         p_remarks: header.remarks ?? '',
-                        p_status: header.status ?? 'Draft',
+                        p_status: header.status ?? '',
                         p_attachment: this.attachmentFileName ?? null
                     },
                     { emitEvent: false }
@@ -1021,7 +1037,7 @@ private buildMrNoPayload(): string {
                     this.rfqForm.patchValue({
                         // p_rfq_id: rfqId,
                         p_draft_rfqno: rfqId,
-                        p_status: res.data.status
+                        p_status: res.data.tran_status
                     });
                     this.messageService.add({ severity: 'success', summary: res.data.msg });
                     this.loadDraftList();
@@ -1185,14 +1201,13 @@ private buildMrNoPayload(): string {
             next: (res: any) => {
                 if (res.data?.success) {
                     const rfqId = res.data.rfqid;
-                    const rfqNo = res.data.rfqno;
-                    
+                   
                     const rfq = this.rfqNoOptions.find(option => option.rfqid === rfqId);
                     console.log("jhhjj",rfq)
                     this.rfqForm.patchValue({
                         p_rfq_id: rfqId,
                         p_rfqno: rfqId,
-                        p_status: res.data.status || 'SUBMITTED'
+                        p_status: res.data.tran_status
                     });
                     this.loadRfqNo();
                     this.messageService.add({ severity: 'success', summary: res.data.msg });

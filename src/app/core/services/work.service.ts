@@ -44,6 +44,24 @@ export class WorkService {
         }))
       }
 
+      upsertPOPerforma(payload: any): Observable<any> {
+        const payloaddata = this.shareservice.GetApiBody(payload);
+        const url = `${this.baseUrl}${API_ENDPOINTS.work.upsertpoperforma}`;
+        return this.http.post<any>(url, payloaddata).pipe(catchError(error => throwError(() => error)));
+      }
+
+      upsertPOInvoice(payload: any): Observable<any> {
+        const payloaddata = this.shareservice.GetApiBody(payload);
+        const url = `${this.baseUrl}${API_ENDPOINTS.work.upsertpoinvoice}`;
+        return this.http.post<any>(url, payloaddata).pipe(catchError(error => throwError(() => error)));
+      }
+
+      upsertPOPayment(payload: any): Observable<any> {
+        const payloaddata = this.shareservice.GetApiBody(payload);
+        const url = `${this.baseUrl}${API_ENDPOINTS.work.upsertpopayment}`;
+        return this.http.post<any>(url, payloaddata).pipe(catchError(error => throwError(() => error)));
+      }
+
       upsertRFQ(payload:UpsertRfqPayload):Observable<any>{
         let payloaddata = this.shareservice.GetApiBody(payload)
         let url = `${this.baseUrl}${API_ENDPOINTS.work.upsertrfq}`;
@@ -75,4 +93,6 @@ getRfqVendorComparison(payload: any): Observable<any> {
         catchError((error) => throwError(() => error))
     );
 }
+
+
 }

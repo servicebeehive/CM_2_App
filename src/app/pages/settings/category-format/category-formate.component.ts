@@ -15,9 +15,9 @@ import { AuthService } from '@/core/services/auth.service';
 import { InventoryService } from '@/core/services/inventory.service';
 import { UserService } from '@/core/services/user.service';
 import { ActivatedRoute } from '@angular/router';
-import { state } from '@angular/animations';
 import { Subject, switchMap, of } from 'rxjs';
-import { RemovedParamterBased } from '@/core/models/inventory.model';
+import * as XLSX from 'xlsx';
+
 import { MultiSelectModule } from 'primeng/multiselect';
 
 export function gstNumberValidator(control: AbstractControl): ValidationErrors | null {
@@ -134,6 +134,35 @@ export class CategoryFormateComponent {
         }
     }
 
+    onDownloadClick(): void {
+        if (!this.filterMaster?.length) {
+            this.messageService.add({ severity: 'warn', summary: 'No data available to download.', life: 2500 });
+            return;
+        }
+        this.downloadExcel();
+    }
+
+    private downloadExcel(): void {
+        const exportData = (this.filterMaster as any[]).map((row) => {
+            const record: Record<string, any> = {};
+            this.tableColumns.forEach((col) => {
+                record[col.header] = row[col.field] ?? '';
+            });
+            return record;
+        });
+
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        worksheet['!cols'] = this.tableColumns.map(() => ({ wch: 20 }));
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, this.pageTitle.substring(0, 31));
+
+        const date = new Date().toISOString().split('T')[0];
+        XLSX.writeFile(workbook, `${this.pageTitle.replace(/\s+/g, '_')}_${date}.xlsx`);
+
+        this.messageService.add({ severity: 'success', summary: 'Excel downloaded successfully!', life: 2500 });
+    }
+
     updateTitleMaster(master: string) {
         switch (master) {
             case 'advance':
@@ -218,7 +247,7 @@ export class CategoryFormateComponent {
             { field: 'suppliergstno', header: 'Gst No' },
             { field: 'suppliercity', header: 'City' },
             { field: 'paymentterm', header: 'Payment Terms' },
-            { field: 'prefferedvendor', header: 'Preferred' },
+            { field: 'preferred_vendor', header: 'Preferred', width: '120px'  },
             { field: 'isactive', header: 'Active', width: '80px' }
         ],
         taxmaster: [
@@ -299,7 +328,7 @@ export class CategoryFormateComponent {
             this.masterForm.addControl('suppliercontactphone', this.fb.control('', Validators.pattern(/^[6-9]\d{9}$/)));
             this.masterForm.addControl('suppliercontactemail', this.fb.control('', [Validators.email]));
             this.masterForm.addControl('payment_term', this.fb.control('', Validators.required));
-            this.masterForm.addControl('preferred_vendor', this.fb.control(true, Validators.required));
+            this.masterForm.addControl('preferred_vendor', this.fb.control({value: true, disabled: true}, Validators.required));
         }
         if (master === 'taxmaster') {
             this.masterForm.addControl('taxname', this.fb.control('', Validators.required));
@@ -390,7 +419,8 @@ export class CategoryFormateComponent {
                 suppliercontactphone: row.suppliercontactphone,
                 suppliercontactemail: row.suppliercontactemail,
                 payment_term: row.paymentterm,
-                categories: (row.categories || []).map((c:any)=> c.categoryid),                preferred_vendor: row.prefferedvendor === 'Y',
+                categories: (row.categories || []).map((c:any)=> c.categoryid),               
+                preferred_vendor: row.preferred_vendor === 'Y',
                 checked: row.isactive === 'Y'
             },
             taxmaster: {
@@ -842,7 +872,7 @@ export class CategoryFormateComponent {
 
     createDropdownPayload(returnType: string, returnvalue: string = '') {
         return {
-            p_username: this.authService.isLogIntType()?.userid,
+            p_username: this.authService.isLogIntType()?.companyid.toString(),
             p_returntype: returnType
             // p_returnvalue: returnvalue
         };

@@ -16,7 +16,7 @@ import { WorkService } from '@/core/services/work.service';
 import { ComparisonRow } from '@/core/models/authmodel/work.model';
 import { DatePickerModule } from 'primeng/datepicker';
 import { TextareaModule } from 'primeng/textarea';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ShareService } from '@/core/services/shared.service';
 
 interface VendorRef {
@@ -65,6 +65,10 @@ export class VendorComparisonComponent implements OnInit {
     isViewingComparison = false;
     approvedByNameValue: string | null = null;
     approvedOnDateValue: string | null = null;
+    approvedVendor: string | null = null;
+    private fromApprovalView = false;
+    private approvalType: string | null = null;
+    private approvalRequest: string | null = null;
 
     evaluationCriteria: { label: string; weight: number }[] = [
         { label: 'Unit Price', weight: 60 },
@@ -80,6 +84,7 @@ export class VendorComparisonComponent implements OnInit {
         private messageService: MessageService,
         private workService: WorkService,
         private router: Router,
+        private route: ActivatedRoute,
         private sharedService: ShareService
     ) {}
 
@@ -87,10 +92,26 @@ export class VendorComparisonComponent implements OnInit {
         this.companyId = this.authService.isLogIntType()?.companyid;
         this.initForm();
         this.restoreViewState();
+        this.fromApprovalView = this.route.snapshot.queryParamMap.get('fromApprovalView') === 'true';
+        this.approvalType = this.route.snapshot.queryParamMap.get('p_type');
+        this.approvalRequest = this.route.snapshot.queryParamMap.get('p_request');
+        const comparisonId = this.route.snapshot.queryParamMap.get('comparisonId');
         // this.loadProjects();
         this.loadRfqNoOptions();
         this.onGetVCNo();
         this.onGetDraftNo();
+        if (comparisonId) this.onVcNoChange({ value: comparisonId }, 'SUBMITTED');
+    }
+
+    get showApprovalBackButton(): boolean {
+        return this.fromApprovalView;
+    }
+
+    returnToApproval(): void {
+        this.sharedService.returnToSavedView(this.router, ['/layout/settings/my-approval'], {
+            p_type: this.approvalType ?? '',
+            p_request: this.approvalRequest ?? 'PENDING'
+        });
     }
 
     private initForm(): void {
@@ -103,6 +124,7 @@ export class VendorComparisonComponent implements OnInit {
             p_vcno: [''],
             p_vcdate: [{ value: new Date(), disabled: true }],
             p_remarks: [''],
+            status: [''],
             p_recommendedvendor: [null]
         });
     }
@@ -194,7 +216,7 @@ export class VendorComparisonComponent implements OnInit {
             this.selectedVendors = [];
             this.rfqHeader = null;
             this.isViewingComparison = false;
-            this.filterForm.patchValue(source === 'DRAFT' ? { p_vcno: '' } : { p_draft_vcno: '' }, { emitEvent: false });
+            this.filterForm.patchValue(source === 'DRAFT' ? { p_vcno: '', status: '' } : { p_draft_vcno: '', status: '' }, { emitEvent: false });
             return;
         }
 
@@ -222,12 +244,7 @@ export class VendorComparisonComponent implements OnInit {
                 this.buildComparisonFromApi(rows);
                 const loadedComparisonId = rows[0].comparison_id ?? rows[0].comparisondraft_id ?? comparisonId;
                 this.rfqHeader.comparison_id = loadedComparisonId;
-                this.filterForm.patchValue(
-                    source === 'DRAFT'
-                        ? { p_draft_vcno: loadedComparisonId, p_vcno: '' }
-                        : { p_vcno: loadedComparisonId, p_draft_vcno: '' },
-                    { emitEvent: false }
-                );
+                this.filterForm.patchValue(source === 'DRAFT' ? { p_draft_vcno: loadedComparisonId, p_vcno: '' } : { p_vcno: loadedComparisonId, p_draft_vcno: '' }, { emitEvent: false });
             },
             error: (err) => {
                 this.isLoadingItems = false;
@@ -239,7 +256,7 @@ export class VendorComparisonComponent implements OnInit {
     onRfqNoChange(event: any): void {
         this.isLoadingItems = true;
         this.isViewingComparison = false;
-        this.filterForm.patchValue({ 'p_vcno': '' });
+        this.filterForm.patchValue({ p_vcno: '' });
         const payload = {
             p_returntype: 'VENDORCOMPARISON',
             p_returnvalue: event.value.toString(),
@@ -283,11 +300,16 @@ export class VendorComparisonComponent implements OnInit {
             {
                 p_rfqno: first.rfqid,
                 p_rfqdate: first.rfqdate ? this.formatDisplayDate(first.rfqdate) : '',
-                p_remarks: first.remarks ?? '',
-                // p_project: first.site_id ?? null
+                p_remarks: first.recommendation_remarks ?? '',
+                status: first.comparison_status ?? ''
+                // p_project: first.site_id ?? null,
             },
             { emitEvent: false }
         );
+
+        this.approvedByNameValue = first.action_name ?? '';
+        this.approvedOnDateValue = first.action_on ? this.formatDisplayDate(first.action_on) : '';
+        this.approvedVendor = first.recommended_suppliername ?? '';
 
         // Distinct vendors
         const vendorMap = new Map<number, VendorRef>();
@@ -408,22 +430,36 @@ export class VendorComparisonComponent implements OnInit {
     }
 
     get approvedVendorName(): string {
-        return this.bestOverallVendor?.vendor_name ?? '—';
+        return this.bestOverallVendor?.vendor_name ?? '';
     }
 
-    get recommendedVendorName(): string {
-        const id = this.filterForm.get('p_recommendedvendor')?.value;
-        const vendor = this.selectedVendors.find((v) => v.vendor_id === id) ?? this.bestOverallVendor;
-        return vendor?.vendor_name ?? '';
+    get approvedByName(): string {
+        return this.approvedByNameValue ?? '';
     }
 
-   get approvedByName(): string {
-    return this.approvedByNameValue ?? '';
-}
+    get approvedOnDate(): string {
+        return this.approvedOnDateValue ?? '';
+    }
 
-get approvedOnDate(): string {
-    return this.approvedOnDateValue ?? '';
-}
+    get getapprovedVendor(): string {
+        return this.approvedVendor ?? '';
+    }
+
+    get statusColor(): string {
+        const status = (this.filterForm.get('status')?.value || '').toUpperCase();
+        switch (status) {
+            case 'APPROVED':
+                return 'green';
+            case 'SUBMITTED':
+                return 'blue';
+            case 'REJECTED':
+                return 'red';
+            case 'DRAFT':
+                return 'grey';
+            default:
+                return 'grey';
+        }
+    }
 
     private formatDisplayDate(value: string | Date): string {
         const date = value instanceof Date ? value : new Date(value);
@@ -573,6 +609,34 @@ get approvedOnDate(): string {
         return this.vendorRanks[vendorId] ?? 0;
     }
 
+    // Applies the payment term entered for one item to all items of that vendor
+    onPaymentTermsChange(vendorId: number, value: number | null): void {
+        this.comparisonRows.forEach((row) => {
+            const data = row.vendorData[vendorId];
+            if (data) data.payment_terms_days = value;
+        });
+    }
+
+    // Resets quality score to 0 if the entered value is outside the valid 1-10 range
+    onQualityScoreChange(row: ComparisonRow, vendorId: number, value: number | null): void {
+        const data = row.vendorData[vendorId];
+        if (!data) return;
+        if (value == null || value < 1 || value > 10) {
+            data.quality_score = 0;
+        }
+    }
+
+    // Only unit price is compulsory for every row/vendor
+    get isTableIncomplete(): boolean {
+        if (!this.comparisonRows.length || !this.selectedVendors.length) return true;
+        return this.comparisonRows.some((row) =>
+            this.selectedVendors.some((v) => {
+                const d = row.vendorData[v.vendor_id];
+                return !d || d.price == null;
+            })
+        );
+    }
+
     onSubmit(): void {
         this.saveComparison('SUBMITTED');
     }
@@ -588,6 +652,10 @@ get approvedOnDate(): string {
         }
         if (this.selectedVendors.length === 0) {
             this.messageService.add({ severity: 'warn', summary: 'No vendors found for this RFQ', life: 2500 });
+            return;
+        }
+        if (operationType === 'SUBMITTED' && this.isTableIncomplete) {
+            this.messageService.add({ severity: 'warn', summary: 'Fill unit price for all items before finalizing', life: 3000 });
             return;
         }
 
@@ -634,7 +702,7 @@ get approvedOnDate(): string {
 
                     vendor_rank: data?.vendor_rank ?? 0,
                     is_recommended: data?.is_recommended ? 'Y' : 'N',
-                    comparison_status: operationType,
+                    comparison_status: operationType
                 });
             });
         });
@@ -701,7 +769,9 @@ get approvedOnDate(): string {
         const comparisonId = res?.data?.comparison_id;
         if (!comparisonId) return;
 
-        const isStillDraft = res.data.comparison_status === 'DRAFT';
+        const savedStatus = res?.data?.tran_status ?? operationType;
+        this.filterForm.patchValue({ status: savedStatus }, { emitEvent: false });
+        const isStillDraft = savedStatus === 'DRAFT';
 
         if (isStillDraft) {
             this.patchAfterDraftReload(comparisonId);
@@ -714,12 +784,12 @@ get approvedOnDate(): string {
         const payload = {
             p_returntype: 'VENDORCOMPARISONIDDRAFT',
             p_returnvalue: this.companyId.toString(),
-            p_username: this.authService.isLogIntType()?.userid?.toString() ?? ''
+            p_username: this.authService.isLogIntType()?.companyid?.toString() ?? ''
         };
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res: any) => {
                 this.draftOptions = res.data || [];
-                this.filterForm.patchValue({ p_draft_vcno: comparisonId }, { emitEvent: false });
+                this.filterForm.patchValue({ p_draft_vcno: comparisonId, p_vcno: '', status: 'DRAFT' }, { emitEvent: false });
             },
             error: (err) => console.error('Error fetching Draft No:', err)
         });
@@ -734,7 +804,7 @@ get approvedOnDate(): string {
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res: any) => {
                 this.vcNoOptions = res.data || [];
-                this.filterForm.patchValue({ p_vcno: comparisonId, p_draft_vcno: '' }, { emitEvent: false });
+                this.filterForm.patchValue({ p_vcno: comparisonId, p_draft_vcno: '', status: 'SUBMITTED' }, { emitEvent: false });
                 // finalized comparisons no longer belong in the drafts list
                 this.draftOptions = this.draftOptions.filter((d) => d.comparison_id !== comparisonId);
             },
@@ -753,7 +823,8 @@ get approvedOnDate(): string {
         this.vendorAttachmentNames = {};
         this.vendorAttachmentPaths = {};
         this.globalFilter = '';
-         this.approvedByNameValue = null;  
-    this.approvedOnDateValue = null;  
+        this.approvedByNameValue = null;
+        this.approvedOnDateValue = null;
+        this.approvedVendor = null;
     }
 }

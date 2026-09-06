@@ -73,14 +73,22 @@
 
             <!-- Level -->
               <div class="flex flex-col">
-                <label class="font-medium mb-1">Level</label>
+                <label class="font-medium mb-1">Level <span class="text-red-500">*</span></label>
                 <input pInputText formControlName="p_level" placeholder="Level" />
+                <small class="text-red-500 text-xs"
+                    *ngIf="salesForm.get('p_level')?.touched && salesForm.get('p_level')?.errors?.['required']">
+                    Level is required
+                </small>
             </div>
 
              <!-- Pour -->
               <div class="flex flex-col">
-                <label class="font-medium mb-1">Pour</label>
+                <label class="font-medium mb-1">Pour <span class="text-red-500">*</span></label>
                 <input pInputText  formControlName="p_pour" placeholder="Pour" />
+                <small class="text-red-500 text-xs"
+                    *ngIf="salesForm.get('p_pour')?.touched && salesForm.get('p_pour')?.errors?.['required']">
+                    Pour is required
+                </small>
             </div>
         </div>
     </form>

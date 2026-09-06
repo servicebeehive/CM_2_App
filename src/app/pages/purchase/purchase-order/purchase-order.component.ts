@@ -10,7 +10,6 @@ import { DialogModule } from 'primeng/dialog';
 import { SelectModule } from 'primeng/select';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
-import { RadioButtonModule } from 'primeng/radiobutton';
 import { TableModule } from 'primeng/table';
 import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -19,9 +18,11 @@ import { AuthService } from '@/core/services/auth.service';
 import { FileUploadModule } from 'primeng/fileupload';
 import { TabsModule } from 'primeng/tabs';
 import { MultiSelectModule } from 'primeng/multiselect';
+import { ToastModule } from 'primeng/toast';
 import { WorkService } from '@/core/services/work.service';
 import { ShareService } from '@/core/services/shared.service';
-import { PurchaseDraftPayload, PurchaseOrderItem, PurchaseOrderPayload } from '@/core/models/authmodel/work.model';
+import { GmailVendorRow, PurchaseDraftPayload, PurchaseOrderItem, PurchaseOrderPayload } from '@/core/models/authmodel/work.model';
+import { forkJoin } from 'rxjs';
 
 export interface PaymentEntry {
     date: Date;
@@ -46,16 +47,16 @@ export interface PaymentEntry {
         SelectModule,
         InputNumberModule,
         InputTextModule,
-        RadioButtonModule,
         TableModule,
         TooltipModule,
         TabsModule,
         FileUploadModule,
-        MultiSelectModule
+        MultiSelectModule,
+        ToastModule
     ],
     templateUrl: './purchase-order.component.html',
     styleUrl: './purchase-order.component.scss',
-    providers: [ConfirmationService, DatePipe]
+    providers: [ConfirmationService, DatePipe, MessageService]
 })
 export class PurchaseOrderComponent implements OnInit {
     poForm!: FormGroup;
@@ -88,12 +89,10 @@ export class PurchaseOrderComponent implements OnInit {
 
     showVendorDialog = false;
     showMrDialog = false;
-    vendorDialogItem: AbstractControl | null = null;
-    vendorDialogIndex: number | null = null;
-    vendorFilter: 'lowest' | 'fastest' | 'preferred' = 'preferred';
+    showPoMailDialog = false;
     allVendorList:any[] = [];
-    filteredVendorList: any[] = [];
-    selectedVendor: any | null = null;
+    isLoadingVendorDialog = false;
+    vendorDialogRows: { category: string; item: string; vendorId: number | null; rate: number | null }[] = [];
     performaFileName: string = '';
     
     companyId = '';
@@ -104,6 +103,7 @@ export class PurchaseOrderComponent implements OnInit {
     includedMrList: any[] = [];
     paymentHistory: PaymentEntry[] = [];
     totalPaid = 0;
+    poMailVendorRows: GmailVendorRow[] = [];
 
     newPayment: Partial<PaymentEntry> = {
         date: new Date(),
@@ -138,6 +138,7 @@ export class PurchaseOrderComponent implements OnInit {
         this.poForm = this.fb.group(
             {
                 p_pono: [null],
+                status: [''],
                 p_podate: [this.today, Validators.required],
                 p_project: [null, Validators.required],
                 p_vendor: [{ value: [], disabled: true }],
@@ -415,7 +416,7 @@ onPOChange(event: any): void {
     const payload = {
         p_returntype: 'PODETAILS',
         p_returnvalue: po['po_no'],
-        p_username: this.userId
+        p_username: this.companyId
     };
 
     this.inventoryService.Getreturndropdowndetails(payload).subscribe({
@@ -437,7 +438,7 @@ onPODraftChange(event: any): void {
     const payload = {
         p_returntype: 'PODRAFTDETAILS',
         p_returnvalue: draft['draft_no'],
-        p_username: this.userId
+        p_username: this.companyId
     };
 
     this.inventoryService.Getreturndropdowndetails(payload).subscribe({
@@ -456,8 +457,8 @@ private applyPORowsToForm(rows: any[], isDraft: boolean): void {
 
     this.poForm.patchValue({
         p_pono: isDraft ? header.draft_id : header.po_id,
-        p_podate: header.po_date ? new Date(header.po_date) : null,
         p_project: header.project_id ?? null,
+        status: header.status ?? '',
         p_deliverylocation: header.delivery_location ?? '',
         p_deliverydate: (header.delivery_date) ? new Date(header.delivery_date) : null,
         p_paymentterms: header.payment_terms ?? null,
@@ -475,6 +476,7 @@ private mapPODetailRowsToFormArray(rows: any[], headerVendorId: number | null): 
     const vendor = this.vendorMasterOptions.find((v) => v.supplierid === headerVendorId);
 
     rows.forEach((row) => {
+        const requiredQty = row.required_qty ?? 0;
         this.poItemArray.push(
             this.fb.group({
                 department: [''],
@@ -485,16 +487,16 @@ private mapPODetailRowsToFormArray(rows: any[], headerVendorId: number | null): 
                 forecastQty: [row.forecast_qty ?? 0],
                 availableStock: [row.available_stock ?? 0],
                 pendingPOQty: [row.pending_po_qty ?? 0],
-                requiredQty: [row.required_qty ?? 0],
-                poQty: [row.po_qty ?? null],
-                vendorName: [vendor?.suppliername ?? ''],
+                requiredQty: [requiredQty],
+                poQty: [row.po_qty ?? requiredQty, [Validators.max(requiredQty)]],
+                vendorName: [vendor?.suppliername ?? row.suppliername ?? ''],
                 rate: [row.rate ?? null],
                 amount: [row.amount ?? null],
-                tax_id: [row.tax_id ?? '18'],
-                taxPercent: [Number(row.tax_percent ?? 18)],
+                tax_id: [row.tax_id ?? 0],
+                taxPercent: [Number(row.gsttax ?? 0)],
                 totalAmount: [row.total_amount ?? row.totalAmount ?? row.amount ?? null],
                 remarks: [row.detail_remarks ?? ''],
-
+                status: [row.status ?? ''],
                 mf_id: [row.mf_id ?? null],
                 mfdetailid: [row.mfdetailid ?? null],
                 department_id: [row.department_id ?? null],
@@ -550,7 +552,7 @@ removePoItem(index: number): void {
             p_delivery_location: formVal.p_deliverylocation || '',
             p_payment_terms: formVal.p_paymentterms,
             p_remarks: formVal.p_remarks,
-            p_items_json: formVal.p_items,
+            p_items_json: this.buildItemsPayload(),
             p_loginuser: this.authService.isLogIntType()?.userid.toString()
         };
 
@@ -568,6 +570,7 @@ removePoItem(index: number): void {
 
                 this.poForm.patchValue({
                     p_pono: pos[0]?.po_id ?? null,
+                    status: data.tran_status
                 });
 
                 this.onPODraftOptions = [...this.onPODraftOptions, ...pos];
@@ -579,6 +582,7 @@ removePoItem(index: number): void {
                     detail: data.msg,
                     life: 2500
                 });
+                // this.sendMailToVendors(pos[0]?.po_id);
             } else {
                 this.messageService.add({
                     severity: 'error',
@@ -610,13 +614,21 @@ removePoItem(index: number): void {
 
     savePerforma(): void {
         const val = this.poForm.getRawValue();
-        // Replace with your API call:
-        // this.inventoryService.savePerforma({ ...val }).subscribe(...)
-        this.messageService.add({
-            severity: 'success',
-            summary: 'Saved',
-            detail: 'Performa details saved.',
-            life: 2500
+        const payload = {
+            p_operation: 'INSERT',
+            p_performa_id: null,
+            p_po_id: this.poForm.get('p_pono')?.value,
+            p_invoice_no: val.p_performainvoiceno || null,
+            p_invoice_date: this.datePipe.transform(val.p_performadate, 'yyyy-MM-dd'),
+            p_amount: this.grandTotal,
+            p_document_path: val.p_performafile?.name || null,
+            p_remarks: val.p_remarks || null,
+            p_loginuser: Number(this.userId)
+        };
+
+        this.workService.upsertPOPerforma(payload).subscribe({
+            next: (res: any) => this.showSaveResult(res, 'Performa details saved.'),
+            error: (err) => this.showSaveError(err, 'Performa save failed.')
         });
     }
 
@@ -626,12 +638,26 @@ removePoItem(index: number): void {
     }
 
     saveInvoice(): void {
-        // Replace with your API call
-        this.messageService.add({
-            severity: 'success',
-            summary: 'Saved',
-            detail: 'Invoice details saved.',
-            life: 2500
+        const val = this.poForm.getRawValue();
+        const payload = {
+            p_operation: 'INSERT',
+            p_invoice_id: null,
+            p_po_id: this.poForm.get('p_pono')?.value,
+            p_invoice_no: val.p_invoiceno || null,
+            p_invoice_date: this.datePipe.transform(val.p_invoicedate, 'yyyy-MM-dd'),
+            p_amount: Number(val.p_invoicepayment || 0),
+            p_freight: Number(val.p_freight || 0),
+            p_loading_charge: Number(val.p_loadingcharge || 0),
+            p_gst_amount: Number(val.p_gst || 0),
+            p_invoice_transit: val.p_transit || null,
+            p_document_path: null,
+            p_remarks: val.p_remarks || null,
+            p_loginuser: Number(this.userId)
+        };
+
+        this.workService.upsertPOInvoice(payload).subscribe({
+            next: (res: any) => this.showSaveResult(res, 'Invoice details saved.'),
+            error: (err) => this.showSaveError(err, 'Invoice save failed.')
         });
     }
 
@@ -659,12 +685,53 @@ removePoItem(index: number): void {
     }
 
     savePayment(): void {
-        // Replace with your API call
+        const poId = this.poForm.get('p_pono')?.value;
+        const payments = this.paymentHistory.map((payment) => this.workService.upsertPOPayment({
+            p_operation: 'INSERT',
+            p_payment_id: null,
+            p_po_id: poId,
+            p_payment_date: this.datePipe.transform(payment.date, 'yyyy-MM-dd'),
+            p_amount: Number(payment.amount || 0),
+            p_payment_mode: payment.mode || null,
+            p_transaction_no: payment.referenceNo || null,
+            p_bank_name: null,
+            p_remarks: this.poForm.get('p_remarks')?.value || null,
+            p_loginuser: Number(this.userId)
+        }));
+
+        if (!payments.length) {
+            return;
+        }
+
+        forkJoin(payments).subscribe({
+            next: (responses: any[]) => {
+                const failed = responses.find((res) => res?.data?.success === false);
+                if (failed) {
+                    this.showSaveResult(failed, 'Payment save failed.');
+                    return;
+                }
+                this.messageService.add({ severity: 'success', summary: 'Saved', detail: 'Payment details saved.', life: 2500 });
+            },
+            error: (err) => this.showSaveError(err, 'Payment save failed.')
+        });
+    }
+
+    private showSaveResult(res: any, successMessage: string): void {
+        const success = res?.data?.success !== false;
         this.messageService.add({
-            severity: 'success',
-            summary: 'Saved',
-            detail: 'Payment details saved.',
+            severity: success ? 'success' : 'error',
+            summary: success ? 'Saved' : 'Save failed',
+            detail: res?.data?.msg || (success ? successMessage : 'The server could not save the details.'),
             life: 2500
+        });
+    }
+
+    private showSaveError(err: any, message: string): void {
+        this.messageService.add({
+            severity: 'error',
+            summary: 'Save failed',
+            detail: err?.error?.error ?? err?.message ?? message,
+            life: 3000
         });
     }
 
@@ -749,6 +816,9 @@ submitDraft(): void {
     });
 }
 
+cancelPO(): void {}
+forceClose(): void {}
+
     // ── Reset ──────────────────────────────────────────────────────────────────
     onReset(): void {
         this.poForm.reset({
@@ -803,7 +873,7 @@ submitDraft(): void {
     this.poItemArray.clear();
     this.vendorOptionsByRow = [];
     items.forEach((it) => {
-        console.log(it)
+        const requiredQty = (it.forecast_qty ?? 0) - (it.pending_qty ?? 0) - (it.available_stock ?? 0);
         this.poItemArray.push(
             this.fb.group({
                 department: [it.department_name ?? ''],
@@ -814,8 +884,8 @@ submitDraft(): void {
                 forecastQty: [it.forecast_qty ?? 0],
                 availableStock: [it.available_stock ?? 0],
                 pendingPOQty: [it.pending_qty ?? 0],
-                requiredQty: [(it.forecast_qty ?? 0) - (it.pending_qty ?? 0) - (it.available_stock ?? 0)],
-                poQty: [null],
+                requiredQty: [requiredQty],
+                poQty: [requiredQty, [Validators.max(requiredQty)]],
                 vendorName: [it.suppliername],
                 rate: [null],
                 amount: [null],
@@ -842,6 +912,7 @@ submitDraft(): void {
     this.poItemArray.clear();
     this.vendorOptionsByRow = [];
     items.forEach((it) => {
+        const requiredQty = it.required_qty ?? 0;
         this.poItemArray.push(
             this.fb.group({
                 department: [''],
@@ -849,16 +920,16 @@ submitDraft(): void {
                 category: [it.item_category ?? ''],
                 item: [it.item_description ?? ''],
                 uom: [it.uom ?? ''],
-                forecastQty: [it.required_qty ?? 0],
+                forecastQty: [it.buffer_stock ?? 0],
                 availableStock: [it.available_stock ?? 0],
                 pendingPOQty: [it.pending_qty ?? 0],
-                requiredQty: [it.required_qty_net ?? 0],
-                poQty: [null],
+                requiredQty: [requiredQty],
+                poQty: [requiredQty, [Validators.max(requiredQty)]],
                 vendorName: [''],
                 rate: [null],
                 amount: [null],
                 tax_id: [''],
-                taxPercent: [''],
+                taxPercent: [it.gsttax ?? ''],
                 totalAmount: [null],
                 remarks: [''],
 
@@ -876,37 +947,8 @@ submitDraft(): void {
     this.recalcGrandTotal();
 }
 
-    onVendorDropdownChange(index: number, vendorId: number | null): void {
-        const row = this.poItemArray.at(index);
-
-        if (!vendorId) {
-            row.patchValue(
-                {
-                    vendorName: null,
-                    vendor_id: null
-                },
-                { emitEvent: false }
-            );
-            this.syncSelectedVendors();
-            return;
-        }
-
-        const vendor = (this.vendorOptionsByRow[index] ?? this.vendorMasterOptions).find((v) => v.supplierid === vendorId);
-        row.patchValue(
-            {
-                vendorName: vendor?.suppliername ?? null,
-                vendor_id: vendorId,
-                rate: vendor?.lastrate ?? row.get('rate')?.value ?? null
-            },
-            { emitEvent: false }
-        );
-
-        this.recalcRow(index);
-        this.syncSelectedVendors();
-    }
-
     getVendorOptions(index: number): any[] {
-        return this.vendorOptionsByRow[index] ?? [];
+        return this.vendorOptionsByRow[index] ?? this.vendorMasterOptions;
     }
 
     onPoQtyChange(i: number): void {
@@ -915,6 +957,22 @@ submitDraft(): void {
 
     onRateChange(i: number): void {
         this.recalcRow(i);
+    }
+
+     get statusColor(): string {
+        const status = (this.poForm.get('status')?.value || '').toUpperCase();
+        switch (status) {
+            case 'APPROVED':
+                return 'green';
+            case 'SUBMIT':
+                return 'blue';
+            case 'REJECTED':
+                return 'red';
+            case 'DRAFT':
+                return 'grey';
+            default:
+                return 'grey';
+        }
     }
 
     private recalcRow(i: number): void {
@@ -941,82 +999,204 @@ submitDraft(): void {
     }
 
     // ──────────────────────────────────────────────────────────────────────────
-    // VENDOR COMPARISON DIALOG
+    // VENDOR ASSIGNMENT DIALOG
     // ──────────────────────────────────────────────────────────────────────────
 
-    openVendorDialog(index: number = 0): void {
-        if (!this.poItemArray.at(index)) return;
-
-        this.vendorDialogIndex = index;
-        this.vendorDialogItem = this.poItemArray.at(index);
-        this.vendorFilter = 'preferred';
-        this.selectedVendor = null;
-
+    openVendorDialog(): void {
+        if (this.poItemArray.length === 0) return;
+         if(!this.poForm.get('p_project')?.value) {
+            this.messageService.add({severity:'warn', summary:'Warning', detail:'Please select a project before opening the vendor dialog.'});
+            return;
+         };
         this.showVendorDialog = true;
-        this.fetchVendorsForFilter();
+        this.isLoadingVendorDialog = true;
+        const payload = this.createReturnPayload('VENDORSELECTION', this.poForm.get('p_project')?.value.toString(), this.authService.isLogIntType()?.companyid.toString());
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res: any) => {
+                this.allVendorList = Array.isArray(res.data) ? res.data : [];
+                this.vendorOptionsByRow = this.poItemArray.controls.map((row) => {
+                    const categoryId = row.get('item_category_id')?.value;
+                    const itemId = row.get('item_id')?.value;
+                    return this.allVendorList.filter((vendor) => vendor.item_category_id === categoryId && vendor.item_id === itemId);
+                });
+                this.buildVendorDialogRows();
+                this.isLoadingVendorDialog = false;
+            },
+            error: (err: any) => {
+                console.error('Error fetching vendor dialog item:', err);
+                this.allVendorList = [];
+                this.vendorOptionsByRow = [];
+                this.isLoadingVendorDialog = false;
+            }
+        });
     }
 
-    onVendorFilterChange(filter: 'lowest' | 'fastest' | 'preferred'): void {
-    this.vendorFilter = filter;
-    if (this.vendorDialogItem) {
-        this.fetchVendorsForFilter();
+    private buildVendorDialogRows(): void {
+        this.vendorDialogRows = this.poItemArray.controls.map((row, index) => {
+            const preferredVendor = this.vendorOptionsByRow[index].find((vendor) => vendor.preferred_vc === 'Y');
+            return {
+                category: row.get('category')?.value ?? '',
+                item: row.get('item')?.value ?? '',
+                vendorId: preferredVendor?.supplierid ?? row.get('vendor_id')?.value ?? null,
+                rate: this.getVendorRate(preferredVendor)
+            };
+        });
     }
+
+    onVendorDialogVendorChange(index: number, vendorId: number | null): void {
+        const dialogRow = this.vendorDialogRows[index];
+        const vendor = this.getVendorOptions(index).find((option) => option.supplierid === vendorId);
+        dialogRow.vendorId = vendorId;
+        dialogRow.rate = this.getVendorRate(vendor) ?? dialogRow.rate;
+    }
+
+    submitVendorAssignments(): void {
+        this.vendorDialogRows.forEach((dialogRow, index) => {
+            const vendor = this.getVendorOptions(index).find((option) => option.supplierid === dialogRow.vendorId);
+            const row = this.poItemArray.at(index);
+            row.patchValue(
+                {
+                    vendorName: vendor?.suppliername ?? null,
+                    vendor_id: dialogRow.vendorId,
+                    rate: dialogRow.rate
+                },
+                { emitEvent: false }
+            );
+            this.recalcRow(index);
+        });
+        this.syncSelectedVendors();
+        this.showVendorDialog = false;
+    }
+
+  private getVendorRate(vendor: any): number | null {
+    if (!vendor) return null;
+    const rate = vendor.item_rate ??  null;
+    return rate == null ? null : Number(rate);
 }
 
-    private fetchVendorsForFilter():void{
-        const categoryId = this.vendorDialogItem?.get('item_category_id')?.value;
-        if (categoryId == null) {
-            this.allVendorList = [];
-            this.filteredVendorList = [];
+    openVendorMail(): void {
+        const poId = this.poForm.get('p_pono')?.value;
+        if (!poId) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Select PO No',
+                detail: 'Select a purchase order before opening mail.',
+                life: 2500
+            });
             return;
         }
 
         const payload = {
-            p_returntype: 'VENDORALL',
-            p_returnvalue: categoryId.toString(),
-            p_username: this.userId
+            p_returntype: 'GETPOMAIL',
+            p_returnvalue: String(poId),
+            p_username: ''
         };
 
-        this.inventoryService.getdropdowndetails(payload).subscribe({
-            next:(res:any)=>{
-                console.log(res.data)
-                this.allVendorList = res.data ?? [];
-                this.filteredVendorList = [...this.allVendorList];
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res: any) => {
+                const rows: any[] = Array.isArray(res.data) ? res.data : [];
+                this.poMailVendorRows = rows.map((row: any) => ({
+                    selected: false,
+                    vendor: row.suppliername,
+                    category: row.categoryname,
+                    count: Number(row.attempt_count ?? 0),
+                    vendorId: row.vendorid ?? row.supplierid ?? null,
+                    email: row.vendor_email ?? row.supplieremail ?? null,
+                    ccEmail: row.cc_email ?? null,
+                    bccEmail: row.bcc_email ?? null,
+                    subject: row.mail_subject ?? '',
+                    body1: row.mail_body1 ?? '',
+                    body2: row.mail_body2 ?? '',
+                    attachmentPath: row.attachment_path ?? null,
+                    mailLogId: row.mail_log_id ?? null
+                }));
+                this.showPoMailDialog = true;
             },
-             error: (err: any) => {
-            console.error('Error fetching vendor list:', err);
-            this.allVendorList = [];
-            this.filteredVendorList = [];
-        }
+            error: () => {
+                this.messageService.add({ severity: 'error', summary: 'Mail data load failed', detail: 'Unable to load vendors for this purchase order.', life: 2500 });
+            }
         });
     }
 
-    confirmVendor(): void {
-        if (!this.selectedVendor || this.vendorDialogIndex === null) return;
+    private sendMailToVendors(poId: number | null | undefined): void {
+        if (!poId) return;
 
-        const v = this.selectedVendor as any;
-        const row = this.poItemArray.at(this.vendorDialogIndex);
-        const qty = Number(row.get('poQty')?.value || 0);
-        const vendorId = v.supplierid ?? v.vendorid ?? v.vendor_id ?? null;
-        const vendorName = v.suppliername ?? v.vendorname ?? v.vendor_name ?? '';
-        const rate = v.lastrate ?? v.last_rate ?? 0;
+        const payload = {
+            p_returntype: 'GETPOMAIL',
+            p_returnvalue: String(poId),
+            p_username: ''
+        };
 
-        row.patchValue({
-            vendorName,
-            vendor_id: vendorId,
-            rate,
-            amount: qty ? +(qty * rate).toFixed(2) : null
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res: any) => {
+                const rows: any[] = Array.isArray(res.data) ? res.data : [];
+                const readyRows = rows.filter((row) => row.vendor_email ?? row.supplieremail);
+                const missingEmail = rows.filter((row) => !(row.vendor_email ?? row.supplieremail));
+
+                if (!readyRows.length) {
+                    this.messageService.add({ severity: 'warn', summary: 'No vendor emails found', life: 2500 });
+                    return;
+                }
+
+                this.workService.sendRfqMail({
+                    p_poid: poId,
+                    p_username: this.userId,
+                    p_mails: readyRows.map((row) => ({
+                        vendorId: row.vendorid ?? row.supplierid ?? null,
+                        email: row.vendor_email ?? row.supplieremail,
+                        ccEmail: row.cc_email ?? null,
+                        bccEmail: row.bcc_email ?? null,
+                        subject: row.mail_subject ?? '',
+                        body: `${row.mail_body1 ?? ''}${row.mail_body2 ?? ''}`,
+                        attachmentPath: row.attachment_path ?? null,
+                        mailLogId: row.mail_log_id ?? null
+                    }))
+                }).subscribe({
+                    next: () => {
+                        this.messageService.add({ severity: 'success', summary: 'PO emails sent', detail: `Purchase order shared with ${readyRows.length} vendor(s).`, life: 2500 });
+                        if (missingEmail.length) {
+                            this.messageService.add({ severity: 'warn', summary: 'Some vendors skipped', detail: `${missingEmail.map((row) => row.suppliername).join(', ')} has no email on file.`, life: 3000 });
+                        }
+                    },
+                    error: (err) => this.messageService.add({ severity: 'error', summary: 'Mail send failed', detail: err.message, life: 2500 })
+                });
+            },
+            error: () => this.messageService.add({ severity: 'error', summary: 'Vendor mail data load failed', life: 2500 })
         });
+    }
 
-        this.recalcGrandTotal();
-        this.syncSelectedVendors();
-        this.showVendorDialog = false;
+    sendVendorPo(): void {
+        const selectedRows = this.poMailVendorRows.filter((row) => row.selected);
+        if (!selectedRows.length) {
+            this.messageService.add({ severity: 'warn', summary: 'Select vendor', detail: 'Select at least one vendor before sending the PO email.', life: 2500 });
+            return;
+        }
 
-        this.messageService.add({
-            severity: 'success',
-            summary: 'Vendor Selected',
-            detail: `${vendorName} assigned to ${row.get('item')?.value}`,
-            life: 2000
+        const missingEmail = selectedRows.filter((row) => !row.email);
+        if (missingEmail.length) {
+            this.messageService.add({ severity: 'warn', summary: 'Missing email', detail: `${missingEmail.map((row) => row.vendor).join(', ')} has no email on file.`, life: 3000 });
+            return;
+        }
+
+        this.workService.sendRfqMail({
+            p_poid: this.poForm.get('p_pono')?.value,
+            p_username: this.userId,
+            p_mails: selectedRows.map((row) => ({
+                vendorId: row.vendorId,
+                email: row.email,
+                ccEmail: row.ccEmail,
+                bccEmail: row.bccEmail,
+                subject: row.subject,
+                body: `${row.body1}${row.body2}`,
+                attachmentPath: row.attachmentPath,
+                mailLogId: row.mailLogId
+            }))
+        }).subscribe({
+            next: () => {
+                this.messageService.add({ severity: 'success', summary: 'PO email sent', detail: `Purchase order shared with ${selectedRows.length} vendor(s).`, life: 2500 });
+                this.showPoMailDialog = false;
+            },
+            error: (err) => this.messageService.add({ severity: 'error', summary: 'Send failed', detail: err.message, life: 2500 })
         });
     }
 
@@ -1095,135 +1275,6 @@ submitDraft(): void {
             queryParams: { mfNo: row.mr_no, mfId: row.mf_id ?? null, fromPurchaseOrderView: true }
         });
     }
-
-    /** Called after every vendor confirmation.
-     *  Collects unique vendor names from all item rows,
-     *  generates one PO No per vendor, updates the dropdown + multiselect. */
-    // private regenerateVendorPONos(): void {
-    //     // 1. Collect distinct vendor names from item rows
-    //     const uniqueVendors = [...new Set(this.poItemArray.controls.map((row) => row.get('vendorName')?.value as string).filter((name) => !!name))];
-
-    //     // 2. Generate one PO No per vendor (preserve existing mapping if already generated)
-    //     const existingMap = new Map(this.ponoOptions.map((p) => [p.label, p.value]));
-    //     this.ponoOptions = uniqueVendors.map((vendorName) => {
-    //         const existing = existingMap.get(vendorName);
-    //         return {
-    //             label: `${vendorName}`, // display: "Vendor A — PO-00125"
-    //             value: existing ?? this.generatePONo()
-    //         };
-    //     });
-
-    //     // Better label with PO No visible
-    //     this.ponoOptions = uniqueVendors.map((vendorName) => {
-    //         const existing = existingMap.get(vendorName);
-    //         const poNo = existing ?? this.generatePONo();
-    //         existingMap.set(vendorName, poNo);
-    //         return { label: `${poNo}  (${vendorName})`, value: poNo };
-    //     });
-
-    //     // 3. Update the vendor multiselect display
-    //     this.selectedVendorNames = uniqueVendors;
-    //     this.poForm.get('p_vendor')?.setValue(uniqueVendors);
-
-    //     // 4. Auto-select first PO if only one vendor
-    //     if (this.ponoOptions.length === 1) {
-    //         this.poForm.patchValue({ p_pono: this.ponoOptions[0].value });
-    //     }
-    // }
-
-    // ── Utility ────────────────────────────────────────────────────────────────
-    // private generatePONo(): string {
-    //     this.poCounter++;
-    //     return `PO-${String(this.poCounter).padStart(5, '0')}`;
-    // }
-
-    // duplicatePO(): void {
-    //     const raw = this.poForm.getRawValue();
-
-    //     // 1. Snapshot current items
-    //     const itemsSnapshot: MFItem[] = this.poItemArray.controls.map((row) => ({
-    //         category: row.get('category')?.value,
-    //         item: row.get('item')?.value,
-    //         uom: row.get('uom')?.value,
-    //         forecastQty: row.get('forecastQty')?.value,
-    //         availableStock: row.get('availableStock')?.value,
-    //         pendingPOQty: row.get('pendingPOQty')?.value,
-    //         requiredQty: row.get('requiredQty')?.value
-    //     }));
-
-    //     // 2. Snapshot vendor assignments (poQty, vendorName, rate, amount)
-    //     const vendorSnapshot = this.poItemArray.controls.map((row) => ({
-    //         poQty: row.get('poQty')?.value,
-    //         vendorName: row.get('vendorName')?.value,
-    //         rate: row.get('rate')?.value,
-    //         amount: row.get('amount')?.value
-    //     }));
-
-    //     // 3. Snapshot MF selections & vendor PO nos
-    //     const mfSnapshot = [...this.selectedMFNos];
-    //     const mfSelSnapshot = [...this.mfSelections];
-    //     const vendorNamesSnap = [...this.selectedVendorNames];
-
-    //     // 4. Reset form state
-    //     this.poForm.reset();
-    //     this.poItemArray.clear();
-    //     this.submitted = false;
-    //     this.showForecastError = false;
-    //     this.grandTotal = 0;
-    //     this.ponoOptions = [];
-    //     this.selectedVendorNames = [];
-    //     this.paymentHistory = [];
-    //     this.totalPaid = 0;
-    //     this.newPayment = { date: new Date(), amount: 0, mode: '', referenceNo: '' };
-
-    //     // 5. Patch header fields — clear PO No, set date to today
-    //     this.poForm.patchValue({
-    //         p_pono: null, // cleared
-    //         p_podate: new Date(), // today
-    //         p_project: raw.p_project,
-    //         p_deliverylocation: raw.p_deliverylocation,
-    //         p_deliverydate: raw.p_deliverydate ? new Date(raw.p_deliverydate) : null,
-    //         p_paymentterms: raw.p_paymentterms,
-    //         p_remarks: raw.p_remarks
-    //     });
-
-    //     // 6. Restore MF chips
-    //     this.selectedMFNos = mfSnapshot;
-    //     this.mfSelections = mfSelSnapshot;
-
-    //     // 7. Rebuild FormArray with items + vendor assignments
-    //     itemsSnapshot.forEach((it, idx) => {
-    //         const v = vendorSnapshot[idx];
-    //         this.poItemArray.push(
-    //             this.fb.group({
-    //                 category: [it.category],
-    //                 item: [it.item],
-    //                 uom: [it.uom],
-    //                 forecastQty: [it.forecastQty],
-    //                 availableStock: [it.availableStock],
-    //                 pendingPOQty: [it.pendingPOQty],
-    //                 requiredQty: [it.requiredQty],
-    //                 poQty: [v.poQty],
-    //                 vendorName: [v.vendorName],
-    //                 rate: [v.rate],
-    //                 amount: [v.amount]
-    //             })
-    //         );
-    //     });
-
-    //     // 8. Restore vendor state & regenerate PO Nos fresh
-    //     this.selectedVendorNames = vendorNamesSnap;
-    //     this.poForm.get('p_vendor')?.setValue(vendorNamesSnap);
-    //     this.regenerateVendorPONos();
-    //     this.recalcGrandTotal();
-
-    //     this.messageService.add({
-    //         severity: 'info',
-    //         summary: 'Duplicated',
-    //         detail: 'PO duplicated — PO No. cleared and date set to today. Ready to submit.',
-    //         life: 3000
-    //     });
-    // }
 
     addAdvancePayment(): void {
         const total = Number(this.poForm.get('p_totalpayment')?.value || 0);

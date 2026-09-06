@@ -101,8 +101,8 @@ export class MaterialRequisitionComponent {
             p_mrdate: [{ value: this.today, disabled: true }],
             p_project: [null, Validators.required],
             p_department: [null],
-            p_work: [null, Validators.required],
-            p_level: [null, Validators.required],
+            p_tower: [null],
+            p_level: [null],
             p_pour: [null],
             p_remarks: [''],
             p_itemdata: [null],
@@ -161,6 +161,10 @@ export class MaterialRequisitionComponent {
                 return 'red';
             case 'DRAFT':
                 return 'grey';
+            case 'SENDBACK':
+                return 'orange';
+            case 'APPROVAL PENDING':
+                return 'orange';
             default:
                 return 'grey';
         }
@@ -309,7 +313,7 @@ export class MaterialRequisitionComponent {
                 this.buildTowerOptions();
                 this.levelOptions = [];
                 this.pourOptions = [];
-                this.forecastForm.patchValue({ p_work: null, p_level: null, p_pour: null }, { emitEvent: false });
+                this.forecastForm.patchValue({ p_tower: null, p_level: null, p_pour: null }, { emitEvent: false });
             },
             error: (err) => console.error(err)
         });
@@ -452,7 +456,7 @@ export class MaterialRequisitionComponent {
     }
 
     onLevelChange(event: any): void {
-        const towerId = this.forecastForm.get('p_work')?.value;
+        const towerId = this.forecastForm.get('p_tower')?.value;
         const levelName = event.value;
         this.pourOptions = this.workList
             .filter((w) => w.tower_block_id === towerId && w.level_name === levelName)
@@ -510,7 +514,7 @@ export class MaterialRequisitionComponent {
                             p_draft_requisitionno: header.mf_id,
                             p_project: header.project_id,
                             p_department: header.department_id,
-                            p_work: header.tower_block_id,
+                            p_tower: header.tower_block_id,
                             p_level: header.level_name,
                             p_pour: resolvedPour,
                             p_requestedby: header.requested_by,
@@ -570,7 +574,7 @@ export class MaterialRequisitionComponent {
     }
 
     get isReadOnlyView(): boolean {
-        return this.forecastForm.get('status')?.value !== 'DRAFT' && this.forecastForm.get('status')?.value !== '';
+        return this.forecastForm.get('status')?.value !== 'DRAFT' && this.forecastForm.get('status')?.value !== '' && this.forecastForm.get('status')?.value !== 'SENDBACK';
     }
     
    createItemRow(data?: any): FormGroup {
@@ -674,7 +678,7 @@ export class MaterialRequisitionComponent {
     }
 
     isSubmitDisabled(): boolean {
-        return this.itemArray.length === 0 || !!this.forecastForm.get('p_project')?.invalid || !!this.forecastForm.get('p_work')?.invalid || !!this.forecastForm.get('p_level')?.invalid;
+        return this.itemArray.length === 0 || !!this.forecastForm.get('p_project')?.invalid || !!this.forecastForm.get('p_tower')?.invalid || !!this.forecastForm.get('p_level')?.invalid;
     }
 
     private buildPayload(action: 'DRAFT' | 'SUBMIT', operation?: 'INSERT' | 'EDIT' | 'DELETE'): MaterialRequisitionPayload {
@@ -685,7 +689,7 @@ export class MaterialRequisitionComponent {
             p_mf_id: v.p_mf_id ?? 0,
             p_project_id: v.p_project,
             p_department_id: v.p_department,
-            p_tower_block_id: v.p_work,
+            p_tower_block_id: v.p_tower,
             p_level_name: v.p_level,
             p_forecast_month: null,
             p_pour_name: v.p_pour,
@@ -728,7 +732,7 @@ export class MaterialRequisitionComponent {
                     this.forecastForm.patchValue({
                         p_mf_id: res.data.mf_id,
                         p_draft_requisitionno: res.data.mf_id,
-                        status: 'Draft'
+                        status: res.data.tran_status
                     });
                 }
             },
@@ -812,7 +816,7 @@ export class MaterialRequisitionComponent {
                             this.forecastForm.patchValue({
                                 p_mf_id: res.data.mf_id,
                                 p_requisitionno: res.data.mf_id,
-                                status: 'Submitted'
+                                status: res.data.tran_status
                             });
                         } else {
                             this.messageService.add({ severity: 'error', summary: res.data.message, life: 2000 });

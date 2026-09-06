@@ -36,8 +36,8 @@
                     </ng-template>
                 </p-dropdown>
 
-                <button pButton type="submit" label="Submit" class="p-button-primary" *ngIf="!isReadOnlyView" [disabled]="forecastForm.invalid || isSubmitDisabled() || isFromRfqView"></button>
-                <button pButton type="button" label="Draft" class="p-button-warning" *ngIf="!isReadOnlyView" (click)="submitDraft()" [disabled]="forecastForm.invalid || isSubmitDisabled() || isFromRfqView"></button>
+                <button pButton type="submit" label="Submit" class="p-button-primary" [disabled]="isReadOnlyView || forecastForm.invalid || isSubmitDisabled() || isFromRfqView"></button>
+                <button pButton type="button" label="Draft" class="p-button-warning" (click)="submitDraft()" [disabled]="isReadOnlyView || forecastForm.invalid || isSubmitDisabled() || isFromRfqView"></button>
                 <button pButton type="button" label="Reset" class="p-button-secondary" (click)="onReset()"></button>
                 <button *ngIf="showRfqBackButton" pButton type="button" label="Back" icon="pi pi-arrow-left" class="p-button-outlined" (click)="returnToSource()"></button>
             </div>
@@ -98,12 +98,12 @@
                 </div>
 
                 <div class="flex flex-col">
-                    <label class="font-medium mb-1">Tower/Block <span class="text-red-500">*</span></label>
-                    <p-dropdown [options]="towerOptions" optionLabel="tower_name" optionValue="tower_id" placeholder="Tower / Block" formControlName="p_work" [filter]="true" [showClear]="true" (onChange)="onTowerChange($event)"></p-dropdown>
+                    <label class="font-medium mb-1">Tower/Block</label>
+                    <p-dropdown [options]="towerOptions" optionLabel="tower_name" optionValue="tower_id" placeholder="Tower / Block" formControlName="p_tower" [filter]="true" [showClear]="true" (onChange)="onTowerChange($event)"></p-dropdown>
                 </div>
 
                 <div class="flex flex-col">
-                    <label class="font-medium mb-1">Level<span class="text-red-500">*</span></label>
+                    <label class="font-medium mb-1">Level</label>
                     <p-dropdown [options]="levelOptions" optionLabel="label" optionValue="value" placeholder="Level" formControlName="p_level" [filter]="true" [showClear]="true" (onChange)="onLevelChange($event)"></p-dropdown>
                 </div>
 
