@@ -99,22 +99,12 @@
                     </div>
 
                     <div class="flex flex-col">
-                        <label class="font-medium mb-1">Total PO Amount (INR)</label>
-                        <input pInputText formControlName="p_totalpoamount" placeholder="Auto from PO" class="surface-100 text-500 text-right" [readonly]="true" />
-                    </div>
-
-                    <div class="flex flex-col">
-                        <label class="font-medium mb-1">Payment Terms</label>
-                        <input pInputText formControlName="p_paymentterms" placeholder="Payment Terms" />
-                    </div>
-
-                    <div class="flex flex-col">
                         <label class="font-medium mb-1">Contact Person</label>
                         <input pInputText formControlName="p_contactperson" placeholder="Contact Person" />
                     </div>
 
                     <div class="flex flex-col">
-                        <label class="font-medium mb-1">Contact No.</label>
+                        <label class="font-medium mb-1">Contact No</label>
                         <input pInputText formControlName="p_contactno" placeholder="Contact Number" (keypress)="allowOnlyNumbers($event)" maxlength="10" />
                     </div>
                 </div>
@@ -241,14 +231,16 @@
     ================================= -->
         <div class="mt-6" *ngIf="poSelected">
             <div class="flex justify-end gap-4 mb-3">
+                 <div class="grn-total-chip received">
+                    <span class="chip-label">Total Received Qty</span>
+                    <span class="chip-value">{{ totalReceivedQty | number: '1.0-2' }}</span>
+                </div>
+                
                 <div class="grn-total-chip accepted">
                     <span class="chip-label">Total Accepted Qty</span>
                     <span class="chip-value">{{ totalAcceptedQty | number: '1.0-2' }}</span>
                 </div>
-                <div class="grn-total-chip received">
-                    <span class="chip-label">Total Received Qty</span>
-                    <span class="chip-value">{{ totalReceivedQty | number: '1.0-2' }}</span>
-                </div>
+               
                 <div class="grn-total-chip rejected">
                     <span class="chip-label">Total Rejected Qty</span>
                     <span class="chip-value">{{ totalRejectedQty | number: '1.0-2' }}</span>
@@ -268,8 +260,6 @@
                         <th class="text-right">Accepted Qty</th>
                         <th class="text-right">Rejected Qty</th>
                         <th class="text-center">Quality Report Required (Y/N/P)</th>
-                        <th class="text-right">Rate (INR)</th>
-                        <th class="text-right">Amount (INR)</th>
                         <th>Remarks</th>
                     </tr>
                 </ng-template>
@@ -313,8 +303,6 @@
                         <td class="text-center">
                             <p-dropdown [options]="qualityReportOptions" optionLabel="label" optionValue="value" [(ngModel)]="product.qualityreport" [ngModelOptions]="{ standalone: true }" placeholder="Select" appendTo="body" styleClass="w-5rem"></p-dropdown>
                         </td>
-                        <td class="text-right text-sm">{{ product.rate || 0 | number: '1.2-2' }}</td>
-                        <td class="text-right text-sm font-semibold">{{ calculateRowAmount(product) | number: '1.2-2' }}</td>
                         <td class="text-sm">{{ product.rowremarks || '—' }}</td>
                     </tr>
                 </ng-template>
@@ -330,14 +318,12 @@
                         <td class="text-right font-semibold">{{ totalRejectedQty | number: '1.0-2' }}</td>
                         <td></td>
                         <td></td>
-                        <td class="text-right font-semibold">{{ totalAmount | number: '1.2-2' }}</td>
-                        <td></td>
                     </tr>
                 </ng-template>
 
                 <ng-template pTemplate="emptymessage">
                     <tr>
-                        <td colspan="14" class="text-center text-400 italic py-6 text-sm">No items — select a PO No. to load materials</td>
+                        <td colspan="14" class="text-center text-400 italic py-6 text-sm">No items — select a PO No to load materials</td>
                     </tr>
                 </ng-template>
 

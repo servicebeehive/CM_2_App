@@ -111,9 +111,7 @@ export class GrnComponent implements OnInit {
             p_vendor:         [null, Validators.required],
             p_location:  [null, Validators.required],
             p_worklocation:   [''],
-            p_totalpoamount:  [''],
             p_deliveryterms:  [''],
-            p_paymentterms:   [''],
             p_poreference:    [''],
             p_contactperson:  [''],
             p_contactno:      [''],
@@ -221,7 +219,6 @@ export class GrnComponent implements OnInit {
     onReceivedQtyChange(product: any): void {
         const received = Number(product.receivedqty || 0);
         if (received > product.pendingqty) product.receivedqty = product.pendingqty;
-        product.acceptedqty = product.receivedqty;
         product.rejectedqty = 0;
     }
 
@@ -310,6 +307,42 @@ export class GrnComponent implements OnInit {
         });
     }
 
+    submitGrnHeader(): void {
+        const payload = {
+            p_operation: 'INSERT',
+            p_grn_id: null,
+            p_grn_date: this.datePipe.transform(new Date(), 'yyyy-MM-dd') || this.datePipe.transform(this.productForm.get('p_grndate')?.value, 'yyyy-MM-dd') || '2026-08-28',
+            p_po_id: 18,
+            p_po_date: '2026-08-28',
+            p_company_id: 1,
+            p_project_id: 45,
+            p_vendor_id: 11,
+            p_status: 'DRAFT',
+            p_loginuser: 1
+        };
+
+        this.stockInService.upsertGrnHeader(payload).subscribe({
+            next: (res) => {
+                console.log('GRN header created:', res);
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'GRN Header Saved',
+                    detail: 'GRN header submitted successfully.',
+                    life: 3000
+                });
+            },
+            error: (err) => {
+                console.error('GRN header submit failed:', err);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Submit Failed',
+                    detail: 'Unable to submit GRN header.',
+                    life: 3000
+                });
+            }
+        });
+    }
+
     // ── API: create GRN header ─────────────────────────────────────────────
     OnPurchesHeaderCreate(data: any): void {
         const payload: any = {
@@ -322,9 +355,7 @@ export class GrnComponent implements OnInit {
             p_vendor:        data.p_vendor         || '',
             p_location: data.p_location  || '',
             p_worklocation:  data.p_worklocation   || '',
-            p_totalpoamount: data.p_totalpoamount  || '',
             p_deliveryterms: data.p_deliveryterms  || '',
-            p_paymentterms:  data.p_paymentterms   || '',
             p_poreference:   data.p_poreference    || '',
             p_contactperson: data.p_contactperson  || '',
             p_contactno:     data.p_contactno      || '',
@@ -442,10 +473,9 @@ private applyPODetailsToForm(rows: any[]): void {
 
     this.productForm.patchValue({
     p_podate: header.po_date ? new Date(header.po_date) : null,
-    p_project: header.project_id ?? '',
-    p_vendor: header.vendor_id ?? null,
-    p_paymentterms: header.payment_terms ?? '',
-    p_totalpoamount: this.calculatePoTotal(rows).toFixed(2)
+    p_project: header.project_name ?? '',
+    p_vendor: header.suppliername ?? null,
+    p_location: header.delivery_location?? '',
 });
 
     this.mapItemsFromPODetails(rows);
@@ -528,9 +558,7 @@ private mapItemsFromPODetails(rows: any[]): void {
             p_remarks:        data.remark       || '',
             p_vendorid:       data.vendorid      || null,
             p_worklocation:   data.worklocation || '',
-            p_totalpoamount:  data.total_po_amount || '',
             p_deliveryterms:  data.delivery_terms || '',
-            p_paymentterms:   data.payment_terms || '',
             p_poreference:    data.po_reference || '',
             p_contactperson:  data.contact_person || '',
             p_contactno:      data.contact_no || '',

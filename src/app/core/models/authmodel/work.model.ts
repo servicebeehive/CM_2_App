@@ -90,6 +90,7 @@ export interface PurchaseOrderPayload {
     p_remarks: string | null;
     p_items_json: PurchaseOrderItem[];
     p_loginuser: string;
+    p_mr_no: string | null;
 }
 
 export interface VendorInvitePayload {
@@ -167,4 +168,29 @@ export interface ComparisonRow {
     vendorData: { [vendorId: number]: VendorEntry };
     _searchText?: string;
     weightage?: number;
+}
+
+export interface MiscPurchase {
+  p_operation: 'INSERT' | 'UPDATE' | 'DELETE';
+  p_misc_purchase_id: number | null;
+  p_misc_purchase_no: string;
+  p_purchase_date: string; // 'YYYY-MM-DD'
+  p_company_id: number | null;
+  p_project_id: number | null;
+  p_vendor_name: string | null;
+  p_attachment: string | null;
+  p_remarks: string;
+  p_items_json: MiscPurchaseItem[];
+  p_loginuser: number;
+}
+
+export interface MiscPurchaseItem {
+  misc_purchase_detail_id: number;
+  item_id: number | null;
+  item_description: string;
+  category_id: number | null;
+  uom_id: number | null;
+  quantity: number | null;
+  rate: number | null;
+  remarks: string;
 }

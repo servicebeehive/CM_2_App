@@ -3,11 +3,13 @@ import { VendorComparisonComponent } from './vendor-comparison/vendor-comparison
 import { MaterialRequisitionComponent } from '../purchase/material-requisition/material-requisition.component';
 import { WorkComponent } from './work-listing/work.component';
 import { PurchaseOrderComponent } from './purchase-order/purchase-order.component';
+import { MicsPurchaseComponent } from './mics-purchase/mics-purchase.component';
 
 export default [
     { path: 'work', component: WorkComponent },
     { path: 'material-requisition', component: MaterialRequisitionComponent },
     { path: 'rfq', component: RfqComponent },
     { path: 'vendor-comparison', component: VendorComparisonComponent },
-    { path: 'purchase-order', component: PurchaseOrderComponent }
+    { path: 'purchase-order', component: PurchaseOrderComponent },
+    { path: 'mics-purchase', component: MicsPurchaseComponent },
 ];

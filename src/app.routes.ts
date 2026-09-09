@@ -79,6 +79,11 @@ export const appRoutes: Routes = [
                 path: 'security',
                 loadChildren: () => import('@/pages/security/security.routers'),
                 canActivate: [AuthGuard]
+            },
+            {
+                path:'action',
+                loadChildren: () => import('@/pages/action/action.routers'),
+                canActivate: [AuthGuard]
             }
         ]
     },

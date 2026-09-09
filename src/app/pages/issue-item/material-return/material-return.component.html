@@ -66,7 +66,7 @@
             </div>
 
             <div class="flex flex-col">
-                <label class="font-medium mb-1">Linked MIN No. <span class="text-red-500">*</span></label>
+                <label class="font-medium mb-1">Linked MIN No <span class="text-red-500">*</span></label>
                 <p-dropdown [options]="linkedMinOptions" optionLabel="label" optionValue="value" placeholder="Select Linked MIN" formControlName="p_linkedminno" [filter]="true" filterPlaceholder="Search MIN No" [showClear]="true"></p-dropdown>
                 <small class="text-red-500 mt-1 text-xs" *ngIf="minForm.get('p_linkedminno')?.touched && minForm.get('p_linkedminno')?.errors?.['required']"> Linked MIN No is required </small>
             </div>

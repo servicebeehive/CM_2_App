@@ -175,7 +175,7 @@ export function gstNumberValidator(control: AbstractControl): ValidationErrors |
                     <div class="grid grid-cols-12 gap-4">
                         <div class="col-span-12 md:col-span-4">
                             <label for="companygstno" class="font-medium text-surface-900 dark:text-surface-0 mb-2 block"> GST No <span class="text-red-500">*</span></label>
-                            <input formControlName="companygstno" type="text" pInputText fluid placeholder="GST No." maxlength="15" />
+                            <input formControlName="companygstno" type="text" pInputText fluid placeholder="GST No" maxlength="15" />
                             <small class="text-red-500 mt-1" *ngIf="profileForm.get('companygstno')?.touched && profileForm.get('companygstno')?.errors?.['invalidGst']"> Enter a valid gst number </small>
                         </div>
 

@@ -241,7 +241,7 @@
             <td width="40%" style="vertical-align: top">
                 <table width="100%" border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse">
                     <tr>
-                        <td><strong>Invoice No.</strong></td>
+                        <td><strong>Invoice No</strong></td>
                         <td>{{ invoiceForm.get('p_billno')?.value }}</td>
                     </tr>
                     <tr>
@@ -260,7 +260,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <td>Reference No. &amp; Date</td>
+                        <td>Reference No &amp; Date</td>
                         <td>
                             {{ invoiceForm.get('p_transactionid')?.value }} dt.
                             {{ invoiceForm.get('p_transactiondate')?.value | date: 'dd-MMM-yy' }}
@@ -271,7 +271,7 @@
                         <td>-</td>
                     </tr>
                     <tr>
-                        <td>Buyer's Order No.</td>
+                        <td>Buyer's Order No</td>
                         <td>-</td>
                     </tr>
                     <tr>
@@ -279,7 +279,7 @@
                         <td>-</td>
                     </tr>
                     <tr>
-                        <td>Dispatch Doc No.</td>
+                        <td>Dispatch Doc No</td>
                         <td>{{ invoiceForm.get('chalanno')?.value }}</td>
                     </tr>
                     <tr>
@@ -307,7 +307,7 @@
     <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; font-size: 10px; margin-top: 10px">
         <thead>
             <tr style="text-align: center; font-weight: bold">
-                <td>Sl No.</td>
+                <td>Sl No</td>
                 <td>Description of Goods</td>
                 <td>HSN/SAC</td>
                 <td>Quantity</td>
@@ -388,7 +388,7 @@
                     <strong>Company's Bank Details</strong><br />
                     Bank Name: <b>{{ bankname }}</b
                     ><br />
-                    A/c No.: {{ accountno }}<br />
+                    A/c No: {{ accountno }}<br />
                     Branch: {{ branchname }}<br />
                     IFSC: {{ ifsc }}<br />
                     PAN: <b>{{ pan }}</b>

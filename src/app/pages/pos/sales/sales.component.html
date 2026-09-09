@@ -43,9 +43,9 @@
                 <label class="font-medium mb-1">Invoice No</label>
                 <p-dropdown [options]="billNoOptions"
                             optionLabel="billno" optionValue="billno"
-                            placeholder="Invoice No."
+                            placeholder="Invoice No"
                             formControlName="p_billno"
-                            [filter]="true" filterPlaceholder="Search Bill No."
+                            [filter]="true" filterPlaceholder="Search Bill No"
                             [showClear]="true"
                             [loading]="isLoadingBills"
                             (onChange)="onBillDetails($event)">
@@ -55,7 +55,7 @@
             <div class="flex flex-col">
                 <label class="font-medium mb-1 text-sm md:text-base">SR No</label>
 
-                <p-dropdown [options]="SRNoOptions" optionLabel="billno" optionValue="billno" placeholder="SR No." formControlName="p_requisitionno" [filter]="true" filterPlaceholder="Search SR No." [showClear]="true"> </p-dropdown>
+                <p-dropdown [options]="SRNoOptions" optionLabel="billno" optionValue="billno" placeholder="SR No" formControlName="p_requisitionno" [filter]="true" filterPlaceholder="Search SR No" [showClear]="true"> </p-dropdown>
 
                 <small class="text-red-500 mt-1 text-xs" *ngIf="salesForm.get('p_indentno')?.touched">
                     <span *ngIf="salesForm.get('p_indentno')?.errors?.['required']"> Indent No is required </span>
@@ -140,7 +140,7 @@
                 <ng-container *ngIf="salesForm.get('p_mobileno')?.touched">
                     <small class="text-red-500 mt-1 text-xs"
                            *ngIf="salesForm.get('p_mobileno')?.errors?.['required']">
-                        Mobile No. is required
+                        Mobile No is required
                     </small>
                     <small class="text-red-500 mt-1 text-xs"
                            *ngIf="salesForm.get('p_mobileno')?.errors?.['pattern']">
@@ -411,19 +411,19 @@
             <td width="40%" style="vertical-align:top">
                 <table width="100%" border="1" cellpadding="6" cellspacing="0"
                        style="border-collapse:collapse">
-                    <tr><td><strong>Invoice No.</strong></td>
+                    <tr><td><strong>Invoice No</strong></td>
                         <td>{{ salesForm.get('p_billno')?.value }}</td></tr>
                     <tr><td><strong>Dated</strong></td>
                         <td>{{ salesForm.get('p_transactiondate')?.value | date:'dd-MMM-yy' }}</td></tr>
                     <tr><td>Delivery Note</td><td>-</td></tr>
                     <tr><td><strong>Mode of Payment</strong></td>
                         <td><strong>{{ salesForm.get('p_paymode')?.value }}</strong></td></tr>
-                    <tr><td>Reference No. &amp; Date</td>
+                    <tr><td>Reference No &amp; Date</td>
                         <td>{{ salesForm.get('p_transactionid')?.value }} dt.
                             {{ salesForm.get('p_transactiondate')?.value | date:'dd-MMM-yy' }}</td></tr>
-                    <tr><td>Buyer's Order No.</td><td>-</td></tr>
+                    <tr><td>Buyer's Order No</td><td>-</td></tr>
                     <tr><td>Dated</td><td>-</td></tr>
-                    <tr><td>Dispatch Doc No.</td>
+                    <tr><td>Dispatch Doc No</td>
                         <td>{{ salesForm.get('chalanno')?.value }}</td></tr>
                     <tr><td>Delivery Note Date</td><td>-</td></tr>
                     <tr><td>Dispatched through</td>
@@ -439,7 +439,7 @@
            style="border-collapse:collapse;font-size:10px;margin-top:10px">
         <thead>
             <tr style="text-align:center;font-weight:bold">
-                <td>Sl No.</td>
+                <td>Sl No</td>
                 <td>Description of Goods</td>
                 <td>HSN/SAC</td>
                 <td>Quantity</td>
@@ -518,7 +518,7 @@
                 <div>
                     <strong>Company's Bank Details</strong><br />
                     Bank Name: <b>{{ bankname }}</b><br />
-                    A/c No.: {{ accountno }}<br />
+                    A/c No: {{ accountno }}<br />
                     Branch: {{ branchname }}<br />
                     IFSC: {{ ifsc }}<br />
                     PAN: <b>{{ pan }}</b>

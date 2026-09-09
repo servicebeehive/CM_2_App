@@ -39,7 +39,6 @@ export class MaterialRequisitionComponent {
     draftRequisitionOptions: any[] = [];
     projectOptions: { label: string; value: any }[] = [{ label: 'Project A', value: 'Project A' }];
     departmentOptions: any[] = [];
-    categoryOptions: any[] = [];
     periodOptions: any[] = [];
     towerOptions: any[] = [];
     levelOptions: any[] = [];

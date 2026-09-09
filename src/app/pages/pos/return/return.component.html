@@ -53,10 +53,10 @@
                         </small>
                     </div>
 
-                    <!-- Mobile No. -->
+                    <!-- Mobile No -->
                     <div class="flex flex-col ">
-                        <label class="font-medium mb-1">Mobile No.</label>
-                        <input pInputText type="number" formControlName="p_mobileno" placeholder="Mobile No." readonly />
+                        <label class="font-medium mb-1">Mobile No</label>
+                        <input pInputText type="number" formControlName="p_mobileno" placeholder="Mobile No" readonly />
                         <small class="text-red-500 ms-3 mt-1" *ngIf="returnForm.get('mobile')?.errors?.['pattern']">
                             <span *ngIf="returnForm.get('mobile')?.errors?.['pattern']">Please enter a valid 10-digit mobile number</span>
                         </small>

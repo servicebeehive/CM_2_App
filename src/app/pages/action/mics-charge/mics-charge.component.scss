@@ -1,0 +1,100 @@
+:host ::ng-deep .p-inputtext,
+:host ::ng-deep .p-select,
+:host ::ng-deep .p-datepicker,
+:host ::ng-deep .p-inputnumber-input {
+    width: 100%;
+    min-height: 2.25rem;
+    border-color: #d8e1eb;
+    border-radius: 5px;
+}
+:host ::ng-deep .p-inputtext::placeholder {
+    color: #9aa8b8;
+}
+
+.item-table-wrap {
+    overflow-x: auto;
+    border: 1px solid #e0e7ef;
+    border-radius: 5px;
+}
+.item-table {
+    width: 100%;
+    min-width: 920px;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+.item-table th {
+    padding: 0.65rem 0.55rem;
+    background: #edf3f8;
+    border-bottom: 1px solid #dce5ee;
+    color: #50677f;
+    font-weight: 700;
+    text-align: left;
+    white-space: nowrap;
+}
+.item-table td {
+    padding: 0.45rem 0.55rem;
+    border-bottom: 1px solid #edf1f5;
+    vertical-align: middle;
+}
+.item-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+.item-table th:nth-child(1),
+.item-table td:nth-child(1) {
+    width: 42px;
+}
+.item-table th:nth-child(2) {
+    width: 23%;
+}
+.item-table th:nth-child(3),
+.item-table th:nth-child(4) {
+    width: 14%;
+}
+.item-table th:nth-child(5),
+.item-table th:nth-child(6),
+.item-table th:nth-child(7) {
+    width: 12%;
+}
+.row-number {
+    color: #71839a;
+    text-align: center !important;
+}
+.amount-cell {
+    background: #f3f6f8;
+    color: #647589;
+    text-align: right;
+}
+.action-cell {
+    width: 72px !important;
+    text-align: center !important;
+}
+.empty-row {
+    padding: 1.5rem !important;
+    color: #8493a5;
+    text-align: center;
+}
+:host ::ng-deep .table-control {
+    width: 100%;
+}
+:host ::ng-deep .table-number {
+    width: 100%;
+    text-align: right;
+}
+
+.attachment-control input {
+    display: none;
+}
+.choose-file {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.42rem 0.7rem;
+    border: 1px solid #ccd9e5;
+    border-radius: 4px;
+    color: #4a6985 !important;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.choose-file:hover {
+    background: #f1f6fa;
+}

@@ -1,5 +1,5 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -22,14 +22,43 @@ import { ToastModule } from 'primeng/toast';
 import { WorkService } from '@/core/services/work.service';
 import { ShareService } from '@/core/services/shared.service';
 import { GmailVendorRow, PurchaseDraftPayload, PurchaseOrderItem, PurchaseOrderPayload } from '@/core/models/authmodel/work.model';
-import { forkJoin } from 'rxjs';
 
 export interface PaymentEntry {
     date: Date;
     amount: number;
     mode: string;
     referenceNo: string;
+    invoiceNo: string;
+    performaInvoiceNo: string;
     remainingAfter: number;
+    isEditing?: boolean;
+    id?: number | null;
+}
+
+export interface PerformaEntry {
+    invoiceNo: string;
+    date: Date | null;
+    amount: number;
+    documentPath: string;
+    documentDataUrl: string;
+    isEditing?: boolean;
+    id?: number | null;
+}
+
+export interface InvoiceEntry {
+    invoiceNo: string;
+    date: Date | null;
+    performaInvoiceNo: string;
+    freight: number;
+    loadingCharge: number;
+    cgst: number;
+    totalTaxableAmount: number;
+    sgst: number;
+    igst: number;
+    miscCharge: number;
+    grandTotal: number;
+    isEditing?: boolean;
+    id?: number | null;
 }
 
 @Component({
@@ -59,14 +88,17 @@ export interface PaymentEntry {
     providers: [ConfirmationService, DatePipe, MessageService]
 })
 export class PurchaseOrderComponent implements OnInit {
+      @ViewChild('performaFileInput') performaFileInputRef!: ElementRef<HTMLInputElement>;
     poForm!: FormGroup;
     today: Date = new Date();
     submitted = false;
+    isDraftPo = false;
     isLoadingProjects = false;
     isLoadingLocations = false;
     showForecastError = false;
     onPODraftOptions:any[] = [];
     projectOptions:any[]=[];
+    activeTabIndex: string = '0';
 
     paymentTermsOptions: { label: string; value: string }[] = [
         { label: '30 Days Net', value: '30 Days Net' },
@@ -94,6 +126,8 @@ export class PurchaseOrderComponent implements OnInit {
     isLoadingVendorDialog = false;
     vendorDialogRows: { category: string; item: string; vendorId: number | null; rate: number | null }[] = [];
     performaFileName: string = '';
+    performaFileDataUrl: string = '';
+    showExistingPerformaDate = false;
     
     companyId = '';
     userId = '';
@@ -102,14 +136,31 @@ export class PurchaseOrderComponent implements OnInit {
     mrPopupRows: any[] = [];
     includedMrList: any[] = [];
     paymentHistory: PaymentEntry[] = [];
+    performaHistory: PerformaEntry[] = [];
+    invoiceHistory: InvoiceEntry[] = [];
+    editingPerformaIndex: number | null = null;
+    editingInvoiceIndex: number | null = null;
+    editingPaymentIndex: number | null = null;
     totalPaid = 0;
     poMailVendorRows: GmailVendorRow[] = [];
+    printHeader: any = {};
+    printData: any = null;
+
+    get performaInvoiceOptions(): { label: string; value: string }[] {
+        return this.performaHistory.filter((item) => item.invoiceNo).map((item) => ({ label: item.invoiceNo, value: item.invoiceNo }));
+    }
+
+    get invoiceOptions(): { label: string; value: string }[] {
+        return this.invoiceHistory.filter((item) => item.invoiceNo).map((item) => ({ label: item.invoiceNo, value: item.invoiceNo }));
+    }
 
     newPayment: Partial<PaymentEntry> = {
         date: new Date(),
         amount: 0,
         mode: '',
-        referenceNo: ''
+        referenceNo: '',
+        invoiceNo: '',
+        performaInvoiceNo: ''
     };
 
     constructor(
@@ -145,24 +196,31 @@ export class PurchaseOrderComponent implements OnInit {
                 p_deliverylocation: [{value: null, disabled:true}],
                 p_deliverydate: [null],
                 p_paymentterms: [{value: null, disabled:true}],
+                p_paymentdate: [this.today],
                 p_remarks: [''],
                 p_forecastrefno: [''],
                 p_items: this.fb.array([]),
                 // ── Performa fields ──
-                p_performainvoiceno: [''],
-                p_performadate: [null],
-                p_performafile: [null],
+                p_performainvoiceno: ['', Validators.required],
+                p_performadate: [this.today, [Validators.required, this.noFutureDateValidator()]],
+                p_performafile: [null, Validators.required],
+                p_performaamount: [null, [Validators.required, Validators.min(0)]],
 
                 // ── Invoice fields ──
-                p_invoiceno: [''],
-                p_invoicedate: [null],
-                p_invoicepayment: [null],
+                p_invoiceno: ['', Validators.required],
+                p_invoicedate: [null, Validators.required],
+                p_invoicepayment: [null, [Validators.required, Validators.min(0)]],
                 p_freight: [null],
                 p_loadingcharge: [null],
-                p_gst: [null],
-                p_transit: [null],
+                p_cgst: [null],
+                p_sgst: [null],
+                p_igst: [null],
+                p_totaltaxableamount: [{value: null, disabled: true}],
+                p_misccharge: [null],
+                p_grandtotal: [{value: null, disabled: true}],
+                p_performainvoiceno_invoice: [''],
 
-                // ── Payment fields ──
+                // ── Payment fields ──F
                 p_payment: [null],
                 p_totalpayment: [{ value: '', disabled: true }],
                 p_remainingpayment: [{ value: '', disabled: true }]
@@ -173,6 +231,57 @@ export class PurchaseOrderComponent implements OnInit {
         this.poForm.get('p_podate')?.valueChanges.subscribe(() => {
             this.poForm.get('p_deliverydate')?.updateValueAndValidity();
         });
+
+        this.poForm.get('p_pono')?.valueChanges.subscribe((poId) => {
+            this.updatePostPoValidators(poId != null && poId !== '');
+        });
+        this.updatePostPoValidators(false);
+
+        ['p_invoicepayment', 'p_freight', 'p_loadingcharge', 'p_cgst', 'p_sgst', 'p_igst', 'p_misccharge'].forEach((ctrlName)=>{
+            this.poForm.get(ctrlName)?.valueChanges.subscribe(() => this.calculateGrandTotals());
+        });
+
+        this.poForm.get('p_cgst')?.valueChanges.subscribe((value) => {
+            this.syncTaxFields('p_cgst', 'p_sgst', value);
+        });
+        this.poForm.get('p_sgst')?.valueChanges.subscribe((value) => {
+            this.syncTaxFields('p_sgst', 'p_cgst', value);
+        });
+        this.poForm.get('p_igst')?.valueChanges.subscribe((value) => {
+            if (value !== null && value !== undefined && value !== '') {
+                this.poForm.patchValue({ p_cgst: null, p_sgst: null }, { emitEvent: false });
+            }
+        });
+
+        ['p_invoicepayment', 'p_freight'].forEach((ctrlName)=>{
+            this.poForm.get(ctrlName)?.valueChanges.subscribe(() => this.recalcPayments());
+        });
+    }
+
+    private updatePostPoValidators(hasPo: boolean): void {
+        const validators: Record<string, ValidatorFn[]> = {
+            p_performainvoiceno: hasPo ? [Validators.required] : [],
+            p_performadate: hasPo ? [Validators.required, this.noFutureDateValidator()] : [],
+            p_performafile: hasPo ? [Validators.required] : [],
+            p_performaamount: hasPo ? [Validators.required, Validators.min(0)] : [Validators.min(0)],
+            p_invoiceno: hasPo ? [Validators.required] : [],
+            p_invoicedate: hasPo ? [Validators.required] : [],
+            p_invoicepayment: hasPo ? [Validators.required, Validators.min(0)] : [Validators.min(0)]
+        };
+
+        Object.entries(validators).forEach(([controlName, controlValidators]) => {
+            const control = this.poForm.get(controlName);
+            control?.setValidators(controlValidators);
+            control?.updateValueAndValidity({ emitEvent: false });
+        });
+    }
+
+    private syncTaxFields(sourceName: 'p_cgst' | 'p_sgst', targetName: 'p_cgst' | 'p_sgst', value: unknown): void {
+        this.poForm.get(targetName)?.setValue(value === '' ? null : value, { emitEvent: false });
+
+        if (value !== null && value !== undefined && value !== '') {
+            this.poForm.get('p_igst')?.setValue(null, { emitEvent: false });
+        }
     }
 
     private restoreViewState(): void {
@@ -195,6 +304,10 @@ export class PurchaseOrderComponent implements OnInit {
     getRowGroup(i: number): FormGroup {
         return this.poItemArray.at(i) as FormGroup;
     }
+
+    get isPaymentEntryDisabled(): boolean {
+    return this.getRemainingPayment() <= 0 && this.paymentHistory.length > 0 && this.editingPaymentIndex === null;
+}
 
     // ── Load all dropdowns ─────────────────────────────────────────────────────
     private loadDropdowns(): void {
@@ -272,6 +385,17 @@ export class PurchaseOrderComponent implements OnInit {
             }
 
             return Object.keys(errors).length ? errors : null;
+        };
+    }
+
+    private noFutureDateValidator(): ValidatorFn {
+        return (control: AbstractControl): ValidationErrors | null => {
+            if (!control.value) return null;
+            const selectedDate = new Date(control.value);
+            const today = new Date();
+            selectedDate.setHours(0, 0, 0, 0);
+            today.setHours(0, 0, 0, 0);
+            return selectedDate > today ? { futureDate: true } : null;
         };
     }
 
@@ -406,6 +530,26 @@ private loadItemsForProject(projectId: number): void {
         return +(this.getRemainingPayment() - (this.newPayment.amount ?? 0)).toFixed(2);
     }
 
+    private calculateGrandTotals(): void {
+        const freight = Number(this.poForm.get('p_freight')?.value || 0);
+        const loadingCharge = Number(this.poForm.get('p_loadingcharge')?.value || 0);
+        const cgst = Number(this.poForm.get('p_cgst')?.value || 0);
+        const sgst = Number(this.poForm.get('p_sgst')?.value || 0);
+        const igst = Number(this.poForm.get('p_igst')?.value || 0);
+        const miscCharge = Number(this.poForm.get('p_misccharge')?.value || 0);
+        const invoiceAmount = Number(this.poForm.get('p_invoicepayment')?.value || 0);
+        const totalTaxableAmount = +(invoiceAmount + freight).toFixed(2);
+
+        const grandTotal = totalTaxableAmount + loadingCharge + cgst + sgst + igst + miscCharge;
+        this.poForm.patchValue(
+        {
+            p_totaltaxableamount: totalTaxableAmount,
+            p_grandtotal: grandTotal
+        },
+        { emitEvent: false }
+    );
+    }
+
 onPOChange(event: any): void {
     const poId = event.value;
     if (!poId) return;
@@ -454,10 +598,14 @@ private applyPORowsToForm(rows: any[], isDraft: boolean): void {
     if (!rows.length) return;
 
     const header = rows[0];
+    this.isDraftPo = isDraft;
+    this.printHeader = header;
 
     this.poForm.patchValue({
         p_pono: isDraft ? header.draft_id : header.po_id,
+        p_podate: this.parseApiDate(header.po_date) ?? this.today,
         p_project: header.project_id ?? null,
+        p_vendor: header.suppliername ?? '',
         status: header.status ?? '',
         p_deliverylocation: header.delivery_location ?? '',
         p_deliverydate: (header.delivery_date) ? new Date(header.delivery_date) : null,
@@ -466,8 +614,104 @@ private applyPORowsToForm(rows: any[], isDraft: boolean): void {
     });
 
     this.mapPODetailRowsToFormArray(rows, header.vendor_id);
+        this.hydrateRelatedDetails(header);
     this.submitted = true;
 }
+
+   private hydrateRelatedDetails(header: any): void {
+    const performa = Array.isArray(header.performa) ? header.performa : [];
+    const invoice = Array.isArray(header.invoice) ? header.invoice : [];
+    const payment = Array.isArray(header.payment) ? header.payment : [];
+    const summary = header.payment_summary ?? {};
+
+    this.performaHistory = performa.map((item: any) => ({
+        id: item.performa_id ?? null,
+        invoiceNo: item.invoice_no ?? '',
+        date: this.parseApiDate(item.invoice_date),
+        amount: Number(item.amount ?? 0),
+        documentPath: item.document_path?.startsWith('data:') ? 'Attachment' : item.document_path ?? '',
+        documentDataUrl: item.document_path?.startsWith('data:') ? item.document_path : ''
+    }));
+
+   this.invoiceHistory = invoice.map((item: any) => ({
+    id: item.invoice_id ?? null,
+    invoiceNo: item.invoice_no ?? '',
+    date: this.parseApiDate(item.invoice_date),
+    performaInvoiceNo: item.performa_invoice_no ?? '',
+    freight: Number(item.freight ?? 0),
+    loadingCharge: Number(item.loading_charge ?? 0),
+    cgst: Number(item.cgst_amount ?? item.cgst ?? 0),
+    totalTaxableAmount: Number(item.total_taxable_amount ?? item.amount ?? 0),
+    sgst: Number(item.sgst ?? item.sgst_amount ?? 0),
+    igst: Number(item.igst ?? item.igst_amount ?? 0),
+    miscCharge: Number(item.misc_charge ?? 0),
+    grandTotal: Number(item.grand_total ?? item.amount ?? 0)
+}));
+
+    this.paymentHistory = payment.map((item: any) => ({
+        id: item.payment_id ?? null,
+        date: this.parseApiDate(item.payment_date) ?? new Date(),
+        amount: Number(item.amount ?? 0),
+        mode: item.payment_mode ?? '',
+        referenceNo: item.transaction_no ?? '',
+        invoiceNo: item.invoice_no ?? '',
+        performaInvoiceNo: item.performa_invoice_no ?? '',
+        remainingAfter: Number(item.remaining_payment ?? 0)
+    }));
+
+    this.totalPaid = Number(summary.total_paid ?? this.paymentHistory.reduce((total, item) => total + item.amount, 0));
+
+    // Reset the entry-form fields for all three tabs — only the history
+    // tables should reflect saved data; the inputs stay clear for a new entry.
+    this.editingPerformaIndex = null;
+    this.editingInvoiceIndex = null;
+    this.editingPaymentIndex = null;
+
+    this.performaFileName = '';
+    this.performaFileDataUrl = '';
+    this.showExistingPerformaDate = false;
+    this.clearFileInput(this.performaFileInputRef);
+
+    this.poForm.patchValue({
+        p_performainvoiceno: '',
+        p_performadate: this.today,
+        p_performaamount: null,
+        p_performafile: null,
+
+        p_invoiceno: '',
+        p_invoicedate: this.today,
+        p_invoicepayment: null,
+        p_freight: null,
+        p_loadingcharge: null,
+        p_cgst: null,
+        p_sgst: null,
+        p_igst: null,
+        p_totaltaxableamount: null,
+        p_misccharge: null,
+        p_grandtotal: null,
+        p_performainvoiceno_invoice: '',
+
+        p_totalpayment: Number(summary.total_payment ?? summary.po_total ?? 0).toFixed(2),
+        p_remainingpayment: Number(summary.remaining_payment ?? 0).toFixed(2)
+    });
+
+    this.newPayment = { date: new Date(), amount: 0, mode: '', referenceNo: '', invoiceNo: '', performaInvoiceNo: '' };
+}
+
+private clearFileInput(ref?: ElementRef<HTMLInputElement>): void {
+    if (ref?.nativeElement) {
+        ref.nativeElement.value = '';
+    }
+}
+
+    private parseApiDate(value: string | Date | null | undefined): Date | null {
+        if (!value) return null;
+        if (value instanceof Date) return value;
+        const parts = String(value).slice(0, 10).split('-').map(Number);
+        return parts.length === 3 && parts.every((part) => Number.isFinite(part))
+            ? new Date(parts[0], parts[1] - 1, parts[2])
+            : new Date(value);
+    }
 
 private mapPODetailRowsToFormArray(rows: any[], headerVendorId: number | null): void {
     this.poItemArray.clear();
@@ -494,6 +738,12 @@ private mapPODetailRowsToFormArray(rows: any[], headerVendorId: number | null): 
                 amount: [row.amount ?? null],
                 tax_id: [row.tax_id ?? 0],
                 taxPercent: [Number(row.gsttax ?? 0)],
+                cgstPercent: [Number(row.cgst_percent ?? row.cgst_rate ?? 0)],
+                sgstPercent: [Number(row.sgst_percent ?? row.sgst_rate ?? 0)],
+                igstPercent: [Number(row.igst_percent ?? row.igst_rate ?? 0)],
+                cgstAmount: [Number(row.cgst_amount ?? 0)],
+                sgstAmount: [Number(row.sgst_amount ?? 0)],
+                igstAmount: [Number(row.igst_amount ?? 0)],
                 totalAmount: [row.total_amount ?? row.totalAmount ?? row.amount ?? null],
                 remarks: [row.detail_remarks ?? ''],
                 status: [row.status ?? ''],
@@ -522,6 +772,11 @@ removePoItem(index: number): void {
     // ── Disable submit when no items ───────────────────────────────────────────
     isSubmitDisabled(): boolean {
         return this.poItemArray.length === 0;
+    }
+
+    get hasExistingPo(): boolean {
+        const poId = this.poForm?.get('p_pono')?.value;
+        return !this.isDraftPo && poId !== null && poId !== undefined && poId !== '';
     }
 
     onSubmit(): void {
@@ -553,7 +808,8 @@ removePoItem(index: number): void {
             p_payment_terms: formVal.p_paymentterms,
             p_remarks: formVal.p_remarks,
             p_items_json: this.buildItemsPayload(),
-            p_loginuser: this.authService.isLogIntType()?.userid.toString()
+            p_loginuser: this.authService.isLogIntType()?.userid.toString(),
+            p_mr_no: ''
         };
 
      this.workService.upsertPurchaseOrder(payload).subscribe({
@@ -609,27 +865,101 @@ removePoItem(index: number): void {
         const file = event.target.files[0];
         if (!file) return;
         this.performaFileName = file.name;
-        this.poForm.patchValue({ p_performafile: file });
+        const reader = new FileReader();
+        reader.onload = () => {
+            this.performaFileDataUrl = typeof reader.result === 'string' ? reader.result : '';
+            this.poForm.patchValue({ p_performafile: file });
+        };
+        reader.readAsDataURL(file);
+    }
+
+    previewPerformaFile(dataUrl: string = this.performaFileDataUrl): void {
+        if (!dataUrl) return;
+
+        const [metadata, encodedData] = dataUrl.split(',', 2);
+        if (!metadata || !encodedData) return;
+
+        try {
+            const mimeType = metadata.match(/data:(.*?);base64/)?.[1] || 'application/pdf';
+            const binary = atob(encodedData);
+            const bytes = new Uint8Array(binary.length);
+            for (let index = 0; index < binary.length; index++) {
+                bytes[index] = binary.charCodeAt(index);
+            }
+
+            const previewUrl = URL.createObjectURL(new Blob([bytes], { type: mimeType }));
+            const previewWindow = window.open('', '_blank');
+            if (!previewWindow) {
+                URL.revokeObjectURL(previewUrl);
+                return;
+            }
+
+            previewWindow.location.href = previewUrl;
+            window.setTimeout(() => URL.revokeObjectURL(previewUrl), 60000);
+        } catch {
+            this.messageService.add({ severity: 'error', summary: 'Preview failed', detail: 'The attachment could not be opened.', life: 3000 });
+        }
     }
 
     savePerforma(): void {
+        if (!this.hasExistingPo) {
+            this.messageService.add({ severity: 'warn', summary: 'PO required', detail: 'Select an existing purchase order before saving performa details.', life: 2500 });
+            return;
+        }
+        if (this.poForm.get('p_performainvoiceno')?.invalid || this.poForm.get('p_performadate')?.invalid || this.poForm.get('p_performaamount')?.invalid || this.poForm.get('p_performafile')?.invalid) {
+            this.poForm.get('p_performainvoiceno')?.markAsTouched();
+            this.poForm.get('p_performadate')?.markAsTouched();
+            this.poForm.get('p_performaamount')?.markAsTouched();
+            this.poForm.get('p_performafile')?.markAsTouched();
+            this.messageService.add({ severity: 'warn', summary: 'Required fields', detail: 'Complete all performa fields before saving.', life: 2500 });
+            return;
+        }
         const val = this.poForm.getRawValue();
+        const entry: PerformaEntry = {
+            invoiceNo: val.p_performainvoiceno || '',
+            date: val.p_performadate || null,
+            amount: Number(val.p_performaamount || 0),
+            documentPath: val.p_performafile?.name || this.performaFileName || '',
+            documentDataUrl: this.performaFileDataUrl
+        };
         const payload = {
-            p_operation: 'INSERT',
-            p_performa_id: null,
+            p_operation: this.editingPerformaIndex === null ? 'INSERT' : 'UPDATE',
+            p_performa_id: this.editingPerformaIndex === null ? null : this.performaHistory[this.editingPerformaIndex].id,
             p_po_id: this.poForm.get('p_pono')?.value,
-            p_invoice_no: val.p_performainvoiceno || null,
+            p_invoice_no: entry.invoiceNo || null,
             p_invoice_date: this.datePipe.transform(val.p_performadate, 'yyyy-MM-dd'),
-            p_amount: this.grandTotal,
-            p_document_path: val.p_performafile?.name || null,
+            p_amount: entry.amount,
+            p_document_path: entry.documentDataUrl || null,
             p_remarks: val.p_remarks || null,
             p_loginuser: Number(this.userId)
         };
 
         this.workService.upsertPOPerforma(payload).subscribe({
-            next: (res: any) => this.showSaveResult(res, 'Performa details saved.'),
+            next: (res: any) => {
+                this.showSaveResult(res, 'Performa details saved.');
+                if (res?.data?.success !== false) {
+                    const saved = { ...entry, id: res?.data?.performa_id ?? entry.id };
+                    this.performaHistory = this.editingPerformaIndex === null
+                        ? [...this.performaHistory, saved]
+                        : this.performaHistory.map((item, index) => index === this.editingPerformaIndex ? saved : item);
+                    this.editingPerformaIndex = null;
+                }
+            },
             error: (err) => this.showSaveError(err, 'Performa save failed.')
         });
+    }
+
+    editPerforma(index: number): void {
+        const entry = this.performaHistory[index];
+        this.editingPerformaIndex = index;
+        this.poForm.patchValue({ p_performainvoiceno: entry.invoiceNo, p_performadate: this.parseApiDate(entry.date), p_performaamount: entry.amount });
+        this.performaFileName = entry.documentPath;
+        this.performaFileDataUrl = entry.documentDataUrl;
+    }
+
+    removePerforma(index: number): void {
+        this.performaHistory = this.performaHistory.filter((_, rowIndex) => rowIndex !== index);
+        this.editingPerformaIndex = null;
     }
 
     // ── Invoice ───────────────────────────────────────────────
@@ -638,27 +968,86 @@ removePoItem(index: number): void {
     }
 
     saveInvoice(): void {
+        if (!this.hasExistingPo) {
+            this.messageService.add({ severity: 'warn', summary: 'PO required', detail: 'Select an existing purchase order before saving invoice details.', life: 2500 });
+            return;
+        }
+        if (this.poForm.get('p_invoiceno')?.invalid || this.poForm.get('p_invoicedate')?.invalid || this.poForm.get('p_invoicepayment')?.invalid) {
+            this.poForm.get('p_invoiceno')?.markAsTouched();
+            this.poForm.get('p_invoicedate')?.markAsTouched();
+            this.poForm.get('p_invoicepayment')?.markAsTouched();
+            this.messageService.add({ severity: 'warn', summary: 'Required fields', detail: 'Invoice number, date, and amount are required.', life: 2500 });
+            return;
+        }
         const val = this.poForm.getRawValue();
+       const entry: InvoiceEntry = {
+    invoiceNo: val.p_invoiceno || '',
+    date: val.p_invoicedate || null,
+    performaInvoiceNo: val.p_performainvoiceno_invoice || '',
+    freight: Number(val.p_freight || 0),
+    loadingCharge: Number(val.p_loadingcharge || 0),
+    cgst: Number(val.p_cgst || 0),
+    totalTaxableAmount: Number(val.p_totaltaxableamount || 0),
+    sgst: Number(val.p_sgst || 0),
+    igst: Number(val.p_igst || 0),
+    miscCharge: Number(val.p_misccharge || 0),
+    grandTotal: Number(val.p_grandtotal || 0)
+};
         const payload = {
-            p_operation: 'INSERT',
-            p_invoice_id: null,
+            p_operation: this.editingInvoiceIndex === null ? 'INSERT' : 'UPDATE',
+            p_invoice_id: this.editingInvoiceIndex === null ? null : this.invoiceHistory[this.editingInvoiceIndex].id,
             p_po_id: this.poForm.get('p_pono')?.value,
-            p_invoice_no: val.p_invoiceno || null,
+            p_invoice_no: entry.invoiceNo || null,
             p_invoice_date: this.datePipe.transform(val.p_invoicedate, 'yyyy-MM-dd'),
-            p_amount: Number(val.p_invoicepayment || 0),
+            p_performa_invoice_no: entry.performaInvoiceNo || null,
+            p_amount: entry.totalTaxableAmount,
             p_freight: Number(val.p_freight || 0),
             p_loading_charge: Number(val.p_loadingcharge || 0),
-            p_gst_amount: Number(val.p_gst || 0),
-            p_invoice_transit: val.p_transit || null,
+            p_sgst: entry.sgst,
+            p_igst: entry.igst,
+            p_total_taxable_amount: entry.totalTaxableAmount,
+            p_misc_charge: entry.miscCharge,
+            p_grand_total: entry.grandTotal,
+            p_cgst_amount: Number(val.p_cgst || 0),
             p_document_path: null,
             p_remarks: val.p_remarks || null,
             p_loginuser: Number(this.userId)
         };
 
         this.workService.upsertPOInvoice(payload).subscribe({
-            next: (res: any) => this.showSaveResult(res, 'Invoice details saved.'),
+            next: (res: any) => {
+                this.showSaveResult(res, 'Invoice details saved.');
+                if (res?.data?.success !== false) {
+                    const saved = { ...entry, id: res?.data?.invoice_id ?? entry.id };
+                    this.invoiceHistory = this.editingInvoiceIndex === null
+                        ? [...this.invoiceHistory, saved]
+                        : this.invoiceHistory.map((item, index) => index === this.editingInvoiceIndex ? saved : item);
+                    this.editingInvoiceIndex = null;
+                }
+            },
             error: (err) => this.showSaveError(err, 'Invoice save failed.')
         });
+    }
+
+    editInvoice(index: number): void {
+        const entry = this.invoiceHistory[index];
+        this.editingInvoiceIndex = index;
+        this.poForm.patchValue({
+            p_invoiceno: entry.invoiceNo,
+            p_invoicedate: this.parseApiDate(entry.date),
+            p_invoicepayment: entry.totalTaxableAmount - entry.freight,
+            p_performainvoiceno_invoice: entry.performaInvoiceNo,
+            p_totaltaxableamount: entry.totalTaxableAmount,
+            p_sgst: entry.sgst,
+            p_igst: entry.igst,
+            p_misccharge: entry.miscCharge,
+            p_grandtotal: entry.grandTotal
+        });
+    }
+
+    removeInvoice(index: number): void {
+        this.invoiceHistory = this.invoiceHistory.filter((_, rowIndex) => rowIndex !== index);
+        this.editingInvoiceIndex = null;
     }
 
     // ── Payment ───────────────────────────────────────────────
@@ -686,34 +1075,72 @@ removePoItem(index: number): void {
 
     savePayment(): void {
         const poId = this.poForm.get('p_pono')?.value;
-        const payments = this.paymentHistory.map((payment) => this.workService.upsertPOPayment({
-            p_operation: 'INSERT',
-            p_payment_id: null,
+        if (!this.hasExistingPo) {
+            this.messageService.add({ severity: 'warn', summary: 'PO required', detail: 'Select an existing purchase order before saving payment details.', life: 2500 });
+            return;
+        }
+        const payment: PaymentEntry = {
+            date: this.newPayment.date || new Date(),
+            amount: Number(this.newPayment.amount || 0),
+            mode: this.newPayment.mode || '',
+            referenceNo: this.newPayment.referenceNo || '',
+            invoiceNo: this.newPayment.invoiceNo || '',
+            performaInvoiceNo: this.newPayment.performaInvoiceNo || '',
+            remainingAfter: 0
+        };
+        if (!payment.amount || !payment.mode) {
+            this.messageService.add({ severity: 'warn', summary: 'Payment details required', detail: 'Enter an amount and select a payment mode.', life: 2500 });
+            return;
+        }
+        const total = Number(this.poForm.get('p_totalpayment')?.value || 0);
+        const existingTotal = this.paymentHistory.reduce((sum, item, index) => sum + (index === this.editingPaymentIndex ? 0 : item.amount), 0);
+        if (existingTotal + payment.amount > total) {
+            this.messageService.add({ severity: 'warn', summary: 'Excess Amount', detail: `Maximum payable now is ₹${Math.max(0, total - existingTotal).toFixed(2)}`, life: 3000 });
+            return;
+        }
+        const payload = {
+            p_operation: this.editingPaymentIndex === null ? 'INSERT' : 'UPDATE',
+            p_payment_id: this.editingPaymentIndex === null ? null : this.paymentHistory[this.editingPaymentIndex].id,
             p_po_id: poId,
             p_payment_date: this.datePipe.transform(payment.date, 'yyyy-MM-dd'),
             p_amount: Number(payment.amount || 0),
             p_payment_mode: payment.mode || null,
             p_transaction_no: payment.referenceNo || null,
+            p_invoice_no: payment.invoiceNo || null,
+            p_performa_invoice_no: payment.performaInvoiceNo || null,
             p_bank_name: null,
             p_remarks: this.poForm.get('p_remarks')?.value || null,
             p_loginuser: Number(this.userId)
-        }));
+        };
 
-        if (!payments.length) {
-            return;
-        }
-
-        forkJoin(payments).subscribe({
-            next: (responses: any[]) => {
-                const failed = responses.find((res) => res?.data?.success === false);
-                if (failed) {
-                    this.showSaveResult(failed, 'Payment save failed.');
-                    return;
+        this.workService.upsertPOPayment(payload).subscribe({
+            next: (res: any) => {
+                this.showSaveResult(res, 'Payment details saved.');
+                if (res?.data?.success !== false) {
+                    const saved = { ...payment, id: res?.data?.payment_id ?? (payment as any).id };
+                    this.paymentHistory = this.editingPaymentIndex === null
+                        ? [...this.paymentHistory, saved]
+                        : this.paymentHistory.map((item, index) => index === this.editingPaymentIndex ? saved : item);
+                    this.editingPaymentIndex = null;
+                    this.newPayment = { date: new Date(), amount: 0, mode: '', referenceNo: '', invoiceNo: '', performaInvoiceNo: '' };
+                    this.recalcPaymentSummary();
                 }
-                this.messageService.add({ severity: 'success', summary: 'Saved', detail: 'Payment details saved.', life: 2500 });
             },
             error: (err) => this.showSaveError(err, 'Payment save failed.')
         });
+    }
+
+    editPayment(index: number): void {
+        const entry = this.paymentHistory[index];
+        this.editingPaymentIndex = index;
+        this.newPayment = {
+            date: entry.date,
+            amount: entry.amount,
+            mode: entry.mode,
+            referenceNo: entry.referenceNo,
+            invoiceNo: entry.invoiceNo,
+            performaInvoiceNo: entry.performaInvoiceNo
+        };
     }
 
     private showSaveResult(res: any, successMessage: string): void {
@@ -785,7 +1212,8 @@ submitDraft(): void {
         next: (res) => {
           
             if(res.data.success){
-                  this.poForm.patchValue({ 
+                this.isDraftPo = true;
+                this.poForm.patchValue({ 
                     p_pono: res.data.draft_no,
                     p_draft_id: res.data.draft_id
                 });
@@ -824,26 +1252,331 @@ forceClose(): void {}
         this.poForm.reset({
             p_podate: this.today
         });
+        this.activeTabIndex = '0';
         this.poItemArray.clear();
         this.submitted = false;
+        this.isDraftPo = false;
         this.showForecastError = false;
         this.grandTotal = 0;
         this.selectedVendorNames = [];
+        this.performaHistory = [];
+        this.invoiceHistory = [];
         this.paymentHistory = [];
+        this.performaFileName = '';
+        this.performaFileDataUrl = '';
+        this.showExistingPerformaDate = false;
         this.totalPaid = 0;
-        this.newPayment = { date: new Date(), amount: 0, mode: '', referenceNo: '' };
+        this.newPayment = { date: new Date(), amount: 0, mode: '', referenceNo: '', invoiceNo: '', performaInvoiceNo: '' };
+        this.clearFileInput(this.performaFileInputRef); 
     }
 
     // ── Print ──────────────────────────────────────────────────────────────────
     printPO(): void {
-        const printContents = document.getElementById('poPrintSection')?.innerHTML;
-        if (!printContents) return;
-        const w = window.open('', '_blank', 'width=900,height=1200');
-        w!.document.open();
-        w!.document.write(
-            `<!DOCTYPE html><html><head><style>body{font-family:Arial,sans-serif;}</style></head><body>${printContents}<script>window.onload=function(){window.print();window.onafterprint=function(){window.close();};}</script></body></html>`
-        );
-        w!.document.close();
+        this.printData = this.buildPurchaseOrderPrintData();
+        setTimeout(() => {
+            const printContents = document.getElementById('poPrintSection')?.innerHTML;
+            if (!printContents) return;
+            const w = window.open('', '_blank', 'width=900,height=1200');
+            w!.document.open();
+            w!.document.write(
+                `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Purchase Order ${this.printData.poNo}</title><style>${this.purchaseOrderPrintStyles()}</style></head><body>${printContents}<script>window.onload=function(){window.print();window.onafterprint=function(){window.close();};}</script></body></html>`
+            );
+            w!.document.close();
+        });
+    }
+
+private buildPurchaseOrderPrintData(): any {
+    const form = this.poForm.getRawValue();
+    const rows = this.poItemArray.getRawValue();
+    const header = this.printHeader ?? {};
+ 
+    const items = rows.map((row: any, index: number) => {
+        const quantity = Number(row.poQty ?? 0);
+        const rate = Number(row.rate ?? 0);
+        // "Taxable Amount" = extended pre-tax value (qty × rate).
+        // "Basic Amount" mirrors the unit Rate to match the reference PO layout.
+        const taxableAmount = +(quantity * rate).toFixed(2);
+        const taxPercent = Number(row.taxPercent ?? 0);
+        const cgstPercent = Number(row.cgstPercent || (row.igstPercent ? 0 : taxPercent / 2));
+        const sgstPercent = Number(row.sgstPercent || (row.igstPercent ? 0 : taxPercent / 2));
+        const igstPercent = Number(row.igstPercent || 0);
+ 
+        return {
+            srNo: index + 1,
+            description: row.item ?? row.itemName ?? '',
+            make: row.make ?? '',
+            uom: row.uom ?? '',
+            quantity,
+            rate,
+            discount: Number(row.discountPercent ?? 0),
+            cgstPercent,
+            sgstPercent,
+            igstPercent,
+            cgstAmount: Number(row.cgstAmount || (taxableAmount * cgstPercent) / 100),
+            sgstAmount: Number(row.sgstAmount || (taxableAmount * sgstPercent) / 100),
+            igstAmount: Number(row.igstAmount || (taxableAmount * igstPercent) / 100),
+            taxableAmount
+        };
+    });
+ 
+    // Gross Amount = sum of every row's extended (pre-tax) amount.
+    const taxableAmount = items.reduce((sum: number, item: any) => sum + Number(item.taxableAmount || 0), 0);
+    const cgst = Number(form.p_cgst || header.cgst_amount || header.cgst || items.reduce((sum: number, item: any) => sum + Number(item.cgstAmount || 0), 0));
+    const sgst = Number(form.p_sgst || header.sgst_amount || header.sgst || items.reduce((sum: number, item: any) => sum + Number(item.sgstAmount || 0), 0));
+    const igst = Number(form.p_igst || header.igst_amount || header.igst || items.reduce((sum: number, item: any) => sum + Number(item.igstAmount || 0), 0));
+    const freight = Number(form.p_freight ?? 0);
+    const loadingCharge = Number(form.p_loadingcharge ?? 0);
+    const miscCharge = Number(form.p_misccharge ?? 0);
+    const totalDiscountAmount = Number(header.total_discount_amount ?? 0);
+    const transportCharges = Number(header.transport_charges ?? 0);
+ 
+    const preRoundTotal = taxableAmount + cgst + sgst + igst + freight + loadingCharge + miscCharge + totalDiscountAmount + transportCharges;
+    const grandTotal = Math.round(preRoundTotal * 100) / 100;
+    const roundOff = +(Math.round(grandTotal) - grandTotal).toFixed(2);
+    const finalGrandTotal = Math.round(grandTotal);
+ 
+    return {
+        // ── Letterhead (page 1 only) ──
+        companyMark: this.printValue(header, ['company_mark', 'company_initials'], 'OM'),
+        companyName: this.printValue(header, ['company_name', 'companyname', 'billing_company'], 'Company Name'),
+        companyTagline: this.printValue(header, ['company_tagline', 'tagline'], ''),
+        companyAddress: this.printValue(header, ['company_address', 'companyaddress', 'billing_address'], ''),
+        companyPhone: this.printValue(header, ['company_phone', 'phone', 'contact_no'], ''),
+        companyEmail: this.printValue(header, ['company_email', 'email'], ''),
+        companyPan: this.printValue(header, ['company_pan', 'pan_no'], ''),
+        companyGstin: this.printValue(header, ['company_gstin', 'gstin_no'], ''),
+        companyCin: this.printValue(header, ['company_cin', 'cin_no'], ''),
+ 
+        // ── PO / Supplier details ──
+        poNo: this.printValue(header, ['po_no', 'pono'], form.p_pono ?? ''),
+        poDate: form.p_podate,
+        contactPerson: this.printValue(header, ['contact_person', 'po_contact_person'], ''),
+        creditPeriod: this.printValue(header, ['credit_period'], form.p_paymentterms ?? ''),
+        supplierName: form.p_vendor || this.printValue(header, ['suppliername', 'vendor_name'], ''),
+        supplierAddress: this.printValue(header, ['supplier_address', 'vendor_address'], ''),
+        supplierPhone: this.printValue(header, ['supplier_phone', 'vendor_phone'], ''),
+        supplierGstin: this.printValue(header, ['supplier_gstin', 'gstin', 'vendor_gstin'], ''),
+ 
+        // ── Billing / Shipping ──
+        projectName: this.printValue(header, ['project_name', 'projectname'], this.projectOptions.find((p) => p.project_id === form.p_project)?.project_name ?? ''),
+        billingAddress: this.printValue(header, ['billing_address', 'company_address'], ''),
+        shippingCompanyName: this.printValue(header, ['shipping_company_name'], ''),
+        shippingAddress: this.printValue(header, ['shipping_address', 'delivery_location'], form.p_deliverylocation || ''),
+        deliveryLocation: form.p_deliverylocation || this.printValue(header, ['delivery_location'], ''),
+        deliveryDate: form.p_deliverydate,
+        paymentTerms: form.p_paymentterms || this.printValue(header, ['payment_terms'], ''),
+        remarks: form.p_remarks || '',
+ 
+        // ── Items & totals ──
+        items,
+        taxableAmount,
+        cgst,
+        sgst,
+        igst,
+        roundOff,
+        freight,
+        loadingCharge,
+        miscCharge,
+        totalDiscountAmount,
+        transportCharges,
+        grandTotal: finalGrandTotal,
+        amountInWords: this.numberToWords(finalGrandTotal),
+ 
+        // ── Notes / terms (page 2, no letterhead) ──
+        deliverySchedule: this.printValue(header, ['delivery_schedule'], ''),
+        note: this.printValue(header, ['note', 'special_conditions'], ''),
+        paymentTermsText: this.printValue(header, ['payment_terms_text'], ''),
+        generalTerms: Array.isArray(header.general_terms) && header.general_terms.length
+            ? header.general_terms
+            : [
+                  'Our Purchase Order Number must be mentioned on all your documents viz. Invoice, Delivery Challan, Lorry Receipt etc., and in all your communications with us.',
+                  'You will submit your invoice and challan (in triplicate) along with the supply of material.',
+                  'You must ensure and guarantee that all products supplied under this Purchase Order strictly match our specifications, drawings, and approved samples.',
+                  'Immediately after dispatch, submit the commercial invoice, delivery challan, packing list, and LR/RR (if applicable) within 3 days of delivery.',
+                  'An appropriate Material Safety Data Sheet and labelling must accompany each shipment as required by law.'
+              ],
+        preparedByName: this.printValue(header, ['prepared_by'], ''),
+        authorisedByName: this.printValue(header, ['authorised_by'], '')
+    };
+}
+ 
+private numberToWords(amount: number): string {
+    const rupees = Math.floor(Math.abs(amount));
+    const paise = Math.round((Math.abs(amount) - rupees) * 100);
+ 
+    if (rupees === 0 && paise === 0) {
+        return 'Rupees Zero Only';
+    }
+ 
+    let result = `Rupees ${this.convertToIndianWords(rupees)}`;
+    if (paise > 0) {
+        result += ` and ${this.convertToIndianWords(paise)} Paise`;
+    }
+    return `${result} Only`;
+}
+ 
+private convertToIndianWords(num: number): string {
+    if (num === 0) return 'Zero';
+ 
+    const ones = [
+        '', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
+        'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'
+    ];
+    const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+ 
+    const twoDigits = (n: number): string => {
+        if (n < 20) return ones[n];
+        const t = Math.floor(n / 10);
+        const o = n % 10;
+        return `${tens[t]}${o ? ' ' + ones[o] : ''}`;
+    };
+ 
+    const threeDigits = (n: number): string => {
+        const hundred = Math.floor(n / 100);
+        const rest = n % 100;
+        const hundredPart = hundred ? `${ones[hundred]} Hundred` : '';
+        const restPart = rest ? twoDigits(rest) : '';
+        return [hundredPart, restPart].filter(Boolean).join(' ');
+    };
+ 
+    let n = num;
+    const crore = Math.floor(n / 10000000);
+    n %= 10000000;
+    const lakh = Math.floor(n / 100000);
+    n %= 100000;
+    const thousand = Math.floor(n / 1000);
+    n %= 1000;
+    const hundred = n;
+ 
+    const parts: string[] = [];
+    if (crore) parts.push(`${threeDigits(crore)} Crore`);
+    if (lakh) parts.push(`${threeDigits(lakh)} Lakh`);
+    if (thousand) parts.push(`${threeDigits(thousand)} Thousand`);
+    if (hundred) parts.push(threeDigits(hundred));
+ 
+    return parts.join(' ');
+}
+ 
+private purchaseOrderPrintStyles(): string {
+    return `
+        @page { size: A4; margin: 10mm; }
+        * { box-sizing: border-box; }
+        body { margin: 0; color: #111; font-family: Arial, sans-serif; font-size: 9px; }
+        .po-print-section { display: block !important; }
+        .po-print { width: 190mm; margin: 0 auto; }
+        .po-first-page { page-break-after: always; break-after: page; }
+ 
+        /* Letterhead — page 1 only */
+        .po-letterhead {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            border: 1px solid #111;
+            padding: 8px 10px;
+            min-height: 62px;
+            background: #f4f4f4;
+            text-align: center;
+        }
+        .po-letterhead-logo {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #111;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .po-letterhead-text h1 { margin: 0; font-size: 15px; text-transform: uppercase; letter-spacing: 0.03em; }
+        .po-letterhead-text .po-tagline { margin: 1px 0 0; font-size: 9px; font-style: italic; }
+        .po-letterhead-text .po-contact,
+        .po-letterhead-text .po-office { margin: 2px 0 0; font-size: 8px; }
+ 
+        .po-title-bar {
+            text-align: center;
+            font-weight: 700;
+            font-size: 11px;
+            letter-spacing: 0.05em;
+            border: 1px solid #111;
+            border-top: 0;
+            padding: 3px 0;
+            text-transform: uppercase;
+        }
+ 
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #111; padding: 3px 5px; vertical-align: top; }
+        th { background: #e7e7e7; text-align: center; font-size: 8px; font-weight: 700; }
+        td { font-size: 8px; }
+ 
+        /* Supplier/PO and Billing/Shipping key-value tables */
+        .po-kv-table { border-top: 0; }
+        .po-kv-header td { background: #e7e7e7; font-weight: 700; text-transform: uppercase; font-size: 9px; }
+        .po-kv-label { width: 14%; font-weight: 700; white-space: nowrap; }
+        .po-kv-value { width: 36%; }
+        .po-address-cell { font-size: 8px; }
+ 
+        .po-items-table { margin-top: 0; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+ 
+        /* Totals block — full width, matching the items table and amount-in-words row above/below it */
+        .po-summary-table {
+            width: 100%;
+            margin: 0;
+            border-top: 0;
+        }
+        .po-summary-label { text-align: left; font-weight: 700; width: 82%; }
+        .po-summary-value { text-align: right; width: 18%; }
+        .po-summary-strong td { font-weight: 700; }
+ 
+        .po-words-table td { font-size: 8.5px; padding: 4px 6px; }
+ 
+        .po-charges-table { margin-top: 0; }
+        .po-charge-label { text-align: left; font-weight: 700; width: 80%; }
+        .po-charge-value { text-align: right; }
+ 
+        .po-note-block {
+            border: 1px solid #111;
+            border-top: 0;
+            padding: 5px 7px;
+            font-size: 8px;
+        }
+        .po-note-label { font-weight: 700; }
+ 
+        /* Page 2 — terms & signatures only, no letterhead */
+        .po-section-title {
+            background: #e7e7e7;
+            border: 1px solid #111;
+            padding: 3px 6px;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 9px;
+            margin-top: 8px;
+        }
+        .po-terms-block {
+            border: 1px solid #111;
+            border-top: 0;
+            padding: 6px 8px;
+            font-size: 8px;
+        }
+        .po-terms-block p { margin: 3px 0; }
+ 
+        .po-signature-row {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .po-signature-block { width: 42%; text-align: center; }
+        .po-signature-line { border-top: 1px solid #111; padding-top: 4px; font-weight: 700; font-size: 9px; }
+        .po-signature-name { margin-top: 20px; font-size: 8px; }
+    `;
+}
+    private printValue(source: any, keys: string[], fallback: any = ''): any {
+        const value = keys.map((key) => source?.[key]).find((item) => item !== null && item !== undefined && item !== '');
+        return value ?? fallback;
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -891,6 +1624,12 @@ forceClose(): void {}
                 amount: [null],
                 tax_id: [it.tax_id ?? '18'],
                 taxPercent: [Number(it.tax_percent ?? 18)],
+                cgstPercent: [Number(it.cgst_percent ?? it.cgst_rate ?? 0)],
+                sgstPercent: [Number(it.sgst_percent ?? it.sgst_rate ?? 0)],
+                igstPercent: [Number(it.igst_percent ?? it.igst_rate ?? 0)],
+                cgstAmount: [Number(it.cgst_amount ?? 0)],
+                sgstAmount: [Number(it.sgst_amount ?? 0)],
+                igstAmount: [Number(it.igst_amount ?? 0)],
                 totalAmount: [null],
                 remarks: [''],
 
@@ -930,6 +1669,12 @@ forceClose(): void {}
                 amount: [null],
                 tax_id: [''],
                 taxPercent: [it.gsttax ?? ''],
+                cgstPercent: [Number(it.cgst_percent ?? it.cgst_rate ?? 0)],
+                sgstPercent: [Number(it.sgst_percent ?? it.sgst_rate ?? 0)],
+                igstPercent: [Number(it.igst_percent ?? it.igst_rate ?? 0)],
+                cgstAmount: [Number(it.cgst_amount ?? 0)],
+                sgstAmount: [Number(it.sgst_amount ?? 0)],
+                igstAmount: [Number(it.igst_amount ?? 0)],
                 totalAmount: [null],
                 remarks: [''],
 
@@ -1138,7 +1883,7 @@ forceClose(): void {}
                     return;
                 }
 
-                this.workService.sendRfqMail({
+                this.workService.sendVendorMail({
                     p_poid: poId,
                     p_username: this.userId,
                     p_mails: readyRows.map((row) => ({
@@ -1178,7 +1923,7 @@ forceClose(): void {}
             return;
         }
 
-        this.workService.sendRfqMail({
+        this.workService.sendVendorMail({
             p_poid: this.poForm.get('p_pono')?.value,
             p_username: this.userId,
             p_mails: selectedRows.map((row) => ({
@@ -1301,6 +2046,8 @@ forceClose(): void {}
             amount: +(this.newPayment.amount ?? 0).toFixed(2),
             mode: this.newPayment.mode || '—',
             referenceNo: this.newPayment.referenceNo || '',
+            invoiceNo: this.newPayment.invoiceNo || '',
+            performaInvoiceNo: this.newPayment.performaInvoiceNo || '',
             remainingAfter: remaining
         };
 
@@ -1308,7 +2055,7 @@ forceClose(): void {}
         this.recalcPaymentSummary();
 
         // Reset input row
-        this.newPayment = { date: new Date(), amount: 0, mode: '', referenceNo: '' };
+        this.newPayment = { date: new Date(), amount: 0, mode: '', referenceNo: '', invoiceNo: '', performaInvoiceNo: '' };
     }
 
     removePayment(index: number): void {
@@ -1334,4 +2081,41 @@ forceClose(): void {}
             p_remainingpayment: (total - this.totalPaid).toFixed(2)
         });
     }
+
+    resetPerformaTab(): void {
+    this.editingPerformaIndex = null;
+    this.performaFileName = '';
+    this.performaFileDataUrl = '';
+    this.showExistingPerformaDate = false;
+    this.clearFileInput(this.performaFileInputRef);
+    this.poForm.patchValue({
+        p_performainvoiceno: '',
+        p_performadate: this.today,
+        p_performaamount: null,
+        p_performafile: null
+    });
+}
+
+resetInvoiceTab(): void {
+    this.editingInvoiceIndex = null;
+    this.poForm.patchValue({
+        p_invoiceno: '',
+        p_invoicedate: null,
+        p_invoicepayment: null,
+        p_freight: null,
+        p_loadingcharge: null,
+        p_cgst: null,
+        p_sgst: null,
+        p_igst: null,
+        p_totaltaxableamount: null,
+        p_misccharge: null,
+        p_grandtotal: null,
+        p_performainvoiceno_invoice: ''
+    });
+}
+
+resetPaymentTab(): void {
+    this.editingPaymentIndex = null;
+    this.newPayment = { date: new Date(), amount: 0, mode: '', referenceNo: '', invoiceNo: '', performaInvoiceNo: '' };
+}
 }

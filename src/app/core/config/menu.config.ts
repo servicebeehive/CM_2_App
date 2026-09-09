@@ -53,6 +53,11 @@ export const MENU_MODEL: any[] = [
                         label: 'Purchase Order',
                         icon: 'pi pi-fw pi pi-send',
                         routerLink: ['/layout/purchase/purchase-order']
+                    },
+                    {
+                        label: 'Misc Purchase',
+                        icon: 'pi pi-fw pi-wallet',
+                        routerLink: ['/layout/purchase/mics-purchase']
                     }
                 ]
             }
@@ -328,17 +333,17 @@ export const MENU_MODEL: any[] = [
             {
                 label: 'Actions',
                 icon: 'pi pi-fw pi-pencil',
-                routerLink: ['/layout/settings/overview'],
+                routerLink: ['/layout/action/overview'],
                 items: [
                     {
                         label: 'Bulk Upload',
                         icon: 'pi pi-fw pi-upload',
-                        routerLink: ['/layout/settings/bulk-upload']
+                        routerLink: ['/layout/action/bulk-upload']
                     },
                     {
                         label: 'My Approval',
                         icon: 'pi pi-fw pi-check-circle',
-                        routerLink: ['/layout/settings/my-approval']
+                        routerLink: ['/layout/action/my-approval']
                     }
                 ]
             }

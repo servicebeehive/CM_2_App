@@ -43,7 +43,7 @@
                 <button pButton type="submit" label="Submit" class="p-button-primary w-full md:w-auto" [disabled]="poForm.invalid || isSubmitDisabled()"></button>
 
                 <!-- Print -->
-                <button pButton type="button" label="Print" class="p-button-secondary w-full md:w-auto" (click)="printPO()" [disabled]="!poForm.get('p_pono')?.value"></button>
+                <button pButton type="button" label="Print" class="p-button-warning w-full md:w-auto" (click)="printPO()" [disabled]="!poForm.get('p_pono')?.value"></button>
 
                 <!-- Reset -->
                 <button pButton type="button" label="Reset" class="p-button-secondary w-full md:w-auto" (click)="onReset()"></button>
@@ -56,7 +56,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 md:gap-x-8 gap-y-3 md:gap-y-4 w-full">
             <!-- PO No (Auto Generated per vendor) -->
             <div class="flex flex-col">
-                <label class="font-medium mb-1">PO No.</label>
+                <label class="font-medium mb-1">PO No</label>
                 <p-select [options]="ponoOptions" optionLabel="po_no" optionValue="po_id" placeholder="Auto Generated" formControlName="p_pono" filter="true" searchPlaceholder="Search PO" [showClear]="true" (onChange)="onPOChange($event)"></p-select>
             </div>
 
@@ -72,7 +72,7 @@
             <!-- Delivery Date -->
             <div class="flex flex-col">
                 <label class="font-medium">Delivery Date</label>
-                <p-datePicker fluid formControlName="p_deliverydate" placeholder="Select date" dateFormat="dd/mm/yy" [showIcon]="true"></p-datePicker>
+                <p-datePicker fluid formControlName="p_deliverydate" placeholder="Select date" dateFormat="dd/mm/yy" [showIcon]="true" [minDate]="today"></p-datePicker>
                 <small class="text-red-500 mt-1 text-xs" *ngIf="poForm.get('p_podate')?.touched && poForm.get('p_deliverydate')?.touched && poForm.errors?.['deliveryBeforePO']"> Delivery date cannot be before PO date </small>
             </div>
 
@@ -125,12 +125,12 @@
      ITEMS TABLE TAB (always visible)
 ================================= -->
         <div class="mt-4 md:mt-6">
-            <p-tabs value="0">
+            <p-tabs [(value)]="activeTabIndex">
                 <p-tablist>
                     <p-tab value="0">Items</p-tab>
-                    <p-tab value="1" [disabled]="!submitted">Performa</p-tab>
-                    <p-tab value="2" [disabled]="!submitted">Invoice</p-tab>
-                    <p-tab value="3" [disabled]="!submitted">Payment</p-tab>
+                    <p-tab value="1" [disabled]="!hasExistingPo">Performa</p-tab>
+                    <p-tab value="2" [disabled]="!hasExistingPo">Invoice</p-tab>
+                    <p-tab value="3" [disabled]="!hasExistingPo">Payment</p-tab>
                 </p-tablist>
                 <p-tabpanels>
                     <!-- ── TAB 0: ITEMS (always visible) ──────────────── -->
@@ -204,48 +204,86 @@
 
                     <!-- ── TAB 1: PERFORMA (only after submit) ─────────── -->
                     <p-tabpanel value="1">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-4 p-3">
-                            <div class="col-span-1 sm:col-span-2 lg:col-span-4 flex justify-between items-center">
-                                <span class="font-semibold text-base text-surface-800">Performa Details</span>
-                                <button pButton type="button" label="Save Performa" icon="pi pi-save" class="p-button-primary p-button-sm" (click)="savePerforma()"></button>
-                            </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-x-4 gap-y-4 p-3">
                             <div class="flex flex-col">
-                                <label class="font-medium">Performa Invoice No.</label>
+                                <label class="font-medium">Performa Invoice No <span class="text-red-500">*</span></label>
                                 <input pInputText type="text" formControlName="p_performainvoiceno" placeholder="Enter performa invoice no." />
                             </div>
                             <div class="flex flex-col">
-                                <label class="font-medium">Performa Date</label>
-                                <p-datePicker fluid formControlName="p_performadate" placeholder="Select date" dateFormat="dd/mm/yy" [showIcon]="true" [showClear]="true"></p-datePicker>
+                                <label class="font-medium">Performa Date <span class="text-red-500">*</span></label>
+                                <p-datePicker fluid formControlName="p_performadate" placeholder="Select date" dateFormat="dd/mm/yy" [showIcon]="true" [showClear]="true" [maxDate]="showExistingPerformaDate ? null : today"></p-datePicker>
                             </div>
                             <div class="flex flex-col">
-                                <label class="font-medium">Performa Attachment<span class="ms-3 text-xs text-red-500 mt-1">PDF / JPG / PNG</span></label>
+                                <label class="font-medium">Performa Amount (₹) <span class="text-red-500">*</span></label>
+                                <p-inputNumber formControlName="p_performaamount" placeholder="0.00" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" [min]="0" inputStyleClass="w-full"></p-inputNumber>
+                            </div>
+                            <div class="flex flex-col">
+                                <label class="font-medium">Performa Attachment <span class="text-red-500">*</span><span class="ms-3 text-xs text-red-500 mt-1">PDF / JPG / PNG</span></label>
                                 <div class="flex align-items-center gap-2 px-3 py-2" style="border: 1px solid var(--surface-300); border-radius: 6px; background: var(--surface-0); min-height: 38px">
                                     <label for="performaFile" class="p-button p-button-sm p-button-outlined p-button-primary m-0" style="cursor: pointer; white-space: nowrap"> <i class="pi pi-upload mr-2"></i> Choose File </label>
-                                    <input id="performaFile" type="file" accept=".pdf,.jpg,.jpeg,.png" style="display: none" (change)="onPerformaFileSelect($event)" />
+                                    <input id="performaFile" #performaFileInput type="file" accept=".pdf,.jpg,.jpeg,.png" style="display: none" (change)="onPerformaFileSelect($event)" />
                                     <span class="text-sm text-400 mt-2" style="font-style: italic">{{ performaFileName || 'No file chosen' }}</span>
+                                    <button pButton type="button" icon="pi pi-eye" class="p-button-text p-button-sm" pTooltip="Preview attachment" tooltipPosition="top" [disabled]="!performaFileDataUrl" (click)="previewPerformaFile()"></button>
                                 </div>
                             </div>
+                                <div class="flex gap-2 pt-7">
+                                    <button pButton type="button" label="Save Performa" class="w-full p-button-primary p-button-sm" (click)="savePerforma()"></button>
+                                    <button pButton type="button" label="Reset" class="w-full p-button-secondary p-button-sm" (click)="resetPerformaTab()"></button>
+                                </div>
+                        </div>
+                        <div class="p-3 pt-0">
+                            <p-table [value]="performaHistory" class="p-datatable-gridlines p-datatable-sm" [responsiveLayout]="'scroll'">
+                                <ng-template pTemplate="header"
+                                    ><tr class="bg-yellow-400">
+                                        <th>Per Inv No</th>
+                                        <th>Date</th>
+                                        <th class="text-right">Amount (₹)</th>
+                                        <th>Attachment</th>
+                                        <th class="text-center">Action</th>
+                                    </tr></ng-template
+                                >
+                                <ng-template pTemplate="body" let-row let-i="rowIndex">
+                                    <tr>
+                                        <td>{{ row.invoiceNo || '—' }}</td>
+                                        <td>{{ row.date | date: 'dd/MM/yyyy' }}</td>
+                                        <td class="text-right">₹{{ row.amount | number: '1.2-2' }}</td>
+                                        <td>
+                                            {{ row.documentPath || '—'
+                                            }}<span
+                                                ><button
+                                                    pButton
+                                                    type="button"
+                                                    icon="pi pi-eye"
+                                                    class="p-button-text p-button-sm"
+                                                    pTooltip="Preview attachment"
+                                                    (click)="previewPerformaFile(row.documentDataUrl)"
+                                                    [disabled]="!row.documentDataUrl"
+                                                ></button
+                                            ></span>
+                                        </td>
+                                        <td class="text-center">
+                                            <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" pTooltip="Edit" (click)="editPerforma(i)"></button
+                                            ><button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm" pTooltip="Delete" (click)="removePerforma(i)"></button>
+                                        </td>
+                                    </tr>
+                                </ng-template>
+                            </p-table>
                         </div>
                     </p-tabpanel>
 
                     <!-- ── TAB 2: INVOICE (only after submit) ──────────── -->
                     <p-tabpanel value="2">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-4 p-3">
-                            <div class="col-span-1 sm:col-span-2 lg:col-span-4 flex justify-between items-center">
-                                <span class="font-semibold text-base text-surface-800">Invoice Details</span>
-                                <button pButton type="button" label="Save Invoice" icon="pi pi-save" class="p-button-primary p-button-sm" (click)="saveInvoice()"></button>
-                            </div>
-
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-x-4 gap-y-4 p-3">
                             <div class="flex flex-col">
-                                <label class="font-medium">Invoice No.</label>
+                                <label class="font-medium">Invoice No <span class="text-red-500">*</span></label>
                                 <input pInputText type="text" formControlName="p_invoiceno" placeholder="Enter invoice no." />
                             </div>
                             <div class="flex flex-col">
-                                <label class="font-medium">Invoice Date</label>
-                                <p-datePicker fluid formControlName="p_invoicedate" placeholder="Select date" dateFormat="dd/mm/yy" [showIcon]="true" [showClear]="true"></p-datePicker>
+                                <label class="font-medium">Invoice Date <span class="text-red-500">*</span></label>
+                                <p-datePicker fluid formControlName="p_invoicedate" placeholder="Select date" dateFormat="dd/mm/yy" [showIcon]="true" [showClear]="true" [maxDate]="today"></p-datePicker>
                             </div>
                             <div class="flex flex-col">
-                                <label class="font-medium">Invoice Payment (₹)</label>
+                                <label class="font-medium">Invoice Amount (₹) <span class="text-red-500">*</span></label>
                                 <p-inputNumber
                                     formControlName="p_invoicepayment"
                                     placeholder="0.00"
@@ -257,185 +295,255 @@
                                     (onInput)="onInvoicePaymentChange()"
                                 ></p-inputNumber>
                             </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-4 p-3">
                             <div class="flex flex-col">
                                 <label class="font-medium">Freight (₹)</label>
                                 <p-inputNumber formControlName="p_freight" placeholder="0.00" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" [min]="0" inputStyleClass="w-full"></p-inputNumber>
+                            </div>
+                            <div class="flex flex-col">
+                                <label class="font-medium">Total Taxable Amount (₹)</label>
+                                <p-inputNumber formControlName="p_totaltaxableamount" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" [min]="0" inputStyleClass="w-full surface-100" placeholder="Auto calculated"></p-inputNumber>
+                            </div>
+                            <div class="flex flex-col">
+                                <label class="font-medium">Performa Invoice No</label
+                                ><p-select
+                                    [options]="performaInvoiceOptions"
+                                    optionLabel="label"
+                                    optionValue="value"
+                                    formControlName="p_performainvoiceno_invoice"
+                                    placeholder="Select performa invoice"
+                                    [showClear]="true"
+                                    [filter]="true"
+                                    class="w-full"
+                                ></p-select>
+                            </div>
+                            <div class="flex flex-col">
+                                <label class="font-medium">CGST</label>
+                                <p-inputNumber formControlName="p_cgst" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" [min]="0" inputStyleClass="w-full" placeholder="Enter CGST"></p-inputNumber>
+                            </div>
+
+                            <div class="flex flex-col">
+                                <label class="font-medium">SGST (₹)</label
+                                ><p-inputNumber formControlName="p_sgst" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" [min]="0" inputStyleClass="w-full" placeholder="Enter SGST"></p-inputNumber>
+                            </div>
+                            <div class="flex flex-col">
+                                <label class="font-medium">IGST (₹)</label
+                                ><p-inputNumber formControlName="p_igst" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" [min]="0" inputStyleClass="w-full" placeholder="Enter IGST"></p-inputNumber>
                             </div>
                             <div class="flex flex-col">
                                 <label class="font-medium">Loading Charge (₹)</label>
                                 <p-inputNumber formControlName="p_loadingcharge" placeholder="0.00" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" [min]="0" inputStyleClass="w-full"></p-inputNumber>
                             </div>
                             <div class="flex flex-col">
-                                <label class="font-medium">GST</label>
-                                <input pInputText type="text" formControlName="p_gst" placeholder="Enter GST" />
+                                <label class="font-medium">Misc Charge (₹)</label
+                                ><p-inputNumber formControlName="p_misccharge" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" [min]="0" inputStyleClass="w-full" placeholder="Enter Misc Charge"></p-inputNumber>
                             </div>
                             <div class="flex flex-col">
-                                <label class="font-medium">Invoice Transit</label>
-                                <input pInputText type="text" formControlName="p_transit" placeholder="Enter Invoice Transit" />
+                                <label class="font-medium">Grand Total (₹)</label>
+                                <p-inputNumber formControlName="p_grandtotal" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" [min]="0" inputStyleClass="w-full surface-100" placeholder="Auto calculated"></p-inputNumber>
                             </div>
+
+                            <div class="flex flex-col"></div>
+                            <div class="flex flex-col"></div>
+                            <div class="flex gap-2 mt-6">
+                                <button pButton type="button" label="Save Invoice" class="p-button-primary p-button-sm w-full" (click)="saveInvoice()"></button>
+                                <button pButton type="button" label="Reset" class="p-button-secondary p-button-sm w-full" (click)="resetInvoiceTab()"></button>
+                            </div>
+                        </div>
+                        <div class="p-3 pt-0">
+                            <p-table [value]="invoiceHistory" class="p-datatable-gridlines p-datatable-sm" [responsiveLayout]="'scroll'">
+                                <ng-template pTemplate="header">
+                                    <tr class="bg-yellow-400">
+                                        <th>Invoice No</th>
+                                        <th>Performa Invoice No</th>
+                                        <th>Freight (₹)</th>
+                                        <th>Loading Charge (₹)</th>
+                                        <th>CGST (₹)</th>
+                                        <th>Total Taxable (₹)</th>
+                                        <th>SGST (₹)</th>
+                                        <th>IGST (₹)</th>
+                                        <th>Misc Charge (₹)</th>
+                                        <th>Grand Total (₹)</th>
+                                        <th class="text-center">Action</th>
+                                    </tr>
+                                </ng-template>
+                                <ng-template pTemplate="body" let-row let-i="rowIndex">
+                                    <tr>
+                                        <td>{{ row.invoiceNo || '—' }}</td>
+                                        <td>{{ row.performaInvoiceNo || '—' }}</td>
+                                        <td>₹{{ row.freight | number: '1.2-2' }}</td>
+                                        <td>₹{{ row.loadingCharge | number: '1.2-2' }}</td>
+                                        <td>₹{{ row.cgst | number: '1.2-2' }}</td>
+                                        <td>₹{{ row.totalTaxableAmount | number: '1.2-2' }}</td>
+                                        <td>₹{{ row.sgst | number: '1.2-2' }}</td>
+                                        <td>₹{{ row.igst | number: '1.2-2' }}</td>
+                                        <td>₹{{ row.miscCharge | number: '1.2-2' }}</td>
+                                        <td>₹{{ row.grandTotal | number: '1.2-2' }}</td>
+                                        <td class="text-center">
+                                            <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" pTooltip="Edit" (click)="editInvoice(i)"></button>
+                                            <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm" pTooltip="Delete" (click)="removeInvoice(i)"></button>
+                                        </td>
+                                    </tr>
+                                </ng-template>
+                            </p-table>
                         </div>
                     </p-tabpanel>
 
-                   <p-tabpanel value="3">
-    <!-- Header row — same grid + col-span pattern as Invoice tab -->
-    <!-- Summary Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-4 p-3">
-        <div class="flex flex-col">
-            <label class="font-medium">Total Payment (₹)</label>
-            <input pInputText type="text" formControlName="p_totalpayment" [readonly]="true" class="surface-100 text-500" placeholder="Auto calculated" />
-        </div>
+                    <p-tabpanel value="3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-x-4 gap-y-4 p-3">
+                            <div class="flex flex-col">
+                                <label class="font-medium">Total Payment (₹)</label>
+                                <input pInputText type="text" formControlName="p_totalpayment" [readonly]="true" class="font-bold"  placeholder="Auto calculated" />
+                            </div>
 
-        <div class="flex flex-col">
-            <label class="font-medium">Remaining Payment (₹)</label>
-            <input
-                pInputText
-                type="text"
-                formControlName="p_remainingpayment"
-                [readonly]="true"
-                [ngClass]="{ 'text-red-500': getRemainingPayment() > 0, 'text-green-600': getRemainingPayment() <= 0 }"
-                class="surface-100"
-                placeholder="Auto calculated"
-            />
-        </div>
+                            <div class="flex flex-col">
+                                <label class="font-medium">Remaining Payment (₹)</label>
+                                <input
+                                    pInputText
+                                    type="text"
+                                    formControlName="p_remainingpayment"
+                                    [readonly]="true"
+                                    [ngClass]="{ 'text-red-500': getRemainingPayment() > 0, 'text-green-600': getRemainingPayment() <= 0 }"
+                                    class="font-bold"
+                                    placeholder="Auto calculated"
+                                />
+                            </div>
 
-        <div class="flex flex-col">
-            <label class="font-medium">Amount Paid(₹)</label>
-            <input pInputText type="text" formControlName="p_payment" placeholder="Enter Amount" />
-        </div>
-    </div>
-     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-4 p-3">
-        <div class="flex flex-col">
-            <label class="font-medium">Payment(₹)</label>
-            <input pInputText type="text" formControlName="p_payment" placeholder="Enter Amount" />
-        </div>
-        <div class="flex flex-col">
-            <label class="font-medium">Payment Date</label>
-            <input pInputText type="text" formControlName="p_paymentdate" placeholder="Enter Payment Date" />
-        </div>
-        <div class="flex flex-col">
-            <label class="font-medium">Payment Mode</label>
-            <input pInputText type="text" formControlName="p_paymentmode" placeholder="Enter Payment Mode" />
-        </div>
-        <div class="flex flex-col">
-            <button pButton type="button" label="Save Payment" icon="pi pi-save" class="p-button-primary p-button-sm" (click)="savePayment()" [disabled]="paymentHistory.length === 0"></button>
-        </div>
-     </div>
+                            <div class="flex flex-col">
+                                <label class="font-medium">Payment(₹)</label>
+                                <p-inputNumber
+                                    [(ngModel)]="newPayment.amount"
+                                    [ngModelOptions]="{ standalone: true }"
+                                    placeholder="0.00"
+                                    mode="decimal"
+                                    [minFractionDigits]="2"
+                                    [maxFractionDigits]="2"
+                                    [min]="0"
+                                    readonly="true"
+                                    [disabled]="isPaymentEntryDisabled"
+                                    inputStyleClass="w-full font-bold"
+                                ></p-inputNumber>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-x-4 gap-y-4 p-3">
+                            <div class="flex flex-col">
+                                <label class="font-medium">Payment Date</label>
+                                <p-datePicker fluid formControlName="p_paymentdate" dateFormat="dd/mm/yy" placeholder="Select Payment Date" [showIcon]="true" [showClear]="true" [maxDate]="today"></p-datePicker>
+                            </div>
+                            <div class="flex flex-col">
+                                <label class="font-medium">Invoice No</label>
+                                <p-select
+                                    [options]="invoiceOptions"
+                                    optionLabel="label"
+                                    optionValue="value"
+                                    [(ngModel)]="newPayment.invoiceNo"
+                                    [ngModelOptions]="{ standalone: true }"
+                                    placeholder="Select invoice no."
+                                    [showClear]="true"
+                                    [filter]="true"
+                                    class="w-full"
+                                ></p-select>
+                            </div>
+                            <div class="flex flex-col">
+                                <label class="font-medium">Performa Invoice No</label>
+                                <p-select
+                                    [options]="performaInvoiceOptions"
+                                    optionLabel="label"
+                                    optionValue="value"
+                                    [(ngModel)]="newPayment.performaInvoiceNo"
+                                    [ngModelOptions]="{ standalone: true }"
+                                    placeholder="Select performa invoice"
+                                    [showClear]="true"
+                                    [filter]="true"
+                                    class="w-full"
+                                ></p-select>
+                            </div>
+                            <div class="flex flex-col">
+                                <label class="font-medium">Payment Mode</label>
+                                <p-select
+                                    [options]="paymentModeOptions"
+                                    optionLabel="label"
+                                    optionValue="value"
+                                    placeholder="Select"
+                                    [(ngModel)]="newPayment.mode"
+                                    [ngModelOptions]="{ standalone: true }"
+                                    appendTo="body"
+                                    styleClass="w-full"
+                                ></p-select>
+                            </div>
+                            <div class="flex flex-col">
+                                <label class="font-medium">Reference No</label>
+                                <input pInputText [(ngModel)]="newPayment.referenceNo" [ngModelOptions]="{ standalone: true }" placeholder="UTR / Cheque No" />
+                            </div>
+                                <div class="flex gap-2 mt-6">
+                                    <button
+                                        pButton
+                                        type="button"
+                                        [label]="editingPaymentIndex === null ? 'Save Payment' : 'Update Payment'"
+                                        class="p-button-primary p-button-sm w-full"
+                                        (click)="savePayment()"
+                                        [disabled]="isPaymentEntryDisabled"
+                                    ></button>
+                                    <button pButton type="button" label="Reset" class="p-button-secondary p-button-sm w-full" (click)="resetPaymentTab()"></button>
+                                </div>
+                        </div>
 
-    <!-- Fully Paid Badge -->
-    <div *ngIf="getRemainingPayment() <= 0 && paymentHistory.length > 0" class="flex align-items-center gap-2 px-3 py-2 border-round mb-3 mx-3" style="border: 1px solid var(--green-300); background: var(--green-50)">
-        <i class="pi pi-check-circle text-green-600"></i>
-        <span class="text-green-700 font-semibold text-sm">Payment Completed — Fully Paid</span>
-    </div>
+                        <!-- Fully Paid Badge -->
+                        <div *ngIf="getRemainingPayment() <= 0 && paymentHistory.length > 0" class="flex align-items-center gap-2 px-3 py-2 border-round mb-3 mx-3" style="border: 1px solid var(--green-300); background: var(--green-50)">
+                            <i class="pi pi-check-circle text-green-600"></i>
+                            <span class="text-green-700 font-semibold text-sm">Payment Completed — Fully Paid</span>
+                        </div>
 
-    <!-- Transaction Table -->
-    <div class="p-3 pt-0">
-        <p-table [value]="paymentHistory" class="p-datatable-gridlines p-datatable-sm" [responsiveLayout]="'scroll'">
-            <ng-template pTemplate="header">
-                <tr class="bg-yellow-400">
-                      <th style="min-width: 150px">Reference No.</th>
-                    <th style="min-width: 140px">Payment Date</th>
-                    <th style="min-width: 130px">Mode</th>
-                    <th style="min-width: 140px" class="text-right">Amount Paid (₹)</th>
-                    <th style="width: 80px" class="text-center">Action</th>
-                </tr>
-            </ng-template>
+                        <div class="p-3 pt-0">
+                            <p-table [value]="paymentHistory" class="p-datatable-gridlines p-datatable-sm" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" appendTo="body">
+                                <ng-template pTemplate="header">
+                                    <tr class="bg-yellow-400">
+                                        <th style="min-width: 150px">Invoice No</th>
+                                        <th style="min-width: 170px">Performa Invoice No</th>
+                                        <th style="min-width: 150px">Reference No</th>
+                                        <th style="min-width: 140px">Payment Date</th>
+                                        <th style="min-width: 130px">Mode</th>
+                                        <th style="min-width: 140px" class="text-right">Amount Paid (₹)</th>
+                                        <th style="width: 120px" class="text-center">Action</th>
+                                    </tr>
+                                </ng-template>
 
-            <ng-template pTemplate="body" let-pay let-i="rowIndex">
-                <tr *ngIf="!pay.isEditing">
-                    <td class="text-sm text-500">{{ pay.referenceNo || '—' }}</td>
-                    <td class="text-sm">{{ pay.date | date: 'dd/MM/yyyy' }}</td>
-                    <td>
-                        <span
-                            class="px-2 py-1 border-round text-xs font-semibold"
-                            [ngClass]="{
-                                'bg-blue-100 text-blue-700': pay.mode === 'Bank Transfer',
-                                'bg-green-100 text-green-700': pay.mode === 'Cash',
-                                'bg-orange-100 text-orange-700': pay.mode === 'Cheque',
-                                'bg-purple-100 text-purple-700': pay.mode === 'UPI'
-                            }"
-                        >
-                            {{ pay.mode || '—' }}
-                        </span>
-                    </td>
-                    <td class="text-right text-sm font-semibold text-green-600">₹{{ pay.amount | number: '1.2-2' }}</td>
-                    <td class="text-center">
-                        <button pButton type="button" icon="pi pi-minus" class="p-button-text p-button-danger p-button-sm" pTooltip="Delete" tooltipPosition="top" (click)="removePayment(i)"></button>
-                    </td>
-                </tr>
-            </ng-template>
+                                <ng-template pTemplate="body" let-pay let-i="rowIndex">
+                                    <tr>
+                                        <td class="text-sm">{{ pay.invoiceNo || '—' }}</td>
+                                        <td class="text-sm">{{ pay.performaInvoiceNo || '—' }}</td>
+                                        <td class="text-sm text-500">{{ pay.referenceNo || '—' }}</td>
+                                        <td class="text-sm">{{ pay.date | date: 'dd/MM/yyyy' }}</td>
+                                        <td>
+                                            <span
+                                                class="px-2 py-1 border-round text-xs font-semibold"
+                                                [ngClass]="{
+                                                    'bg-blue-100 text-blue-700': pay.mode === 'Bank Transfer',
+                                                    'bg-green-100 text-green-700': pay.mode === 'Cash',
+                                                    'bg-orange-100 text-orange-700': pay.mode === 'Cheque',
+                                                    'bg-purple-100 text-purple-700': pay.mode === 'UPI'
+                                                }"
+                                            >
+                                                {{ pay.mode || '—' }}
+                                            </span>
+                                        </td>
+                                        <td class="text-right text-sm font-semibold text-green-600">₹{{ pay.amount | number: '1.2-2' }}</td>
+                                        <td class="text-center">
+                                            <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" pTooltip="Edit" tooltipPosition="top" (click)="editPayment(i)"></button>
+                                            <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm" pTooltip="Delete" tooltipPosition="top" (click)="removePayment(i)"></button>
+                                        </td>
+                                    </tr>
+                                </ng-template>
 
-            <ng-template pTemplate="footer">
-                <tr *ngIf="getRemainingPayment() > 0">
-                    <td>
-                        <input pInputText type="text" [(ngModel)]="newPayment.referenceNo" [ngModelOptions]="{ standalone: true }" placeholder="UTR / Cheque No." class="w-full text-sm" />
-                    </td>
-
-                    <td>
-                        <p-datePicker
-                            [(ngModel)]="newPayment.date"
-                            [ngModelOptions]="{ standalone: true }"
-                            dateFormat="dd/mm/yy"
-                            placeholder="dd/mm/yyyy"
-                            [showIcon]="true"
-                            [maxDate]="today"
-                            inputStyleClass="w-full text-sm"
-                            appendTo="body"
-                        ></p-datePicker>
-                    </td>
-
-                    <td>
-                        <p-select
-                            [options]="paymentModeOptions"
-                            optionLabel="label"
-                            optionValue="value"
-                            placeholder="Select"
-                            [(ngModel)]="newPayment.mode"
-                            [ngModelOptions]="{ standalone: true }"
-                            appendTo="body"
-                            styleClass="w-full"
-                        ></p-select>
-                    </td>
-
-                    <td>
-                        <p-inputNumber
-                            [(ngModel)]="newPayment.amount"
-                            [ngModelOptions]="{ standalone: true }"
-                            placeholder="0.00"
-                            mode="decimal"
-                            [minFractionDigits]="2"
-                            [maxFractionDigits]="2"
-                            [min]="0"
-                            [max]="getRemainingPayment()"
-                            inputStyleClass="w-full text-right text-sm"
-                        ></p-inputNumber>
-                    </td>
-
-                    <td class="text-center">
-                        <button
-                            pButton
-                            type="button"
-                            icon="pi pi-plus"
-                            class="p-button-text p-button-success p-button-sm"
-                            pTooltip="Add payment"
-                            tooltipPosition="top"
-                            [disabled]="!newPayment.date || !newPayment.amount || newPayment.amount <= 0"
-                            (click)="addAdvancePayment()"
-                        ></button>
-                    </td>
-                </tr>
-
-                <tr *ngIf="paymentHistory.length > 0">
-                    <td colspan="4" class="text-right font-bold text-sm">Total</td>
-                    <td class="text-right font-bold text-green-600 text-sm">₹{{ totalPaid | number: '1.2-2' }}</td>
-                    <td></td>
-                </tr>
-            </ng-template>
-        </p-table>
-    </div>
-</p-tabpanel>
+                                <ng-template pTemplate="footer">
+                                    <tr *ngIf="paymentHistory.length > 0">
+                                        <td colspan="5" class="text-right font-bold text-sm">Total</td>
+                                        <td class="text-right font-bold text-green-600 text-sm">₹{{ totalPaid | number: '1.2-2' }}</td>
+                                        <td></td>
+                                    </tr>
+                                </ng-template>
+                            </p-table>
+                        </div>
+                    </p-tabpanel>
                 </p-tabpanels>
             </p-tabs>
         </div>
@@ -443,6 +551,239 @@
 
     <p-confirmDialog></p-confirmDialog>
 </div>
+
+<section id="poPrintSection" class="po-print-section" *ngIf="printData as po">
+    <div class="po-print">
+ 
+        <!-- ============ PAGE 1 ============ -->
+        <div class="po-first-page">
+ 
+            <!-- Letterhead — page 1 ONLY -->
+            <div class="po-letterhead">
+                <div class="po-letterhead-logo">{{ po.companyMark || 'OM' }}</div>
+                <div class="po-letterhead-text">
+                    <h1>{{ po.companyName }}</h1>
+                    <p class="po-tagline" *ngIf="po.companyTagline">{{ po.companyTagline }}</p>
+                    <p class="po-contact" *ngIf="po.companyEmail || po.companyPhone">
+                        Email: {{ po.companyEmail || '-' }}<span *ngIf="po.companyEmail && po.companyPhone">, </span
+                        >Phone: {{ po.companyPhone || '-' }}
+                    </p>
+                    <p class="po-office" *ngIf="po.companyAddress">{{ po.companyAddress }}</p>
+                </div>
+            </div>
+ 
+            <div class="po-title-bar">PURCHASE ORDER</div>
+ 
+            <!-- Supplier Details / PO Details -->
+            <table class="po-kv-table">
+                <tr class="po-kv-header">
+                    <td colspan="2">Supplier Details</td>
+                    <td colspan="2">PO Details</td>
+                </tr>
+                <tr>
+                    <td class="po-kv-label">Supplier:</td>
+                    <td class="po-kv-value">{{ po.supplierName || '-' }}</td>
+                    <td class="po-kv-label">PO No.</td>
+                    <td class="po-kv-value">{{ po.poNo || '-' }}</td>
+                </tr>
+                <tr>
+                    <td class="po-kv-label">Address:</td>
+                    <td class="po-kv-value">{{ po.supplierAddress || '-' }}</td>
+                    <td class="po-kv-label">PO Date</td>
+                    <td class="po-kv-value">{{ po.poDate | date: 'dd-MM-yyyy' }}</td>
+                </tr>
+                <tr>
+                    <td class="po-kv-label"></td>
+                    <td class="po-kv-value"></td>
+                    <td class="po-kv-label">Credit Period</td>
+                    <td class="po-kv-value">{{ po.creditPeriod || po.paymentTerms || '-' }}</td>
+                </tr>
+                <tr>
+                    <td class="po-kv-label"></td>
+                    <td class="po-kv-value"></td>
+                    <td class="po-kv-label">Project Name</td>
+                    <td class="po-kv-value">{{ po.projectName || '-' }}</td>
+                </tr>
+                <tr>
+                    <td class="po-kv-label">Contact No:</td>
+                    <td class="po-kv-value">{{ po.supplierPhone || '-' }}</td>
+                    <td class="po-kv-label">Contact Person:</td>
+                    <td class="po-kv-value">{{ po.contactPerson || '-' }}</td>
+                </tr>
+                <tr>
+                    <td class="po-kv-label">GSTIN:</td>
+                    <td class="po-kv-value">{{ po.supplierGstin || '-' }}</td>
+                    <td class="po-kv-label"></td>
+                    <td class="po-kv-value"></td>
+                </tr>
+            </table>
+ 
+            <!-- Billing Address / Shipping Address -->
+            <table class="po-kv-table">
+                <tr class="po-kv-header">
+                    <td colspan="2">Billing Address</td>
+                    <td colspan="2">Shipping Address</td>
+                </tr>
+                <tr>
+                    <td colspan="2" class="po-address-cell">
+                        <strong>{{ po.companyName }}</strong><br />
+                        {{ po.billingAddress || po.companyAddress || '-' }}
+                    </td>
+                    <td colspan="2" class="po-address-cell">
+                        <span *ngIf="po.projectName">Project Name - {{ po.projectName }}<br /></span>
+                        <span *ngIf="po.shippingCompanyName">Company Name- {{ po.shippingCompanyName }}<br /></span>
+                        {{ po.shippingAddress || po.deliveryLocation || '-' }}
+                    </td>
+                </tr>
+                <tr>
+                    <td class="po-kv-label">PAN No.</td>
+                    <td class="po-kv-value">{{ po.companyPan || '-' }}</td>
+                    <td class="po-kv-label">Contact Person:</td>
+                    <td class="po-kv-value">{{ po.contactPerson || '-' }}</td>
+                </tr>
+                <tr>
+                    <td class="po-kv-label">GSTIN No.</td>
+                    <td class="po-kv-value">{{ po.companyGstin || '-' }}</td>
+                    <td class="po-kv-label">PAN / GSTIN</td>
+                    <td class="po-kv-value">{{ po.companyPan || '-' }} / {{ po.companyGstin || '-' }}</td>
+                </tr>
+                <tr *ngIf="po.companyCin">
+                    <td class="po-kv-label">CIN No.</td>
+                    <td class="po-kv-value" colspan="3">{{ po.companyCin }}</td>
+                </tr>
+            </table>
+ 
+            <!-- Items -->
+            <table class="po-items-table">
+                <thead>
+                    <tr>
+                        <th style="width: 4%">Sr<br />No.</th>
+                        <th style="width: 26%">Description of Goods</th>
+                        <th style="width: 8%">Make</th>
+                        <th style="width: 6%">Unit</th>
+                        <th style="width: 6%">Qty</th>
+                        <th style="width: 8%">Rate</th>
+                        <th style="width: 6%">Disc %</th>
+                        <th style="width: 9%">Basic<br />Amount</th>
+                        <th style="width: 6%">CGST %</th>
+                        <th style="width: 6%">SGST %</th>
+                        <th style="width: 6%">IGST %</th>
+                        <th style="width: 9%">Taxable<br />Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let item of po.items">
+                        <td class="text-center">{{ item.srNo }}</td>
+                        <td>{{ item.description }}</td>
+                        <td>{{ item.make || '-' }}</td>
+                        <td class="text-center">{{ item.uom }}</td>
+                        <td class="text-right">{{ item.quantity | number: '1.0-2' }}</td>
+                        <td class="text-right">{{ item.rate | number: '1.2-2' }}</td>
+                        <td class="text-center">{{ item.discount || 0 }}%</td>
+                        <!-- "Basic Amount" mirrors the unit Rate, matching the reference PO layout -->
+                        <td class="text-right">{{ item.rate | number: '1.2-2' }}</td>
+                        <td class="text-center">{{ item.cgstPercent | number: '1.1-1' }}%</td>
+                        <td class="text-center">{{ item.sgstPercent | number: '1.1-1' }}%</td>
+                        <td class="text-center">{{ item.igstPercent | number: '1.1-1' }}%</td>
+                        <td class="text-right">{{ item.taxableAmount | number: '1.2-2' }}</td>
+                    </tr>
+                    <tr *ngIf="!po.items.length">
+                        <td colspan="12" class="text-center">No items</td>
+                    </tr>
+                </tbody>
+            </table>
+ 
+            <!-- Totals -->
+            <table class="po-summary-table">
+                <tr>
+                    <td class="po-summary-label">Gross Amount</td>
+                    <td class="po-summary-value">₹{{ po.taxableAmount | number: '1.2-2' }}</td>
+                </tr>
+                <tr>
+                    <td class="po-summary-label">Total CGST</td>
+                    <td class="po-summary-value">₹{{ po.cgst | number: '1.2-2' }}</td>
+                </tr>
+                <tr>
+                    <td class="po-summary-label">Total SGST</td>
+                    <td class="po-summary-value">₹{{ po.sgst | number: '1.2-2' }}</td>
+                </tr>
+                <tr *ngIf="po.igst">
+                    <td class="po-summary-label">Total IGST</td>
+                    <td class="po-summary-value">₹{{ po.igst | number: '1.2-2' }}</td>
+                </tr>
+                <tr>
+                    <td class="po-summary-label">Round Off</td>
+                    <td class="po-summary-value">₹{{ po.roundOff | number: '1.2-2' }}</td>
+                </tr>
+                <tr class="po-summary-strong">
+                    <td class="po-summary-label">TOTAL AMOUNT</td>
+                    <td class="po-summary-value">₹{{ po.grandTotal | number: '1.2-2' }}</td>
+                </tr>
+            </table>
+ 
+            <table class="po-words-table">
+                <tr>
+                    <td>Amount in word : <strong>{{ po.amountInWords }}</strong></td>
+                </tr>
+            </table>
+ 
+            <table class="po-charges-table">
+                <tr>
+                    <td class="po-charge-label">Total Freight Amount</td>
+                    <td class="po-charge-value">₹{{ po.freight | number: '1.2-2' }}</td>
+                </tr>
+                <tr>
+                    <td class="po-charge-label">Total Discount Amount</td>
+                    <td class="po-charge-value">₹{{ po.totalDiscountAmount | number: '1.2-2' }}</td>
+                </tr>
+                <tr>
+                    <td class="po-charge-label">Transport Charges</td>
+                    <td class="po-charge-value">₹{{ po.transportCharges | number: '1.2-2' }}</td>
+                </tr>
+                <tr>
+                    <td class="po-charge-label">Total Loading/Unloading Charges</td>
+                    <td class="po-charge-value">₹{{ po.loadingCharge | number: '1.2-2' }}</td>
+                </tr>
+                <tr>
+                    <td class="po-charge-label">Total Other Charges</td>
+                    <td class="po-charge-value">₹{{ po.miscCharge | number: '1.2-2' }}</td>
+                </tr>
+            </table>
+ 
+            <div class="po-note-block">
+                <div class="po-note-label">Delivery Schedule :</div>
+                <div>{{ po.deliverySchedule || '-' }}</div>
+                <div class="po-note-label" style="margin-top: 4px">Note:-</div>
+                <div>{{ po.note || 'Special Conditions apply as per the general terms and conditions overleaf.' }}</div>
+            </div>
+        </div>
+ 
+        <!-- ============ PAGE 2 — no letterhead repeated ============ -->
+        <div class="po-second-page">
+            <div class="po-section-title">Payment Terms</div>
+            <div class="po-terms-block">
+                <p>{{ po.paymentTermsText || ('Payment Terms: ' + (po.paymentTerms || 'As agreed') + ' of the total order value along with taxes & duties.') }}</p>
+            </div>
+ 
+            <div class="po-section-title">General Terms &amp; Conditions</div>
+            <div class="po-terms-block">
+                <p *ngFor="let term of po.generalTerms; let i = index">{{ i + 1 }}. {{ term }}</p>
+                <p *ngIf="po.remarks">Remarks: {{ po.remarks }}</p>
+            </div>
+ 
+            <div class="po-signature-row">
+                <div class="po-signature-block">
+                    <div class="po-signature-line">Prepared By</div>
+                    <div class="po-signature-name">{{ po.preparedByName || '&nbsp;' }}</div>
+                </div>
+                <div class="po-signature-block">
+                    <div class="po-signature-line">Authorised By</div>
+                    <div class="po-signature-name">{{ po.authorisedByName || '&nbsp;' }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
 <!-- ================================================
      VENDOR ASSIGNMENT DIALOG

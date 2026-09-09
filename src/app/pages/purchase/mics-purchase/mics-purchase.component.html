@@ -1,0 +1,169 @@
+<p-toast></p-toast>
+<div class="card p-3 md:p-6">
+    <form [formGroup]="form" (ngSubmit)="onSave()">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-2">
+            <span class="block text-surface-900 font-bold text-lg md:text-xl">Misc Purchase</span>
+
+            <div class="mr-form-footer">
+                <span class="text-xl font-bold mt-2">Status</span>
+                <span class="font-bold text-xl mt-2" [ngStyle]="{ color: statusColor }">
+                    {{ form.get('status')?.value }}
+                </span>
+
+                <button pButton type="submit" label="Submit" class="p-button-primary"></button>
+                <button pButton type="button" label="Reset" class="p-button-secondary" (click)="onReset()"></button>
+            </div>
+        </div>
+
+        <div class="mr-card mb-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-3">
+                <div class="flex flex-col">
+                    <label class="font-medium mb-1">Purchase No</label>
+                    <p-dropdown
+                        [options]="purchaseNoOptions"
+                        optionLabel="misc_purchase_no"
+                        optionValue="misc_purchase_id"
+                        formControlName="purchaseNo"
+                        [filter]="true"
+                        [showClear]="true"
+                        (onChange)="onPurchaseChange($event)"
+                        placeholder="Select purchase no"
+                        filterPlaceholder="Search purchase no"
+                    ></p-dropdown>
+                </div>
+
+                <div class="flex flex-col">
+                    <label class="font-medium mb-1">Purchase Date <span class="text-red-500">*</span></label>
+                    <p-datePicker fluid [showIcon]="true" formControlName="purchaseDate" dateFormat="dd-mm-yy" placeholder="Select date" [disabled]="true"></p-datePicker>
+                </div>
+
+                <div class="flex flex-col">
+                    <label class="font-medium mb-1">Site <span class="text-red-500">*</span></label>
+                    <p-dropdown [options]="siteOptions" optionLabel="project_name" optionValue="project_id" placeholder="Select Site" formControlName="site" [filter]="true" [showClear]="true" filterPlaceholder="Search project"></p-dropdown>
+                </div>
+
+                <div class="flex flex-col">
+                    <label class="font-medium mb-1">Vendor <span class="text-red-500">*</span></label>
+                    <input pInputText placeholder="Select vendor" formControlName="vendor" />
+                </div>
+
+                 <div class="flex flex-col col-span-2">
+                    <label class="font-medium mb-1 text-sm md:text-base">Item</label>
+                    <p-dropdown
+                        class="w-full"
+                        [options]="itemOptions"
+                        optionLabel="itemname"
+                        optionValue="itemid"
+                        formControlName="p_itemdata"
+                        [filter]="true"
+                        filterBy="itemname"
+                        placeholder="Select Item"
+                        [showClear]="true"
+                        (onChange)="onItemChange($event)"
+                    >
+                        <ng-template #selectedItem let-item>
+                            <div class="text-sm md:text-base">{{ item.itemname }}</div>
+                        </ng-template>
+                        <ng-template #item let-details>
+                            <div class="flex items-center justify-between w-full">
+                                <div class="text-sm md:text-base">{{ details.itemname }}</div>
+                                <span class="text-xs md:text-sm" [ngClass]="details.currentstock == 0 ? 'text-red-500' : 'text-green-600'"> Stock: {{ details.currentstock }} </span>
+                            </div>
+                        </ng-template>
+                    </p-dropdown>
+                </div>
+
+                  <div class="flex flex-col">
+                    <label class="font-medium mb-1">Attachment</label>
+                    <div class="mr-file-input flex items-center gap-2">
+                        <label for="miscAttachment" class="mr-choose-btn"><i class="pi pi-upload"></i> Choose File</label>
+                        <input id="miscAttachment" type="file" accept=".pdf,.jpg,.jpeg,.png" hidden (change)="onFileSelect($event)" />
+                        <span class="mr-file-name">{{ uploadedFileName || 'No file chosen' }}</span>
+                        <button
+                            type="button"
+                            *ngIf="uploadedFileName || uploadedFileBase64 || uploadedFileUrl"
+                            pButton
+                            icon="pi pi-eye"
+                            class="p-button-text p-button-sm"
+                            pTooltip="Preview PDF"
+                            tooltipPosition="top"
+                            (click)="previewAttachment()"
+                        ></button>
+                    </div>
+                </div>
+
+                <div class="flex flex-col">
+                    <label class="font-medium mb-1">Remarks</label>
+                    <input pInputText formControlName="remarks" placeholder="Enter remarks" />
+                </div>
+            </div>
+        </div>
+
+        <div class="mr-card">
+            <div class="mr-card-header">
+                    <i class="pi pi-list"></i>
+                    <span>Purchase Items</span>
+            </div>
+
+            <div class="mt-4 md:mt-6 overflow-x-auto">
+                <p-table [value]="items.controls" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" class="p-datatable-gridlines" styleClass="material-forcast">
+                    <ng-template pTemplate="header">
+                        <tr class="bg-yellow-400">
+                            <th>#</th>
+                            <th>Item / Description</th>
+                            <th>Category</th>
+                            <th>UOM</th>
+                            <th class="text-right">Quantity</th>
+                            <th class="text-right">Rate (₹)</th>
+                            <th class="text-right">Amount (₹)</th>
+                            <th class="text-center">Action</th>
+                        </tr>
+                    </ng-template>
+
+                    <ng-template pTemplate="body" let-row let-i="rowIndex">
+                        <tr [formGroup]="row">
+                            <td class="text-xs md:text-sm">{{ i + 1 }}</td>
+
+                            <td class="text-xs md:text-sm">
+                                {{ row.get('item_description')?.value || '-' }}
+                            </td>
+
+                            <td class="text-xs md:text-sm">
+                                {{ row.get('category')?.value || '-' }}
+                            </td>
+
+                            <td class="text-xs md:text-sm">
+                                {{ row.get('uom')?.value || '-' }}
+                            </td>
+
+                            <td>
+                                <p-inputNumber formControlName="quantity" [minFractionDigits]="0" [maxFractionDigits]="2" placeholder="0" inputStyleClass="w-full text-right" styleClass="w-full"></p-inputNumber>
+                            </td>
+
+                            <td>
+                                <p-inputNumber formControlName="rate" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" placeholder="0" inputStyleClass="w-full text-right" styleClass="w-full"></p-inputNumber>
+                            </td>
+
+                            <td class="text-xs md:text-sm text-right font-semibold">{{ rowAmount(i) | number: '1.2-2' }}</td>
+
+                            <td class="text-center">
+                                <i class="pi pi-trash text-red-500 cursor-pointer" (click)="removeItem(i)"></i>
+                            </td>
+                        </tr>
+                    </ng-template>
+
+                    <ng-template pTemplate="paginatorleft">
+                        <div class="text-gray-600 ms-2 text-xs md:text-sm">Total Items: {{ items.controls.length }}</div>
+                    </ng-template>
+                </p-table>
+            </div>
+
+            <div class="mt-4 flex justify-end">
+                <div class="mr-total-box">
+                    <span>Total Amount (₹)</span>
+                    <strong>{{ totalAmount | number: '1.2-2' }}</strong>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

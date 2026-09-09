@@ -2,7 +2,7 @@ import { environment } from "@/environments/environment";
 import { HttpClient } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 import { ShareService } from "./shared.service";
-import { MaterialRequisitionPayload, PurchaseDraftPayload, PurchaseOrderPayload, UpsertRfqPayload, UpserWorkList } from "../models/authmodel/work.model";
+import { MaterialRequisitionPayload, MiscPurchase, PurchaseDraftPayload, PurchaseOrderPayload, UpsertRfqPayload, UpserWorkList } from "../models/authmodel/work.model";
 import { catchError, Observable, throwError } from "rxjs";
 import { API_ENDPOINTS } from "../config/api-endpoints";
 
@@ -70,12 +70,14 @@ export class WorkService {
         }))
       }
 
-      sendRfqMail(payload:any):Observable<any>{
-        let payloaddata = this.shareservice.GetApiBody(payload)
-        let url = `${this.baseUrl}${API_ENDPOINTS.work.sendrfqmail}`;
-        return this.http.post<any>(url,payloaddata).pipe(catchError(error=>{
-            return throwError(()=>error)
-        }))
+      sendVendorMail(payload: any): Observable<any> {
+        const payloaddata = this.shareservice.GetApiBody(payload);
+        const url = `${this.baseUrl}${API_ENDPOINTS.work.sendrfqmail}`;
+        return this.http.post<any>(url, payloaddata).pipe(catchError(error => throwError(() => error)));
+      }
+
+      sendRfqMail(payload: any): Observable<any> {
+        return this.sendVendorMail(payload);
       }
 
       upsertRfqVendorComparison(payload: any): Observable<any> {
@@ -94,5 +96,10 @@ getRfqVendorComparison(payload: any): Observable<any> {
     );
 }
 
+upsertMiscPurchase(payload: MiscPurchase): Observable<any> {
+    const payloaddata = this.shareservice.GetApiBody(payload);
+    const url = `${this.baseUrl}${API_ENDPOINTS.work.upsertmiscpurchase}`;
+    return this.http.post<any>(url, payloaddata).pipe(catchError(error => throwError(() => error)));
+  }
 
 }

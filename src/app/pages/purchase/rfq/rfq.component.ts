@@ -843,7 +843,7 @@ private buildMrNoPayload(): string {
                     }))
                 };
 
-                this.workService.sendRfqMail(mailPayload).subscribe({
+                this.workService.sendVendorMail(mailPayload).subscribe({
                     next: () => {
                         this.messageService.add({
                             severity: 'success',
@@ -910,7 +910,7 @@ private buildMrNoPayload(): string {
             }))
         };
 
-        this.workService.sendRfqMail(payload).subscribe({
+        this.workService.sendVendorMail(payload).subscribe({
             next: (res: any) => {
                 this.messageService.add({ severity: 'success', summary: 'RFQ email sent', detail: `RFQ shared with ${selectedRows.length} vendor(s).`, life: 2500 });
                 this.showGmailReqDialog = false;

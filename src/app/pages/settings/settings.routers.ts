@@ -3,19 +3,17 @@ import { UserManagementComponent } from '../security/user-management/user-manage
 import { UserCreate } from '../user-management/usercreate';
 import { NewPassword } from '../user-management/changepassword';
 import { CategoryFormateComponent } from './category-format/category-formate.component';
-import { BulkUploadComponent } from './bulk-upload/bulk-upload.component';
+import { BulkUploadComponent } from '../action/bulk-upload/bulk-upload.component';
 import { MiscChargesComponent } from './misc-charges/misc-charges.component';
-import { MyApprovalComponent } from './my-approval/my-approval.component';
+import { MyApprovalComponent } from '../action/my-approval/my-approval.component';
 import { RuleDetailComponent } from './rule-detail/rule-detail.component';
 
 export default [
     { path: 'user-management', component: UserManagementComponent },
     { path: 'category-formate/:master', component: CategoryFormateComponent },
-     { path: 'my-approval', component: MyApprovalComponent },
     { path: 'misc-charges', component: MiscChargesComponent },
     { path: 'rule-detail', component: RuleDetailComponent},
     { path: 'profile', component: UserCreate },
     { path: 'changepassword', component: NewPassword },
-    {path:'bulk-upload',component:BulkUploadComponent},
     { path: '**', redirectTo: '/notfound' }
 ] as Routes;
