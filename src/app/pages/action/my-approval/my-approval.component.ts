@@ -15,6 +15,7 @@ import { AuthService } from '@/core/services/auth.service';
 import * as XLSX from 'xlsx';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ShareService } from '@/core/services/shared.service';
+import { WorkService } from '@/core/services/work.service';
 
 @Component({
     selector: 'app-my-approval',
@@ -62,9 +63,10 @@ export class MyApprovalComponent {
         private messageService: MessageService,
         private datePipe: DatePipe,
         private confirmationService: ConfirmationService,
-        private router:Router,
+        private router: Router,
         private route: ActivatedRoute,
-        private sharedService: ShareService
+        private sharedService: ShareService,
+        private workService: WorkService
     ) {}
 
     ngOnInit(): void {
@@ -120,6 +122,10 @@ export class MyApprovalComponent {
 
 get isVendorApproval(): boolean {
     return this.selectedTypeName === 'VENDOR APPROVAL';
+}
+
+get isPurchaseOrder(): boolean {
+    return this.selectedTypeName === 'PURCHASE ORDER';
 }
 
     applyFilter() {
@@ -182,7 +188,7 @@ get isVendorApproval(): boolean {
         let type = this.typeOptions.find(i=> i.rule_id === this.approvalForm.get('p_type')?.value);
         const payload = {
             p_username: this.authService.isLogIntType()?.companyid.toString(),
-            p_returntype:  this.industryTypeId !== '3' ? (type.rule_name === 'Material Requisition' ? 'MYAPPROVALENTRYCONST_MR' : 'MYAPPROVALENTRYCONST_VC') : 'MYAPPROVALENTRY',
+            p_returntype:  this.industryTypeId !== '3' ? (type.rule_name === 'Material Requisition' ? 'MYAPPROVALENTRYCONST_MR' : ( type.rule_name === 'Purchase Order' ? 'MYAPPROVALENTRYCONST_PO' : 'MYAPPROVALENTRYCONST_VC')) : 'MYAPPROVALENTRY',
             p_returnvalue: this.authService.isLogIntType()?.usertypeid.toString()
         };
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
@@ -244,12 +250,36 @@ get isVendorApproval(): boolean {
     }
 
     onViewMF(row: any): void {
+    if (this.selectedTypeName === 'PURCHASE ORDER') {
+        const poId = row?.po_id;
+        if (!poId) return;
+
+        this.sharedService.setReturnView({
+            route: ['/layout/action/my-approval'],
+            queryParams: {
+                p_type: this.approvalForm.get('p_type')?.value ?? '',
+                p_request: this.approvalForm.get('p_request')?.value ?? 'PENDING'
+            },
+            state: {
+                returnViewState: {
+                    formValue: this.approvalForm.getRawValue(),
+                    products: this.products,
+                    filteredProducts: this.filteredProducts
+                }
+            }
+        });
+        this.router.navigate(['/layout/purchase/purchase-order'], {
+            queryParams: { poId, fromApprovalView: true }
+        });
+        return;
+    }
+
     if (this.isVendorApproval) {
         const comparisonId = row?.comparison_id ?? row?.comparisondraft_id ?? row?.comparison_no;
         if (!comparisonId) return;
 
         this.sharedService.setReturnView({
-            route: ['/layout/settings/my-approval'],
+            route: ['/layout/action/my-approval'],
             queryParams: {
                 p_type: this.approvalForm.get('p_type')?.value ?? '',
                 p_request: this.approvalForm.get('p_request')?.value ?? 'PENDING'
@@ -293,7 +323,7 @@ get isVendorApproval(): boolean {
 
     log(row: any): void {
         this.logForm.patchValue({
-            mfNo: this.isVendorApproval ? row?.comparison_no : row?.mf_no,
+            mfNo: this.isVendorApproval ? row?.comparison_no : ( this.isPurchaseOrder ? row?.po_no : row?.mf_no ),
             requestedBy: row?.fullname
         });
 
@@ -314,7 +344,7 @@ get isVendorApproval(): boolean {
     this.actionType = 'APPROVE';
     this.rejectComment = '';
     this.submitted = false;
-    this.rejectiondetails = true;
+    this.rejectiondetails = true;    
 }
 
 reject(row: any) {
@@ -388,6 +418,9 @@ get isSubmitDisabled(): boolean {
     }
 
     const actionMap = { APPROVE: 'APPROVE', REJECT: 'REJECT', SENDBACK: 'SENDBACK' };
+    const selectedRowCopy = { ...this.selectedRow };
+    const currentAction = this.actionType;
+    const isPo = this.isPurchaseOrder;
 
     const payload = {
         p_request_id: this.selectedRow.request_id,
@@ -400,6 +433,9 @@ get isSubmitDisabled(): boolean {
     this.inventoryService.approverequest(payload).subscribe({
         next: (res) => {
             this.showSuccess(res.data.msg);
+            if (currentAction === 'APPROVE' && isPo) {
+                this.sendPOMailAfterApproval(selectedRowCopy?.po_id);
+            }
             this.onGetApprovalList();
         }
     });
@@ -408,6 +444,75 @@ get isSubmitDisabled(): boolean {
     this.rejectComment = '';
     this.submitted = false;
 }
+
+    private sendPOMailAfterApproval(poId: number | string | null | undefined): void {
+        if (!poId) return;
+
+        const payload = {
+            p_returntype: 'GETPOMAIL',
+            p_returnvalue: poId.toString(),
+            p_username: this.authService.isLogIntType()?.companyid?.toString() ?? ''
+        };
+
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res: any) => {
+                const rows: any[] = Array.isArray(res?.data) ? res.data : [];
+                const readyRows = rows.filter((row) => row.vendor_email ?? row.supplieremail);
+                const missingEmail = rows.filter((row) => !(row.vendor_email ?? row.supplieremail));
+
+                if (!readyRows.length) {
+                    this.messageService.add({ severity: 'warn', summary: 'No vendor emails found', life: 2500 });
+                    return;
+                }
+
+                const mailPayload = {
+                    p_rfqid: Number(poId),
+                    p_username: this.authService.isLogIntType()?.userid?.toString(),
+                    p_mails: readyRows.map((row) => ({
+                        vendorId: row.vendorid ?? row.supplierid ?? null,
+                        email: row.vendor_email ?? row.supplieremail,
+                        ccEmail: row.cc_email ?? null,
+                        bccEmail: row.bcc_email ?? null,
+                        subject: row.mail_subject ?? '',
+                        body: `${row.mail_body1 ?? ''}${row.mail_body2 ?? ''}${row.body_table ?? ''}`,
+                        attachmentPath: row.attachment_path ?? null,
+                        mailLogId: row.mail_log_id ?? null
+                    }))
+                };
+
+                this.workService.sendVendorMail(mailPayload).subscribe({
+                    next: () => {
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'PO emails sent',
+                            detail: `Purchase order email sent to ${readyRows.length} vendor(s).`,
+                            life: 2500
+                        });
+                        if (missingEmail.length) {
+                            this.messageService.add({
+                                severity: 'warn',
+                                summary: 'Some vendors skipped',
+                                detail: `${missingEmail.map((row) => row.suppliername).join(', ')} has no email on file.`,
+                                life: 3000
+                            });
+                        }
+                    },
+                    error: (err: any) => {
+                        this.messageService.add({
+                            severity: 'error',
+                            summary: 'Mail send failed',
+                            detail: err?.error?.error ?? err?.message ?? 'Failed to send PO email',
+                            life: 2500
+                        });
+                    }
+                });
+            },
+            error: (err: any) => {
+                console.error('Error fetching PO mail data:', err);
+                this.messageService.add({ severity: 'error', summary: 'Vendor mail data load failed', life: 2500 });
+            }
+        });
+    }
 
     showSuccess(message: string) {
         this.messageService.add({ severity: 'success', summary: 'Success', detail: message });

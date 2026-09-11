@@ -203,14 +203,6 @@ gettransactionreportdetail(payload:any):Observable<any>{
   )
 }
 
-upsertGrnHeader(payload:any):Observable<any>{
-  const payloaddata = this.shareservice.GetApiBody(payload);
-  const url = `${this.baseUrl}${API_ENDPOINTS.inventory.upsertgrnheader}`;
-  return this.http.post<any>(url, payloaddata).pipe(catchError(error => {
-    return throwError(() => error);
-  }));
-}
-
 get_pnl(payload:any):Observable<any>{
    let payloaddata=this.shareservice.GetApiBody(payload)
   let url=`${this.baseUrl}${API_ENDPOINTS.inventory.get_pnl}`;

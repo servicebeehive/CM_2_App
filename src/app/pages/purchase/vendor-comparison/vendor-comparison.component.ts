@@ -108,7 +108,7 @@ export class VendorComparisonComponent implements OnInit {
     }
 
     returnToApproval(): void {
-        this.sharedService.returnToSavedView(this.router, ['/layout/settings/my-approval'], {
+        this.sharedService.returnToSavedView(this.router, ['/layout/action/my-approval'], {
             p_type: this.approvalType ?? '',
             p_request: this.approvalRequest ?? 'PENDING'
         });
@@ -456,6 +456,8 @@ export class VendorComparisonComponent implements OnInit {
                 return 'red';
             case 'DRAFT':
                 return 'grey';
+                case 'APPROVAL PENDING':
+                    return 'orange';
             default:
                 return 'grey';
         }

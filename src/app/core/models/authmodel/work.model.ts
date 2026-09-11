@@ -72,7 +72,8 @@ export interface PurchaseDraftPayload {
     p_payment_terms: string | null;
     p_remarks: string | null;
     p_items_json: PurchaseOrderItem[];
-    p_loginuser: number
+    p_loginuser: number;
+    p_mr_no?: string | null;
 }
 
 export interface PurchaseOrderPayload {
@@ -193,4 +194,56 @@ export interface MiscPurchaseItem {
   quantity: number | null;
   rate: number | null;
   remarks: string;
+}
+
+export interface GrnHeader {
+     p_operation: 'INSERT' | 'UPDATE' | 'DELETE';
+     p_grn_id: number | null;
+     p_grn_date: string; // 'YYYY-MM-DD'
+     p_po_id: number | null;
+     p_po_date: string; // 'YYYY-MM-DD'
+     p_company_id: number | null;
+     p_project_id: number | null;
+     p_vendor_id: number | null;
+     p_status: string;
+     p_loginuser: number;
+}
+
+export interface GrnDelivery {
+    p_operation: 'INSERT' | 'UPDATE' | 'DELETE';
+    p_delivery_id: number | null;
+    p_grn_id: number | null;
+    p_po_id: number | null;
+    p_challan_no: string;
+    p_challan_date: string; // 'YYYY-MM-DD'
+    p_vehicle_no: string;
+    p_driver_name: string;
+    p_driver_mobile: string;
+    p_remarks: string;
+    p_loginuser: number;
+}
+
+export interface GrnRemarks {
+    p_operation: 'INSERT' | 'UPDATE' | 'DELETE';
+    p_grn_remark_id: number | null;
+    p_grn_id: number | null;
+    p_po_id: number | null;
+    p_received_by: number | null;
+    p_remarks: string;
+    p_loginuser: number;
+}
+
+export interface GrnDocumentItem {
+    document_type: 'DELIVERY_CHALLAN' | 'MATERIAL_PHOTO' | 'QUALITY_REPORT' | 'OTHER';
+    document_name: string;
+    document_path: string;
+}
+
+export interface GrnDocuments {
+    p_operation: 'SAVE' | 'UPDATE' | 'DELETE';
+    p_document_id: number | null;
+    p_grn_id: number | null;
+    p_po_id: number | null;
+    p_documents: GrnDocumentItem[];
+    p_loginuser: number;
 }

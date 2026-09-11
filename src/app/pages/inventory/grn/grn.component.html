@@ -12,7 +12,7 @@
             >
                 {{ productForm.get('status')?.value }}
             </span>
-            <button pButton type="button" label="Submit" class="p-button-warning" [disabled]="productForm.invalid || !poSelected" (click)="onSubmit()"></button>
+            <button pButton type="button" label="Submit" class="p-button-warning" [disabled]="!isHeaderReady" (click)="onSubmit()"></button>
             <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
             @if (backshow) {
                 <button pButton type="button" label="Back" class="p-button-secondary" (click)="back()"></button>
@@ -50,8 +50,8 @@
             <!-- PO Number -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">PO Number <span class="text-red-500">*</span></label>
-                <p-dropdown [options]="ponoOptions" optionLabel="po_no" optionValue="po_id" [filter]="true" filterPlaceholder="Search PO No" formControlName="p_vendorid" placeholder="Select PO No" (onChange)="onPOChange($event)"></p-dropdown>
-                <small class="text-red-500 mt-1 text-xs" *ngIf="productForm.get('p_vendorid')?.touched && productForm.get('p_vendorid')?.errors?.['required']"> PO Number is required </small>
+                <p-dropdown [options]="ponoOptions" optionLabel="po_no" optionValue="po_id" [filter]="true" filterPlaceholder="Search PO No" formControlName="p_poid" placeholder="Select PO No" (onChange)="onPOChange($event)"></p-dropdown>
+                <small class="text-red-500 mt-1 text-xs" *ngIf="productForm.get('p_poid')?.touched && productForm.get('p_poid')?.errors?.['required']"> PO Number is required </small>
             </div>
 
             <!-- PO Date (readonly, past dates only) -->
@@ -116,7 +116,7 @@
                     <span [ngClass]="{ 'text-400 cursor-not-allowed': !poSelected }"> <i class="pi pi-truck mr-2"></i>Delivery </span>
                 </ng-template>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4 p-3">
+                <div class="flex flex-wrap items-end gap-4 p-3">
                     <!-- Delivery Challan No -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Delivery Challan No <span class="text-red-500">*</span></label>
@@ -149,6 +149,40 @@
                         <input pInputText formControlName="p_drivermobile" placeholder="Driver Mobile" (keypress)="allowOnlyNumbers($event)" maxlength="10" />
                         <small class="text-red-500 mt-1 text-xs" *ngIf="productForm.get('p_drivermobile')?.touched && productForm.get('p_drivermobile')?.errors?.['pattern']"> Enter valid 10-digit mobile number </small>
                     </div>
+
+                    <!-- Actions -->
+                    <div class="flex gap-3 ml-auto">
+                        <button pButton type="button" label="Save Delivery" class="p-button-warning" (click)="submitDelivery()"></button>
+                        <button pButton type="button" label="Reset" class="p-button-secondary" (click)="resetDelivery()"></button>
+                    </div>
+                </div>
+
+                <!-- Saved delivery entries -->
+                <div class="px-3 pb-3" *ngIf="deliveryList.length">
+                    <p-table [value]="deliveryList" class="p-datatable-gridlines p-datatable-sm">
+                        <ng-template pTemplate="header">
+                            <tr class="bg-yellow-400">
+                                <th>Challan No</th>
+                                <th>Challan Date</th>
+                                <th>Vehicle No</th>
+                                <th>Driver Name</th>
+                                <th>Driver Mobile</th>
+                                <th class="text-center">Action</th>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="body" let-row let-rowIndex="rowIndex">
+                            <tr>
+                                <td>{{ row.challanno }}</td>
+                                <td>{{ row.challandate }}</td>
+                                <td>{{ row.vehicleno || '—' }}</td>
+                                <td>{{ row.drivername || '—' }}</td>
+                                <td>{{ row.drivermobile || '—' }}</td>
+                                <td class="text-center">
+                                    <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm" (click)="removeDeliveryRow(rowIndex)"></button>
+                                </td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
                 </div>
             </p-tabPanel>
 
@@ -158,7 +192,7 @@
                     <span [ngClass]="{ 'text-400 cursor-not-allowed': !poSelected }"> <i class="pi pi-comment mr-2"></i>Remarks </span>
                 </ng-template>
 
-                <div class="grid grid-cols-1 sm:grid-cols-4 gap-x-6 gap-y-4 p-3">
+                <div class="flex flex-wrap items-end gap-4 p-3">
                     <!-- Received By -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Received By <span class="text-red-500">*</span></label>
@@ -167,11 +201,39 @@
                     </div>
 
                     <!-- Remarks -->
-                    <div class="flex flex-col">
+                    <div class="flex flex-col" style="min-width: 260px">
                         <label class="font-medium mb-1">Remarks</label>
                         <input pInputText formControlName="p_remarks" placeholder="Enter remarks" rows="3" class="w-full" />
                         <small class="text-red-500 mt-1 text-xs" *ngIf="productForm.get('p_remarks')?.errors?.['maxlength']"> Remarks must not exceed 500 characters </small>
                     </div>
+
+                    <!-- Actions -->
+                    <div class="flex gap-3 ml-auto">
+                        <button pButton type="button" label="Save Remarks" class="p-button-warning" (click)="submitRemarks()"></button>
+                        <button pButton type="button" label="Reset" class="p-button-secondary" (click)="resetRemarks()"></button>
+                    </div>
+                </div>
+
+                <!-- Saved remarks entries -->
+                <div class="px-3 pb-3" *ngIf="remarksList.length">
+                    <p-table [value]="remarksList" class="p-datatable-gridlines p-datatable-sm">
+                        <ng-template pTemplate="header">
+                            <tr class="bg-yellow-400">
+                                <th>Received By</th>
+                                <th>Remarks</th>
+                                <th class="text-center">Action</th>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="body" let-row let-rowIndex="rowIndex">
+                            <tr>
+                                <td>{{ row.receivedby }}</td>
+                                <td>{{ row.remarks || '—' }}</td>
+                                <td class="text-center">
+                                    <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm" (click)="removeRemarksRow(rowIndex)"></button>
+                                </td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
                 </div>
             </p-tabPanel>
 
@@ -181,14 +243,15 @@
                     <span [ngClass]="{ 'text-400 cursor-not-allowed': !poSelected }"> <i class="pi pi-paperclip mr-2"></i>Documents </span>
                 </ng-template>
 
-                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 p-3">
+                <div class="flex flex-wrap items-end gap-4 p-3">
                     <!-- Delivery Challan Upload -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Delivery Challan <span class="text-red-500">*</span><span class="ms-3 text-xs text-red-500 mt-1">PDF / JPG / PNG</span></label>
                         <div class="flex align-items-center gap-2 px-3 py-2" style="border: 1px solid var(--surface-300); border-radius: 6px; background: var(--surface-0); min-height: 38px">
-                            <label for="challanFile" class="p-button p-button-sm p-button-outlined p-button-primary m-0" style="cursor: pointer; white-space: nowrap"> <i class="pi pi-upload mr-1"></i> Upload </label>
+                            <label for="challanFile" class="p-button p-button-sm p-button-outlined p-button-primary m-0" style="cursor: pointer; white-space: nowrap"> <i class="pi pi-upload mr-1"></i> Choose File </label>
                             <input id="challanFile" type="file" accept=".pdf,.jpg,.jpeg,.png" style="display: none" (change)="onFileSelect($event, 'challan')" />
                             <span class="text-xs text-400 italic mt-2">{{ fileNames.challan || 'No file chosen' }}</span>
+                            <button pButton type="button" icon="pi pi-eye" class="p-button-text p-button-sm" [disabled]="!uploadedFiles.challan" (click)="previewFile(uploadedFiles.challan)"></button>
                         </div>
                     </div>
 
@@ -196,9 +259,10 @@
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Material Photos <span class="text-red-500">*</span><span class="ms-3 text-xs text-red-500 mt-1">JPG / PNG (multiple allowed)</span></label>
                         <div class="flex align-items-center gap-2 px-3 py-2" style="border: 1px solid var(--surface-300); border-radius: 6px; background: var(--surface-0); min-height: 38px">
-                            <label for="materialPhotoFile" class="p-button p-button-sm p-button-outlined p-button-primary m-0" style="cursor: pointer; white-space: nowrap"> <i class="pi pi-upload mr-1"></i> Upload </label>
+                            <label for="materialPhotoFile" class="p-button p-button-sm p-button-outlined p-button-primary m-0" style="cursor: pointer; white-space: nowrap"> <i class="pi pi-upload mr-1"></i> Choose File </label>
                             <input id="materialPhotoFile" type="file" accept=".jpg,.jpeg,.png" style="display: none" (change)="onFileSelect($event, 'material')" multiple />
                             <span class="text-xs text-400 mt-2 italic">{{ fileNames.material || 'No file chosen' }}</span>
+                            <button pButton type="button" icon="pi pi-eye" class="p-button-text p-button-sm" [disabled]="!uploadedFiles.material?.length" (click)="previewFile(uploadedFiles.material?.[0] || null)"></button>
                         </div>
                     </div>
 
@@ -206,9 +270,10 @@
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Quality Report <span class="text-red-500" *ngIf="isQualityReportAttachmentRequired">*</span><span class="ms-3 text-xs text-red-500 mt-1">PDF / JPG / PNG</span></label>
                         <div class="flex align-items-center gap-2 px-3 py-2" style="border: 1px solid var(--surface-300); border-radius: 6px; background: var(--surface-0); min-height: 38px">
-                            <label for="qualityReportFile" class="p-button p-button-sm p-button-outlined p-button-primary m-0" style="cursor: pointer; white-space: nowrap"> <i class="pi pi-upload mr-1"></i> Upload </label>
+                            <label for="qualityReportFile" class="p-button p-button-sm p-button-outlined p-button-primary m-0" style="cursor: pointer; white-space: nowrap"> <i class="pi pi-upload mr-1"></i> Choose File </label>
                             <input id="qualityReportFile" type="file" accept=".pdf,.jpg,.jpeg,.png" style="display: none" (change)="onFileSelect($event, 'qualityreport')" />
                             <span class="text-xs text-400 mt-2 italic">{{ fileNames.qualityreport || 'No file chosen' }}</span>
+                            <button pButton type="button" icon="pi pi-eye" class="p-button-text p-button-sm" [disabled]="!uploadedFiles.qualityreport" (click)="previewFile(uploadedFiles.qualityreport)"></button>
                         </div>
                         <small class="text-red-500 mt-1 text-xs" *ngIf="isQualityReportAttachmentRequired && !uploadedFiles.qualityreport">Quality report file is required when any row has Quality Report = Y.</small>
                     </div>
@@ -217,11 +282,44 @@
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Other Documents<span class="ms-3 text-xs text-red-500 mt-1">PDF / JPG / PNG / DOC (multiple)</span></label>
                         <div class="flex align-items-center gap-2 px-3 py-2" style="border: 1px solid var(--surface-300); border-radius: 6px; background: var(--surface-0); min-height: 38px">
-                            <label for="otherDocFile" class="p-button p-button-sm p-button-outlined p-button-primary m-0" style="cursor: pointer; white-space: nowrap"> <i class="pi pi-upload mr-1"></i> Upload </label>
+                            <label for="otherDocFile" class="p-button p-button-sm p-button-outlined p-button-primary m-0" style="cursor: pointer; white-space: nowrap"> <i class="pi pi-upload mr-1"></i> Choose File </label>
                             <input id="otherDocFile" type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="display: none" (change)="onFileSelect($event, 'other')" multiple />
                             <span class="text-xs text-400 mt-2 italic">{{ fileNames.other || 'No file chosen' }}</span>
+                            <button pButton type="button" icon="pi pi-eye" class="p-button-text p-button-sm" [disabled]="!uploadedFiles.other?.length" (click)="previewFile(uploadedFiles.other?.[0] || null)"></button>
                         </div>
                     </div>
+
+                    <!-- Actions -->
+                    <div class="flex gap-3 ml-auto">
+                        <button pButton type="button" label="Save Documents" class="p-button-warning" (click)="submitDocuments()"></button>
+                        <button pButton type="button" label="Reset" class="p-button-secondary" (click)="resetDocuments()"></button>
+                    </div>
+                </div>
+
+                <!-- Saved document entries -->
+                <div class="px-3 pb-3" *ngIf="documentsList.length">
+                    <p-table [value]="documentsList" class="p-datatable-gridlines p-datatable-sm">
+                        <ng-template pTemplate="header">
+                            <tr class="bg-yellow-400">
+                                <th>Document Type</th>
+                                <th>Document Name</th>
+                                <th>Attachment</th>
+                                <th class="text-center">Action</th>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="body" let-row let-rowIndex="rowIndex">
+                            <tr>
+                                <td>{{ row.type }}</td>
+                                <td>{{ row.name }}</td>
+                                <td class="text-center">
+                                    <button pButton type="button" icon="pi pi-eye" class="p-button-text p-button-sm" (click)="previewFile(row.path)"></button>
+                                </td>
+                                <td class="text-center">
+                                    <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm" (click)="removeDocumentRow(rowIndex)"></button>
+                                </td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
                 </div>
             </p-tabPanel>
         </p-tabView>
@@ -309,7 +407,7 @@
 
                 <ng-template pTemplate="footer">
                     <tr>
-                        <td colspan="4" class="font-semibold">Total</td>
+                        <td colspan="3" class="font-semibold">Total</td>
                         <td class="text-right font-semibold">{{ totalPoQty | number: '1.0-2' }}</td>
                         <td class="text-right font-semibold">{{ totalPreviouslyReceivedQty | number: '1.0-2' }}</td>
                         <td class="text-right font-semibold">{{ totalPendingQty | number: '1.0-2' }}</td>

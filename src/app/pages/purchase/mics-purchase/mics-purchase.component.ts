@@ -53,7 +53,7 @@ export class MicsPurchaseComponent implements OnInit {
             remarks: [''],
             status: [''],
             p_itemdata: [null],
-            items: this.fb.array([this.buildItemRow()])
+            items: this.fb.array([])
         });
         this.companyId = this.authService.isLogIntType().companyid.toString();
         this.userId = this.authService.isLogIntType().userid.toString();
@@ -149,9 +149,39 @@ export class MicsPurchaseComponent implements OnInit {
                 this.uploadedFileUrl = '';
                 this.uploadedFileName = '';
             }
+
+            this.form.patchValue({
+                purchaseDate: data?.purchase_date ? new Date(data.purchase_date) : this.form.get('purchaseDate')?.value,
+                site: data?.project_id ?? null,
+                vendor: data?.vendor_name ?? '',
+                remarks: data?.remarks ?? '',
+                status: data?.status ?? ''
+            });
+
+            this.mapMiscItemsToFormArray(Array.isArray(data?.items) ? data.items : []);
           },
           error: (err) => console.error('Error fetching misc purchase details:', err)
       });
+    }
+
+    private mapMiscItemsToFormArray(rows: any[]): void {
+        this.items.clear();
+        rows.forEach((row) => {
+            this.items.push(
+                this.fb.group({
+                    misc_purchase_detail_id: [row.misc_purchase_detail_id ?? 0],
+                    item_id: [row.item_id ?? null],
+                    item_description: [row.item_description ?? ''],
+                    category_id: [row.category_id ?? null],
+                    category: [row.category_name ?? ''],
+                    uom_id: [row.uom_id ?? null],
+                    uom: [row.uom_name ?? ''],
+                    quantity: [row.quantity ?? null, [Validators.min(0)]],
+                    rate: [row.rate ?? 0, [Validators.min(0)]],
+                    remarks: [row.remarks ?? '']
+                })
+            );
+        });
     }
 
     get items(): FormArray {
@@ -174,9 +204,7 @@ export class MicsPurchaseComponent implements OnInit {
     }
 
     removeItem(index: number): void {
-        if (this.items.length > 1) {
-            this.items.removeAt(index);
-        }
+        this.items.removeAt(index);
     }
 
     rowAmount(index: number): number {
@@ -384,6 +412,7 @@ private dataUrlToBlob(dataUrl: string): Blob | null {
 
     onReset(): void {
         this.form.reset();
+        this.items.clear();
         this.uploadedFileName = '';
         this.uploadedFileBase64 = '';
         this.uploadedFileUrl = '';

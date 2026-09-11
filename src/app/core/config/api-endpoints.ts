@@ -26,7 +26,6 @@ export const API_ENDPOINTS = {
         gettransactiondetails: '/beeware/gettrasnactiondetails',
         gettransactionreport: '/beeware/gettrasnactionreport',
         get_pnl: '/beeware/get_pnl',
-        upsertgrnheader: '/beeware/upsert_grn_header',
         updatewriteoffamount: '/beeware/fnupdatewriteoffamount',
         upsertproject: '/beeware/upsert_project',
         getprojectlist: '/beeware/get_project_list',
@@ -44,7 +43,11 @@ export const API_ENDPOINTS = {
         upsertpoperforma: '/beeware/upsert_po_performa',
         upsertpoinvoice: '/beeware/upsert_po_invoice',
         upsertpopayment: '/beeware/upsert_po_payment',
-        upsertmiscpurchase: '/beeware/upsert_misc_purchase'
+        upsertmiscpurchase: '/beeware/upsert_misc_purchase',
+        upsertgrnheader: '/beeware/upsert_grn_header',
+        upsertgrndelivery: '/beeware/upsert_grn_delivery',
+        upsertgrndocuments: '/beeware/upsert_grn_documents',
+        upsertgrnremarks: '/beeware/upsert_grn_remarks'
     },
     sales: {
         getcalculatedMRP: '/beeware/getcalculatedMRP'

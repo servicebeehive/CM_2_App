@@ -992,7 +992,7 @@ export class SalesComponent implements OnInit, AfterViewInit {
     //  Navigation
     // -------------------------------------------------------------------------
     back(): void {
-        const dest = this.fromPage === 'approval' ? '/layout/settings/my-approval' : '/layout/pos/invoice';
+        const dest = this.fromPage === 'approval' ? '/layout/action/my-approval' : '/layout/pos/invoice';
         this.route.navigate([dest]);
     }
 

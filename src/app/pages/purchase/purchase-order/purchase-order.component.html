@@ -20,7 +20,7 @@
                     optionLabel="draft_no"
                     optionValue="draft_id"
                     placeholder="Draft PO No"
-                    formControlName="p_pono"
+                    formControlName="p_draft_id"
                     [filter]="true"
                     filterPlaceholder="Search Draft"
                     [showClear]="true"
@@ -28,7 +28,7 @@
                 ></p-select>
 
                 <!-- Draft PO -->
-                <button pButton *ngIf="this.poForm.get('p_pono')?.value === null" type="button" label="Draft PO" class="p-button-warning w-full md:w-auto" (click)="submitDraft()" [disabled]="poForm.invalid || isSubmitDisabled()"></button>
+                <button pButton type="button" label="Draft PO" class="p-button-warning w-full md:w-auto" (click)="submitDraft()" [disabled]="isSubmitDisabled() || isDraftDisabled()"></button>
                 <button pButton *ngIf="this.poForm.get('p_pono')?.value === null" type="button" label="Vendor" class="p-button-warning" pTooltip="Vendor comparison" tooltipPosition="top" (click)="openVendorDialog()"></button>
                 <button pButton *ngIf="this.poForm.get('p_pono')?.value !== null" type="button" label="Cancel" class="p-button-warning w-full md:w-auto" (click)="cancelPO()"></button>
                 <button pButton *ngIf="this.poForm.get('p_pono')?.value !== null" type="button" label="Force Close" class="p-button-warning w-full md:w-auto" (click)="forceClose()" [disabled]="!submitted"></button>
@@ -40,10 +40,12 @@
                 <!-- <button pButton type="button" label="Duplicate" class="p-button-warning w-full md:w-auto" (click)="duplicatePO()" [disabled]="!submitted"></button> -->
 
                 <!-- Submit -->
-                <button pButton type="submit" label="Submit" class="p-button-primary w-full md:w-auto" [disabled]="poForm.invalid || isSubmitDisabled()"></button>
+                <button pButton type="submit" label="Submit" class="p-button-primary w-full md:w-auto" [disabled]="isHeaderInvalid() || isSubmitDisabled() || !!poForm.get('p_pono')?.value"></button>
 
                 <!-- Print -->
                 <button pButton type="button" label="Print" class="p-button-warning w-full md:w-auto" (click)="printPO()" [disabled]="!poForm.get('p_pono')?.value"></button>
+                <!-- Back to source view (e.g. My Approval) -->
+                <button *ngIf="showBackButton" pButton type="button" label="Back" icon="pi pi-arrow-left" class="p-button-outlined" (click)="returnToSource()"></button>
 
                 <!-- Reset -->
                 <button pButton type="button" label="Reset" class="p-button-secondary w-full md:w-auto" (click)="onReset()"></button>
@@ -217,19 +219,28 @@
                                 <label class="font-medium">Performa Amount (₹) <span class="text-red-500">*</span></label>
                                 <p-inputNumber formControlName="p_performaamount" placeholder="0.00" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" [min]="0" inputStyleClass="w-full"></p-inputNumber>
                             </div>
-                            <div class="flex flex-col">
+                            <div class="flex flex-col min-w-0">
                                 <label class="font-medium">Performa Attachment <span class="text-red-500">*</span><span class="ms-3 text-xs text-red-500 mt-1">PDF / JPG / PNG</span></label>
-                                <div class="flex align-items-center gap-2 px-3 py-2" style="border: 1px solid var(--surface-300); border-radius: 6px; background: var(--surface-0); min-height: 38px">
-                                    <label for="performaFile" class="p-button p-button-sm p-button-outlined p-button-primary m-0" style="cursor: pointer; white-space: nowrap"> <i class="pi pi-upload mr-2"></i> Choose File </label>
+                                <div class="flex align-items-center gap-2 px-3 py-2" style="border: 1px solid var(--surface-300); border-radius: 6px; background: var(--surface-0); min-height: 38px; min-width: 0">
+                                    <label for="performaFile" class="p-button p-button-sm p-button-outlined p-button-primary m-0 flex-shrink-0" style="cursor: pointer; white-space: nowrap"> <i class="pi pi-upload mr-2"></i> Choose File </label>
                                     <input id="performaFile" #performaFileInput type="file" accept=".pdf,.jpg,.jpeg,.png" style="display: none" (change)="onPerformaFileSelect($event)" />
-                                    <span class="text-sm text-400 mt-2" style="font-style: italic">{{ performaFileName || 'No file chosen' }}</span>
-                                    <button pButton type="button" icon="pi pi-eye" class="p-button-text p-button-sm" pTooltip="Preview attachment" tooltipPosition="top" [disabled]="!performaFileDataUrl" (click)="previewPerformaFile()"></button>
+                                    <span class="text-sm text-400 mt-2 overflow-hidden text-ellipsis whitespace-nowrap" style="font-style: italic; min-width: 0">{{ performaFileName || 'No file chosen' }}</span>
+                                    <button
+                                        pButton
+                                        type="button"
+                                        icon="pi pi-eye"
+                                        class="p-button-text p-button-sm flex-shrink-0"
+                                        pTooltip="Preview attachment"
+                                        tooltipPosition="top"
+                                        [disabled]="!performaFileDataUrl"
+                                        (click)="previewPerformaFile()"
+                                    ></button>
                                 </div>
                             </div>
-                                <div class="flex gap-2 pt-7">
-                                    <button pButton type="button" label="Save Performa" class="w-full p-button-primary p-button-sm" (click)="savePerforma()"></button>
-                                    <button pButton type="button" label="Reset" class="w-full p-button-secondary p-button-sm" (click)="resetPerformaTab()"></button>
-                                </div>
+                            <div class="flex gap-2 pt-7 min-w-0 flex-shrink-0">
+                                <button pButton type="button" label="Save Performa" class="w-full p-button-primary p-button-sm" (click)="savePerforma()" [disabled]="isPerformaInvalid()"></button>
+                                <button pButton type="button" label="Reset" class="w-full p-button-secondary p-button-sm" (click)="resetPerformaTab()"></button>
+                            </div>
                         </div>
                         <div class="p-3 pt-0">
                             <p-table [value]="performaHistory" class="p-datatable-gridlines p-datatable-sm" [responsiveLayout]="'scroll'">
@@ -307,8 +318,8 @@
                                 <label class="font-medium">Performa Invoice No</label
                                 ><p-select
                                     [options]="performaInvoiceOptions"
-                                    optionLabel="label"
-                                    optionValue="value"
+                                    optionLabel="invoice_no"
+                                    optionValue="performa_id"
                                     formControlName="p_performainvoiceno_invoice"
                                     placeholder="Select performa invoice"
                                     [showClear]="true"
@@ -342,10 +353,27 @@
                                 <p-inputNumber formControlName="p_grandtotal" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" [min]="0" inputStyleClass="w-full surface-100" placeholder="Auto calculated"></p-inputNumber>
                             </div>
 
+                            <div class="flex flex-col min-w-0">
+                                <label class="font-medium">Invoice Attachment <span class="text-red-500">*</span><span class="ms-3 text-xs text-red-500 mt-1">PDF / JPG / PNG</span></label>
+                                <div class="flex align-items-center gap-2 px-3 py-2" style="border: 1px solid var(--surface-300); border-radius: 6px; background: var(--surface-0); min-height: 38px; min-width: 0">
+                                    <label for="invoiceFile" class="p-button p-button-sm p-button-outlined p-button-primary m-0 flex-shrink-0" style="cursor: pointer; white-space: nowrap"> <i class="pi pi-upload mr-2"></i> Choose File </label>
+                                    <input id="invoiceFile" #invoiceFileInput type="file" accept=".pdf,.jpg,.jpeg,.png" style="display: none" (change)="onInvoiceFileSelect($event)" />
+                                    <span class="text-sm text-400 mt-2 overflow-hidden text-ellipsis whitespace-nowrap" style="font-style: italic; min-width: 0">{{ invoiceFileName || 'No file chosen' }}</span>
+                                    <button
+                                        pButton
+                                        type="button"
+                                        icon="pi pi-eye"
+                                        class="p-button-text p-button-sm flex-shrink-0"
+                                        pTooltip="Preview attachment"
+                                        tooltipPosition="top"
+                                        [disabled]="!invoiceFileDataUrl"
+                                        (click)="previewInvoiceFile()"
+                                    ></button>
+                                </div>
+                            </div>
                             <div class="flex flex-col"></div>
-                            <div class="flex flex-col"></div>
-                            <div class="flex gap-2 mt-6">
-                                <button pButton type="button" label="Save Invoice" class="p-button-primary p-button-sm w-full" (click)="saveInvoice()"></button>
+                            <div class="flex gap-2 mt-6 flex-shrink-0">
+                                <button pButton type="button" label="Save Invoice" class="p-button-primary p-button-sm w-full" (click)="saveInvoice()" [disabled]="isInvoiceInvalid()"></button>
                                 <button pButton type="button" label="Reset" class="p-button-secondary p-button-sm w-full" (click)="resetInvoiceTab()"></button>
                             </div>
                         </div>
@@ -363,6 +391,7 @@
                                         <th>IGST (₹)</th>
                                         <th>Misc Charge (₹)</th>
                                         <th>Grand Total (₹)</th>
+                                        <th>Attachment</th>
                                         <th class="text-center">Action</th>
                                     </tr>
                                 </ng-template>
@@ -378,6 +407,20 @@
                                         <td>₹{{ row.igst | number: '1.2-2' }}</td>
                                         <td>₹{{ row.miscCharge | number: '1.2-2' }}</td>
                                         <td>₹{{ row.grandTotal | number: '1.2-2' }}</td>
+                                        <td>
+                                            {{ row.documentPath || '—'
+                                            }}<span
+                                                ><button
+                                                    pButton
+                                                    type="button"
+                                                    icon="pi pi-eye"
+                                                    class="p-button-text p-button-sm"
+                                                    pTooltip="Preview attachment"
+                                                    (click)="previewInvoiceFile(row.documentDataUrl)"
+                                                    [disabled]="!row.documentDataUrl"
+                                                ></button
+                                            ></span>
+                                        </td>
                                         <td class="text-center">
                                             <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm" pTooltip="Edit" (click)="editInvoice(i)"></button>
                                             <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm" pTooltip="Delete" (click)="removeInvoice(i)"></button>
@@ -389,10 +432,33 @@
                     </p-tabpanel>
 
                     <p-tabpanel value="3">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-x-4 gap-y-4 p-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-x-4 gap-y-4 p-3">
+                            <div class="flex flex-col">
+                                <label class="font-medium">Total PO Amount (₹)</label>
+                                <input pInputText type="text" formControlName="p_totalpoamount" [readonly]="true" class="font-bold surface-100" placeholder="0.00" />
+                            </div>
+
+                            <div class="flex flex-col">
+                                <label class="font-medium">Total Invoice Amount (₹)</label>
+                                <input pInputText type="text" formControlName="p_totalinvoiceamount" [readonly]="true" class="font-bold surface-100" placeholder="0.00" />
+                            </div>
+
+                            <div class="flex flex-col">
+                                <label class="font-medium">Remaining Invoice Amount (₹)</label>
+                                <input
+                                    pInputText
+                                    type="text"
+                                    formControlName="p_remaininginvoiceamount"
+                                    [readonly]="true"
+                                    [ngClass]="{ 'text-red-500': +poForm.get('p_remaininginvoiceamount')?.value > 0, 'text-green-600': +poForm.get('p_remaininginvoiceamount')?.value <= 0 }"
+                                    class="font-bold surface-100"
+                                    placeholder="0.00"
+                                />
+                            </div>
+
                             <div class="flex flex-col">
                                 <label class="font-medium">Total Payment (₹)</label>
-                                <input pInputText type="text" formControlName="p_totalpayment" [readonly]="true" class="font-bold"  placeholder="Auto calculated" />
+                                <input pInputText type="text" formControlName="p_totalpayment" [readonly]="true" class="font-bold surface-100" placeholder="0.00" />
                             </div>
 
                             <div class="flex flex-col">
@@ -403,26 +469,26 @@
                                     formControlName="p_remainingpayment"
                                     [readonly]="true"
                                     [ngClass]="{ 'text-red-500': getRemainingPayment() > 0, 'text-green-600': getRemainingPayment() <= 0 }"
-                                    class="font-bold"
-                                    placeholder="Auto calculated"
+                                    class="font-bold surface-100"
+                                    placeholder="0.00"
                                 />
                             </div>
 
                             <div class="flex flex-col">
-                                <label class="font-medium">Payment(₹)</label>
-                                <p-inputNumber
-                                    [(ngModel)]="newPayment.amount"
-                                    [ngModelOptions]="{ standalone: true }"
-                                    placeholder="0.00"
-                                    mode="decimal"
-                                    [minFractionDigits]="2"
-                                    [maxFractionDigits]="2"
-                                    [min]="0"
-                                    readonly="true"
-                                    [disabled]="isPaymentEntryDisabled"
-                                    inputStyleClass="w-full font-bold"
-                                ></p-inputNumber>
-                            </div>
+    <label class="font-medium">Payment (₹)</label>
+    <input
+    pInputText
+        [(ngModel)]="newPayment.amount"
+        [ngModelOptions]="{ standalone: true }"
+        mode="decimal"
+        [min]="0"
+        [max]="getRemainingPayment()"
+        inputStyleClass="w-full font-bold"
+    />
+    <small class="text-red-500 mt-1 text-xs" *ngIf="(newPayment.amount ?? 0) > getRemainingPayment()">
+        Payment cannot exceed remaining amount (₹{{ getRemainingPayment() | number: '1.2-2' }})
+    </small>
+</div>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-x-4 gap-y-4 p-3">
                             <div class="flex flex-col">
@@ -430,11 +496,11 @@
                                 <p-datePicker fluid formControlName="p_paymentdate" dateFormat="dd/mm/yy" placeholder="Select Payment Date" [showIcon]="true" [showClear]="true" [maxDate]="today"></p-datePicker>
                             </div>
                             <div class="flex flex-col">
-                                <label class="font-medium">Invoice No</label>
+                                <label class="font-medium">Invoice No <span class="text-red-500">*</span></label>
                                 <p-select
                                     [options]="invoiceOptions"
-                                    optionLabel="label"
-                                    optionValue="value"
+                                    optionLabel="invoice_no"
+                                    optionValue="invoice_id"
                                     [(ngModel)]="newPayment.invoiceNo"
                                     [ngModelOptions]="{ standalone: true }"
                                     placeholder="Select invoice no."
@@ -444,11 +510,11 @@
                                 ></p-select>
                             </div>
                             <div class="flex flex-col">
-                                <label class="font-medium">Performa Invoice No</label>
+                                <label class="font-medium">Performa Invoice No <span class="text-red-500">*</span></label>
                                 <p-select
                                     [options]="performaInvoiceOptions"
-                                    optionLabel="label"
-                                    optionValue="value"
+                                    optionLabel="invoice_no"
+                                    optionValue="performa_id"
                                     [(ngModel)]="newPayment.performaInvoiceNo"
                                     [ngModelOptions]="{ standalone: true }"
                                     placeholder="Select performa invoice"
@@ -458,7 +524,7 @@
                                 ></p-select>
                             </div>
                             <div class="flex flex-col">
-                                <label class="font-medium">Payment Mode</label>
+                                <label class="font-medium">Payment Mode <span class="text-red-500">*</span></label>
                                 <p-select
                                     [options]="paymentModeOptions"
                                     optionLabel="label"
@@ -474,17 +540,17 @@
                                 <label class="font-medium">Reference No</label>
                                 <input pInputText [(ngModel)]="newPayment.referenceNo" [ngModelOptions]="{ standalone: true }" placeholder="UTR / Cheque No" />
                             </div>
-                                <div class="flex gap-2 mt-6">
-                                    <button
-                                        pButton
-                                        type="button"
-                                        [label]="editingPaymentIndex === null ? 'Save Payment' : 'Update Payment'"
-                                        class="p-button-primary p-button-sm w-full"
-                                        (click)="savePayment()"
-                                        [disabled]="isPaymentEntryDisabled"
-                                    ></button>
-                                    <button pButton type="button" label="Reset" class="p-button-secondary p-button-sm w-full" (click)="resetPaymentTab()"></button>
-                                </div>
+                            <div class="flex gap-2 mt-6">
+                                <button
+                                    pButton
+                                    type="button"
+                                    [label]="editingPaymentIndex === null ? 'Save Payment' : 'Update Payment'"
+                                    class="p-button-primary p-button-sm w-full"
+                                    (click)="savePayment()"
+                                    [disabled]="isPaymentEntryDisabled || isPaymentInvalid()"
+                                ></button>
+                                <button pButton type="button" label="Reset" class="p-button-secondary p-button-sm w-full" (click)="resetPaymentTab()"></button>
+                            </div>
                         </div>
 
                         <!-- Fully Paid Badge -->
@@ -554,26 +620,24 @@
 
 <section id="poPrintSection" class="po-print-section" *ngIf="printData as po">
     <div class="po-print">
- 
         <!-- ============ PAGE 1 ============ -->
         <div class="po-first-page">
- 
             <!-- Letterhead — page 1 ONLY -->
             <div class="po-letterhead">
-                <div class="po-letterhead-logo">{{ po.companyMark || 'OM' }}</div>
+                <div class="po-letterhead-logo">
+                    <img *ngIf="po.companyLogo" [src]="po.companyLogo" alt="Company logo" />
+                    <span *ngIf="!po.companyLogo">{{ po.companyMark || 'OM' }}</span>
+                </div>
                 <div class="po-letterhead-text">
                     <h1>{{ po.companyName }}</h1>
                     <p class="po-tagline" *ngIf="po.companyTagline">{{ po.companyTagline }}</p>
-                    <p class="po-contact" *ngIf="po.companyEmail || po.companyPhone">
-                        Email: {{ po.companyEmail || '-' }}<span *ngIf="po.companyEmail && po.companyPhone">, </span
-                        >Phone: {{ po.companyPhone || '-' }}
-                    </p>
+                    <p class="po-contact" *ngIf="po.companyEmail || po.companyPhone">Email: {{ po.companyEmail || '-' }}<span *ngIf="po.companyEmail && po.companyPhone">, </span>Phone: {{ po.companyPhone || '-' }}</p>
                     <p class="po-office" *ngIf="po.companyAddress">{{ po.companyAddress }}</p>
                 </div>
             </div>
- 
+
             <div class="po-title-bar">PURCHASE ORDER</div>
- 
+
             <!-- Supplier Details / PO Details -->
             <table class="po-kv-table">
                 <tr class="po-kv-header">
@@ -617,7 +681,7 @@
                     <td class="po-kv-value"></td>
                 </tr>
             </table>
- 
+
             <!-- Billing Address / Shipping Address -->
             <table class="po-kv-table">
                 <tr class="po-kv-header">
@@ -626,7 +690,8 @@
                 </tr>
                 <tr>
                     <td colspan="2" class="po-address-cell">
-                        <strong>{{ po.companyName }}</strong><br />
+                        <strong>{{ po.companyName }}</strong
+                        ><br />
                         {{ po.billingAddress || po.companyAddress || '-' }}
                     </td>
                     <td colspan="2" class="po-address-cell">
@@ -652,7 +717,7 @@
                     <td class="po-kv-value" colspan="3">{{ po.companyCin }}</td>
                 </tr>
             </table>
- 
+
             <!-- Items -->
             <table class="po-items-table">
                 <thead>
@@ -692,7 +757,7 @@
                     </tr>
                 </tbody>
             </table>
- 
+
             <!-- Totals -->
             <table class="po-summary-table">
                 <tr>
@@ -720,36 +785,38 @@
                     <td class="po-summary-value">₹{{ po.grandTotal | number: '1.2-2' }}</td>
                 </tr>
             </table>
- 
+
             <table class="po-words-table">
                 <tr>
-                    <td>Amount in word : <strong>{{ po.amountInWords }}</strong></td>
+                    <td>
+                        Amount in word : <strong>{{ po.amountInWords }}</strong>
+                    </td>
                 </tr>
             </table>
- 
-            <table class="po-charges-table">
+
+            <table>
                 <tr>
-                    <td class="po-charge-label">Total Freight Amount</td>
+                    <td>Total Freight Amount</td>
                     <td class="po-charge-value">₹{{ po.freight | number: '1.2-2' }}</td>
                 </tr>
                 <tr>
-                    <td class="po-charge-label">Total Discount Amount</td>
+                    <td>Total Discount Amount</td>
                     <td class="po-charge-value">₹{{ po.totalDiscountAmount | number: '1.2-2' }}</td>
                 </tr>
                 <tr>
-                    <td class="po-charge-label">Transport Charges</td>
+                    <td>Transport Charges</td>
                     <td class="po-charge-value">₹{{ po.transportCharges | number: '1.2-2' }}</td>
                 </tr>
                 <tr>
-                    <td class="po-charge-label">Total Loading/Unloading Charges</td>
+                    <td>Total Loading/Unloading Charges</td>
                     <td class="po-charge-value">₹{{ po.loadingCharge | number: '1.2-2' }}</td>
                 </tr>
                 <tr>
-                    <td class="po-charge-label">Total Other Charges</td>
+                    <td>Total Other Charges</td>
                     <td class="po-charge-value">₹{{ po.miscCharge | number: '1.2-2' }}</td>
                 </tr>
             </table>
- 
+
             <div class="po-note-block">
                 <div class="po-note-label">Delivery Schedule :</div>
                 <div>{{ po.deliverySchedule || '-' }}</div>
@@ -757,20 +824,20 @@
                 <div>{{ po.note || 'Special Conditions apply as per the general terms and conditions overleaf.' }}</div>
             </div>
         </div>
- 
+
         <!-- ============ PAGE 2 — no letterhead repeated ============ -->
         <div class="po-second-page">
             <div class="po-section-title">Payment Terms</div>
             <div class="po-terms-block">
-                <p>{{ po.paymentTermsText || ('Payment Terms: ' + (po.paymentTerms || 'As agreed') + ' of the total order value along with taxes & duties.') }}</p>
+                <p>{{ po.paymentTermsText || 'Payment Terms: ' + (po.paymentTerms || 'As agreed') + ' of the total order value along with taxes & duties.' }}</p>
             </div>
- 
+
             <div class="po-section-title">General Terms &amp; Conditions</div>
             <div class="po-terms-block">
                 <p *ngFor="let term of po.generalTerms; let i = index">{{ i + 1 }}. {{ term }}</p>
                 <p *ngIf="po.remarks">Remarks: {{ po.remarks }}</p>
             </div>
- 
+
             <div class="po-signature-row">
                 <div class="po-signature-block">
                     <div class="po-signature-line">Prepared By</div>

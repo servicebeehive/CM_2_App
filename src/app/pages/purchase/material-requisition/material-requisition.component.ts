@@ -178,7 +178,7 @@ export class MaterialRequisitionComponent {
     }
 
     get backRoute(): string[] {
-        if (this.fromApprovalView) return ['/layout/settings/my-approval'];
+        if (this.fromApprovalView) return ['/layout/action/my-approval'];
         if (this.fromPurchaseOrderView) return ['/layout/purchase/purchase-order'];
         if (this.fromComparisonView) return ['/layout/purchase/vendor-comparison'];
         return ['/layout/purchase/rfq'];

@@ -5,7 +5,6 @@ import { NewPassword } from '../user-management/changepassword';
 import { CategoryFormateComponent } from './category-format/category-formate.component';
 import { BulkUploadComponent } from '../action/bulk-upload/bulk-upload.component';
 import { MiscChargesComponent } from './misc-charges/misc-charges.component';
-import { MyApprovalComponent } from '../action/my-approval/my-approval.component';
 import { RuleDetailComponent } from './rule-detail/rule-detail.component';
 
 export default [
