@@ -30,8 +30,7 @@
                 <!-- Draft PO -->
                 <button pButton type="button" label="Draft PO" class="p-button-warning w-full md:w-auto" (click)="submitDraft()" [disabled]="isSubmitDisabled() || isDraftDisabled()"></button>
                 <button pButton *ngIf="this.poForm.get('p_pono')?.value === null" type="button" label="Vendor" class="p-button-warning" pTooltip="Vendor comparison" tooltipPosition="top" (click)="openVendorDialog()"></button>
-                <button pButton *ngIf="this.poForm.get('p_pono')?.value !== null" type="button" label="Cancel" class="p-button-warning w-full md:w-auto" (click)="cancelPO()"></button>
-                <button pButton *ngIf="this.poForm.get('p_pono')?.value !== null" type="button" label="Force Close" class="p-button-warning w-full md:w-auto" (click)="forceClose()" [disabled]="!submitted"></button>
+                <button pButton *ngIf="this.poForm.get('p_pono')?.value !== null" type="button" [label]="cancelButtonLabel" class="p-button-warning w-full md:w-auto" (click)="cancelPO()" [disabled]="this.poForm.get('status')?.value==='CANCELLED'"></button>
                 <button pButton type="button" label="View" class="p-button-warning w-full md:w-auto" (click)="openMrDialog()"></button>
 
                 <button pButton type="button" label="Mail" class="p-button-warning w-full md:w-auto" (click)="openVendorMail()" [disabled]="!poForm.get('p_pono')?.value"></button>
@@ -152,6 +151,7 @@
                                     <th class="text-right">Rate</th>
                                     <th class="text-right">Amount</th>
                                     <th class="text-right">Tax %</th>
+                                    <th class="text-right">Tax Amount</th>
                                     <th class="text-right">Total Amount</th>
                                     <th class="action-column text-center">Action</th>
                                 </tr>
@@ -179,6 +179,9 @@
                                         {{ row.get('amount')?.value ? '₹' + (row.get('amount')?.value | number: '1.2-2') : '' }}
                                     </td>
                                     <td class="text-right text-sm">{{ row.get('taxPercent')?.value || 0 }}</td>
+                                   <td class="text-right text-sm">
+    {{ (row.get('cgstAmount')?.value || 0) + (row.get('sgstAmount')?.value || 0) + (row.get('igstAmount')?.value || 0) | number: '1.2-2' }}
+</td>
                                     <td class="text-right text-sm font-semibold text-blue-700">
                                         {{ row.get('totalAmount')?.value ? '₹' + (row.get('totalAmount')?.value | number: '1.2-2') : '' }}
                                     </td>
@@ -444,19 +447,6 @@
                             </div>
 
                             <div class="flex flex-col">
-                                <label class="font-medium">Remaining Invoice Amount (₹)</label>
-                                <input
-                                    pInputText
-                                    type="text"
-                                    formControlName="p_remaininginvoiceamount"
-                                    [readonly]="true"
-                                    [ngClass]="{ 'text-red-500': +poForm.get('p_remaininginvoiceamount')?.value > 0, 'text-green-600': +poForm.get('p_remaininginvoiceamount')?.value <= 0 }"
-                                    class="font-bold surface-100"
-                                    placeholder="0.00"
-                                />
-                            </div>
-
-                            <div class="flex flex-col">
                                 <label class="font-medium">Total Payment (₹)</label>
                                 <input pInputText type="text" formControlName="p_totalpayment" [readonly]="true" class="font-bold surface-100" placeholder="0.00" />
                             </div>
@@ -475,26 +465,28 @@
                             </div>
 
                             <div class="flex flex-col">
-    <label class="font-medium">Payment (₹)</label>
-    <input
-    pInputText
-        [(ngModel)]="newPayment.amount"
-        [ngModelOptions]="{ standalone: true }"
-        mode="decimal"
-        [min]="0"
-        [max]="getRemainingPayment()"
-        inputStyleClass="w-full font-bold"
-    />
-    <small class="text-red-500 mt-1 text-xs" *ngIf="(newPayment.amount ?? 0) > getRemainingPayment()">
-        Payment cannot exceed remaining amount (₹{{ getRemainingPayment() | number: '1.2-2' }})
-    </small>
-</div>
-                        </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-x-4 gap-y-4 p-3">
+                                <label class="font-medium">Remaining Invoice Amount (₹)</label>
+                                <input
+                                    pInputText
+                                    type="text"
+                                    formControlName="p_remaininginvoiceamount"
+                                    [readonly]="true"
+                                    [ngClass]="{ 'text-red-500': +poForm.get('p_remaininginvoiceamount')?.value > 0, 'text-green-600': +poForm.get('p_remaininginvoiceamount')?.value <= 0 }"
+                                    class="font-bold surface-100"
+                                    placeholder="0.00"
+                                />
+                            </div>
                             <div class="flex flex-col">
                                 <label class="font-medium">Payment Date</label>
                                 <p-datePicker fluid formControlName="p_paymentdate" dateFormat="dd/mm/yy" placeholder="Select Payment Date" [showIcon]="true" [showClear]="true" [maxDate]="today"></p-datePicker>
                             </div>
+
+                            <div class="flex flex-col">
+                                <label class="font-medium">Payment (₹)</label>
+                                <input pInputText [(ngModel)]="newPayment.amount" [ngModelOptions]="{ standalone: true }" mode="decimal" [min]="0" [max]="getRemainingPayment()" inputStyleClass="w-full font-bold" />
+                                <small class="text-red-500 mt-1 text-xs" *ngIf="(newPayment.amount ?? 0) > getRemainingPayment()"> Payment cannot exceed remaining amount (₹{{ getRemainingPayment() | number: '1.2-2' }}) </small>
+                            </div>
+
                             <div class="flex flex-col">
                                 <label class="font-medium">Invoice No <span class="text-red-500">*</span></label>
                                 <p-select
@@ -616,6 +608,24 @@
     </form>
 
     <p-confirmDialog></p-confirmDialog>
+
+    <p-dialog [header]="cancelDialogHeader" [(visible)]="showCancelDialog" [modal]="true" [style]="{ width: '600px' }" [closable]="true">
+        <div class="p-fluid">
+            <label class="mb-2 block">Please provide a reason for {{ isPartiallyReceived ? 'force cancelling' : 'cancelling' }} this Purchase Order:</label>
+
+            <div class="mb-3">
+                <label for="cancel-comment"><b>Comment *</b></label>
+                <textarea id="cancel-comment" pInputTextarea [(ngModel)]="cancelComment" [ngModelOptions]="{ standalone: true }" rows="4" class="w-full" [ngClass]="{ 'ng-invalid ng-dirty': cancelSubmitted && !cancelComment }"></textarea>
+            </div>
+
+            <p-message *ngIf="cancelSubmitted && !cancelComment" severity="error" text="Comment is required."></p-message>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <button pButton label="Close" class="p-button-secondary" (click)="showCancelDialog = false"></button>
+            <button pButton [label]="cancelButtonLabel" class="p-button-danger" (click)="submitCancelPO()" [disabled]="!cancelComment || cancelComment.trim().length === 0"></button>
+        </ng-template>
+    </p-dialog>
 </div>
 
 <section id="poPrintSection" class="po-print-section" *ngIf="printData as po">
@@ -899,7 +909,7 @@
     </ng-template>
 </p-dialog>
 
-<p-dialog [(visible)]="showPoMailDialog" [modal]="true" [style]="{ width: '60rem', maxWidth: '95vw' }" [draggable]="false" [resizable]="false" header="Purchase Order Mail">
+<p-dialog [(visible)]="showPoMailDialog" [modal]="true" [style]="{ width: '80rem', maxWidth: '95vw' }" [draggable]="false" [resizable]="false" header="Purchase Order Mail">
     <p-table [value]="poMailVendorRows" [responsiveLayout]="'scroll'" class="p-datatable-gridlines p-datatable-sm">
         <ng-template pTemplate="header">
             <tr class="bg-yellow-400">
@@ -908,6 +918,7 @@
                 <th>Category</th>
                 <th>Email</th>
                 <th class="text-right">Count</th>
+                <th class="text-right">Document</th>
             </tr>
         </ng-template>
         <ng-template pTemplate="body" let-row>
@@ -919,11 +930,24 @@
                 <td>{{ row.category || '—' }}</td>
                 <td>{{ row.email || 'No email on file' }}</td>
                 <td class="text-right">{{ row.count }}</td>
+                <td class="text-center">
+                    <button
+                        pButton
+                        type="button"
+                        icon="pi pi-file-pdf"
+                        label="PDF"
+                        class="p-button-text p-button-sm"
+                        pTooltip="Download purchase order PDF"
+                        tooltipPosition="top"
+                        [disabled]="!row.attachmentPath"
+                        (click)="downloadMailAttachment(row)"
+                    ></button>
+                </td>
             </tr>
         </ng-template>
         <ng-template pTemplate="emptymessage">
             <tr>
-                <td colspan="5" class="text-center">No vendors found for this purchase order.</td>
+                <td colspan="6" class="text-center">No vendors found for this purchase order.</td>
             </tr>
         </ng-template>
     </p-table>

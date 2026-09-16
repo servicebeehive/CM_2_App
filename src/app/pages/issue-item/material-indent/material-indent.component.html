@@ -1,71 +1,117 @@
 <div class="card p-3 md:p-6">
     <!-- Header -->
-      <form [formGroup]="minForm" (ngSubmit)="onSubmit()">
-<div class="flex justify-between items-center mb-6">
-    <span class="block text-surface-900 font-bold text-2xl">Material Issue Note</span>
-    <div class="flex gap-3 flex-wrap">
-        <span class="text-xl font-bold mt-2">Status</span>
+    <form [formGroup]="minForm" (ngSubmit)="onSubmit()">
+        <div class="flex justify-between items-center mb-6">
+            <span class="block text-surface-900 font-bold text-2xl">Material Indent</span>
+            <div class="flex gap-3 flex-wrap">
+                 <span class="text-xl font-bold mt-2">Status</span>
                 <span class="font-bold text-xl mt-2" [ngStyle]="{ color: statusColor }">
                     {{ minForm.get('status')?.value }}
                 </span>
-        <button pButton type="submit" label="Submit" class="p-button-warning"
-            [disabled]="minForm.invalid || issueItems.length === 0"></button>
-        <button pButton type="button" label="Reset" class="p-button-secondary"
-            (click)="onReset()"></button>
-    </div>
-</div>
+                <p-dropdown
+                    [options]="draftMinOptions"
+                    optionLabel="mf_no"
+                    optionValue="mf_id"
+                    placeholder="Draft MR No"
+                    filterPlaceholder="Draft MR No"
+                    formControlName="p_draft_requisitionno"
+                    [filter]="true"
+                    [showClear]="true"
+                    (onChange)="onDraftChange($event)"
+                >
+                    <ng-template pTemplate="selectedItem" let-item>
+                        <div class="flex items-center gap-2" *ngIf="item">
+                            <span>{{ item.mf_no }}</span>
+                        </div>
+                    </ng-template>
+
+                    <ng-template pTemplate="item" let-item>
+                        <div class="flex items-center justify-between gap-2 w-full">
+                            <span>{{ item.mf_no }}</span>
+                            <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-0" [attr.aria-label]="'Delete draft ' + item.mf_no" (click)="deleteDraftItem(item, $event)"></button>
+                        </div>
+                    </ng-template>
+                </p-dropdown>
+                <button pButton type="button" label="Draft" class="p-button-warning" (click)="draftSubmit()" [disabled]="!hasCopyableData()"></button>
+                <button pButton type="submit" label="Submit" class="p-button-warning" [disabled]="minForm.invalid || issueItems.length === 0"></button>
+                <button pButton type="button" label="Reset" class="p-button-secondary" (click)="onReset()"></button>
+            </div>
+        </div>
         <!-- ================================
          HEADER FIELDS
     ================================= -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4 w-full mb-4">
-            <!-- MIN No (Auto Generated) -->
+            <!-- Indent No (Auto Generated) -->
             <div class="flex flex-col">
-                <label class="font-medium mb-1">MIN No</label>
+                <label class="font-medium mb-1">Indent No</label>
                 <p-dropdown
-                    [options]="minOptions"
-                    optionLabel="min_no"
-                    optionValue="min_no"
-                    placeholder="Auto Generated"
+                    [options]="indentOptions"
+                    optionLabel="indent_no"
+                    optionValue="indent_no"
+                    placeholder="Indent No"
                     formControlName="p_minno"
                     [filter]="true"
-                    filterPlaceholder="Search MIN No"
+                    filterPlaceholder="Search Indent No"
                     [showClear]="true"
-                    (onChange)="onMINSelect($event)"
+                    (onChange)="onIndentChange($event)"
                 ></p-dropdown>
             </div>
 
-            <!-- Issue Date -->
+            <!-- Indent Date -->
             <div class="flex flex-col">
-                <label class="font-medium mb-1">Issue Date <span class="text-red-500">*</span></label>
+                <label class="font-medium mb-1">Indent Date <span class="text-red-500">*</span></label>
                 <p-datePicker fluid formControlName="p_issuedate" dateFormat="dd/mm/yy" [maxDate]="today" [showIcon]="true" placeholder="Select date"></p-datePicker>
-                <small class="text-red-500 mt-1 text-xs" *ngIf="minForm.get('p_issuedate')?.touched && minForm.get('p_issuedate')?.errors?.['required']"> Issue Date is required </small>
-            </div>
-
-             <!-- Indent No -->
-            <div class="flex flex-col">
-                <label class="font-medium mb-1">Indent No <span class="text-red-500">*</span></label>
-                <p-dropdown [options]="indentOptions" optionLabel="indent_no" optionValue="indent_id" placeholder="Select Indent" formControlName="p_indent" [filter]="true" filterPlaceholder="Search Indent" [showClear]="true"></p-dropdown>
-                <small class="text-red-500 mt-1 text-xs" *ngIf="minForm.get('p_indent')?.touched && minForm.get('p_indent')?.errors?.['required']"> Indent No is required </small>
+                <small class="text-red-500 mt-1 text-xs" *ngIf="minForm.get('p_issuedate')?.touched && minForm.get('p_issuedate')?.errors?.['required']"> Indent Date is required </small>
             </div>
 
             <!-- Site -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Site <span class="text-red-500">*</span></label>
-                <p-dropdown [options]="projectOptions" optionLabel="project_name" optionValue="project_id" placeholder="Select Site" formControlName="p_project" [filter]="true" filterPlaceholder="Search Site" [showClear]="true" (onChange)="onProjectChange($event)"></p-dropdown>
+                <p-dropdown
+                    [options]="projectOptions"
+                    optionLabel="project_name"
+                    optionValue="project_id"
+                    placeholder="Select Site"
+                    formControlName="p_project"
+                    [filter]="true"
+                    filterPlaceholder="Search Site"
+                    [showClear]="true"
+                    (onChange)="onProjectChange($event)"
+                ></p-dropdown>
                 <small class="text-red-500 mt-1 text-xs" *ngIf="minForm.get('p_project')?.touched && minForm.get('p_project')?.errors?.['required']"> Site is required </small>
             </div>
 
             <!-- Tower / Block -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Tower / Block <span class="text-red-500">*</span></label>
-                <p-dropdown [options]="towerOptions" optionLabel="tower_name" optionValue="tower_id" placeholder="Select Tower/Block" formControlName="p_tower" [filter]="true" filterPlaceholder="Search Tower/Block" [showClear]="true" (onChange)="onTowerChange($event)"></p-dropdown>
+                <p-dropdown
+                    [options]="towerOptions"
+                    optionLabel="tower_name"
+                    optionValue="tower_id"
+                    placeholder="Select Tower/Block"
+                    formControlName="p_tower"
+                    [filter]="true"
+                    filterPlaceholder="Search Tower/Block"
+                    [showClear]="true"
+                    (onChange)="onTowerChange($event)"
+                ></p-dropdown>
                 <small class="text-red-500 mt-1 text-xs" *ngIf="minForm.get('p_tower')?.touched && minForm.get('p_tower')?.errors?.['required']"> Tower/Block is required </small>
             </div>
 
             <!-- Level -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Level</label>
-                <p-dropdown [options]="levelOptions" optionLabel="label" optionValue="value" placeholder="Select Level" formControlName="p_level" [filter]="true" filterPlaceholder="Search Level" [showClear]="true" (onChange)="onLevelChange($event)"></p-dropdown>
+                <p-dropdown
+                    [options]="levelOptions"
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Select Level"
+                    formControlName="p_level"
+                    [filter]="true"
+                    filterPlaceholder="Search Level"
+                    [showClear]="true"
+                    (onChange)="onLevelChange($event)"
+                ></p-dropdown>
             </div>
 
             <!-- Pour / Activity -->
@@ -81,10 +127,43 @@
                 <small class="text-red-500 mt-1 text-xs" *ngIf="minForm.get('p_requestedby')?.touched && minForm.get('p_requestedby')?.errors?.['required']"> Requested By is required </small>
             </div>
 
-              <!-- Issued By (Auto/User, readonly) -->
+            <!-- Created By (Auto/User, readonly) -->
             <div class="flex flex-col">
-                <label class="font-medium mb-1">Issued By</label>
+                <label class="font-medium mb-1">Created By</label>
                 <input pInputText formControlName="p_issuedby" placeholder="Auto / Current User" [readonly]="true" class="surface-100 text-500" />
+            </div>
+
+            <!-- Select Item (inline — no dialog needed) -->
+            <div class="flex flex-col col-span-1 sm:col-span-2 lg:col-span-2">
+                <label class="font-medium mb-1"> Select Item </label>
+                <p-dropdown
+                    [options]="itemOptions"
+                    optionLabel="itemname"
+                    optionValue="itemid"
+                    placeholder="Search and select an item"
+                    formControlName="p_selecteditem"
+                    [filter]="true"
+                    filterBy="itemname,itemcode"
+                    filterPlaceholder="Search by name or code"
+                    [showClear]="true"
+                    appendTo="body"
+                    [style]="{ width: '100%' }"
+                    [panelStyle]="{ width: 'auto', 'min-width': '100%' }"
+                    (onChange)="onItemChange($event)"
+                >
+                    <ng-template let-item pTemplate="item">
+                        <div class="flex justify-between items-center w-full gap-3">
+                            <span class="text-sm" style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">
+                                {{ item.itemname }}
+                            </span>
+                            <div class="flex gap-2 text-xs flex-shrink-0">
+                                <span class="text-500">{{ item.itemcode }}</span>
+                                <span [ngClass]="item.availableqty > 0 ? 'text-green-600 font-semibold' : 'text-red-500 font-semibold'"> Avail: {{ item.availableqty }} </span>
+                                <span class="text-400">{{ item.uom }}</span>
+                            </div>
+                        </div>
+                    </ng-template>
+                </p-dropdown>
             </div>
 
             <!-- Remarks -->
@@ -109,9 +188,8 @@
                     <th>UOM</th>
                     <th class="text-right">Current Stock</th>
                     <th class="text-right">Buffer Qty</th>
+                    <th class="text-right">Available Qty</th>
                     <th class="text-right">Requested Qty</th>
-                    <th class="text-right">Issue Qty</th>
-                    <th class="text-right">Balance</th>
                     <th class="text-center">Action</th>
                 </tr>
             </ng-template>
@@ -123,9 +201,12 @@
                     <td class="text-sm">{{ item.uom }}</td>
                     <td class="text-right text-sm">{{ item.currentstock | number }}</td>
                     <td class="text-right text-sm">{{ item.bufferqty | number }}</td>
-                    <td class="text-right text-sm">{{ item.requestedqty | number }}</td>
-
-                    <!-- Issue Qty (input, capped at available) -->
+                    <td class="text-right text-sm font-semibold">
+                        <span [ngClass]="{ 'text-red-500': item.availableqty <= 0, 'text-green-600': item.availableqty > 0 }">
+                            {{ item.availableqty | number }}
+                        </span>
+                    </td>
+                    <!-- Indent Qty (input, capped at available) -->
                     <td>
                         <p-inputNumber
                             [(ngModel)]="item.issueqty"
@@ -138,16 +219,6 @@
                         ></p-inputNumber>
                         <small class="text-red-500 text-xs block mt-1" *ngIf="item.issueqty > item.availableqty"> Exceeds available stock </small>
                     </td>
-
-                    <!-- Balance (auto) -->
-                    <td class="text-right text-sm font-semibold">
-                        <span [ngClass]="{ 'text-red-500': item.balance < 0, 'text-green-600': item.balance >= 0 }">
-                            {{ item.balance | number }}
-                        </span>
-                    </td>
-
-                   
-
                     <!-- Action -->
                     <td class="text-center">
                         <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm" pTooltip="Remove" tooltipPosition="top" (click)="removeItem(i)"></button>

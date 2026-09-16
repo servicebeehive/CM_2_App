@@ -10,7 +10,7 @@
                     {{ form.get('status')?.value }}
                 </span>
 
-                <button pButton type="submit" label="Submit" class="p-button-primary"></button>
+                <button pButton type="submit" label="Submit" class="p-button-primary" [disabled]="form.invalid"></button>
                 <button pButton type="button" label="Reset" class="p-button-secondary" (click)="onReset()"></button>
             </div>
         </div>
@@ -34,7 +34,7 @@
 
                 <div class="flex flex-col">
                     <label class="font-medium mb-1">Purchase Date <span class="text-red-500">*</span></label>
-                    <p-datePicker fluid [showIcon]="true" formControlName="purchaseDate" dateFormat="dd-mm-yy" placeholder="Select date" [disabled]="true"></p-datePicker>
+                    <p-datePicker fluid [showIcon]="true" formControlName="purchaseDate" dateFormat="dd-mm-yy" placeholder="Select date"></p-datePicker>
                 </div>
 
                 <div class="flex flex-col">
@@ -137,11 +137,11 @@
                             </td>
 
                             <td>
-                                <p-inputNumber formControlName="quantity" [minFractionDigits]="0" [maxFractionDigits]="2" placeholder="0" inputStyleClass="w-full text-right" styleClass="w-full"></p-inputNumber>
+                                <p-inputNumber formControlName="quantity" [minFractionDigits]="0" [maxFractionDigits]="2" placeholder="0"  [inputStyleClass]="row.get('quantity')?.touched && row.get('quantity')?.invalid ? 'w-full text-right ng-invalid ng-dirty' : 'w-full text-right'" styleClass="w-full"></p-inputNumber>
                             </td>
 
-                            <td>
-                                <p-inputNumber formControlName="rate" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" placeholder="0" inputStyleClass="w-full text-right" styleClass="w-full"></p-inputNumber>
+                                <td>
+                                    <p-inputNumber formControlName="rate" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" placeholder="0"  [inputStyleClass]="row.get('rate')?.touched && row.get('rate')?.invalid ? 'w-full text-right ng-invalid ng-dirty' : 'w-full text-right'" styleClass="w-full"></p-inputNumber>
                             </td>
 
                             <td class="text-xs md:text-sm text-right font-semibold">{{ rowAmount(i) | number: '1.2-2' }}</td>

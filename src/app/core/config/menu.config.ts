@@ -175,6 +175,11 @@ export const MENU_MODEL: any[] = [
                 icon: 'pi pi-fw pi-desktop',
                 routerLink: ['/layout/pos/overview'],
                 items: [
+                     {
+                        label: 'Material Indent',
+                        icon: 'pi pi-fw pi-file-plus',
+                        routerLink: ['/layout/issue-item/material-indent']
+                    },
                     {
                         label: 'Material Issue',
                         icon: 'pi pi-fw pi-arrow-right-arrow-left',
@@ -184,6 +189,17 @@ export const MENU_MODEL: any[] = [
                         label: 'Material Return',
                         icon: 'pi pi-fw pi-arrow-left',
                         routerLink: ['/layout/issue-item/material-return']
+                    }, 
+                    {
+                        label: 'Material Transfer',
+                        // icon: 'pi pi-fw pi-exchange',
+                        icon: 'pi pi-fw pi-sync',
+                        routerLink: ['/layout/issue-item/material-transfer']
+                    },
+                    {
+                        label: 'Material Transfer Create',
+                        icon: 'pi pi-fw pi-file-plus',
+                        routerLink: ['/layout/issue-item/create-material-transfer']
                     },
                     {
                         label: 'Invoice',

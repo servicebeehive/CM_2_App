@@ -18,7 +18,7 @@ import { InventoryService } from '@/core/services/inventory.service';
 import { AuthService } from '@/core/services/auth.service';
 import { ShareService } from '@/core/services/shared.service';
 import { WorkService } from '@/core/services/work.service';
-import { GrnDelivery, GrnDocumentItem, GrnDocuments, GrnHeader, GrnRemarks } from '@/core/models/authmodel/work.model';
+import { GrnDelivery, GrnDocumentItem, GrnDocuments, GrnHeader, GrnItem, GrnRemarks } from '@/core/models/authmodel/work.model';
 
 @Component({
     selector: 'app-grn',
@@ -43,12 +43,13 @@ import { GrnDelivery, GrnDocumentItem, GrnDocuments, GrnHeader, GrnRemarks } fro
     providers: [ConfirmationService, DatePipe]
 })
 export class GrnComponent implements OnInit, OnDestroy {
-    productForm!: FormGroup;
+    grnForm!: FormGroup;
     poSelected = false;
     public transationid: any;
     backshow = false;
     dateTime = new Date();
-
+    userId = '';
+    
     fileNames: { challan: string; material: string; qualityreport: string; other: string } = {
         challan: '', material: '', qualityreport: '', other: ''
     };
@@ -69,13 +70,8 @@ export class GrnComponent implements OnInit, OnDestroy {
 
     itemOptionslist: any[] = [];
     ponoOptions: any[] = [];
-    purchaseIdOptions: any[] = [];
+    grnOptions: any[] = [];
     indentNoOptions: any[] = [];
-
-    // Rows shown in the "saved entries" table under each tab
-    deliveryList: { challanno: string; challandate: string; vehicleno: string; drivername: string; drivermobile: string }[] = [];
-    remarksList: { receivedby: any; remarks: string }[] = [];
-    documentsList: { type: string; name: string; path: string }[] = [];
 
     // Bound reference so it can be removed correctly in ngOnDestroy
     private readonly beforeUnloadHandler = () => this.sharedService.clearTransactionState();
@@ -96,7 +92,8 @@ export class GrnComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.initForm();
         this.onGetPONO();
-
+        this.onGetGRN();
+        this.userId = this.authService.isLogIntType().username;
         const navigation = history.state;
         if (navigation?.stockData && navigation?.itemsData) {
             this.backshow = true;
@@ -112,22 +109,24 @@ export class GrnComponent implements OnInit, OnDestroy {
 
     // ── Form initialisation ────────────────────────────────────────────────
     private initForm(): void {
-        this.productForm = this.fb.group({
+        this.grnForm = this.fb.group({
             // Top 3 (always visible)
-            p_tranpurchaseid: [null],
+            p_grn_id: [null],
             p_grndate: [this.dateTime, Validators.required],
-            p_poid: [null, Validators.required], // PO Number
-
+            p_pono: [null, Validators.required], // PO Number
+            status: [''],
             // Tab 1: Purchase Order
             p_podate: [null],
-            p_project: ['', Validators.required],
-            p_vendor: [null, Validators.required],
-            p_location: [null, Validators.required],
+            p_project: [{value: '', disabled: true}, Validators.required],
+            p_project_id: [null],
+            p_vendor: [{value: null, disabled: true}, Validators.required],
+            p_vendor_id: [null],
+            p_location: [{value: null, disabled: true}, Validators.required],
             p_worklocation: [''],
             p_deliveryterms: [''],
             p_poreference: [''],
-            p_contactperson: [''],
-            p_contactno: [''],
+            p_contactperson: [{value: '', disabled: true}],
+            p_contactno: [{value: '', disabled: true}],
 
             // Tab 2: Delivery
             p_challanno: ['', Validators.required],
@@ -137,7 +136,7 @@ export class GrnComponent implements OnInit, OnDestroy {
             p_drivermobile: ['', Validators.pattern(/^[6-9]\d{9}$/)],
 
             // Tab 3: Remarks
-            p_indentno: [null, Validators.required],
+            p_received_by: [{value: this.authService.isLogIntType().fullname, disabled: true}, Validators.required],
             p_remarks: ['', Validators.maxLength(500)],
 
             // Internal
@@ -146,23 +145,177 @@ export class GrnComponent implements OnInit, OnDestroy {
         });
     }
 
-    // ── GRN No dropdown: load a saved GRN ─────────────────────────────────
-    purchaseIdDetails(event: any): void {
-        this.transationid = event.value;
-        const selected = this.purchaseIdOptions.find(item => item.purchaseid == event.value);
-        if (!selected) return;
+    get statusColor(): string {
+        const status = (this.grnForm.get('status')?.value || '').toUpperCase();
+        switch (status) {
+            case 'APPROVED':
+                return 'green';
+            case 'SUBMITTED':
+                return 'blue';
+            case 'REJECTED':
+                return 'red';
+            case 'DRAFT':
+                return 'grey';
+            case 'SENDBACK':
+                return 'orange';
+            case 'APPROVAL PENDING':
+                return 'orange';
+            case 'FULLY_RECEIVED':
+                return 'green';
+            default:
+                return 'grey';
+        }
+    }
 
-        this.productForm.patchValue({
-            p_poid: selected.vendorid,
-            p_grndate: selected.invoicedate ? new Date(selected.invoicedate) : null,
-            p_remarks: selected.remark,
-            grandTotal: this.grandTotal.toFixed(2),
-            p_amountpaid: (selected.total_paid || 0).toFixed(2)
+    onGetGRN(){
+        const payload = {
+            p_returntype: 'GRNLIST',
+            p_username: this.authService.isLogIntType().companyid.toString()
+        }
+        this.inventoryService.getdropdowndetails(payload).subscribe({
+            next: (res) => {
+                this.grnOptions = res.data;
+            },
+            error: (error) => {
+                console.error(error);
+            }
         });
+    }
 
+    // ── GRN No dropdown: load a saved GRN ─────────────────────────────────
+    onGRNChange(event: any): void {
+        this.transationid = event.value;
+        const grnValue = this.grnOptions.find((g: any) => g.grn_id === event.value)?.grn_no;
+         const payload = {
+          p_returntype: 'GRNDETAILS',
+          p_returnvalue: grnValue,
+          p_username: this.authService.isLogIntType().companyid.toString()
+         }
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res) => {
+               const rows: any[] = res.data ?? [];
+            if (!rows.length) return;
+            this.applyGrnDetailsToForm(rows);
+            },
+            error: (error) => {
+                console.error(error);
+            }
+        })
         this.poSelected = true;
     }
 
+  private applyGrnDetailsToForm(rows: any[]): void {
+    const header = rows[0];
+    this.poSelected = true;
+    this.transationid = header.grn_id;
+
+    this.grnForm.patchValue({
+        p_grn_id: header.grn_id,
+        p_grndate: header.grn_date ? new Date(header.grn_date) : null,
+        p_pono: header.po_id,
+        p_podate: header.po_date ? new Date(header.po_date) : null,
+        p_project: header.project_name ?? '',
+        p_project_id: header.project_id ?? null,
+        p_vendor: header.suppliername ?? '',
+        p_vendor_id: header.vendor_id ?? header.supplier_id ?? null,
+        // p_location: header.delivery_location ?? '',
+        p_location: header.location ?? '',                        
+        p_contactperson: header.companycontactperson ?? '',         
+        p_contactno: header.companycontactphone ?? '',     
+        status: header.status ?? ''
+    });
+
+    // ── Patch Delivery tab fields from the first saved delivery entry ──────
+    const delivery = header.delivery?.[0];
+    if (delivery) {
+        this.grnForm.patchValue({
+            p_challanno: delivery.delivery_challan_no ?? '',
+            p_challandate: delivery.delivery_challan_date ? new Date(delivery.delivery_challan_date) : null,
+            p_vehicleno: delivery.vehicle_number ?? '',
+            p_drivername: delivery.driver_name ?? '',
+            p_drivermobile: delivery.driver_mobile ?? ''
+        });
+    }
+
+    // ── Patch Remarks tab fields from the first saved remarks entry ────────
+    const remark = header.remarks?.[0];
+    if (remark) {
+        this.grnForm.patchValue({
+            p_received_by: remark.received_by ?? null,
+            p_remarks: remark.remarks ?? ''
+        });
+    }
+
+    // ── Patch Documents tab display names from saved documents ─────────────
+    const documents: any[] = header.documents ?? [];
+    if (documents.length) {
+        const findDoc = (type: string) => documents.find((d) => d.document_type === type);
+
+        const challanDoc = findDoc('DELIVERY_CHALLAN');
+        const qualityDoc = findDoc('QUALITY_REPORT');
+        const materialDocs = documents.filter((d) => d.document_type === 'MATERIAL_PHOTO');
+        const otherDocs = documents.filter((d) => d.document_type === 'OTHER');
+
+        this.fileNames = {
+            challan: challanDoc?.document_name ?? '',
+            qualityreport: qualityDoc?.document_name ?? '',
+            material: materialDocs.length ? `${materialDocs.length} file(s) selected` : '',
+            other: otherDocs.length ? `${otherDocs.length} file(s) selected` : ''
+        };
+
+        this.uploadedFiles = {
+            challan: challanDoc?.document_path ?? null,
+            qualityreport: qualityDoc?.document_path ?? null,
+            material: materialDocs.length ? materialDocs.map((d) => d.document_path) : null,
+            other: otherDocs.length ? otherDocs.map((d) => d.document_path) : null
+        };
+    } else {
+        this.fileNames = { challan: '', material: '', qualityreport: '', other: '' };
+        this.uploadedFiles = { challan: null, material: null, qualityreport: null, other: null };
+    }
+
+    // Re-fetch the full PO item list so we have ordered/pending qty context,
+    // then overlay the saved GRN line-item quantities onto the matching rows.
+    const poPayload = {
+        p_returntype: 'PODETAILS',
+        p_returnvalue: header.po_no,
+        p_username: this.authService.isLogIntType().companyid.toString()
+    };
+    this.inventoryService.Getreturndropdowndetails(poPayload).subscribe({
+        next: (poRes: any) => {
+            this.mapItemsFromPODetails(poRes.data ?? []);
+            this.overlayGrnItemQuantities(rows);
+        },
+        error: (err) => console.error('Error fetching PO details for GRN:', err)
+    });
+}
+
+private overlayGrnItemQuantities(grnRows: any[]): void {
+    const byPoDetail = new Map<number, any>();
+    grnRows.forEach((r) => {
+        if (r.po_detail_id != null) byPoDetail.set(r.po_detail_id, r);
+    });
+
+    this.itemOptionslist = this.itemOptionslist.map((item) => {
+        const g = byPoDetail.get(item.purchasedetailid);
+        if (!g) return item;
+
+        return {
+            ...item,
+            grndetailid: g.grn_detail_id ?? null,
+            itemid: g.item_id ?? item.itemid,
+            uomid: g.uom_id ?? item.uomid,
+            receivedqty: g.received_qty ?? item.receivedqty,
+            acceptedqty: g.accepted_qty ?? item.acceptedqty,
+            rejectedqty: g.rejected_qty ?? item.rejectedqty,
+            qualityreport: g.quality ?? item.qualityreport,
+            rowremarks: g.detail_remarks ?? item.rowremarks,
+            batchno: g.batch_no ?? item.batchno ?? '',
+            batchdate: g.batch_date ? new Date(g.batch_date) : item.batchdate,
+            expirydate: g.expiry_date ? new Date(g.expiry_date) : item.expirydate
+        };
+    });
+}
     // ── File preview (opens the base64 file in a new tab) ──────────────────
     previewFile(base64: string | null): void {
         if (!base64) {
@@ -224,9 +377,14 @@ export class GrnComponent implements OnInit, OnDestroy {
 
     onAcceptedQtyChange(product: any): void {
         const received = Number(product.receivedqty || 0);
-        const accepted = Number(product.acceptedqty || 0);
-        if (accepted > received) product.acceptedqty = received;
-        product.rejectedqty = received - Number(product.acceptedqty || 0);
+        if (product.acceptedqty === null || product.acceptedqty === undefined) {
+        product.rejectedqty = 0;
+        return;
+    }
+
+    const accepted = Number(product.acceptedqty);
+    if (accepted > received) product.acceptedqty = received;
+    product.rejectedqty = received - Number(product.acceptedqty || 0);
     }
 
     calculateRowAmount(product: any): number {
@@ -275,23 +433,49 @@ export class GrnComponent implements OnInit, OnDestroy {
     }
 
     get isHeaderReady(): boolean {
-        return this.poSelected && ['p_grndate', 'p_poid', 'p_project', 'p_vendor', 'p_location']
-            .every(controlName => this.productForm.get(controlName)?.valid);
-    }
+    const receivedQtyValid =
+        this.itemOptionslist.length > 0 &&
+        this.itemOptionslist.every(
+            item =>
+                item.receivedqty !== null &&
+                item.receivedqty !== undefined &&
+                Number(item.receivedqty) > 0
+        );
+
+    return (
+        this.poSelected &&
+        this.grnForm.get('p_grndate')?.valid === true &&
+        this.grnForm.get('p_pono')?.valid === true &&
+        !!this.grnForm.get('p_project')?.value &&
+        !!this.grnForm.get('p_vendor')?.value &&
+        !!this.grnForm.get('p_location')?.value &&
+        receivedQtyValid
+    );
+}
+
+get isDeliveryReady(): boolean {
+    return (
+        !!this.grnForm.get('p_challanno')?.value &&
+        !!this.grnForm.get('p_challandate')?.value &&
+        this.grnForm.get('p_drivermobile')?.valid === true
+    );
+}
+
+get isRemarksReady(): boolean {
+    return !!this.grnForm.get('p_received_by')?.value;
+}
+
+get isDocumentsReady(): boolean {
+    const challanOk = !!this.uploadedFiles.challan;
+    const materialOk = !!(this.uploadedFiles.material && this.uploadedFiles.material.length);
+    const qualityOk = !this.isQualityReportAttachmentRequired || !!this.uploadedFiles.qualityreport;
+    return challanOk && materialOk && qualityOk;
+}
 
     // ── Submit ─────────────────────────────────────────────────────────────
     onSubmit(): void {
-        this.productForm.markAllAsTouched();
-        // if (this.productForm.invalid) {
-        //     this.messageService.add({
-        //         severity: 'error',
-        //         summary: 'Validation Failed',
-        //         detail: 'Please fill all required fields across all tabs.',
-        //         life: 3000
-        //     });
-        //     return;
-        // }
-
+        this.grnForm.markAllAsTouched();
+    
         if (this.isQualityReportAttachmentRequired && !this.uploadedFiles.qualityreport) {
             this.messageService.add({
                 severity: 'error',
@@ -308,37 +492,47 @@ export class GrnComponent implements OnInit, OnDestroy {
             acceptLabel: 'Yes',
             rejectLabel: 'Cancel',
             rejectButtonStyleClass: 'p-button-secondary',
-            accept: () => this.submitGrnHeader(this.productForm.value)
+            accept: () => this.submitGrnHeader(this.grnForm.value)
         });
     }
 
     submitGrnHeader(value: any): void {
-        console.log('Submitting GRN header with value:', value);
+        const isUpdate = !!this.transationid;
         const payload:GrnHeader= {
-            p_operation: 'INSERT',
-            p_grn_id: 0,
-            p_grn_date: this.datePipe.transform(new Date(), 'yyyy-MM-dd') || this.datePipe.transform(this.productForm.get('p_grndate')?.value, 'yyyy-MM-dd') || '2026-08-28',
-            p_po_id: value.p_poid,
+            p_grn_id: isUpdate ? this.transationid : 0,
+            p_grn_date: this.datePipe.transform(new Date(), 'yyyy-MM-dd') || this.datePipe.transform(this.grnForm.get('p_grndate')?.value, 'yyyy-MM-dd') || '2026-08-28',
+            p_po_id: value.p_pono,
             p_po_date: this.datePipe.transform(value.p_podate, 'yyyy-MM-dd') || '',
             p_company_id: this.authService.isLogIntType().companyid,
             p_project_id: value.p_project_id,
             p_vendor_id: value.p_vendor_id,
-            p_status: 'SUBMIT',
-            p_loginuser: 1,
+            p_status: isUpdate ? 'UPDATE' : 'SUBMIT',
+            p_items_json: this.buildItemsJson(),
+            p_loginuser: this.authService.isLogIntType().userid,
         };
 
-        this.workService.upsertGrnHeader(payload).subscribe({
+        this.workService.upsertGrn(payload).subscribe({
             next: (res) => {
-                console.log('GRN header created:', res);
+                if(res.data.success){
                 this.messageService.add({
                     severity: 'success',
-                    summary: 'GRN Header Saved',
-                    detail: 'GRN header submitted successfully.',
-                    life: 3000
+                    summary: res.data.msg
                 });
-            },
+                this.grnForm.patchValue({
+                    p_grn_id: res.data.grn_id,
+                    status: res.data.tran_status
+                });
+                this.transationid = res.data.grn_id;
+               this.onGetGRN();
+            }
+        else{
+            this.messageService.add({
+                severity: 'error',
+                summary:res.data.msg
+            });
+        }
+    },
             error: (err) => {
-                console.error('GRN header submit failed:', err);
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Submit Failed',
@@ -348,6 +542,33 @@ export class GrnComponent implements OnInit, OnDestroy {
             }
         });
     }
+
+ private buildItemsJson(): GrnItem[] {
+    return this.itemOptionslist.map((item) => {
+        const receivedQty = item.receivedqty != null ? Number(item.receivedqty) : 0;
+        const hasAcceptedQty = item.acceptedqty !== null && item.acceptedqty !== undefined && item.acceptedqty !== '';
+        const acceptedQty = hasAcceptedQty ? Number(item.acceptedqty) : receivedQty;
+
+        return {
+            po_detail_id: item.purchasedetailid,
+            item_id: item.itemid,
+            uom_id: item.uomid,
+            received_qty: receivedQty,
+            accepted_qty: acceptedQty,
+            rejected_qty: item.rejectedqty != null ? Number(item.rejectedqty) : 0,
+            rate: Number(item.rate) || 0,
+            batch_no: item.batchno ?? '',
+            batch_date: item.batchdate
+                ? (this.datePipe.transform(item.batchdate, 'yyyy-MM-dd HH:mm:ss') ?? '')
+                : '',
+            expiry_date: item.expirydate
+                ? this.datePipe.transform(item.expirydate, 'yyyy-MM-dd HH:mm:ss')
+                : null,
+            quality: item.qualityreport ?? 'N',
+            remarks: item.rowremarks ?? ''
+        };
+    });
+}
 
     onGetPONO(): void {
         const payload = {
@@ -397,11 +618,15 @@ export class GrnComponent implements OnInit, OnDestroy {
 
         const header = rows[0];
 
-        this.productForm.patchValue({
+        this.grnForm.patchValue({
             p_podate: header.po_date ? new Date(header.po_date) : null,
             p_project: header.project_name ?? '',
+            p_project_id: header.project_id ?? null,
             p_vendor: header.suppliername ?? null,
-            p_location: header.delivery_location ?? ''
+             p_vendor_id: header.vendor_id ?? header.supplier_id ?? null,
+            p_location: header.delivery_location ?? '',
+            p_contactperson: header.suppliercontactperson ?? '',
+            p_contactno: header.suppliercontactphone ?? ''
         });
 
         this.mapItemsFromPODetails(rows);
@@ -417,6 +642,8 @@ export class GrnComponent implements OnInit, OnDestroy {
 
             return {
                 purchasedetailid: row.po_detail_id,
+                itemid: row.item_id ?? null,
+                uomid: row.uom_id ?? null,
                 categoryname: row.category_name ?? row.item_category_id ?? '',
                 itemname: row.item_name ?? row.item_id ?? '',
                 uomname: row.uom_name ?? row.uom_id ?? '',
@@ -428,7 +655,11 @@ export class GrnComponent implements OnInit, OnDestroy {
                 rejectedqty: null,
                 qualityreport: 'N',
                 rate: Number(row.rate || 0),
-                rowremarks: row.detail_remarks ?? ''
+                rowremarks: row.detail_remarks ?? '',
+                  grndetailid: null,                   
+            batchno: '',
+            batchdate: null as Date | null,
+            expirydate: null as Date | null
             };
         });
     }
@@ -436,12 +667,12 @@ export class GrnComponent implements OnInit, OnDestroy {
     // ── Delivery tab: submit / reset ─────────────────────────────────────
     submitDelivery(): void {
         ['p_challanno', 'p_challandate', 'p_vehicleno', 'p_drivername', 'p_drivermobile']
-            .forEach(c => this.productForm.get(c)?.markAsTouched());
+            .forEach(c => this.grnForm.get(c)?.markAsTouched());
 
         if (
-            this.productForm.get('p_challanno')?.invalid ||
-            this.productForm.get('p_challandate')?.invalid ||
-            this.productForm.get('p_drivermobile')?.invalid
+            this.grnForm.get('p_challanno')?.invalid ||
+            this.grnForm.get('p_challandate')?.invalid ||
+            this.grnForm.get('p_drivermobile')?.invalid
         ) {
             this.messageService.add({
                 severity: 'error',
@@ -456,29 +687,21 @@ export class GrnComponent implements OnInit, OnDestroy {
             p_operation: 'INSERT',
             p_delivery_id: null,
             p_grn_id: this.transationid ?? null,
-            p_po_id: this.productForm.get('p_poid')?.value ?? null,
-            p_challan_no: this.productForm.get('p_challanno')?.value ?? '',
-            p_challan_date: this.datePipe.transform(this.productForm.get('p_challandate')?.value, 'yyyy-MM-dd') ?? '',
-            p_vehicle_no: this.productForm.get('p_vehicleno')?.value ?? '',
-            p_driver_name: this.productForm.get('p_drivername')?.value ?? '',
-            p_driver_mobile: this.productForm.get('p_drivermobile')?.value ?? '',
+            p_po_id: this.grnForm.get('p_pono')?.value ?? null,
+            p_challan_no: this.grnForm.get('p_challanno')?.value ?? '',
+            p_challan_date: this.datePipe.transform(this.grnForm.get('p_challandate')?.value, 'yyyy-MM-dd') ?? '',
+            p_vehicle_no: this.grnForm.get('p_vehicleno')?.value ?? '',
+            p_driver_name: this.grnForm.get('p_drivername')?.value ?? '',
+            p_driver_mobile: this.grnForm.get('p_drivermobile')?.value ?? '',
             p_remarks: '',
-            p_loginuser: 1
+            p_loginuser: Number(this.userId)
         };
 
         this.workService.upsertGrnDelivery(payload).subscribe({
-            next: () => {
-                this.deliveryList.push({
-                    challanno: payload.p_challan_no,
-                    challandate: payload.p_challan_date,
-                    vehicleno: payload.p_vehicle_no,
-                    drivername: payload.p_driver_name,
-                    drivermobile: payload.p_driver_mobile
-                });
+            next: (res) => {
                 this.messageService.add({
-                    severity: 'success', summary: 'Delivery Saved', detail: 'Delivery details submitted successfully.', life: 3000
+                    severity: 'success', summary: res.data.msg
                 });
-                this.resetDelivery();
             },
             error: (err) => {
                 console.error('Delivery submit failed:', err);
@@ -489,12 +712,8 @@ export class GrnComponent implements OnInit, OnDestroy {
         });
     }
 
-    removeDeliveryRow(index: number): void {
-        this.deliveryList.splice(index, 1);
-    }
-
     resetDelivery(): void {
-        this.productForm.patchValue({
+        this.grnForm.patchValue({
             p_challanno: '',
             p_challandate: null,
             p_vehicleno: '',
@@ -502,14 +721,14 @@ export class GrnComponent implements OnInit, OnDestroy {
             p_drivermobile: ''
         });
         ['p_challanno', 'p_challandate', 'p_vehicleno', 'p_drivername', 'p_drivermobile']
-            .forEach(c => this.productForm.get(c)?.markAsUntouched());
+            .forEach(c => this.grnForm.get(c)?.markAsUntouched());
     }
 
     // ── Remarks tab: submit / reset ──────────────────────────────────────
     submitRemarks(): void {
-        this.productForm.get('p_indentno')?.markAsTouched();
+        this.grnForm.get('p_received_by')?.markAsTouched();
 
-        if (this.productForm.get('p_indentno')?.invalid) {
+        if (this.grnForm.get('p_received_by')?.invalid) {
             this.messageService.add({
                 severity: 'error',
                 summary: 'Validation Failed',
@@ -521,24 +740,19 @@ export class GrnComponent implements OnInit, OnDestroy {
 
         const payload: GrnRemarks = {
             p_operation: 'INSERT',
-            p_grn_remark_id: null,
+            p_grn_remark_id: 0,
             p_grn_id: this.transationid ?? null,
-            p_po_id: this.productForm.get('p_poid')?.value ?? null,
-            p_received_by: this.productForm.get('p_indentno')?.value ?? null,
-            p_remarks: this.productForm.get('p_remarks')?.value ?? '',
-            p_loginuser: 1
+            p_po_id: this.grnForm.get('p_pono')?.value ?? null,
+            p_received_by: this.grnForm.get('p_received_by')?.value ?? null,
+            p_remarks: this.grnForm.get('p_remarks')?.value ?? '',
+            p_loginuser: this.userId.toString()
         };
 
         this.workService.upsertGrnRemarks(payload).subscribe({
-            next: () => {
-                this.remarksList.push({
-                    receivedby: payload.p_received_by,
-                    remarks: payload.p_remarks
-                });
+            next: (res) => {
                 this.messageService.add({
-                    severity: 'success', summary: 'Remarks Saved', detail: 'Remarks submitted successfully.', life: 3000
+                    severity: 'success', summary: res.data.msg
                 });
-                this.resetRemarks();
             },
             error: (err) => {
                 console.error('Remarks submit failed:', err);
@@ -549,13 +763,9 @@ export class GrnComponent implements OnInit, OnDestroy {
         });
     }
 
-    removeRemarksRow(index: number): void {
-        this.remarksList.splice(index, 1);
-    }
-
     resetRemarks(): void {
-        this.productForm.patchValue({ p_indentno: null, p_remarks: '' });
-        this.productForm.get('p_indentno')?.markAsUntouched();
+        this.grnForm.patchValue({ p_received_by: null, p_remarks: '' });
+        this.grnForm.get('p_received_by')?.markAsUntouched();
     }
 
     // ── Documents tab: submit / reset ────────────────────────────────────
@@ -613,24 +823,18 @@ export class GrnComponent implements OnInit, OnDestroy {
 
         const payload: GrnDocuments = {
             p_operation: 'SAVE',
-            p_document_id: null,
+            p_document_id: 0,
             p_grn_id: this.transationid ?? null,
-            p_po_id: this.productForm.get('p_poid')?.value ?? null,
+            p_po_id: this.grnForm.get('p_pono')?.value ?? null,
             p_documents: documents,
-            p_loginuser: 1
+            p_loginuser: this.userId.toString()
         };
 
         this.workService.upsertGrnDocuments(payload).subscribe({
-            next: () => {
-                documents.forEach(doc => this.documentsList.push({
-                    type: doc.document_type,
-                    name: doc.document_name,
-                    path: doc.document_path
-                }));
+            next: (res) => {
                 this.messageService.add({
-                    severity: 'success', summary: 'Documents Saved', detail: 'Documents submitted successfully.', life: 3000
+                    severity: 'success', summary: res.data.msg
                 });
-                this.resetDocuments();
             },
             error: (err) => {
                 console.error('Documents submit failed:', err);
@@ -639,10 +843,6 @@ export class GrnComponent implements OnInit, OnDestroy {
                 });
             }
         });
-    }
-
-    removeDocumentRow(index: number): void {
-        this.documentsList.splice(index, 1);
     }
 
     resetDocuments(): void {
@@ -672,11 +872,11 @@ export class GrnComponent implements OnInit, OnDestroy {
     populateStockForm(data: any, itemsData: any[]): void {
         this.transationid = data.purchaseid;
         this.poSelected = true;
-        this.productForm.patchValue({
-            p_tranpurchaseid: data.purchaseid || 0,
+        this.grnForm.patchValue({
+            p_grn_id: data.purchaseid || 0,
             p_grndate: data.invoicedate ? new Date(data.invoicedate) : new Date(),
             p_remarks: data.remark || '',
-            p_poid: data.vendorid || null,
+            p_pono: data.vendorid || null,
             p_worklocation: data.worklocation || '',
             p_deliveryterms: data.delivery_terms || '',
             p_poreference: data.po_reference || '',
@@ -702,7 +902,7 @@ export class GrnComponent implements OnInit, OnDestroy {
     }
 
     reset(): void {
-        this.productForm.reset(
+        this.grnForm.reset(
             { p_grndate: this.dateTime }
         );
         this.itemOptionslist = [];

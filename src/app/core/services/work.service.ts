@@ -2,7 +2,7 @@ import { environment } from '@/environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ShareService } from './shared.service';
-import { GrnDelivery, GrnDocuments, GrnHeader, GrnRemarks, MaterialRequisitionPayload, MiscPurchase, PurchaseDraftPayload, PurchaseOrderPayload, UpsertRfqPayload, UpserWorkList } from '../models/authmodel/work.model';
+import { GrnDelivery, GrnDocuments, GrnHeader, GrnRemarks, MaterialRequisitionPayload, MiscPurchase, PurchaseDraftPayload, PurchaseOrderPayload, UpsertRfqPayload, UpserWorkList, CancelPOPayload, MaterialIssue, MaterialIndent, MaterialReturn } from '../models/authmodel/work.model';
 import { catchError, Observable, throwError } from 'rxjs';
 import { API_ENDPOINTS } from '../config/api-endpoints';
 
@@ -53,6 +53,12 @@ export class WorkService {
                 return throwError(() => error);
             })
         );
+    }
+
+    cancelPurchaseOrder(payload: CancelPOPayload): Observable<any> {
+        const payloaddata = this.shareservice.GetApiBody(payload);
+        const url = `${this.baseUrl}${API_ENDPOINTS.work.cancelpo}`;
+        return this.http.post<any>(url, payloaddata).pipe(catchError((error) => throwError(() => error)));
     }
 
     upsertPOPerforma(payload: any): Observable<any> {
@@ -111,9 +117,9 @@ export class WorkService {
         return this.http.post<any>(url, payloaddata).pipe(catchError((error) => throwError(() => error)));
     }
 
-    upsertGrnHeader(payload: GrnHeader): Observable<any> {
+    upsertGrn(payload: GrnHeader): Observable<any> {
         const payloaddata = this.shareservice.GetApiBody(payload);
-        const url = `${this.baseUrl}${API_ENDPOINTS.work.upsertgrnheader}`;
+        const url = `${this.baseUrl}${API_ENDPOINTS.work.upsertgrn}`;
         return this.http.post<any>(url, payloaddata).pipe(catchError((error) => throwError(() => error)));
     }
 
@@ -132,6 +138,24 @@ export class WorkService {
     upsertGrnDocuments(payload: GrnDocuments): Observable<any> {
         const payloaddata = this.shareservice.GetApiBody(payload);
         const url = `${this.baseUrl}${API_ENDPOINTS.work.upsertgrndocuments}`;
+        return this.http.post<any>(url, payloaddata).pipe(catchError((error) => throwError(() => error)));
+    }
+
+    upsertMaterialIssue(payload: MaterialIssue): Observable<any> {
+        const payloaddata = this.shareservice.GetApiBody(payload);
+        const url = `${this.baseUrl}${API_ENDPOINTS.work.upsertmaterialissue}`;
+        return this.http.post<any>(url, payloaddata).pipe(catchError((error) => throwError(() => error)));
+    }
+
+    upsertMaterialIndent(payload: MaterialIndent): Observable<any> {
+        const payloaddata = this.shareservice.GetApiBody(payload);
+        const url = `${this.baseUrl}${API_ENDPOINTS.work.upsertmaterialindent}`;
+        return this.http.post<any>(url, payloaddata).pipe(catchError((error) => throwError(() => error)));
+    }
+
+    upsertMaterialReturn(payload: MaterialReturn): Observable<any> {
+        const payloaddata = this.shareservice.GetApiBody(payload);
+        const url = `${this.baseUrl}${API_ENDPOINTS.work.upsertmaterialreturn}`;
         return this.http.post<any>(url, payloaddata).pipe(catchError((error) => throwError(() => error)));
     }
 }

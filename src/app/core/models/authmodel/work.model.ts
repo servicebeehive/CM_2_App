@@ -92,6 +92,13 @@ export interface PurchaseOrderPayload {
     p_items_json: PurchaseOrderItem[];
     p_loginuser: string;
     p_mr_no: string | null;
+    p_po_attachment: string | null;
+}
+
+export interface CancelPOPayload {
+    p_po_id: number;
+    p_cancel_reason: string;
+    p_loginuser: number;
 }
 
 export interface VendorInvitePayload {
@@ -197,7 +204,6 @@ export interface MiscPurchaseItem {
 }
 
 export interface GrnHeader {
-     p_operation: 'INSERT' | 'UPDATE' | 'DELETE';
      p_grn_id: number | null;
      p_grn_date: string; // 'YYYY-MM-DD'
      p_po_id: number | null;
@@ -206,9 +212,24 @@ export interface GrnHeader {
      p_project_id: number | null;
      p_vendor_id: number | null;
      p_status: string;
+     p_items_json: GrnItem[];
      p_loginuser: number;
 }
 
+export interface GrnItem {
+    po_detail_id: number;
+    item_id: number;
+    uom_id: number;
+    received_qty: number;
+    accepted_qty: number | null;
+    rejected_qty: number;
+    rate: number;
+    batch_no: string;
+    batch_date: string; // 'YYYY-MM-DD HH:mm:ss'
+    expiry_date: string | null; // 'YYYY-MM-DD HH:mm:ss' or null
+    quality: string;
+    remarks: string;
+}
 export interface GrnDelivery {
     p_operation: 'INSERT' | 'UPDATE' | 'DELETE';
     p_delivery_id: number | null;
@@ -228,9 +249,9 @@ export interface GrnRemarks {
     p_grn_remark_id: number | null;
     p_grn_id: number | null;
     p_po_id: number | null;
-    p_received_by: number | null;
+    p_received_by: string | null;
     p_remarks: string;
-    p_loginuser: number;
+    p_loginuser: string;
 }
 
 export interface GrnDocumentItem {
@@ -245,5 +266,139 @@ export interface GrnDocuments {
     p_grn_id: number | null;
     p_po_id: number | null;
     p_documents: GrnDocumentItem[];
+    p_loginuser: string;
+}
+
+export interface PaymentEntry {
+    date: Date;
+    amount: number;
+    mode: string;
+    referenceNo: string;
+    invoiceNo: string;
+    performaInvoiceNo: string;
+    invoiceId?: number | null;
+    performaId?: number | null;
+    remainingAfter: number;
+    isEditing?: boolean;
+    id?: number | null;
+}
+
+export interface PerformaEntry {
+    invoiceNo: string;
+    date: Date | null;
+    amount: number;
+    documentPath: string;
+    documentDataUrl: string;
+    isEditing?: boolean;
+    id?: number | null;
+}
+
+export interface InvoiceEntry {
+    invoiceNo: string;
+    date: Date | null;
+    performaInvoiceNo: string;
+    performaId?: number | null;
+    freight: number;
+    loadingCharge: number;
+    cgst: number;
+    totalTaxableAmount: number;
+    sgst: number;
+    igst: number;
+    miscCharge: number;
+    grandTotal: number;
+    documentPath: string;
+    documentDataUrl: string;
+    isEditing?: boolean;
+    id?: number | null;
+}
+
+
+export interface MaterialIssue {
+     p_action: 'DRAFT' | 'SUBMIT';
+     p_operation: 'INSERT' | 'UPDATE' | 'DELETE';
+     p_min_id: number | null;        // NULL on insert
+     p_issue_date: string | null; // 'YYYY-MM-DD'
+     p_company_id: number | null;
+     p_project_id: number | null;      // Site
+     p_tower_block_id: number | null;  // Tower / Block
+     p_level_name: string;
+     p_pour_name: string;       // Pour / Activity
+     p_requested_by: number | null;
+     p_issued_by: number | null;
+     p_remarks: string;
+     p_items_json: MaterialIssueItem[];      // the grid
+     p_loginuser: number;
+}
+
+export interface MaterialIssueItem {
+      item_category_id: number;
+      item_id: number;
+      uom_id: number | null;            // add this to IssueItem if you track uom id (not just label)
+      current_stock: number;
+      reserved_qty: number;
+      available_qty: number;
+      requested_qty: number;
+      issue_qty: number;
+      balance_qty: number;
+      rate: number;
+      amount: number;
+      remarks: string;
+}
+
+export interface MaterialIndentItem {
+    item_category_id: number | null;
+    item_id: number;
+    uom_id: number | null;
+    current_stock: number;
+    requested_qty: number;
+    available_qty: number;
+    issue_qty: number;
+    balance_qty: number;
+    rate: number;
+    amount: number;
+}
+
+export interface MaterialIndent {
+    p_action: 'DRAFT' | 'SUBMIT';
+    p_operation: 'INSERT' | 'UPDATE' | 'DELETE';
+    p_indent_id: number | null;     
+    p_indent_date: string | null;
+    p_company_id: number;
+    p_project_id: number;
+    p_tower_block_id: number;
+    p_indent_for: string | null;            
+    p_indent_activty: string | null;       
+    p_requested_by: string; 
+    p_created_by: string;
+    p_remarks: string;
+    p_items_json: MaterialIndentItem[];
+    p_loginuser: string;
+}
+
+export interface MaterialReturnItem {
+    item_id: number;
+    return_qty: number;
+    return_reason: string;
+    return_condition: string;
+}
+
+export interface MaterialReturn {
+    p_action: 'DRAFT' | 'SUBMIT';
+    p_operation: 'INSERT' | 'UPDATE' | 'DELETE';
+    p_mrn_id: number | null;
+    p_return_date: string | null;
+    p_company_id: number;
+    p_project_id: number;
+    p_tower_block_id: number;
+    p_level_name: string;
+    p_pour_name: string;
+    p_linked_min_id: number;
+    p_return_by: number;
+    p_issued_by: number;
+    p_return_type: string;
+    p_requested_by: number;
+    p_created_by: number;
+    p_remarks: string;
+    p_items_json: MaterialReturnItem[];
     p_loginuser: number;
 }

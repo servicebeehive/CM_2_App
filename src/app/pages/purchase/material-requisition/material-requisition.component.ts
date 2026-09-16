@@ -631,21 +631,6 @@ export class MaterialRequisitionComponent {
         this.isAutoSelect = false;
     }
 
-    OnUMO(itemId: any, index: number): void {
-        this.inventoryService.getdropdowndetails({ p_returntype: 'SALEUOM', p_returnvalue: itemId }).subscribe({
-            next: (res) => {
-                if (!res?.data?.length) return;
-                this.uomlist[index] = res.data;
-                const row = this.itemArray.at(index);
-                if (!row.get('uom_id')?.value) {
-                    const first = res.data[0];
-                    row.patchValue({ uom_id: first.fieldid, uomname: first.fieldname });
-                }
-            },
-            error: (err) => console.error(err)
-        });
-    }
-
     UOMId(event: any, index: number): void {
         const row = this.itemArray.at(index);
         const selectedUom = this.uomlist[index]?.find((u: any) => u.fieldid === event.value);

@@ -3,15 +3,10 @@
     <div class="flex justify-between items-center mb-6">
         <span class="block text-surface-900 font-bold text-2xl">Good Received Note - GRN</span>
         <div class="flex gap-3">
-            <span class="text-xl font-bold mt-2">Status</span>
-            <span
-                class="font-bold text-xl mt-2"
-                [ngStyle]="{
-                    color: productForm.get('status')?.value === 'Done' ? 'green' : productForm.get('status')?.value === 'Partial Cancel' ? 'grey' : productForm.get('status')?.value === 'Cancel' ? 'red' : 'black'
-                }"
-            >
-                {{ productForm.get('status')?.value }}
-            </span>
+              <span class="text-xl font-bold mt-2">Status</span>
+                <span class="font-bold text-xl mt-2" [ngStyle]="{ color: statusColor }">
+                    {{ grnForm.get('status')?.value }}
+                </span>
             <button pButton type="button" label="Submit" class="p-button-warning" [disabled]="!isHeaderReady" (click)="onSubmit()"></button>
             <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
             @if (backshow) {
@@ -20,7 +15,7 @@
         </div>
     </div>
 
-    <form [formGroup]="productForm">
+    <form [formGroup]="grnForm">
         <!-- ================================
          TOP 3 FIELDS (always visible)
     ================================= -->
@@ -29,13 +24,13 @@
             <div class="flex flex-col">
                 <label class="font-medium mb-1">GRN No</label>
                 <p-dropdown
-                    [options]="purchaseIdOptions"
-                    optionLabel="purchaseid"
-                    optionValue="purchaseid"
-                    (onChange)="purchaseIdDetails($event)"
+                    [options]="grnOptions"
+                    optionLabel="grn_no"
+                    optionValue="grn_id"
+                    (onChange)="onGRNChange($event)"
                     [filter]="true"
                     filterPlaceholder="Search GRN No"
-                    formControlName="p_tranpurchaseid"
+                    formControlName="p_grn_id"
                     placeholder="Auto Generated"
                 ></p-dropdown>
             </div>
@@ -44,14 +39,14 @@
             <div class="flex flex-col">
                 <label class="font-medium mb-1">GRN Date <span class="text-red-500">*</span></label>
                 <p-datepicker fluid formControlName="p_grndate" dateFormat="dd/mm/yy" [maxDate]="dateTime" [showIcon]="true" placeholder="GRN Date"></p-datepicker>
-                <small class="text-red-500 mt-1 text-xs" *ngIf="productForm.get('p_grndate')?.touched && productForm.get('p_grndate')?.errors?.['required']"> GRN Date is required </small>
+                <small class="text-red-500 mt-1 text-xs" *ngIf="grnForm.get('p_grndate')?.touched && grnForm.get('p_grndate')?.errors?.['required']"> GRN Date is required </small>
             </div>
 
             <!-- PO Number -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">PO Number <span class="text-red-500">*</span></label>
-                <p-dropdown [options]="ponoOptions" optionLabel="po_no" optionValue="po_id" [filter]="true" filterPlaceholder="Search PO No" formControlName="p_poid" placeholder="Select PO No" (onChange)="onPOChange($event)"></p-dropdown>
-                <small class="text-red-500 mt-1 text-xs" *ngIf="productForm.get('p_poid')?.touched && productForm.get('p_poid')?.errors?.['required']"> PO Number is required </small>
+                <p-dropdown [options]="ponoOptions" optionLabel="po_no" optionValue="po_id" [filter]="true" filterPlaceholder="Search PO No" formControlName="p_pono" placeholder="Select PO No" (onChange)="onPOChange($event)"></p-dropdown>
+                <small class="text-red-500 mt-1 text-xs" *ngIf="grnForm.get('p_pono')?.touched && grnForm.get('p_pono')?.errors?.['required']"> PO Number is required </small>
             </div>
 
             <!-- PO Date (readonly, past dates only) -->
@@ -77,7 +72,7 @@
                     <span [ngClass]="{ 'text-400 cursor-not-allowed': !poSelected }"> <i class="pi pi-file-edit mr-2"></i>Purchase Order </span>
                 </ng-template>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4 p-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-x-6 gap-y-4 p-3">
                     <!-- Site (auto from PO, readonly) -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Site <span class="text-red-500">*</span></label>
@@ -88,14 +83,14 @@
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Vendor <span class="text-red-500">*</span></label>
                         <input pInputText formControlName="p_vendor" placeholder="Select Vendor" />
-                        <small class="text-red-500 mt-1 text-xs" *ngIf="productForm.get('p_vendor')?.touched && productForm.get('p_vendor')?.errors?.['required']"> Vendor is required </small>
+                        <small class="text-red-500 mt-1 text-xs" *ngIf="grnForm.get('p_vendor')?.touched && grnForm.get('p_vendor')?.errors?.['required']"> Vendor is required </small>
                     </div>
 
                     <!-- Store Location -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Location <span class="text-red-500">*</span></label>
                         <input pInputText formControlName="p_location" placeholder="Select Location" />
-                        <small class="text-red-500 mt-1 text-xs" *ngIf="productForm.get('p_location')?.touched && productForm.get('p_location')?.errors?.['required']">Location is required </small>
+                        <small class="text-red-500 mt-1 text-xs" *ngIf="grnForm.get('p_location')?.touched && grnForm.get('p_location')?.errors?.['required']">Location is required </small>
                     </div>
 
                     <div class="flex flex-col">
@@ -121,14 +116,14 @@
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Delivery Challan No <span class="text-red-500">*</span></label>
                         <input pInputText formControlName="p_challanno" placeholder="Delivery Challan No" (keypress)="allowOnlyNumbers($event)" />
-                        <small class="text-red-500 mt-1 text-xs" *ngIf="productForm.get('p_challanno')?.touched && productForm.get('p_challanno')?.errors?.['required']"> Challan No is required </small>
+                        <small class="text-red-500 mt-1 text-xs" *ngIf="grnForm.get('p_challanno')?.touched && grnForm.get('p_challanno')?.errors?.['required']"> Challan No is required </small>
                     </div>
 
                     <!-- Delivery Challan Date -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Delivery Challan Date <span class="text-red-500">*</span></label>
                         <p-datepicker fluid formControlName="p_challandate" dateFormat="dd/mm/yy" [maxDate]="dateTime" [showIcon]="true" placeholder="Challan Date"> </p-datepicker>
-                        <small class="text-red-500 mt-1 text-xs" *ngIf="productForm.get('p_challandate')?.touched && productForm.get('p_challandate')?.errors?.['required']"> Challan Date is required </small>
+                        <small class="text-red-500 mt-1 text-xs" *ngIf="grnForm.get('p_challandate')?.touched && grnForm.get('p_challandate')?.errors?.['required']"> Challan Date is required </small>
                     </div>
 
                     <!-- Vehicle Number -->
@@ -147,42 +142,14 @@
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Driver Mobile</label>
                         <input pInputText formControlName="p_drivermobile" placeholder="Driver Mobile" (keypress)="allowOnlyNumbers($event)" maxlength="10" />
-                        <small class="text-red-500 mt-1 text-xs" *ngIf="productForm.get('p_drivermobile')?.touched && productForm.get('p_drivermobile')?.errors?.['pattern']"> Enter valid 10-digit mobile number </small>
+                        <small class="text-red-500 mt-1 text-xs" *ngIf="grnForm.get('p_drivermobile')?.touched && grnForm.get('p_drivermobile')?.errors?.['pattern']"> Enter valid 10-digit mobile number </small>
                     </div>
 
                     <!-- Actions -->
                     <div class="flex gap-3 ml-auto">
-                        <button pButton type="button" label="Save Delivery" class="p-button-warning" (click)="submitDelivery()"></button>
+                        <button pButton type="button" label="Save Delivery" class="p-button-warning" [disabled]="!isDeliveryReady" (click)="submitDelivery()"></button>
                         <button pButton type="button" label="Reset" class="p-button-secondary" (click)="resetDelivery()"></button>
                     </div>
-                </div>
-
-                <!-- Saved delivery entries -->
-                <div class="px-3 pb-3" *ngIf="deliveryList.length">
-                    <p-table [value]="deliveryList" class="p-datatable-gridlines p-datatable-sm">
-                        <ng-template pTemplate="header">
-                            <tr class="bg-yellow-400">
-                                <th>Challan No</th>
-                                <th>Challan Date</th>
-                                <th>Vehicle No</th>
-                                <th>Driver Name</th>
-                                <th>Driver Mobile</th>
-                                <th class="text-center">Action</th>
-                            </tr>
-                        </ng-template>
-                        <ng-template pTemplate="body" let-row let-rowIndex="rowIndex">
-                            <tr>
-                                <td>{{ row.challanno }}</td>
-                                <td>{{ row.challandate }}</td>
-                                <td>{{ row.vehicleno || '—' }}</td>
-                                <td>{{ row.drivername || '—' }}</td>
-                                <td>{{ row.drivermobile || '—' }}</td>
-                                <td class="text-center">
-                                    <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm" (click)="removeDeliveryRow(rowIndex)"></button>
-                                </td>
-                            </tr>
-                        </ng-template>
-                    </p-table>
                 </div>
             </p-tabPanel>
 
@@ -196,44 +163,21 @@
                     <!-- Received By -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Received By <span class="text-red-500">*</span></label>
-                        <p-dropdown [options]="indentNoOptions" optionLabel="billno" optionValue="billno" placeholder="Received By" formControlName="p_indentno" [filter]="true" filterPlaceholder="Search" [showClear]="true"></p-dropdown>
-                        <small class="text-red-500 mt-1 text-xs" *ngIf="productForm.get('p_indentno')?.touched && productForm.get('p_indentno')?.errors?.['required']"> Received By is required </small>
+                        <input pInputText type="text" formControlName="p_received_by" placeholder="Enter received by" class="w-full"/>
                     </div>
 
                     <!-- Remarks -->
                     <div class="flex flex-col" style="min-width: 260px">
                         <label class="font-medium mb-1">Remarks</label>
-                        <input pInputText formControlName="p_remarks" placeholder="Enter remarks" rows="3" class="w-full" />
-                        <small class="text-red-500 mt-1 text-xs" *ngIf="productForm.get('p_remarks')?.errors?.['maxlength']"> Remarks must not exceed 500 characters </small>
+                        <input pInputText formControlName="p_remarks" placeholder="Enter remarks" rows="1" class="w-full" />
+                        <small class="text-red-500 mt-1 text-xs" *ngIf="grnForm.get('p_remarks')?.errors?.['maxlength']"> Remarks must not exceed 500 characters </small>
                     </div>
 
                     <!-- Actions -->
                     <div class="flex gap-3 ml-auto">
-                        <button pButton type="button" label="Save Remarks" class="p-button-warning" (click)="submitRemarks()"></button>
+                       <button pButton type="button" label="Save Remarks" class="p-button-warning" [disabled]="!isRemarksReady" (click)="submitRemarks()"></button>
                         <button pButton type="button" label="Reset" class="p-button-secondary" (click)="resetRemarks()"></button>
                     </div>
-                </div>
-
-                <!-- Saved remarks entries -->
-                <div class="px-3 pb-3" *ngIf="remarksList.length">
-                    <p-table [value]="remarksList" class="p-datatable-gridlines p-datatable-sm">
-                        <ng-template pTemplate="header">
-                            <tr class="bg-yellow-400">
-                                <th>Received By</th>
-                                <th>Remarks</th>
-                                <th class="text-center">Action</th>
-                            </tr>
-                        </ng-template>
-                        <ng-template pTemplate="body" let-row let-rowIndex="rowIndex">
-                            <tr>
-                                <td>{{ row.receivedby }}</td>
-                                <td>{{ row.remarks || '—' }}</td>
-                                <td class="text-center">
-                                    <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm" (click)="removeRemarksRow(rowIndex)"></button>
-                                </td>
-                            </tr>
-                        </ng-template>
-                    </p-table>
                 </div>
             </p-tabPanel>
 
@@ -291,35 +235,9 @@
 
                     <!-- Actions -->
                     <div class="flex gap-3 ml-auto">
-                        <button pButton type="button" label="Save Documents" class="p-button-warning" (click)="submitDocuments()"></button>
+                        <button pButton type="button" label="Save Documents" class="p-button-warning" [disabled]="!isDocumentsReady" (click)="submitDocuments()"></button>
                         <button pButton type="button" label="Reset" class="p-button-secondary" (click)="resetDocuments()"></button>
                     </div>
-                </div>
-
-                <!-- Saved document entries -->
-                <div class="px-3 pb-3" *ngIf="documentsList.length">
-                    <p-table [value]="documentsList" class="p-datatable-gridlines p-datatable-sm">
-                        <ng-template pTemplate="header">
-                            <tr class="bg-yellow-400">
-                                <th>Document Type</th>
-                                <th>Document Name</th>
-                                <th>Attachment</th>
-                                <th class="text-center">Action</th>
-                            </tr>
-                        </ng-template>
-                        <ng-template pTemplate="body" let-row let-rowIndex="rowIndex">
-                            <tr>
-                                <td>{{ row.type }}</td>
-                                <td>{{ row.name }}</td>
-                                <td class="text-center">
-                                    <button pButton type="button" icon="pi pi-eye" class="p-button-text p-button-sm" (click)="previewFile(row.path)"></button>
-                                </td>
-                                <td class="text-center">
-                                    <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm" (click)="removeDocumentRow(rowIndex)"></button>
-                                </td>
-                            </tr>
-                        </ng-template>
-                    </p-table>
                 </div>
             </p-tabPanel>
         </p-tabView>
@@ -352,13 +270,12 @@
                         <th>Item Description</th>
                         <th>UOM</th>
                         <th class="text-right">PO Qty</th>
-                        <th class="text-right">Previously Received Qty</th>
+                        <th class="text-right">Prev Received Qty</th>
                         <th class="text-right">Pending Qty</th>
                         <th class="text-right">Received Qty <span class="text-red-500">*</span></th>
                         <th class="text-right">Accepted Qty</th>
                         <th class="text-right">Rejected Qty</th>
-                        <th class="text-center">Quality Report Required (Y/N/P)</th>
-                        <th>Remarks</th>
+                        <th class="text-center">Quality Report</th>
                     </tr>
                 </ng-template>
 
@@ -401,7 +318,6 @@
                         <td class="text-center">
                             <p-dropdown [options]="qualityReportOptions" optionLabel="label" optionValue="value" [(ngModel)]="product.qualityreport" [ngModelOptions]="{ standalone: true }" placeholder="Select" appendTo="body" styleClass="w-5rem"></p-dropdown>
                         </td>
-                        <td class="text-sm">{{ product.rowremarks || '—' }}</td>
                     </tr>
                 </ng-template>
 

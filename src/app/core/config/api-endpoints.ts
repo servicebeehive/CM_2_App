@@ -36,6 +36,7 @@ export const API_ENDPOINTS = {
         upsertmaterialforecast: '/beeware/upsert_material_forecast',
         upsertpurchasedraft: '/beeware/upsert_po_draft',
         upsertpurchaseorder: '/beeware/upsert_purchase_order',
+        cancelpo: '/beeware/cancel_po',
         upsertrfq: '/beeware/upsert_rfq',
         sendrfqmail: '/beeware/send_rfq_mail',
         upsertrfqvendorcomparison: '/beeware/upsert_rfq_vendor_comparison',
@@ -44,10 +45,13 @@ export const API_ENDPOINTS = {
         upsertpoinvoice: '/beeware/upsert_po_invoice',
         upsertpopayment: '/beeware/upsert_po_payment',
         upsertmiscpurchase: '/beeware/upsert_misc_purchase',
-        upsertgrnheader: '/beeware/upsert_grn_header',
+        upsertgrn: '/beeware/upsert_grn',
         upsertgrndelivery: '/beeware/upsert_grn_delivery',
         upsertgrndocuments: '/beeware/upsert_grn_documents',
-        upsertgrnremarks: '/beeware/upsert_grn_remarks'
+        upsertgrnremarks: '/beeware/upsert_grn_remarks',
+        upsertmaterialissue: '/beeware/upsert_material_issue',
+        upsertmaterialindent: '/beeware/upsert_material_indent',
+        upsertmaterialreturn: '/beeware/upsert_material_return'
     },
     sales: {
         getcalculatedMRP: '/beeware/getcalculatedMRP'

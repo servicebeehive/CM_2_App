@@ -20,52 +20,12 @@ import { FileUploadModule } from 'primeng/fileupload';
 import { TabsModule } from 'primeng/tabs';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { ToastModule } from 'primeng/toast';
+import { TextareaModule } from 'primeng/textarea';
+import { MessageModule } from 'primeng/message';
 import { WorkService } from '@/core/services/work.service';
 import { ShareService } from '@/core/services/shared.service';
-import { GmailVendorRow, PurchaseDraftPayload, PurchaseOrderItem, PurchaseOrderPayload } from '@/core/models/authmodel/work.model';
+import { GmailVendorRow, PurchaseDraftPayload, PurchaseOrderItem, PurchaseOrderPayload, CancelPOPayload, InvoiceEntry, PaymentEntry, PerformaEntry } from '@/core/models/authmodel/work.model';
 
-export interface PaymentEntry {
-    date: Date;
-    amount: number;
-    mode: string;
-    referenceNo: string;
-    invoiceNo: string;
-    performaInvoiceNo: string;
-    invoiceId?: number | null;
-    performaId?: number | null;
-    remainingAfter: number;
-    isEditing?: boolean;
-    id?: number | null;
-}
-
-export interface PerformaEntry {
-    invoiceNo: string;
-    date: Date | null;
-    amount: number;
-    documentPath: string;
-    documentDataUrl: string;
-    isEditing?: boolean;
-    id?: number | null;
-}
-
-export interface InvoiceEntry {
-    invoiceNo: string;
-    date: Date | null;
-    performaInvoiceNo: string;
-    performaId?: number | null;
-    freight: number;
-    loadingCharge: number;
-    cgst: number;
-    totalTaxableAmount: number;
-    sgst: number;
-    igst: number;
-    miscCharge: number;
-    grandTotal: number;
-    documentPath: string;
-    documentDataUrl: string;
-    isEditing?: boolean;
-    id?: number | null;
-}
 
 @Component({
     selector: 'app-purchase-order',
@@ -87,7 +47,9 @@ export interface InvoiceEntry {
         TabsModule,
         FileUploadModule,
         MultiSelectModule,
-        ToastModule
+        ToastModule,
+        TextareaModule,
+        MessageModule
     ],
     templateUrl: './purchase-order.component.html',
     styleUrl: './purchase-order.component.scss',
@@ -103,8 +65,6 @@ export class PurchaseOrderComponent implements OnInit {
     // Skip the "PO date can't be in the past" check when loading an already-saved draft/PO
     private allowPastPoDate = false;
     isLoadingProjects = false;
-    isLoadingLocations = false;
-    showForecastError = false;
     onPODraftOptions: any[] = [];
     projectOptions: any[] = [];
     activeTabIndex: string = '0';
@@ -133,7 +93,7 @@ export class PurchaseOrderComponent implements OnInit {
     showPoMailDialog = false;
     allVendorList: any[] = [];
     isLoadingVendorDialog = false;
-    vendorDialogRows: { category: string; item: string; vendorId: number | null; rate: number | null }[] = [];
+    vendorDialogRows: { category: string; item: string; vendorId: number | null; rate: number | null; taxType: string | null }[] = [];
     performaFileName: string = '';
     performaFileDataUrl: string = '';
     showExistingPerformaDate = false;
@@ -161,7 +121,10 @@ export class PurchaseOrderComponent implements OnInit {
     poMailVendorRows: GmailVendorRow[] = [];
     printHeader: any = {};
     printData: any = null;
-   
+
+    showCancelDialog = false;
+    cancelComment = '';
+    cancelSubmitted = false;
 
     newPayment: Partial<PaymentEntry> = {
         date: new Date(),
@@ -251,13 +214,13 @@ export class PurchaseOrderComponent implements OnInit {
                 p_grandtotal: [{ value: null, disabled: true }],
                 p_performainvoiceno_invoice: [''],
 
-               // ── Payment fields ──
-p_payment: [null],
-p_totalpoamount: [{ value: null, disabled: true }],
-p_totalinvoiceamount: [{ value: null, disabled: true }],
-p_remaininginvoiceamount: [{ value: null, disabled: true }],
-p_totalpayment: [{ value: '', disabled: true }],
-p_remainingpayment: [{ value: '', disabled: true }]
+                // ── Payment fields ──
+                p_payment: [null],
+                p_totalpoamount: [{ value: null, disabled: true }],
+                p_totalinvoiceamount: [{ value: null, disabled: true }],
+                p_remaininginvoiceamount: [{ value: null, disabled: true }],
+                p_totalpayment: [{ value: '', disabled: true }],
+                p_remainingpayment: [{ value: '', disabled: true }]
             },
             { validators: this.dateRangeValidator() }
         );
@@ -341,8 +304,8 @@ p_remainingpayment: [{ value: '', disabled: true }]
     }
 
     get isPaymentEntryDisabled(): boolean {
-    return this.getRemainingPayment() <= 0 && this.paymentHistory.length > 0 && this.editingPaymentIndex === null;
-}
+        return this.getRemainingPayment() <= 0 && this.paymentHistory.length > 0 && this.editingPaymentIndex === null;
+    }
 
     // ── Load all dropdowns ─────────────────────────────────────────────────────
     private loadDropdowns(): void {
@@ -384,58 +347,58 @@ p_remainingpayment: [{ value: '', disabled: true }]
         });
     }
 
-    onGetPerforma(){
+    onGetPerforma() {
         const po = this.poForm.get('p_pono')?.value;
-        if(po){
-        const payload = {
-            p_returntype: 'PERFORMALIST',
-            p_username: po.toString()
+        if (po) {
+            const payload = {
+                p_returntype: 'PERFORMALIST',
+                p_username: po.toString()
+            };
+            this.inventoryService.getdropdowndetails(payload).subscribe({
+                next: (res: any) => {
+                    this.performaInvoiceOptions = Array.isArray(res?.data) ? res.data : [];
+                },
+                error: (err: any) => {
+                    console.error('Error fetching performa list:', err);
+                }
+            });
         }
-        this.inventoryService.getdropdowndetails(payload).subscribe({
-            next: (res: any) => {
-               this.performaInvoiceOptions = Array.isArray(res?.data) ? res.data : [];
-            },
-            error: (err: any) => {
-                console.error('Error fetching performa list:', err);
-            }
-        });
-    }
     }
 
-    onGetPerformaInvoice(){
+    onGetPerformaInvoice() {
         const po = this.poForm.get('p_pono')?.value;
-        if(po){
-        const payload = {
-            p_returntype: 'POINVOICELIST',
-            p_username: po
+        if (po) {
+            const payload = {
+                p_returntype: 'POINVOICELIST',
+                p_username: po
+            };
+            this.inventoryService.getdropdowndetails(payload).subscribe({
+                next: (res: any) => {
+                    this.invoiceOptions = Array.isArray(res?.data) ? res.data : [];
+                },
+                error: (err: any) => {
+                    console.error('Error fetching invoice list:', err);
+                }
+            });
         }
-        this.inventoryService.getdropdowndetails(payload).subscribe({
-            next: (res: any) => {
-                this.invoiceOptions = Array.isArray(res?.data) ? res.data : [];
-            },
-            error: (err: any) => {
-                console.error('Error fetching invoice list:', err);
-            }
-        });
-    }
     }
 
-    onGetPOPayment(){
+    onGetPOPayment() {
         const po = this.poForm.get('p_pono')?.value.toString();
         const payload = this.createReturnPayload('POPAYMENT', po, this.companyId);
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res: any) => {
                 const rows: any[] = Array.isArray(res?.data) ? res.data : [];
-            const row = rows[0] ?? {};
+                const row = rows[0] ?? {};
 
-            this.poForm.patchValue(
-                {
-                    p_totalpoamount: Number(row.total_po_amount ?? 0).toFixed(2),
-                    p_totalinvoiceamount: Number(row.total_invoice_amount ?? 0).toFixed(2),
-                    p_remaininginvoiceamount: Number(row.remaining_inv_amount ?? 0).toFixed(2)
-                },
-                { emitEvent: false }
-            );
+                this.poForm.patchValue(
+                    {
+                        p_totalpoamount: Number(row.total_po_amount ?? 0).toFixed(2),
+                        p_totalinvoiceamount: Number(row.total_invoice_amount ?? 0).toFixed(2),
+                        p_remaininginvoiceamount: Number(row.remaining_inv_amount ?? 0).toFixed(2)
+                    },
+                    { emitEvent: false }
+                );
             },
             error: (err: any) => {
                 console.error('Error fetching PO payment list:', err);
@@ -588,45 +551,8 @@ p_remainingpayment: [{ value: '', disabled: true }]
         });
     }
 
-    private loadItemsForProject(projectId: number): void {
-        const payload = this.createReturnPayload('MFAPPROVED', projectId.toString());
-        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-            next: (res: any) => {
-                const rows: any[] = res.data || [];
-
-                if (rows.length === 0) {
-                    this.poItemArray.clear();
-                    this.recalcGrandTotal();
-                    this.messageService.add({
-                        severity: 'info',
-                        summary: 'No Data',
-                        detail: 'No forecast items found for this site.',
-                        life: 2500
-                    });
-                    return;
-                }
-
-                this.mapItemsToFormArray(rows);
-            },
-            error: (err) => {
-                console.error('Error fetching items for project:', err);
-                this.poItemArray.clear();
-                this.recalcGrandTotal();
-                this.messageService.add({
-                    severity: 'error',
-                    summary: 'Failed to load items for this site',
-                    life: 2500
-                });
-            }
-        });
-    }
-
     getTotalPayable(): number {
         return Number(this.poForm.get('p_totalpayment')?.value || 0);
-    }
-
-    getPreviewRemaining(): number {
-        return +(this.getRemainingPayment() - (this.newPayment.amount ?? 0)).toFixed(2);
     }
 
     private calculateGrandTotals(): void {
@@ -762,7 +688,7 @@ p_remainingpayment: [{ value: '', disabled: true }]
             mode: item.payment_mode ?? '',
             referenceNo: item.transaction_no ?? '',
             invoiceNo: item.invoice_no ?? '',
-            performaInvoiceNo: item.performa_invoice_no ?? '',
+            performaInvoiceNo: item.performa_no ?? '',
             remainingAfter: Number(item.remaining_payment ?? 0)
         }));
 
@@ -847,13 +773,11 @@ p_remainingpayment: [{ value: '', disabled: true }]
                     rate: [row.rate ?? null],
                     amount: [row.amount ?? null],
                     tax_id: [row.tax_id ?? 0],
-                    taxPercent: [Number(row.gsttax ?? 0)],
-                    cgstPercent: [Number(row.cgst_percent ?? row.cgst_rate ?? 0)],
-                    sgstPercent: [Number(row.sgst_percent ?? row.sgst_rate ?? 0)],
-                    igstPercent: [Number(row.igst_percent ?? row.igst_rate ?? 0)],
-                    cgstAmount: [Number(row.cgst_amount ?? 0)],
-                    sgstAmount: [Number(row.sgst_amount ?? 0)],
-                    igstAmount: [Number(row.igst_amount ?? 0)],
+                    taxPercent: [Number(row.tax_percentage ?? 0)],
+                    taxType: [row.tax_type ?? null],
+                      cgstAmount: [Number(row.cgst ?? 0)],
+                sgstAmount: [Number(row.sgst ?? 0)],
+                igstAmount: [Number(row.igst ?? 0)],
                     totalAmount: [row.total_amount ?? row.totalAmount ?? row.amount ?? null],
                     remarks: [row.detail_remarks ?? ''],
                     status: [row.status ?? ''],
@@ -931,48 +855,48 @@ p_remainingpayment: [{ value: '', disabled: true }]
             p_remarks: formVal.p_remarks,
             p_items_json: this.buildItemsPayload(),
             p_loginuser: this.authService.isLogIntType()?.userid.toString(),
-            p_mr_no: this.getSelectedMrNumbers()
+            p_mr_no: this.getSelectedMrNumbers(),
+            p_po_attachment: ""
         };
 
-        this.workService.upsertPurchaseOrder(payload).subscribe({
-            next: (res: any) => {
-                const data = res.data;
+       this.workService.upsertPurchaseOrder(payload).subscribe({
+    next: (res: any) => {
+        const data = res.data;
 
-                if (data.success) {
-                    this.poForm.patchValue({
-                        p_pono: res.data.data[0]?.po_id ?? null,
-                        status: data.tran_status
-                    });
+        if (data.success) {
+            this.poForm.patchValue({
+                p_pono: data.po_id ?? null,
+                status: data.tran_status
+            });
 
-                    this.onGetPONo();
-                    this.submitted = true;
+            this.onGetPONo();
+            this.submitted = true;
 
-                    this.messageService.add({
-                        severity: 'success',
-                        summary: 'Success',
-                        detail: data.msg,
-                        life: 2500
-                    });
-                    // this.sendMailToVendors(pos[0]?.po_id);
-                } else {
-                    this.messageService.add({
-                        severity: 'error',
-                        summary: 'Submit Failed',
-                        detail: data.msg,
-                        life: 3000
-                    });
-                }
-            },
-            error: (err) => {
-                console.error(err);
-                this.messageService.add({
-                    severity: 'error',
-                    summary: 'Submit Failed',
-                    detail: err?.error?.error ?? err?.message ?? 'Something went wrong.',
-                    life: 3000
-                });
-            }
+            this.messageService.add({
+                severity: 'success',
+                summary: 'Success',
+                detail: data.msg,
+                life: 2500
+            });
+        } else {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Submit Failed',
+                detail: data.msg,
+                life: 3000
+            });
+        }
+    },
+    error: (err) => {
+        console.error(err);
+        this.messageService.add({
+            severity: 'error',
+            summary: 'Submit Failed',
+            detail: err?.error?.error ?? err?.message ?? 'Something went wrong.',
+            life: 3000
         });
+    }
+});
     }
 
     // ── Performa ──────────────────────────────────────────────
@@ -1046,9 +970,9 @@ p_remainingpayment: [{ value: '', disabled: true }]
     }
 
     isPaymentInvalid(): boolean {
-    const amount = Number(this.newPayment.amount);
-    return !(amount > 0) || amount > this.getRemainingPayment() || !this.newPayment.mode || (!this.newPayment.invoiceNo && !this.newPayment.performaInvoiceNo);
-}
+        const amount = Number(this.newPayment.amount);
+        return !(amount > 0) || amount > this.getRemainingPayment() || !this.newPayment.mode || (!this.newPayment.invoiceNo && !this.newPayment.performaInvoiceNo);
+    }
 
     savePerforma(): void {
         if (!this.hasExistingPo) {
@@ -1205,10 +1129,6 @@ p_remainingpayment: [{ value: '', disabled: true }]
     }
 
     // ── Payment ───────────────────────────────────────────────
-    onPaymentChange(): void {
-        this.recalcPayments();
-    }
-
     getRemainingPayment(): number {
         return +(this.getTotalPayable() - this.totalPaid).toFixed(2);
     }
@@ -1233,20 +1153,27 @@ p_remainingpayment: [{ value: '', disabled: true }]
             this.messageService.add({ severity: 'warn', summary: 'PO required', detail: 'Select an existing purchase order before saving payment details.', life: 2500 });
             return;
         }
+
+        const selectedInvoice = this.invoiceOptions?.find((inv: any) => inv.invoice_id === this.newPayment.invoiceNo);
+        const selectedPerforma = this.performaInvoiceOptions?.find((p: any) => p.performa_id === this.newPayment.performaInvoiceNo);
+
         const payment: PaymentEntry = {
             date: this.newPayment.date || new Date(),
             amount: Number(this.newPayment.amount || 0),
             mode: this.newPayment.mode || '',
             referenceNo: this.newPayment.referenceNo || '',
-            invoiceNo: this.newPayment.invoiceNo || '',
-            performaInvoiceNo: this.newPayment.performaInvoiceNo || '',
+            invoiceNo: selectedInvoice?.invoice_no ?? '',
+            performaInvoiceNo: selectedPerforma?.invoice_no ?? '',
+            invoiceId: this.newPayment.invoiceNo ? Number(this.newPayment.invoiceNo) : null,
+            performaId: this.newPayment.performaInvoiceNo ? Number(this.newPayment.performaInvoiceNo) : null,
             remainingAfter: 0
         };
+
         if (!payment.amount || !payment.mode) {
             this.messageService.add({ severity: 'warn', summary: 'Payment details required', detail: 'Enter an amount and select a payment mode.', life: 2500 });
             return;
         }
-        if (!payment.invoiceNo && !payment.performaInvoiceNo) {
+        if (!payment.invoiceId && !payment.performaId) {
             this.messageService.add({ severity: 'warn', summary: 'Invoice reference required', detail: 'Select either an Invoice No or a Performa Invoice No.', life: 2500 });
             return;
         }
@@ -1256,16 +1183,17 @@ p_remainingpayment: [{ value: '', disabled: true }]
             this.messageService.add({ severity: 'warn', summary: 'Excess Amount', detail: `Maximum payable now is ₹${Math.max(0, total - existingTotal).toFixed(2)}`, life: 3000 });
             return;
         }
+
         const payload = {
             p_operation: this.editingPaymentIndex === null ? 'INSERT' : 'UPDATE',
             p_payment_id: this.editingPaymentIndex === null ? null : this.paymentHistory[this.editingPaymentIndex].id,
             p_po_id: poId,
+            p_invoice_id: payment.invoiceId,
+            p_performa_id: payment.performaId,
             p_payment_date: this.datePipe.transform(payment.date, 'yyyy-MM-dd'),
             p_amount: Number(payment.amount || 0),
             p_payment_mode: payment.mode || null,
             p_transaction_no: payment.referenceNo || null,
-            p_invoice_no: payment.invoiceNo || null,
-            p_performa_invoice_no: payment.performaInvoiceNo || null,
             p_bank_name: null,
             p_remarks: this.poForm.get('p_remarks')?.value || null,
             p_loginuser: Number(this.userId)
@@ -1297,6 +1225,9 @@ p_remainingpayment: [{ value: '', disabled: true }]
             invoiceNo: entry.invoiceNo,
             performaInvoiceNo: entry.performaInvoiceNo
         };
+        this.poForm.patchValue({
+            p_paymentdate: this.parseApiDate(entry.date)
+        });
     }
 
     private showSaveResult(res: any, successMessage: string): void {
@@ -1319,23 +1250,36 @@ p_remainingpayment: [{ value: '', disabled: true }]
     }
 
     private buildItemsPayload(): PurchaseOrderItem[] {
-        return this.poItemArray.controls.map((row) => ({
-            mf_id: row.get('mf_id')?.value,
-            mfdetailid: row.get('mfdetailid')?.value,
-            department_id: row.get('department_id')?.value,
-            vendor_id: row.get('vendor_id')?.value,
-            item_category_id: row.get('item_category_id')?.value,
-            item_id: row.get('item_id')?.value,
-            uom_id: row.get('uom_id')?.value,
-            forecast_qty: row.get('forecastQty')?.value ?? 0,
-            available_stock: row.get('availableStock')?.value ?? 0,
-            pending_po_qty: row.get('pendingPOQty')?.value ?? 0,
-            required_qty: row.get('requiredQty')?.value ?? 0,
-            po_qty: row.get('poQty')?.value ?? 0,
-            rate: row.get('rate')?.value ?? 0,
-            amount: row.get('amount')?.value ?? 0,
-            remarks: row.get('remarks')?.value ?? ''
-        }));
+        return this.poItemArray.controls.map((row) => {
+            const amount = row.get('amount')?.value ?? 0;
+            const cgstAmount = row.get('cgstAmount')?.value ?? 0;
+            const sgstAmount = row.get('sgstAmount')?.value ?? 0;
+            const igstAmount = row.get('igstAmount')?.value ?? 0;
+
+            return {
+                mf_id: row.get('mf_id')?.value,
+                mfdetailid: row.get('mfdetailid')?.value,
+                department_id: row.get('department_id')?.value,
+                vendor_id: row.get('vendor_id')?.value,
+                item_category_id: row.get('item_category_id')?.value,
+                item_id: row.get('item_id')?.value,
+                uom_id: row.get('uom_id')?.value,
+                forecast_qty: row.get('forecastQty')?.value ?? 0,
+                available_stock: row.get('availableStock')?.value ?? 0,
+                pending_po_qty: row.get('pendingPOQty')?.value ?? 0,
+                required_qty: row.get('requiredQty')?.value ?? 0,
+                po_qty: row.get('poQty')?.value ?? 0,
+                rate: row.get('rate')?.value ?? 0,
+                amount,
+                remarks: row.get('remarks')?.value ?? '',
+                tax_type: row.get('taxType')?.value ?? null,
+                tax_percentage: row.get('taxPercent')?.value ?? 0,
+                cgst: cgstAmount,
+                sgst: sgstAmount,
+                igst: igstAmount,
+                total_taxable_amount: +(amount + cgstAmount + sgstAmount + igstAmount).toFixed(2)
+            };
+        });
     }
 
     private getSelectedMrNumbers(): string {
@@ -1415,8 +1359,99 @@ p_remainingpayment: [{ value: '', disabled: true }]
         });
     }
 
-    cancelPO(): void {}
-    forceClose(): void {}
+    get isPartiallyReceived(): boolean {
+        return (this.poForm.get('status')?.value || '').toUpperCase() === 'PARTIALLY RECEIVED';
+    }
+
+    get cancelButtonLabel(): string {
+        return this.isPartiallyReceived ? 'Force Cancel' : 'Cancel';
+    }
+
+    get cancelDialogHeader(): string {
+        return this.isPartiallyReceived ? 'Force Cancel Purchase Order' : 'Cancel Purchase Order';
+    }
+
+    cancelPO(): void {
+        this.cancelComment = '';
+        this.cancelSubmitted = false;
+        this.showCancelDialog = true;
+    }
+
+    submitCancelPO(): void {
+        if (!this.cancelComment || this.cancelComment.trim().length === 0) {
+            this.cancelSubmitted = true;
+            return;
+        }
+
+        const payload: CancelPOPayload = {
+            p_po_id: Number(this.poForm.get('p_pono')?.value),
+            p_cancel_reason: this.cancelComment,
+            p_loginuser: Number(this.authService.isLogIntType()?.userid)
+        };
+
+        this.workService.cancelPurchaseOrder(payload).subscribe({
+            next: (res: any) => {
+                const data = res.data;
+
+                if (data.success) {
+                    this.poForm.patchValue({ status: data.tran_status });
+                    this.showCancelDialog = false;
+                    this.cancelComment = '';
+                    this.messageService.add({ severity: 'success', summary: 'Success', detail: data.msg, life: 2500 });
+                } else {
+                    this.messageService.add({ severity: 'error', summary: 'Cancel Failed', detail: data.msg, life: 3000 });
+                }
+            },
+            error: (err) => {
+                console.error(err);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Cancel Failed',
+                    detail: err?.error?.error ?? err?.message ?? 'Something went wrong.',
+                    life: 3000
+                });
+            }
+        });
+    }
+
+    downloadMailAttachment(row: GmailVendorRow): void {
+        const path = row.attachmentPath;
+        if (!path) {
+            this.messageService.add({ severity: 'warn', summary: 'No document', detail: 'No attachment is available for this vendor.', life: 2500 });
+            return;
+        }
+
+        const fileName = `PO_${this.poForm.get('p_pono')?.value ?? ''}_${row.vendor ?? 'vendor'}.pdf`;
+
+        if (path.startsWith('data:')) {
+            const [metadata, encodedData] = path.split(',', 2);
+            if (!metadata || !encodedData) return;
+            try {
+                const mimeType = metadata.match(/data:(.*?);base64/)?.[1] || 'application/pdf';
+                const binary = atob(encodedData);
+                const bytes = new Uint8Array(binary.length);
+                for (let i = 0; i < binary.length; i++) {
+                    bytes[i] = binary.charCodeAt(i);
+                }
+                const blob = new Blob([bytes], { type: mimeType });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = fileName;
+                link.click();
+                window.setTimeout(() => URL.revokeObjectURL(url), 60000);
+            } catch {
+                this.messageService.add({ severity: 'error', summary: 'Download failed', detail: 'The attachment could not be downloaded.', life: 3000 });
+            }
+        } else {
+            // Backend-hosted file URL — open/download directly
+            const link = document.createElement('a');
+            link.href = path;
+            link.download = fileName;
+            link.target = '_blank';
+            link.click();
+        }
+    }
 
     // ── Reset ──────────────────────────────────────────────────────────────────
     onReset(): void {
@@ -1428,7 +1463,6 @@ p_remainingpayment: [{ value: '', disabled: true }]
         this.poItemArray.clear();
         this.submitted = false;
         this.isDraftPo = false;
-        this.showForecastError = false;
         this.grandTotal = 0;
         this.selectedVendorNames = [];
         this.performaHistory = [];
@@ -1457,7 +1491,7 @@ p_remainingpayment: [{ value: '', disabled: true }]
 
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res: any) => {
-                const printRows = Array.isArray(res.data) ? res.data : res.data?.data ?? [];
+                const printRows = Array.isArray(res.data) ? res.data : (res.data?.data ?? []);
                 this.printData = this.buildPurchaseOrderPrintData(printRows);
                 setTimeout(() => {
                     const printContents = document.getElementById('poPrintSection')?.innerHTML;
@@ -1483,51 +1517,51 @@ p_remainingpayment: [{ value: '', disabled: true }]
         const useApiData = printRows.length > 0;
         const header = useApiData ? printRows[0] : (this.printHeader ?? {});
         const sourceRows = useApiData ? printRows : rows;
-       
+
         const items = sourceRows.map((row: any, index: number) => {
-            const quantity = Number(useApiData ? row.qty ?? 0 : row.poQty ?? 0);
+            const quantity = Number(useApiData ? (row.qty ?? 0) : (row.poQty ?? 0));
             const rate = Number(row.rate ?? 0);
             // "Taxable Amount" = extended pre-tax value (qty × rate).
             // "Basic Amount" mirrors the unit Rate to match the reference PO layout.
-            const taxableAmount = Number(useApiData ? row.taxable_amount ?? row.basic_amount ?? quantity * rate : (quantity * rate).toFixed(2));
-            const taxPercent = Number(useApiData ? row.gst_rate ?? 0 : row.taxPercent ?? 0);
-            const cgstPercent = Number(useApiData ? row.cgst_rate ?? 0 : row.cgstPercent || (row.igstPercent ? 0 : taxPercent / 2));
-            const sgstPercent = Number(useApiData ? row.sgst_rate ?? 0 : row.sgstPercent || (row.igstPercent ? 0 : taxPercent / 2));
-            const igstPercent = Number(useApiData ? row.igst_rate ?? 0 : row.igstPercent || 0);
+            const taxableAmount = Number(useApiData ? (row.taxable_amount ?? row.basic_amount ?? quantity * rate) : (quantity * rate).toFixed(2));
+            const taxPercent = Number(useApiData ? (row.gst_rate ?? 0) : (row.taxPercent ?? 0));
+            const cgstPercent = Number(useApiData ? (row.cgst_rate ?? 0) : row.cgstPercent || (row.igstPercent ? 0 : taxPercent / 2));
+            const sgstPercent = Number(useApiData ? (row.sgst_rate ?? 0) : row.sgstPercent || (row.igstPercent ? 0 : taxPercent / 2));
+            const igstPercent = Number(useApiData ? (row.igst_rate ?? 0) : row.igstPercent || 0);
 
             return {
-                srNo: useApiData ? row.sr_no ?? index + 1 : index + 1,
-                description: useApiData ? row.itemdesc ?? row.itemname ?? '' : row.item ?? row.itemName ?? '',
-                make: useApiData ? row.brand ?? row.model_size ?? '' : row.make ?? '',
-                uom: useApiData ? row.unit ?? '' : row.uom ?? '',
+                srNo: useApiData ? (row.sr_no ?? index + 1) : index + 1,
+                description: useApiData ? (row.itemdesc ?? row.itemname ?? '') : (row.item ?? row.itemName ?? ''),
+                make: useApiData ? (row.brand ?? row.model_size ?? '') : (row.make ?? ''),
+                uom: useApiData ? (row.unit ?? '') : (row.uom ?? ''),
                 quantity,
                 rate,
-                discount: Number(useApiData ? row.discount_percent ?? 0 : row.discountPercent ?? 0),
+                discount: Number(useApiData ? (row.discount_percent ?? 0) : (row.discountPercent ?? 0)),
                 cgstPercent,
                 sgstPercent,
                 igstPercent,
-                cgstAmount: Number(useApiData ? row.cgst_amount ?? 0 : row.cgstAmount || (taxableAmount * cgstPercent) / 100),
-                sgstAmount: Number(useApiData ? row.sgst_amount ?? 0 : row.sgstAmount || (taxableAmount * sgstPercent) / 100),
-                igstAmount: Number(useApiData ? row.igst_amount ?? 0 : row.igstAmount || (taxableAmount * igstPercent) / 100),
+                cgstAmount: Number(useApiData ? (row.cgst_amount ?? 0) : row.cgstAmount || (taxableAmount * cgstPercent) / 100),
+                sgstAmount: Number(useApiData ? (row.sgst_amount ?? 0) : row.sgstAmount || (taxableAmount * sgstPercent) / 100),
+                igstAmount: Number(useApiData ? (row.igst_amount ?? 0) : row.igstAmount || (taxableAmount * igstPercent) / 100),
                 taxableAmount
             };
         });
 
         // Gross Amount = sum of every row's extended (pre-tax) amount.
-        const taxableAmount = Number(useApiData ? header.gross_amount ?? header.total_basic_amount ?? 0 : items.reduce((sum: number, item: any) => sum + Number(item.taxableAmount || 0), 0));
-        const cgst = Number(useApiData ? header.total_cgst ?? 0 : form.p_cgst || header.cgst_amount || header.cgst || items.reduce((sum: number, item: any) => sum + Number(item.cgstAmount || 0), 0));
-        const sgst = Number(useApiData ? header.total_sgst ?? 0 : form.p_sgst || header.sgst_amount || header.sgst || items.reduce((sum: number, item: any) => sum + Number(item.sgstAmount || 0), 0));
-        const igst = Number(useApiData ? header.total_igst ?? 0 : form.p_igst || header.igst_amount || header.igst || items.reduce((sum: number, item: any) => sum + Number(item.igstAmount || 0), 0));
-        const freight = Number(useApiData ? header.freight_amount ?? 0 : form.p_freight ?? 0);
-        const loadingCharge = Number(useApiData ? header.loading_unloading_charges ?? 0 : form.p_loadingcharge ?? 0);
-        const miscCharge = Number(useApiData ? header.other_charges ?? 0 : form.p_misccharge ?? 0);
+        const taxableAmount = Number(useApiData ? (header.gross_amount ?? header.total_basic_amount ?? 0) : items.reduce((sum: number, item: any) => sum + Number(item.taxableAmount || 0), 0));
+        const cgst = Number(useApiData ? (header.total_cgst ?? 0) : form.p_cgst || header.cgst_amount || header.cgst || items.reduce((sum: number, item: any) => sum + Number(item.cgstAmount || 0), 0));
+        const sgst = Number(useApiData ? (header.total_sgst ?? 0) : form.p_sgst || header.sgst_amount || header.sgst || items.reduce((sum: number, item: any) => sum + Number(item.sgstAmount || 0), 0));
+        const igst = Number(useApiData ? (header.total_igst ?? 0) : form.p_igst || header.igst_amount || header.igst || items.reduce((sum: number, item: any) => sum + Number(item.igstAmount || 0), 0));
+        const freight = Number(useApiData ? (header.freight_amount ?? 0) : (form.p_freight ?? 0));
+        const loadingCharge = Number(useApiData ? (header.loading_unloading_charges ?? 0) : (form.p_loadingcharge ?? 0));
+        const miscCharge = Number(useApiData ? (header.other_charges ?? 0) : (form.p_misccharge ?? 0));
         const totalDiscountAmount = Number(header.total_discount_amount ?? 0);
         const transportCharges = Number(header.transport_charges ?? 0);
 
-        const preRoundTotal = Number(useApiData ? header.total_before_roundoff ?? 0 : taxableAmount + cgst + sgst + igst + freight + loadingCharge + miscCharge + totalDiscountAmount + transportCharges);
+        const preRoundTotal = Number(useApiData ? (header.total_before_roundoff ?? 0) : taxableAmount + cgst + sgst + igst + freight + loadingCharge + miscCharge + totalDiscountAmount + transportCharges);
         const grandTotal = Math.round(preRoundTotal * 100) / 100;
-        const roundOff = Number(useApiData ? header.round_off ?? 0 : (Math.round(grandTotal) - grandTotal).toFixed(2));
-        const finalGrandTotal = Number(useApiData ? header.total_amount ?? Math.round(grandTotal) : Math.round(grandTotal));
+        const roundOff = Number(useApiData ? (header.round_off ?? 0) : (Math.round(grandTotal) - grandTotal).toFixed(2));
+        const finalGrandTotal = Number(useApiData ? (header.total_amount ?? Math.round(grandTotal)) : Math.round(grandTotal));
 
         return {
             // ── Letterhead (page 1 only) ──
@@ -1802,51 +1836,6 @@ p_remainingpayment: [{ value: '', disabled: true }]
 
     // }
 
-    private mapItemsToFormArray(items: any[]): void {
-        this.poItemArray.clear();
-        this.vendorOptionsByRow = [];
-        items.forEach((it) => {
-            const requiredQty = (it.forecast_qty ?? 0) - (it.pending_qty ?? 0) - (it.available_stock ?? 0);
-            this.poItemArray.push(
-                this.fb.group({
-                    department: [it.department_name ?? ''],
-                    mf_no: [it.mf_no ?? ''],
-                    category: [it.categoryname ?? ''],
-                    item: [it.itemname ?? ''],
-                    uom: [it.uomname ?? ''],
-                    forecastQty: [it.forecast_qty ?? 0],
-                    availableStock: [it.available_stock ?? 0],
-                    pendingPOQty: [it.pending_qty ?? 0],
-                    requiredQty: [requiredQty],
-                    poQty: [requiredQty, [Validators.max(requiredQty)]],
-                    vendorName: [it.suppliername],
-                    rate: [null],
-                    amount: [null],
-                    tax_id: [it.tax_id ?? '18'],
-                    taxPercent: [Number(it.tax_percent ?? 18)],
-                    cgstPercent: [Number(it.cgst_percent ?? it.cgst_rate ?? 0)],
-                    sgstPercent: [Number(it.sgst_percent ?? it.sgst_rate ?? 0)],
-                    igstPercent: [Number(it.igst_percent ?? it.igst_rate ?? 0)],
-                    cgstAmount: [Number(it.cgst_amount ?? 0)],
-                    sgstAmount: [Number(it.sgst_amount ?? 0)],
-                    igstAmount: [Number(it.igst_amount ?? 0)],
-                    totalAmount: [null],
-                    remarks: [''],
-
-                    mf_id: [it.mf_id ?? null],
-                    mfdetailid: [it.mfdetailid ?? null],
-                    department_id: [it.department_id ?? null],
-                    vendor_id: [it.supplierid],
-                    item_category_id: [it.item_category_id ?? null],
-                    item_id: [it.item_id ?? null],
-                    uom_id: [it.uom_id ?? null]
-                })
-            );
-        });
-        this.syncSelectedVendors();
-        this.recalcGrandTotal();
-    }
-
     private mapProjectRfqItemsToFormArray(items: any[]): void {
         this.poItemArray.clear();
         this.vendorOptionsByRow = [];
@@ -1869,15 +1858,15 @@ p_remainingpayment: [{ value: '', disabled: true }]
                     amount: [null],
                     tax_id: [''],
                     taxPercent: [it.gsttax ?? ''],
-                    cgstPercent: [Number(it.cgst_percent ?? it.cgst_rate ?? 0)],
-                    sgstPercent: [Number(it.sgst_percent ?? it.sgst_rate ?? 0)],
-                    igstPercent: [Number(it.igst_percent ?? it.igst_rate ?? 0)],
-                    cgstAmount: [Number(it.cgst_amount ?? 0)],
-                    sgstAmount: [Number(it.sgst_amount ?? 0)],
-                    igstAmount: [Number(it.igst_amount ?? 0)],
+                    taxType: [null],
+                    cgstPercent: [0],
+                    sgstPercent: [0],
+                    igstPercent: [0],
+                    cgstAmount: [0],
+                    sgstAmount: [0],
+                    igstAmount: [0],
                     totalAmount: [null],
                     remarks: [''],
-
                     mf_id: [null],
                     mfdetailid: [null],
                     department_id: [null],
@@ -1913,6 +1902,10 @@ p_remainingpayment: [{ value: '', disabled: true }]
                 return 'blue';
             case 'REJECTED':
                 return 'red';
+            case 'CANCELLED':
+                return 'red';
+            case 'PARTIALLY RECEIVED':
+                return 'purple';
             case 'DRAFT':
                 return 'grey';
             case 'APPROVAL PENDING':
@@ -1928,10 +1921,33 @@ p_remainingpayment: [{ value: '', disabled: true }]
         const rate = Number(row.get('rate')?.value || 0);
         const amount = qty && rate ? +(qty * rate).toFixed(2) : 0;
         const taxPercent = Number(row.get('taxPercent')?.value || 0);
-        const totalAmount = +(amount + (amount * taxPercent) / 100).toFixed(2);
+        const taxType = row.get('taxType')?.value ?? null;
+
+        let cgstPercent = 0;
+        let sgstPercent = 0;
+        let igstPercent = 0;
+
+        if (taxType === 'I') {
+            cgstPercent = taxPercent / 2;
+            sgstPercent = taxPercent / 2;
+        } else if (taxType === 'E') {
+            igstPercent = taxPercent;
+        }
+
+        const cgstAmount = amount ? +((amount * cgstPercent) / 100).toFixed(2) : 0;
+        const sgstAmount = amount ? +((amount * sgstPercent) / 100).toFixed(2) : 0;
+        const igstAmount = amount ? +((amount * igstPercent) / 100).toFixed(2) : 0;
+        const totalAmount = amount ? +(amount + cgstAmount + sgstAmount + igstAmount).toFixed(2) : 0;
+
         row.patchValue(
             {
                 amount: amount || null,
+                cgstPercent,
+                sgstPercent,
+                igstPercent,
+                cgstAmount,
+                sgstAmount,
+                igstAmount,
                 totalAmount: amount ? totalAmount : null
             },
             { emitEvent: false }
@@ -1985,7 +2001,8 @@ p_remainingpayment: [{ value: '', disabled: true }]
                 category: row.get('category')?.value ?? '',
                 item: row.get('item')?.value ?? '',
                 vendorId: preferredVendor?.supplierid ?? row.get('vendor_id')?.value ?? null,
-                rate: this.getVendorRate(preferredVendor)
+                rate: this.getVendorRate(preferredVendor),
+                taxType: preferredVendor?.taxtype ?? row.get('taxPercent')?.value ?? null
             };
         });
     }
@@ -1995,6 +2012,7 @@ p_remainingpayment: [{ value: '', disabled: true }]
         const vendor = this.getVendorOptions(index).find((option) => option.supplierid === vendorId);
         dialogRow.vendorId = vendorId;
         dialogRow.rate = this.getVendorRate(vendor) ?? dialogRow.rate;
+        dialogRow.taxType = vendor?.taxtype ?? dialogRow.taxType;
     }
 
     submitVendorAssignments(): void {
@@ -2005,7 +2023,8 @@ p_remainingpayment: [{ value: '', disabled: true }]
                 {
                     vendorName: vendor?.suppliername ?? null,
                     vendor_id: dialogRow.vendorId,
-                    rate: dialogRow.rate
+                    rate: dialogRow.rate,
+                    taxType: dialogRow.taxType
                 },
                 { emitEvent: false }
             );
@@ -2065,55 +2084,6 @@ p_remainingpayment: [{ value: '', disabled: true }]
         });
     }
 
-    private sendMailToVendors(poId: number | null | undefined): void {
-        if (!poId) return;
-
-        const payload = {
-            p_returntype: 'GETPOMAIL',
-            p_returnvalue: String(poId),
-            p_username: ''
-        };
-
-        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-            next: (res: any) => {
-                const rows: any[] = Array.isArray(res.data) ? res.data : [];
-                const readyRows = rows.filter((row) => row.vendor_email ?? row.supplieremail);
-                const missingEmail = rows.filter((row) => !(row.vendor_email ?? row.supplieremail));
-
-                if (!readyRows.length) {
-                    this.messageService.add({ severity: 'warn', summary: 'No vendor emails found', life: 2500 });
-                    return;
-                }
-
-                this.workService
-                    .sendVendorMail({
-                        p_poid: poId,
-                        p_username: this.userId,
-                        p_mails: readyRows.map((row) => ({
-                            vendorId: row.vendorid ?? row.supplierid ?? null,
-                            email: row.vendor_email ?? row.supplieremail,
-                            ccEmail: row.cc_email ?? null,
-                            bccEmail: row.bcc_email ?? null,
-                            subject: row.mail_subject ?? '',
-                            body: `${row.mail_body1 ?? ''}${row.mail_body2 ?? ''}`,
-                            attachmentPath: row.attachment_path ?? null,
-                            mailLogId: row.mail_log_id ?? null
-                        }))
-                    })
-                    .subscribe({
-                        next: () => {
-                            this.messageService.add({ severity: 'success', summary: 'PO emails sent', detail: `Purchase order shared with ${readyRows.length} vendor(s).`, life: 2500 });
-                            if (missingEmail.length) {
-                                this.messageService.add({ severity: 'warn', summary: 'Some vendors skipped', detail: `${missingEmail.map((row) => row.suppliername).join(', ')} has no email on file.`, life: 3000 });
-                            }
-                        },
-                        error: (err) => this.messageService.add({ severity: 'error', summary: 'Mail send failed', detail: err.message, life: 2500 })
-                    });
-            },
-            error: () => this.messageService.add({ severity: 'error', summary: 'Vendor mail data load failed', life: 2500 })
-        });
-    }
-
     sendVendorPo(): void {
         const selectedRows = this.poMailVendorRows.filter((row) => row.selected);
         if (!selectedRows.length) {
@@ -2165,7 +2135,7 @@ p_remainingpayment: [{ value: '', disabled: true }]
         }
         this.showMrDialog = true;
         this.isLoadingMrPopup = true;
-        const payload = this.createReturnPayload('PO4MR', poId.toString(), this.authService.isLogIntType()?.userid.toString());
+        const payload = this.createReturnPayload('PO4MR', poId.toString(), this.authService.isLogIntType()?.companyid.toString());
 
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res: any) => {
@@ -2223,43 +2193,6 @@ p_remainingpayment: [{ value: '', disabled: true }]
         this.router.navigate(['/layout/purchase/material-requisition'], {
             queryParams: { mfNo: row.mr_no, mfId: row.mf_id ?? null, fromPurchaseOrderView: true }
         });
-    }
-
-    addAdvancePayment(): void {
-        const total = Number(this.poForm.get('p_totalpayment')?.value || 0);
-
-        // Guard: don't overpay
-        const alreadyPaid = this.paymentHistory.reduce((s, p) => s + p.amount, 0);
-        const maxAllowed = total - alreadyPaid;
-
-        if ((this.newPayment.amount ?? 0) > maxAllowed) {
-            this.messageService.add({
-                severity: 'warn',
-                summary: 'Excess Amount',
-                detail: `Maximum payable now is ₹${maxAllowed.toFixed(2)}`,
-                life: 3000
-            });
-            return;
-        }
-
-        const newTotal = alreadyPaid + (this.newPayment.amount ?? 0);
-        const remaining = +(total - newTotal).toFixed(2);
-
-        const entry: PaymentEntry = {
-            date: this.newPayment.date!,
-            amount: +(this.newPayment.amount ?? 0).toFixed(2),
-            mode: this.newPayment.mode || '—',
-            referenceNo: this.newPayment.referenceNo || '',
-            invoiceNo: this.newPayment.invoiceNo || '',
-            performaInvoiceNo: this.newPayment.performaInvoiceNo || '',
-            remainingAfter: remaining
-        };
-
-        this.paymentHistory = [...this.paymentHistory, entry];
-        this.recalcPaymentSummary();
-
-        // Reset input row
-        this.newPayment = { date: new Date(), amount: 0, mode: '', referenceNo: '', invoiceNo: '', performaInvoiceNo: '' };
     }
 
     removePayment(index: number): void {
@@ -2325,5 +2258,6 @@ p_remainingpayment: [{ value: '', disabled: true }]
     resetPaymentTab(): void {
         this.editingPaymentIndex = null;
         this.newPayment = { date: new Date(), amount: 0, mode: '', referenceNo: '', invoiceNo: '', performaInvoiceNo: '' };
+        this.poForm.patchValue({ p_paymentdate: this.today });
     }
 }

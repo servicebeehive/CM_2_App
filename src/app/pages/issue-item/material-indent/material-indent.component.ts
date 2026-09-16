@@ -16,35 +16,36 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { InventoryService } from '@/core/services/inventory.service';
 import { WorkService } from '@/core/services/work.service';
 import { AuthService } from '@/core/services/auth.service';
-import { MaterialIssue } from '@/core/models/authmodel/work.model';
+import { MaterialIndent, MaterialIndentItem, MaterialIssue } from '@/core/models/authmodel/work.model';
 
 @Component({
-    selector: 'app-material-issue',
+    selector: 'app-material-indent',
     standalone: true,
     imports: [CommonModule, FormsModule, ReactiveFormsModule, ButtonModule, ConfirmDialogModule, DatePickerModule, DialogModule, DropdownModule, InputNumberModule, InputTextModule, TableModule, TooltipModule],
-    templateUrl: './material-issue.component.html',
-    styleUrl: './material-issue.component.scss',
+    templateUrl: './material-indent.component.html',
+    styleUrl: './material-indent.component.scss',
     providers: [ConfirmationService, DatePipe]
 })
-export class MaterialIssueComponent implements OnInit {
+export class MaterialIndentComponent implements OnInit {
     minForm!: FormGroup;
     today: Date = new Date();
     issueItems: any[] = [];
     selectedItemId: number | null = null;
 
-    minOptions: { minno: string; [key: string]: any }[] = [];
+    indentOptions: any[] = [];
+    draftMinOptions: any[] = [];
     projectOptions: any[] = [];
     towerOptions: any[] = [];
-    levelOptions: { label: string; value: string }[] = [];
-    pourOptions: { label: string; value: string }[] = [];
+    levelOptions: any[] = [];
+    pourOptions: any[] = [];
     workList: any[] = [];
-    storeOptions: { label: string; value: string }[] = [];
-    requestReferenceOptions: { label: string; value: string }[] = [];
-    requestedByOptions: { label: string; value: string }[] = [];
-    indentOptions: any[] = [];
+    storeOptions: any[] = [];
+    requestReferenceOptions: any[] = [];
+    requestedByOptions: any[] = [];
+    itemOptions: any[] = [];
 
     // ── MIN counter (replace with backend auto-increment) ──────────────────
-    private minCounter = 0;
+    editingIndentId: number | null = null;
     private companyId = '';
     private userId = '';
 
@@ -79,16 +80,12 @@ export class MaterialIssueComponent implements OnInit {
             p_selecteditem: [null],
             p_requestedby: [null, Validators.required],
             p_issuedby: [{ value: currentUser, disabled: true }],
-            p_remarks: ['', Validators.maxLength(500)]
+            p_remarks: ['', Validators.maxLength(500)],
+            status: ['']
         });
     }
 
-    hasCopyableData(): boolean {
-        const v = this.minForm.getRawValue();
-        return !!(v.p_project || v.p_tower || v.p_level || v.p_pour || v.p_requestreference || v.p_requestedby || v.p_remarks || this.issueItems.length > 0);
-    }
-
-     get statusColor(): string {
+    get statusColor(): string {
         const status = (this.minForm.get('status')?.value || '').toUpperCase();
         switch (status) {
             case 'APPROVED':
@@ -97,12 +94,10 @@ export class MaterialIssueComponent implements OnInit {
                 return 'blue';
             case 'REJECTED':
                 return 'red';
-            case 'CANCELLED':
-                return 'red';
-            case 'PARTIALLY RECEIVED':
-                return 'purple';
             case 'DRAFT':
                 return 'grey';
+            case 'SENDBACK':
+                return 'orange';
             case 'APPROVAL PENDING':
                 return 'orange';
             default:
@@ -110,26 +105,21 @@ export class MaterialIssueComponent implements OnInit {
         }
     }
 
+    hasCopyableData(): boolean {
+        const v = this.minForm.getRawValue();
+        return !!(v.p_project || v.p_tower || v.p_level || v.p_pour || v.p_requestreference || v.p_requestedby || v.p_remarks || this.issueItems.length > 0);
+    }
+
     private loadDropdowns(): void {
-        this.loadMINList();
         this.loadProjects();
         this.loadRequestedBy();
-        this.onGetIndent();
+        this.OnGetItem();
+        this.onGetIndentList();
     }
 
-    private loadMINList(): void {
-        const payload = { p_returntype: 'MINLIST', p_username: this.companyId };
-        this.inventoryService.getdropdowndetails(payload).subscribe({
-            next: (res) => {
-                this.minOptions = res.data;
-            },
-            error: (err) => console.error(err)
-        });
-    }
-
-    private onGetIndent(): void {
-        const payload = { p_returntype: 'INDENTLIST', p_username: this.companyId };
-        this.inventoryService.getdropdowndetails(payload).subscribe({
+    onGetIndentList(): void {
+        const payload = { p_returntype: 'INDENTLIST', p_returnvalue: this.companyId, p_username: this.userId };
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res) => {
                 this.indentOptions = res.data;
             },
@@ -141,32 +131,6 @@ export class MaterialIssueComponent implements OnInit {
         const payload = { returnType: 'ACTIVEPROJECT', returnValue: '', username: '', option1: this.companyId, option2: null };
         this.inventoryService.getparameterbased(payload).subscribe({ next: (res: any) => (this.projectOptions = res.data ?? []), error: (err) => console.error(err) });
     }
-
-     onIndentChange(event: any): void {
-        if (!event.value) return;
-        const indentValue = this.indentOptions.find((option) => option.indent_no === event.value);
-        const payload = {
-            p_returntype: 'INDENTDETAILS',
-            p_returnvalue: indentValue?.indent_no,
-            p_username: this.authService.isLogIntType().companyid.toString()
-        };
-        this.inventoryService.Getreturndropdowndetails(payload).subscribe((res) => {
-            // const d = res.data[0];
-            // this.editingIndentId = d.indent_id ?? null;
-            // this.minForm.patchValue({
-            //     p_issuedate: d.issuedate ? new Date(d.issuedate) : null,
-            //     p_project: d.project,
-            //     p_tower: d.tower,
-            //     p_level: d.level,
-            //     p_pour: d.pour,
-            //     p_requestedby: d.requestedby,
-            //     p_remarks: d.remarks,
-            //     status: d.status ?? ''
-            // });
-            // this.issueItems = res.data.items || [];
-        });
-    }
-
 
     onProjectChange(event: any): void {
         const projectId = event.value;
@@ -217,26 +181,40 @@ export class MaterialIssueComponent implements OnInit {
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({ next: (res: any) => (this.requestedByOptions = res.data ?? []), error: (err) => console.error(err) });
     }
 
-    // ── MIN dropdown: load a submitted MIN back into the form ──────────────
-    onMINSelect(event: any): void {
+    OnGetItem(): void {
+        const paylaod = {
+            p_returntype: 'ITEMALL',
+            p_returnvalue: this.companyId,
+            p_username: this.userId
+        };
+        this.inventoryService.Getreturndropdowndetails(paylaod).subscribe({
+            next: (res) => (this.itemOptions = res.data),
+            error: (err) => console.error(err)
+        });
+    }
+
+    onIndentChange(event: any): void {
         if (!event.value) return;
-         const payload = {
-            p_returntype: 'MINDETAILS',
-            p_returnvalue: event.value,
+        const indentValue = this.indentOptions.find((option) => option.indent_no === event.value);
+        const payload = {
+            p_returntype: 'INDENTDETAILS',
+            p_returnvalue: indentValue?.indent_no,
             p_username: this.authService.isLogIntType().companyid.toString()
-         }
-        this.inventoryService.Getreturndropdowndetails(payload).subscribe(res => {
-          const d = res.data[0];
-          this.minForm.patchValue({
-            p_issuedate:   d.issuedate   ? new Date(d.issuedate) : null,
-            p_project:     d.project,
-            p_tower:       d.tower,
-            p_level:       d.level,
-            p_pour:        d.pour,
-            p_requestedby: d.requestedby,
-            p_remarks:     d.remarks
-          });
-          this.issueItems = res.data.items || [];
+        };
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe((res) => {
+            const d = res.data[0];
+            this.editingIndentId = d.indent_id ?? null;
+            this.minForm.patchValue({
+                p_issuedate: d.issuedate ? new Date(d.issuedate) : null,
+                p_project: d.project,
+                p_tower: d.tower,
+                p_level: d.level,
+                p_pour: d.pour,
+                p_requestedby: d.requestedby,
+                p_remarks: d.remarks,
+                status: d.status ?? ''
+            });
+            this.issueItems = res.data.items || [];
         });
     }
 
@@ -271,7 +249,45 @@ export class MaterialIssueComponent implements OnInit {
         });
     }
 
-    // ── Totals ─────────────────────────────────────────────────────────────
+    onDraftChange(event: any): void {
+        if (!event.value) return;
+        const payload = {
+            p_returntype: 'MININDENTDRAFT',
+            p_returnvalue: event.value,
+            p_username: this.companyId
+        };
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe((res) => {
+            const d = res.data[0];
+            this.editingIndentId = d.indent_id ?? event.value;
+            this.minForm.patchValue({
+                p_issuedate: d.issuedate ? new Date(d.issuedate) : null,
+                p_project: d.project,
+                p_tower: d.tower,
+                p_level: d.level,
+                p_pour: d.pour,
+                p_requestedby: d.requestedby,
+                p_remarks: d.remarks,
+                status: d.status ?? 'DRAFT'
+            });
+            this.issueItems = d.items || [];
+        });
+    }
+
+    deleteDraftItem(item: any, event: Event): void {
+        event.stopPropagation();
+        this.confirmationService.confirm({
+            message: 'Are you sure you want to delete this draft item?',
+            header: 'Confirm Deletion',
+            acceptLabel: 'Yes, Delete',
+            rejectLabel: 'Cancel',
+            acceptButtonStyleClass: 'p-button-danger',
+            rejectButtonStyleClass: 'p-button-secondary',
+            accept: () => {
+                this.draftMinOptions = this.draftMinOptions.filter((i) => i.mf_id !== item.mf_id);
+            }
+        });
+    }
+
     get totalRequestedQty(): number {
         return this.issueItems.reduce((s, it) => s + (Number(it.requestedqty) || 0), 0);
     }
@@ -288,10 +304,8 @@ export class MaterialIssueComponent implements OnInit {
         return this.issueItems.reduce((s, it) => s + (Number(it.amount) || 0), 0);
     }
 
-    // ── Submit ─────────────────────────────────────────────────────────────
     onSubmit(): void {
         this.minForm.markAllAsTouched();
-       console.log('Submitting MIN with items:', this.issueItems);
         if (this.issueItems.length === 0) {
             this.messageService.add({
                 severity: 'warn',
@@ -301,7 +315,6 @@ export class MaterialIssueComponent implements OnInit {
             });
             return;
         }
-console.log("hdshsj")
         this.confirmationService.confirm({
             message: 'Are you sure you want to submit this Material Issue Note?',
             header: 'Confirm Submission',
@@ -313,78 +326,149 @@ console.log("hdshsj")
         });
     }
 
-    private saveMIN(): void {
-        const formVal = this.minForm.getRawValue();
+    onItemChange(event: any): void {
+        if (!event.value) return;
 
-        const itemsPayload = this.issueItems.map((it) => ({
-            item_category_id: it['item_category_id'] ?? null,
-            item_id: it.itemid,
-            uom_id: it['uom_id'] ?? null,
-            current_stock: it.currentstock,
-            reserved_qty: it.reservedqty,
-            available_qty: it.availableqty,
-            requested_qty: it.requestedqty,
-            issue_qty: it.issueqty,
-            balance_qty: it.balance,
-            rate: it.rate,
-            amount: it.amount,
-            remarks: it.remarks
-        }));
+        const payload = { p_returntype: 'ITEMWISE', p_returnvalue: event.value, p_username: this.userId };
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res) => {
+                const item = res.data?.[0];
+                if (!item) return;
+                this.addItemToTable(item);
+            },
+            error: (err) => console.error(err)
+        });
+    }
 
-        const payload: MaterialIssue = {
-            p_action: 'SUBMIT',
-            p_operation: 'INSERT', // switch to 'UPDATE' when editing an existing MIN
-            p_min_id: null, // pass existing MIN id when editing
-            p_issue_date: this.datePipe.transform(formVal.p_issuedate, 'yyyy-MM-dd'),
-            p_company_id: Number(this.companyId),
-            p_project_id: formVal.p_project,
-            p_tower_block_id: formVal.p_tower,
-            p_level_name: formVal.p_level,
-            p_pour_name: formVal.p_pour,
-            p_requested_by: formVal.p_requestedby,
-            p_issued_by: Number(this.userId),
-            p_remarks: formVal.p_remarks,
-            p_items_json: itemsPayload,
-            p_loginuser: Number(this.userId)
+    private addItemToTable(item: any): void {
+        const exists = this.issueItems.find((i) => i.itemid === item.itemid);
+        if (exists) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Duplicate Item',
+                detail: `${item.item_description} is already in the list.`,
+                life: 2500
+            });
+            this.selectedItemId = null;
+            this.minForm.get('p_selecteditem')?.setValue(null);
+            return;
+        }
+
+        const availableqty = item.available_stock ?? 0;
+
+        const newRow: any = {
+            itemid: item.itemid,
+            itemcode: item.itemid,
+            itemname: item.item_description,
+            categoryid: item.categoryid,
+            categoryname: item.categoryname,
+            uom: item.uomname,
+            uomid: item.uomid,
+            // currentstock: item.available_stock ?? 0,
+            // bufferqty: item.buffer_stock ?? 0,
+            // reservedqty: item.pending_qty ?? 0,
+            currentstock: 15,
+            bufferqty: 4,
+            reservedqty: 1,
+            availableqty: 10,
+            // availableqty: availableqty,
+            requestedqty: item.required_qty_net ?? 0,
+            issueqty: 0,
+            balance: availableqty,
+            remarks: '',
+            rate: item.rate ?? 0,
+            amount: 0
         };
 
-        this.workService.upsertMaterialIssue(payload).subscribe({
+        this.issueItems = [...this.issueItems, newRow];
+        this.selectedItemId = null;
+        this.minForm.get('p_selecteditem')?.setValue(null);
+    }
+
+    private saveMIN(): void {
+        const payload = this.buildIndentPayload('SUBMIT');
+
+        this.workService.upsertMaterialIndent(payload).subscribe({
             next: (res: any) => {
-                const minno = res?.data?.minno ?? res?.data; // adjust based on actual return shape of fn_upsert_material_issue
-                if(res.data.success){
-                    this.messageService.add({
-                        severity: 'success',
-                        summary: 'Submitted',
-                        detail: res.data.msg
-                    });
+                if (res.data.success) {
+                    this.messageService.add({ severity: 'success', summary: 'Submitted', detail: res.data.msg });
+                    this.editingIndentId = res.data.indent_id ?? this.editingIndentId;
+                    this.minForm.patchValue({ p_minno: res.data.indent_no ?? '', status: res.data.tran_status ?? 'SUBMITTED' });
+                    this.onGetIndentList();
+                } else {
+                    this.messageService.add({ severity: 'error', summary: 'Error', detail: res.data.msg });
                 }
-                else{
-                    this.messageService.add({
-                        severity: 'error',
-                        summary: 'Error',
-                        detail: res.data.msg
-                    });
-                }
-                this.loadMINList();
-                this.minForm.patchValue({ p_minno: minno });
             },
             error: (err) => {
-                this.messageService.add({
-                    severity: 'error',
-                    summary: 'Error',
-                    detail: 'Failed to save Material Issue Note. Please try again.',
-                    life: 3000
-                });
                 console.error(err);
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to submit Material Indent.', life: 3000 });
             }
         });
     }
 
-    // ── Reset ──────────────────────────────────────────────────────────────
+    draftSubmit(): void {
+        const payload = this.buildIndentPayload('DRAFT');
+
+        this.workService.upsertMaterialIndent(payload).subscribe({
+            next: (res: any) => {
+                if (res.data.success) {
+                    this.messageService.add({ severity: 'success', summary: 'Draft Saved', detail: res.data.msg });
+                    this.editingIndentId = res.data.indent_id ?? this.editingIndentId;
+                    this.minForm.patchValue({ status: 'DRAFT' });
+                } else {
+                    this.messageService.add({ severity: 'error', summary: 'Error', detail: res.data.msg });
+                }
+            },
+            error: (err) => {
+                console.error(err);
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to save draft.', life: 3000 });
+            }
+        });
+    }
+
+    private buildIndentPayload(action: 'DRAFT' | 'SUBMIT'): MaterialIndent {
+        const formVal = this.minForm.getRawValue();
+        const isEdit = this.editingIndentId != null;
+
+        const itemsPayload: MaterialIndentItem[] = this.issueItems.map((it) => ({
+            item_category_id: it['item_category_id'] ?? null,
+            item_id: it.itemid,
+            uom_id: it.uomid,
+            // current_stock: it.currentstock,
+            // requested_qty: it.requestedqty,
+            // available_qty: it.availableqty,
+            current_stock: 10,
+            requested_qty: 5,
+            available_qty: 5,
+            issue_qty: it.issueqty,
+            balance_qty: it.balance,
+            rate: it.rate,
+            amount: it.amount
+        }));
+
+        return {
+            p_action: action,
+            p_operation: isEdit ? 'UPDATE' : 'INSERT',
+            p_indent_id: isEdit ? this.editingIndentId : null,
+            p_indent_date: this.datePipe.transform(formVal.p_issuedate, 'yyyy-MM-dd'),
+            p_company_id: Number(this.companyId),
+            p_project_id: formVal.p_project,
+            p_tower_block_id: formVal.p_tower,
+            p_indent_for: null, 
+            p_indent_activty: [formVal.p_pour, formVal.p_level].filter(Boolean).join(' - ') || null , 
+            p_requested_by: String(formVal.p_requestedby ?? ''),
+            p_created_by: String(this.userId),
+            p_remarks: formVal.p_remarks,
+            p_items_json: itemsPayload,
+            p_loginuser: String(this.userId)
+        };
+    }
+
     onReset(): void {
         const currentUser = this.authService.isLogIntType()?.username || 'Current User';
         this.minForm.reset({ p_issuedate: this.today });
         this.minForm.patchValue({ p_issuedby: currentUser });
         this.issueItems = [];
+        this.editingIndentId = null;
     }
 }

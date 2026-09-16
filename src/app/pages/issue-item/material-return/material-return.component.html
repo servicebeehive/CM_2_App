@@ -2,7 +2,10 @@
     <div class="flex justify-between items-center mb-6">
         <span class="block text-surface-900 font-bold text-2xl">Material Return Note</span>
         <div class="flex gap-3 flex-wrap">
-            <button pButton type="button" label="Duplicate" class="p-button-warning" (click)="duplicateForm()" [disabled]="!hasCopyableData()"></button>
+             <span class="text-xl font-bold mt-2">Status</span>
+                <span class="font-bold text-xl mt-2" [ngStyle]="{ color: statusColor }">
+                    {{ minForm.get('status')?.value }}
+                </span>
             <button pButton type="submit" label="Submit" class="p-button-warning" [disabled]="minForm.invalid || issueItems.length === 0"></button>
             <button pButton type="button" label="Reset" class="p-button-secondary" (click)="onReset()"></button>
         </div>
@@ -13,15 +16,15 @@
             <div class="flex flex-col">
                 <label class="font-medium mb-1">MRN No</label>
                 <p-dropdown
-                    [options]="minOptions"
-                    optionLabel="minno"
-                    optionValue="minno"
+                    [options]="mrnOptions"
+                    optionLabel="min_no"
+                    optionValue="min_id"
                     placeholder="Auto Generated"
                     formControlName="p_minno"
                     [filter]="true"
                     filterPlaceholder="Search MRN No"
                     [showClear]="true"
-                    (onChange)="onMINSelect($event)"
+                    (onChange)="onMRNChange($event)"
                 ></p-dropdown>
             </div>
 
@@ -39,41 +42,8 @@
 
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Tower / Block <span class="text-red-500">*</span></label>
-                <p-dropdown [options]="towerOptions" optionLabel="tower_name" optionValue="tower_id" placeholder="Select Tower/Block" formControlName="p_tower" [filter]="true" filterPlaceholder="Search Tower/Block" [showClear]="true" (onChange)="onTowerChange($event)"></p-dropdown>
+                <p-dropdown [options]="towerOptions" optionLabel="tower_name" optionValue="tower_id" placeholder="Select Tower/Block" formControlName="p_tower" [filter]="true" filterPlaceholder="Search Tower/Block" [showClear]="true"></p-dropdown>
                 <small class="text-red-500 mt-1 text-xs" *ngIf="minForm.get('p_tower')?.touched && minForm.get('p_tower')?.errors?.['required']"> Tower/Block is required </small>
-            </div>
-
-            <div class="flex flex-col">
-                <label class="font-medium mb-1">Level</label>
-                <p-dropdown [options]="levelOptions" optionLabel="label" optionValue="value" placeholder="Select Level" formControlName="p_level" [filter]="true" filterPlaceholder="Search Level" [showClear]="true" (onChange)="onLevelChange($event)"></p-dropdown>
-            </div>
-
-            <div class="flex flex-col">
-                <label class="font-medium mb-1">Pour</label>
-                <p-dropdown [options]="pourOptions" optionLabel="label" optionValue="value" placeholder="Select Pour" formControlName="p_pour" [filter]="true" filterPlaceholder="Search Pour" [showClear]="true"></p-dropdown>
-            </div>
-
-            <div class="flex flex-col">
-                <label class="font-medium mb-1">Return From (Issued To) <span class="text-red-500">*</span></label>
-                <p-dropdown [options]="returnFromOptions" optionLabel="label" optionValue="value" placeholder="Select Return From" formControlName="p_returnfrom" [filter]="true" filterPlaceholder="Search Team" [showClear]="true"></p-dropdown>
-                <small class="text-red-500 mt-1 text-xs" *ngIf="minForm.get('p_returnfrom')?.touched && minForm.get('p_returnfrom')?.errors?.['required']"> Return From is required </small>
-            </div>
-
-            <div class="flex flex-col">
-                <label class="font-medium mb-1">Issued From Store <span class="text-red-500">*</span></label>
-                <p-dropdown [options]="storeOptions" optionLabel="label" optionValue="value" placeholder="Select Store" formControlName="p_store" [filter]="true" filterPlaceholder="Search Store" [showClear]="true"></p-dropdown>
-                <small class="text-red-500 mt-1 text-xs" *ngIf="minForm.get('p_store')?.touched && minForm.get('p_store')?.errors?.['required']"> Issued From Store is required </small>
-            </div>
-
-            <div class="flex flex-col">
-                <label class="font-medium mb-1">Linked MIN No <span class="text-red-500">*</span></label>
-                <p-dropdown [options]="linkedMinOptions" optionLabel="label" optionValue="value" placeholder="Select Linked MIN" formControlName="p_linkedminno" [filter]="true" filterPlaceholder="Search MIN No" [showClear]="true"></p-dropdown>
-                <small class="text-red-500 mt-1 text-xs" *ngIf="minForm.get('p_linkedminno')?.touched && minForm.get('p_linkedminno')?.errors?.['required']"> Linked MIN No is required </small>
-            </div>
-
-            <div class="flex flex-col">
-                <label class="font-medium mb-1">MIN Date</label>
-                <p-datePicker fluid formControlName="p_mindate" dateFormat="dd/mm/yy" [showIcon]="true" placeholder="MIN Date"></p-datePicker>
             </div>
 
             <div class="flex flex-col">
@@ -83,21 +53,42 @@
             </div>
 
             <div class="flex flex-col">
-                <label class="font-medium mb-1">Requested By <span class="text-red-500">*</span></label>
-                <p-dropdown [options]="requestedByOptions" optionLabel="fullname" optionValue="userid" placeholder="Select Requester" formControlName="p_requestedby" [filter]="true" filterPlaceholder="Search" [showClear]="true"></p-dropdown>
-                <small class="text-red-500 mt-1 text-xs" *ngIf="minForm.get('p_requestedby')?.touched && minForm.get('p_requestedby')?.errors?.['required']"> Requested By is required </small>
+                <label class="font-medium mb-1">Return By <span class="text-red-500">*</span></label>
+                <p-dropdown [options]="returnOptions" optionLabel="fullname" optionValue="userid" placeholder="Select Return By" formControlName="p_returnby" [filter]="true" filterPlaceholder="Search" [showClear]="true"></p-dropdown>
+                <small class="text-red-500 mt-1 text-xs" *ngIf="minForm.get('p_returnby')?.touched && minForm.get('p_returnby')?.errors?.['required']"> Return By is required </small>
             </div>
 
             <div class="flex flex-col">
-                <label class="font-medium mb-1">Returned By (Person) <span class="text-red-500">*</span></label>
-                <input pInputText formControlName="p_issuedby" placeholder="Returned by person" class="surface-100 text-500" [readonly]="true" />
-            </div>
-
-            <div class="flex flex-col col-span-1 sm:col-span-2 lg:col-span-1">
                 <label class="font-medium mb-1">Remarks</label>
-                <textarea pInputText formControlName="p_remarks" placeholder="Enter remarks" rows="2" class="w-full"></textarea>
+                <input pInputText formControlName="p_remarks" placeholder="Enter remarks" rows="2" class="w-full" />
                 <small class="text-red-500 mt-1 text-xs" *ngIf="minForm.get('p_remarks')?.errors?.['maxlength']"> Remarks must not exceed 500 characters </small>
             </div>
+
+             <div class="flex flex-col col-span-2">
+                    <label class="font-medium mb-1 text-sm md:text-base">Item</label>
+                    <p-select
+                        class="w-full"
+                        [options]="itemOptions"
+                        optionLabel="itemname"
+                        optionValue="itemid"
+                        formControlName="p_itemdata"
+                        [filter]="true"
+                        filterBy="itemname"
+                        placeholder="Select Item"
+                        [showClear]="true"
+                        (onChange)="OnItemChange($event)"
+                    >
+                        <ng-template #selectedItem let-item>
+                            <div class="text-sm md:text-base">{{ item.itemname }}</div>
+                        </ng-template>
+                        <ng-template #item let-details>
+                            <div class="flex items-center justify-between w-full">
+                                <div class="text-sm md:text-base">{{ details.itemname }}</div>
+                                <span class="text-xs md:text-sm" [ngClass]="details.currentstock == 0 ? 'text-red-500' : 'text-green-600'"> Stock: {{ details.currentstock }} </span>
+                            </div>
+                        </ng-template>
+                    </p-select>
+                </div>
         </div>
 
         <div class="border-top-1 surface-border pt-3 mt-2">
@@ -111,28 +102,23 @@
             <p-table [value]="issueItems" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" class="p-datatable-gridlines p-datatable-sm">
             <ng-template pTemplate="header">
                 <tr class="bg-yellow-400">
-                    <th>Item Code</th>
+                    <th>Item Category</th>
                     <th>Item Name</th>
                     <th>UOM</th>
-                    <th class="text-right">Issued Qty (from MIN)</th>
-                    <th class="text-right">Already Returned Qty</th>
+                    <th class="text-right">Last Issued Qty</th>
                     <th class="text-right">Returnable Qty (Balance)</th>
                     <th class="text-right">Return Qty <span class="text-red-500">*</span></th>
-                    <th>Return Reason</th>
                     <th>Return Condition</th>
-                    <th class="text-right">Rate (INR)</th>
-                    <th class="text-right">Amount (INR)</th>
                     <th class="text-center">Action</th>
                 </tr>
             </ng-template>
 
             <ng-template pTemplate="body" let-item let-i="rowIndex">
                 <tr>
-                    <td class="text-sm font-medium text-primary">{{ item.itemcode }}</td>
+                    <td class="text-sm font-medium text-primary">{{ item.categoryname }}</td>
                     <td class="text-sm">{{ item.itemname }}</td>
                     <td class="text-sm">{{ item.uom }}</td>
                     <td class="text-right text-sm">{{ item.issuedqty | number: '1.0-2' }}</td>
-                    <td class="text-right text-sm">{{ item.alreadyreturnedqty | number: '1.0-2' }}</td>
                     <td class="text-right text-sm font-semibold">{{ item.returnableqty | number: '1.0-2' }}</td>
                     <td>
                         <p-inputNumber
@@ -146,15 +132,9 @@
                         ></p-inputNumber>
                         <small class="text-red-500 text-xs block mt-1" *ngIf="item.issueqty > item.returnableqty"> Exceeds returnable qty </small>
                     </td>
-
                     <td class="text-sm">
-                        <p-dropdown [options]="returnReasonOptions" optionLabel="label" optionValue="value" [(ngModel)]="item.returnreason" [ngModelOptions]="{ standalone: true }" [showClear]="false"></p-dropdown>
+                        <p-dropdown [options]="returnConditionOptions" optionLabel="label" optionValue="value" [(ngModel)]="item.returncondition" [ngModelOptions]="{ standalone: true }" [showClear]="false" appendTo="body"></p-dropdown>
                     </td>
-                    <td class="text-sm">
-                        <p-dropdown [options]="returnConditionOptions" optionLabel="label" optionValue="value" [(ngModel)]="item.returncondition" [ngModelOptions]="{ standalone: true }" [showClear]="false"></p-dropdown>
-                    </td>
-                    <td class="text-right text-sm">{{ item.rate | number: '1.2-2' }}</td>
-                    <td class="text-right text-sm font-semibold">{{ item.amount | number: '1.2-2' }}</td>
 
                     <td class="text-center">
                         <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm" pTooltip="Remove" tooltipPosition="top" (click)="removeItem(i)"></button>

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { WorkService } from '@/core/services/work.service';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormArray, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormArray, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
@@ -47,13 +47,13 @@ export class MicsPurchaseComponent implements OnInit {
     ngOnInit(): void {
         this.form = this.fb.group({
             purchaseNo: [null],
-            purchaseDate: [{ value: new Date(), disabled: true }, Validators.required],
+            purchaseDate: [new Date(), Validators.required],
             site: [null, Validators.required],
             vendor: [null, Validators.required],
             remarks: [''],
             status: [''],
             p_itemdata: [null],
-            items: this.fb.array([])
+           items: this.fb.array([], this.minLengthArray(1))
         });
         this.companyId = this.authService.isLogIntType().companyid.toString();
         this.userId = this.authService.isLogIntType().userid.toString();
@@ -61,6 +61,13 @@ export class MicsPurchaseComponent implements OnInit {
         this.OnGetItem();
         this.onGetProject();
     }
+
+    private minLengthArray(min: number) {
+    return (control: AbstractControl): ValidationErrors | null => {
+        const arr = control as FormArray;
+        return arr.length >= min ? null : { minLengthArray: { requiredLength: min, actualLength: arr.length } };
+    };
+}
 
     get statusColor(): string {
         const status = (this.form.get('status')?.value || '').toUpperCase();
@@ -197,8 +204,8 @@ export class MicsPurchaseComponent implements OnInit {
             category: [''],
             uom_id: [null],
             uom: [''],
-            quantity: [null, [Validators.min(0)]],
-            rate: [0, [Validators.min(0)]],
+           quantity: [null, [Validators.required, Validators.min(0.01)]],
+        rate: [0, [Validators.required, Validators.min(0.01)]],
             remarks: ['']
         });
     }
@@ -411,7 +418,9 @@ private dataUrlToBlob(dataUrl: string): Blob | null {
     }
 
     onReset(): void {
-        this.form.reset();
+        this.form.reset({
+            purchaseDate: new Date()
+        });
         this.items.clear();
         this.uploadedFileName = '';
         this.uploadedFileBase64 = '';
@@ -445,43 +454,47 @@ private dataUrlToBlob(dataUrl: string): Blob | null {
                 item_description: row.get('item_description')?.value,
                 category_id: Number(row.get('category_id')?.value || 0),
                 uom_id: Number(row.get('uom_id')?.value || 0),
-                quantity: Number(row.get('quantity')?.value || 0),
-                rate: Number(row.get('rate')?.value || 0),
+                quantity: [row.quantity ?? null, [Validators.required, Validators.min(0.01)]],
+                rate: [row.rate ?? 0, [Validators.required, Validators.min(0.01)]],
                 remarks: row.get('remarks')?.value || ''
             })),
             p_loginuser: Number(this.userId)
         };
 
-        this.workService.upsertMiscPurchase(payload).subscribe({
-            next: (res) => {
-                const responseData = res?.data ?? res ?? {};
-                const savedNo = responseData.misc_purchase_no ?? this.form.get('purchaseNo')?.value ?? '';
-                const message = responseData.msg || responseData.message || 'Misc Purchase saved successfully';
+       this.workService.upsertMiscPurchase(payload).subscribe({
+    next: (res) => {
+        const responseData = res?.data;
+        const savedId = responseData.misc_purchase_id ?? null;
+        const savedNo = responseData.misc_purchase_no ?? this.form.get('purchaseNo')?.value ?? '';
+        const message = responseData.msg || responseData.message || 'Misc Purchase saved successfully';
 
-                if (savedNo) {
-                    const exists = this.purchaseNoOptions.some((option) => String(option.misc_purchase_no ?? option.purchase_no ?? '').trim() === String(savedNo).trim());
-                    if (!exists) {
-                        this.purchaseNoOptions.push({ misc_purchase_no: savedNo, misc_purchase_id: responseData.misc_purchase_id ?? null });
-                    }
-                    this.form.patchValue({ purchaseNo: savedNo });
-                }
-
-               
-
-                this.messageService.add({
-                    severity: 'success',
-                    summary: 'Saved',
-                    detail: message
-                });
-            },
-            error: (err) => {
-                const message = err?.error?.message || err?.error?.msg || 'Failed to save misc purchase.';
-                this.messageService.add({
-                    severity: 'error',
-                    summary: 'Save failed',
-                    detail: message
-                });
+        if (savedId) {
+            const exists = this.purchaseNoOptions.some((option) => Number(option.misc_purchase_id) === Number(savedId));
+            if (!exists) {
+                this.purchaseNoOptions = [...this.purchaseNoOptions, { misc_purchase_no: savedNo, misc_purchase_id: savedId }];
             }
+        }
+
+        // Always patch purchaseNo (as the numeric id the dropdown expects) and status
+        this.form.patchValue({
+            purchaseNo: savedId,
+            status: responseData.tran_status ?? responseData.status ?? ''
         });
+
+        this.messageService.add({
+            severity: 'success',
+            summary: 'Saved',
+            detail: message
+        });
+    },
+    error: (err) => {
+        const message = err?.error?.message || err?.error?.msg || 'Failed to save misc purchase.';
+        this.messageService.add({
+            severity: 'error',
+            summary: 'Save failed',
+            detail: message
+        });
+    }
+});
     }
 }
