@@ -314,9 +314,10 @@ export interface InvoiceEntry {
 
 
 export interface MaterialIssue {
-     p_action: 'DRAFT' | 'SUBMIT';
+     p_action: 'PARTIALLY ISSUED' | 'FULLY ISSUED';
      p_operation: 'INSERT' | 'UPDATE' | 'DELETE';
-     p_min_id: number | null;        // NULL on insert
+     p_min_id: number | null;       
+     p_indent_id: number | null;
      p_issue_date: string | null; // 'YYYY-MM-DD'
      p_company_id: number | null;
      p_project_id: number | null;      // Site
@@ -338,7 +339,7 @@ export interface MaterialIssueItem {
       reserved_qty: number;
       available_qty: number;
       requested_qty: number;
-      issue_qty: number;
+      issued_qty: number;
       balance_qty: number;
       rate: number;
       amount: number;
@@ -352,10 +353,6 @@ export interface MaterialIndentItem {
     current_stock: number;
     requested_qty: number;
     available_qty: number;
-    issue_qty: number;
-    balance_qty: number;
-    rate: number;
-    amount: number;
 }
 
 export interface MaterialIndent {
@@ -376,7 +373,10 @@ export interface MaterialIndent {
 }
 
 export interface MaterialReturnItem {
+    min_detail_id: number | null;
+    item_category_id: number;
     item_id: number;
+    uom_id: number;
     return_qty: number;
     return_reason: string;
     return_condition: string;
@@ -392,13 +392,45 @@ export interface MaterialReturn {
     p_tower_block_id: number;
     p_level_name: string;
     p_pour_name: string;
-    p_linked_min_id: number;
-    p_return_by: number;
-    p_issued_by: number;
+    p_return_form: number;
+    p_store_id: number | null;
+    p_min_id: number;
     p_return_type: string;
-    p_requested_by: number;
-    p_created_by: number;
+    p_returned_by: number;
     p_remarks: string;
     p_items_json: MaterialReturnItem[];
     p_loginuser: number;
+}
+
+export interface MaterialTransferItemPayload {
+    item_id: number;
+    uom_id: number;
+    available_qty: number;
+    transfer_qty: number;
+}
+
+export interface MaterialTransfer {
+    p_operation: 'INSERT' | 'UPDATE' | 'GATEPASS' | 'RECEIVED';
+    p_transfer_id: number | null;
+    p_transfer_no: string | null;
+    p_transfer_date: string | null;
+    p_company_id: number;
+    p_from_project_id: number;
+    p_to_project_id: number;
+    p_remarks: string;
+    p_attachment: string;
+    p_items_json: MaterialTransferItemPayload[];
+    p_loginuser: number;
+}
+
+export interface TransferItem {
+    itemid: number;
+    item_category_id: number;
+    categoryname: string;
+    itemname: string;
+    uom: string;
+    uomid: number;       
+    availableqty: number;
+    qtytotransfer: number;
+    remarks: string;
 }

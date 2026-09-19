@@ -25,7 +25,7 @@
             <!-- Transfer No (Auto Generated) -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Transfer No</label>
-                <input pInputText formControlName="p_transferno" placeholder="Auto Generated" [readonly]="true" class="surface-100 text-500" />
+                <p-dropdown [options]="transferNoOptions" optionLabel="transfer_no" optionValue="transfer_id" formControlName="p_transferno" placeholder="Auto Generated" filter="true" [showClear]="true" (onChange)="onTransferChange($event)"></p-dropdown>
             </div>
 
             <!-- Transfer Date -->
@@ -88,9 +88,7 @@
         <!-- ================================
              MATERIAL ITEMS TABLE
         ================================= -->
-        <span class="block font-semibold text-lg mb-2">Material Items</span>
-
-        <p-table [value]="transferItems" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" class="p-datatable-gridlines p-datatable-sm mb-6">
+        <p-table [value]="transferItems" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" class="p-datatable-gridlines p-datatable-sm mb-6 create-transfer">
             <ng-template pTemplate="header">
                 <tr class="bg-yellow-400">
                     <th>Item Category</th>
@@ -104,7 +102,7 @@
 
             <ng-template pTemplate="body" let-item let-i="rowIndex">
                 <tr>
-                    <td class="text-sm font-medium">{{ item.itemcategory }}</td>
+                    <td class="text-sm font-medium">{{ item.categoryname }}</td>
                     <td class="text-sm font-medium">{{ item.itemname }}</td>
                     <td class="text-sm">{{ item.uom }}</td>
                     <td class="text-right text-sm font-semibold">
@@ -121,7 +119,7 @@
                             [min]="0"
                             [max]="item.availableqty"
                             [useGrouping]="false"
-                            inputStyleClass="w-5rem text-right text-sm"
+                            inputStyleClass="w-full text-sm"
                             (onInput)="onQtyChange(item)">
                         </p-inputNumber>
                         <small class="text-red-500 text-xs block mt-1" *ngIf="item.qtytotransfer > item.availableqty"> Exceeds available stock </small>

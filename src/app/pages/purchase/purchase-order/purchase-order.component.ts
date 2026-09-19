@@ -1908,6 +1908,8 @@ export class PurchaseOrderComponent implements OnInit {
                 return 'purple';
             case 'DRAFT':
                 return 'grey';
+            case 'FULLY_RECEIVED':
+                return 'green';
             case 'APPROVAL PENDING':
                 return 'orange';
             default:

@@ -11,8 +11,6 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
 import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmationService, MessageService } from 'primeng/api';
-
-// ── Replace with your real service ───────────────────────────────────────────
 import { InventoryService } from '@/core/services/inventory.service';
 import { WorkService } from '@/core/services/work.service';
 import { AuthService } from '@/core/services/auth.service';
@@ -33,7 +31,7 @@ export class MaterialIndentComponent implements OnInit {
     selectedItemId: number | null = null;
 
     indentOptions: any[] = [];
-    draftMinOptions: any[] = [];
+    draftIndentOptions: any[] = [];
     projectOptions: any[] = [];
     towerOptions: any[] = [];
     levelOptions: any[] = [];
@@ -43,7 +41,7 @@ export class MaterialIndentComponent implements OnInit {
     requestReferenceOptions: any[] = [];
     requestedByOptions: any[] = [];
     itemOptions: any[] = [];
-
+    
     // ── MIN counter (replace with backend auto-increment) ──────────────────
     editingIndentId: number | null = null;
     private companyId = '';
@@ -70,7 +68,8 @@ export class MaterialIndentComponent implements OnInit {
         const currentUser = this.authService.isLogIntType()?.fullname;
 
         this.minForm = this.fb.group({
-            p_minno: [{ value: '', disabled: false }],
+            p_indentno: [{ value: '', disabled: false }],
+            p_draft_indent: [''],
             p_issuedate: [this.today, Validators.required],
             p_project: [null, Validators.required],
             p_tower: [null, Validators.required],
@@ -115,6 +114,7 @@ export class MaterialIndentComponent implements OnInit {
         this.loadRequestedBy();
         this.OnGetItem();
         this.onGetIndentList();
+        this.onGetDraftIndentList();
     }
 
     onGetIndentList(): void {
@@ -122,6 +122,16 @@ export class MaterialIndentComponent implements OnInit {
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res) => {
                 this.indentOptions = res.data;
+            },
+            error: (err) => console.error(err)
+        });
+    }
+
+    onGetDraftIndentList(): void {
+        const payload = { p_returntype: 'INDENTLISTDRAFT', p_returnvalue: this.companyId, p_username: this.userId };
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res) => {
+                this.draftIndentOptions = res.data;
             },
             error: (err) => console.error(err)
         });
@@ -193,46 +203,99 @@ export class MaterialIndentComponent implements OnInit {
         });
     }
 
-    onIndentChange(event: any): void {
-        if (!event.value) return;
-        const indentValue = this.indentOptions.find((option) => option.indent_no === event.value);
-        const payload = {
-            p_returntype: 'INDENTDETAILS',
-            p_returnvalue: indentValue?.indent_no,
-            p_username: this.authService.isLogIntType().companyid.toString()
-        };
-        this.inventoryService.Getreturndropdowndetails(payload).subscribe((res) => {
-            const d = res.data[0];
-            this.editingIndentId = d.indent_id ?? null;
-            this.minForm.patchValue({
-                p_issuedate: d.issuedate ? new Date(d.issuedate) : null,
-                p_project: d.project,
-                p_tower: d.tower,
-                p_level: d.level,
-                p_pour: d.pour,
-                p_requestedby: d.requestedby,
-                p_remarks: d.remarks,
-                status: d.status ?? ''
-            });
-            this.issueItems = res.data.items || [];
+   onIndentChange(event: any): void {
+    if (!event.value) return;
+    const indentValue = this.indentOptions.find((option) => option.indent_no === event.value);
+    const payload = {
+        p_returntype: 'INDENTDETAILS',
+        p_returnvalue: indentValue?.indent_no,
+        p_username: this.authService.isLogIntType().companyid.toString()
+    };
+    this.inventoryService.Getreturndropdowndetails(payload).subscribe((res) => {
+        const rows: any[] = res.data ?? [];
+        if (!rows.length) return;
+        this.minForm.patchValue({p_draft_indent:''});
+        this.onChangePatch(rows);    
+    });
+}
+
+onChangePatch(rows:any){
+       const header = rows[0];
+        this.editingIndentId = header.indent_id ?? null;
+        
+        this.minForm.patchValue({
+            p_indentno: header.indent_no ?? '',
+            p_issuedate: header.indent_date ? new Date(header.indent_date) : null,
+            p_project: header.project_id ?? null,
+            p_requestedby: Number(header.requested_by) ?? null,  
+            p_remarks: header.remarks ?? '',
+            status: header.status ?? ''
         });
-    }
+       
+         const projectId = header.project_id;
+        const towerId = header.tower_block_id != null ? Number(header.tower_block_id) : null;
+         if (projectId) {
+            const workPayload = { p_returntype: 'WORKLISTDD', p_returnvalue: String(projectId), p_username: this.userId };
+            this.inventoryService.Getreturndropdowndetails(workPayload).subscribe({
+                next: (workRes: any) => {
+                    this.workList = workRes.data ?? [];
+                    const towers = new Map<number, any>();
+                    this.workList.forEach((work) => towers.set(work.tower_block_id, { tower_id: work.tower_block_id, tower_name: work.tower_name }));
+                    this.towerOptions = Array.from(towers.values());
+
+                    // Now towerOptions has the matching { tower_id: 29, tower_name: 'Tower 1' } entry
+                    this.minForm.patchValue({ p_tower: towerId });
+
+                    // Build Level options for this tower too (Pour will populate similarly if/when
+                    // your backend starts returning level/pour data on the indent record)
+                    if (towerId) {
+                        this.levelOptions = this.workList
+                            .filter((work) => work.tower_block_id === towerId)
+                            .reduce((levels: any[], work) => {
+                                if (!levels.some((level) => level.value === work.level_name)) levels.push({ label: work.level_name, value: work.level_name });
+                                return levels;
+                            }, []);
+                    }
+                },
+                error: (err) => console.error(err)
+            });
+        }
+
+        // ── Patch item rows from the flattened response ─────────────────────
+        this.issueItems = rows
+            .filter((r:any) => r.item_id != null)
+            .map((r:any) => {
+                return {
+                    itemid: r.item_id,
+                    itemname: r.item_name,
+                    categoryid: r.item_category_id,
+                    categoryname: r.category_name,
+                    uom: r.uom_name,
+                    uomid: r.uom_id,
+                    currentstock: r.current_stock ?? 0,
+                    bufferqty: Number(r.current_stock - r.available_qty) ?? 0,                          // ⚠️ not present in this response — confirm source
+                    availableqty: r.available_qty ?? 0,
+                    requestqty: r.requested_qty ?? 0,
+                    indentdetailid: r.indent_detail_id ?? null
+                };
+            });
+}
 
     // ── Table qty logic ────────────────────────────────────────────────────
     onIssueQtyChange(item: any): void {
-        const issued = Number(item.issueqty || 0);
+        const issued = Number(item.requestqty || 0);
         const available = Number(item.availableqty || 0);
 
         // Cap at available
         if (issued > available) {
-            item.issueqty = available;
+            item.requestqty = available;
         }
         if (issued < 0) {
-            item.issueqty = 0;
+            item.requestqty = 0;
         }
 
-        item.balance = available - Number(item.issueqty);
-        item.amount = Number(item.issueqty || 0) * Number(item.rate || 0);
+        item.balance = available - Number(item.requestqty);
+        item.amount = Number(item.requestqty || 0) * Number(item.rate || 0);
     }
 
     removeItem(index: number): void {
@@ -251,25 +314,15 @@ export class MaterialIndentComponent implements OnInit {
 
     onDraftChange(event: any): void {
         if (!event.value) return;
+        const draftvalue = this.draftIndentOptions.find((i) => i.indent_id === event.value)?.indent_no;
         const payload = {
-            p_returntype: 'MININDENTDRAFT',
-            p_returnvalue: event.value,
+            p_returntype: 'INDENTDETAILSDRAFT',
+            p_returnvalue: draftvalue,
             p_username: this.companyId
         };
         this.inventoryService.Getreturndropdowndetails(payload).subscribe((res) => {
-            const d = res.data[0];
-            this.editingIndentId = d.indent_id ?? event.value;
-            this.minForm.patchValue({
-                p_issuedate: d.issuedate ? new Date(d.issuedate) : null,
-                p_project: d.project,
-                p_tower: d.tower,
-                p_level: d.level,
-                p_pour: d.pour,
-                p_requestedby: d.requestedby,
-                p_remarks: d.remarks,
-                status: d.status ?? 'DRAFT'
-            });
-            this.issueItems = d.items || [];
+           this.minForm.patchValue({ p_indentno: '' });
+           this.onChangePatch(res.data)
         });
     }
 
@@ -283,7 +336,7 @@ export class MaterialIndentComponent implements OnInit {
             acceptButtonStyleClass: 'p-button-danger',
             rejectButtonStyleClass: 'p-button-secondary',
             accept: () => {
-                this.draftMinOptions = this.draftMinOptions.filter((i) => i.mf_id !== item.mf_id);
+                this.draftIndentOptions = this.draftIndentOptions.filter((i) => i.indent_id !== item.indent_id);
             }
         });
     }
@@ -293,7 +346,7 @@ export class MaterialIndentComponent implements OnInit {
     }
 
     get totalIssueQty(): number {
-        return this.issueItems.reduce((s, it) => s + (Number(it.issueqty) || 0), 0);
+        return this.issueItems.reduce((s, it) => s + (Number(it.requestqty) || 0), 0);
     }
 
     get totalBalance(): number {
@@ -354,30 +407,17 @@ export class MaterialIndentComponent implements OnInit {
             return;
         }
 
-        const availableqty = item.available_stock ?? 0;
-
         const newRow: any = {
             itemid: item.itemid,
-            itemcode: item.itemid,
             itemname: item.item_description,
             categoryid: item.categoryid,
             categoryname: item.categoryname,
             uom: item.uomname,
             uomid: item.uomid,
-            // currentstock: item.available_stock ?? 0,
-            // bufferqty: item.buffer_stock ?? 0,
-            // reservedqty: item.pending_qty ?? 0,
-            currentstock: 15,
-            bufferqty: 4,
-            reservedqty: 1,
-            availableqty: 10,
-            // availableqty: availableqty,
-            requestedqty: item.required_qty_net ?? 0,
-            issueqty: 0,
-            balance: availableqty,
-            remarks: '',
-            rate: item.rate ?? 0,
-            amount: 0
+            currentstock: item.current_stock ?? 0,
+            bufferqty: item.buffer_stock ?? 0,
+            availableqty: item.available_qty,
+            requestedqty: item.requestqty ?? 0,
         };
 
         this.issueItems = [...this.issueItems, newRow];
@@ -393,7 +433,7 @@ export class MaterialIndentComponent implements OnInit {
                 if (res.data.success) {
                     this.messageService.add({ severity: 'success', summary: 'Submitted', detail: res.data.msg });
                     this.editingIndentId = res.data.indent_id ?? this.editingIndentId;
-                    this.minForm.patchValue({ p_minno: res.data.indent_no ?? '', status: res.data.tran_status ?? 'SUBMITTED' });
+                    this.minForm.patchValue({ p_indentno: res.data.indent_no ?? '', status: res.data.tran_status ?? 'SUBMITTED' });
                     this.onGetIndentList();
                 } else {
                     this.messageService.add({ severity: 'error', summary: 'Error', detail: res.data.msg });
@@ -413,8 +453,7 @@ export class MaterialIndentComponent implements OnInit {
             next: (res: any) => {
                 if (res.data.success) {
                     this.messageService.add({ severity: 'success', summary: 'Draft Saved', detail: res.data.msg });
-                    this.editingIndentId = res.data.indent_id ?? this.editingIndentId;
-                    this.minForm.patchValue({ status: 'DRAFT' });
+                    this.minForm.patchValue({p_draft_indent: res.data.indent_id ?? '', status: res.data.status });
                 } else {
                     this.messageService.add({ severity: 'error', summary: 'Error', detail: res.data.msg });
                 }
@@ -429,21 +468,14 @@ export class MaterialIndentComponent implements OnInit {
     private buildIndentPayload(action: 'DRAFT' | 'SUBMIT'): MaterialIndent {
         const formVal = this.minForm.getRawValue();
         const isEdit = this.editingIndentId != null;
-
+        console.log(this.editingIndentId);
         const itemsPayload: MaterialIndentItem[] = this.issueItems.map((it) => ({
-            item_category_id: it['item_category_id'] ?? null,
+            item_category_id: it['categoryid'] ?? null,
             item_id: it.itemid,
             uom_id: it.uomid,
-            // current_stock: it.currentstock,
-            // requested_qty: it.requestedqty,
-            // available_qty: it.availableqty,
-            current_stock: 10,
-            requested_qty: 5,
-            available_qty: 5,
-            issue_qty: it.issueqty,
-            balance_qty: it.balance,
-            rate: it.rate,
-            amount: it.amount
+            current_stock: it.currentstock,
+            requested_qty: it.requestqty,
+            available_qty: it.availableqty
         }));
 
         return {

@@ -26,7 +26,7 @@
                     optionLabel="min_no"
                     optionValue="min_no"
                     placeholder="Auto Generated"
-                    formControlName="p_minno"
+                    formControlName="p_issueno"
                     [filter]="true"
                     filterPlaceholder="Search MIN No"
                     [showClear]="true"
@@ -44,7 +44,7 @@
              <!-- Indent No -->
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Indent No <span class="text-red-500">*</span></label>
-                <p-dropdown [options]="indentOptions" optionLabel="indent_no" optionValue="indent_id" placeholder="Select Indent" formControlName="p_indent" [filter]="true" filterPlaceholder="Search Indent" [showClear]="true"></p-dropdown>
+                <p-dropdown [options]="indentOptions" optionLabel="indent_no" optionValue="indent_id" placeholder="Select Indent" formControlName="p_indent" [filter]="true" filterPlaceholder="Search Indent" [showClear]="true" (onChange)="onIndentChange($event)"></p-dropdown>
                 <small class="text-red-500 mt-1 text-xs" *ngIf="minForm.get('p_indent')?.touched && minForm.get('p_indent')?.errors?.['required']"> Indent No is required </small>
             </div>
 
@@ -101,7 +101,7 @@
         <!-- ================================
          ITEMS TABLE
     ================================= -->
-        <p-table [value]="issueItems" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" class="p-datatable-gridlines p-datatable-sm">
+        <p-table [value]="issueItems" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" class="p-datatable-gridlines p-datatable-sm material-issue">
             <ng-template pTemplate="header">
                 <tr class="bg-yellow-400">
                     <th>Item Category</th>
@@ -118,12 +118,12 @@
 
             <ng-template pTemplate="body" let-item let-i="rowIndex">
                 <tr>
-                    <td class="text-sm font-medium text-primary">{{ item.categoryname }}</td>
+                    <td class="text-sm">{{ item.categoryname }}</td>
                     <td class="text-sm">{{ item.itemname }}</td>
                     <td class="text-sm">{{ item.uom }}</td>
-                    <td class="text-right text-sm">{{ item.currentstock | number }}</td>
-                    <td class="text-right text-sm">{{ item.bufferqty | number }}</td>
-                    <td class="text-right text-sm">{{ item.requestedqty | number }}</td>
+                    <td class="text-sm">{{ item.currentstock | number }}</td>
+                    <td class="text-sm">{{ item.bufferqty | number }}</td>
+                    <td class="text-sm">{{ item.requestedqty | number }}</td>
 
                     <!-- Issue Qty (input, capped at available) -->
                     <td>
@@ -133,7 +133,7 @@
                             [min]="0"
                             [max]="item.availableqty"
                             [useGrouping]="false"
-                            inputStyleClass="w-5rem text-right text-sm"
+                            inputStyleClass="w-full text-sm"
                             (onInput)="onIssueQtyChange(item)"
                         ></p-inputNumber>
                         <small class="text-red-500 text-xs block mt-1" *ngIf="item.issueqty > item.availableqty"> Exceeds available stock </small>

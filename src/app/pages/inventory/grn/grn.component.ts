@@ -49,6 +49,9 @@ export class GrnComponent implements OnInit, OnDestroy {
     backshow = false;
     dateTime = new Date();
     userId = '';
+    editingDeliveryId: number | null = null;
+editingRemarkId: number | null = null;
+editingDocumentId: number | null = null; // see note below on documents
     
     fileNames: { challan: string; material: string; qualityreport: string; other: string } = {
         challan: '', material: '', qualityreport: '', other: ''
@@ -228,6 +231,7 @@ export class GrnComponent implements OnInit, OnDestroy {
     // ── Patch Delivery tab fields from the first saved delivery entry ──────
     const delivery = header.delivery?.[0];
     if (delivery) {
+        this.editingDeliveryId = delivery.delivery_id ?? null;
         this.grnForm.patchValue({
             p_challanno: delivery.delivery_challan_no ?? '',
             p_challandate: delivery.delivery_challan_date ? new Date(delivery.delivery_challan_date) : null,
@@ -236,14 +240,21 @@ export class GrnComponent implements OnInit, OnDestroy {
             p_drivermobile: delivery.driver_mobile ?? ''
         });
     }
+    else{
+        this.editingDeliveryId = null;
+    }
 
     // ── Patch Remarks tab fields from the first saved remarks entry ────────
     const remark = header.remarks?.[0];
     if (remark) {
+        this.editingRemarkId = remark.grn_remark_id ?? null;
         this.grnForm.patchValue({
             p_received_by: remark.received_by ?? null,
             p_remarks: remark.remarks ?? ''
         });
+    }
+    else{
+        this.editingRemarkId = null;
     }
 
     // ── Patch Documents tab display names from saved documents ─────────────
@@ -251,10 +262,13 @@ export class GrnComponent implements OnInit, OnDestroy {
     if (documents.length) {
         const findDoc = (type: string) => documents.find((d) => d.document_type === type);
 
-        const challanDoc = findDoc('DELIVERY_CHALLAN');
+         const challanDoc = findDoc('DELIVERY_CHALLAN');
         const qualityDoc = findDoc('QUALITY_REPORT');
         const materialDocs = documents.filter((d) => d.document_type === 'MATERIAL_PHOTO');
         const otherDocs = documents.filter((d) => d.document_type === 'OTHER');
+
+        // Documents are saved as a set via p_document_id (see note below) — use the first doc's id, if present
+        this.editingDocumentId = documents[0]?.document_id ?? null;
 
         this.fileNames = {
             challan: challanDoc?.document_name ?? '',
@@ -270,6 +284,7 @@ export class GrnComponent implements OnInit, OnDestroy {
             other: otherDocs.length ? otherDocs.map((d) => d.document_path) : null
         };
     } else {
+        this.editingDocumentId = null;
         this.fileNames = { challan: '', material: '', qualityreport: '', other: '' };
         this.uploadedFiles = { challan: null, material: null, qualityreport: null, other: null };
     }
@@ -682,10 +697,10 @@ get isDocumentsReady(): boolean {
             });
             return;
         }
-
+        const isUpdate = !!this.editingDeliveryId;
         const payload: GrnDelivery = {
-            p_operation: 'INSERT',
-            p_delivery_id: null,
+            p_operation: isUpdate ? 'UPDATE' : 'INSERT',
+            p_delivery_id: this.editingDeliveryId ?? null,
             p_grn_id: this.transationid ?? null,
             p_po_id: this.grnForm.get('p_pono')?.value ?? null,
             p_challan_no: this.grnForm.get('p_challanno')?.value ?? '',
@@ -702,6 +717,7 @@ get isDocumentsReady(): boolean {
                 this.messageService.add({
                     severity: 'success', summary: res.data.msg
                 });
+                this.editingDeliveryId = res.data.delivery_id ?? this.editingDeliveryId;
             },
             error: (err) => {
                 console.error('Delivery submit failed:', err);
@@ -737,10 +753,10 @@ get isDocumentsReady(): boolean {
             });
             return;
         }
-
+        const isUpdate = !!this.editingRemarkId;
         const payload: GrnRemarks = {
-            p_operation: 'INSERT',
-            p_grn_remark_id: 0,
+            p_operation: isUpdate ? 'UPDATE' : 'INSERT',
+            p_grn_remark_id: isUpdate ? this.editingRemarkId ?? 0 : 0,
             p_grn_id: this.transationid ?? null,
             p_po_id: this.grnForm.get('p_pono')?.value ?? null,
             p_received_by: this.grnForm.get('p_received_by')?.value ?? null,
@@ -753,6 +769,7 @@ get isDocumentsReady(): boolean {
                 this.messageService.add({
                     severity: 'success', summary: res.data.msg
                 });
+                this.editingRemarkId = res.data.grn_remark_id ?? this.editingRemarkId;
             },
             error: (err) => {
                 console.error('Remarks submit failed:', err);
@@ -820,10 +837,10 @@ get isDocumentsReady(): boolean {
             });
             return;
         }
-
+        const isUpdate = !!this.editingDocumentId;
         const payload: GrnDocuments = {
-            p_operation: 'SAVE',
-            p_document_id: 0,
+            p_operation: isUpdate ? 'UPDATE' : 'SAVE',
+            p_document_id: this.editingDocumentId ?? 0,
             p_grn_id: this.transationid ?? null,
             p_po_id: this.grnForm.get('p_pono')?.value ?? null,
             p_documents: documents,
@@ -835,6 +852,7 @@ get isDocumentsReady(): boolean {
                 this.messageService.add({
                     severity: 'success', summary: res.data.msg
                 });
+                this.editingDocumentId = res.data.document_id ?? this.editingDocumentId;
             },
             error: (err) => {
                 console.error('Documents submit failed:', err);
@@ -908,6 +926,10 @@ get isDocumentsReady(): boolean {
         this.itemOptionslist = [];
         this.poSelected = false;
         this.backshow = false;
+        this.transationid = null;
+        this.editingDeliveryId = null;
+    this.editingRemarkId = null;
+    this.editingDocumentId = null;
         this.fileNames = { challan: '', material: '', qualityreport: '', other: '' };
         this.uploadedFiles = { challan: null, material: null, qualityreport: null, other: null };
     }

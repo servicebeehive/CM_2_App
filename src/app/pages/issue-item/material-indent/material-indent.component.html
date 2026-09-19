@@ -9,26 +9,26 @@
                     {{ minForm.get('status')?.value }}
                 </span>
                 <p-dropdown
-                    [options]="draftMinOptions"
-                    optionLabel="mf_no"
-                    optionValue="mf_id"
+                    [options]="draftIndentOptions"
+                    optionLabel="indent_no"
+                    optionValue="indent_id"
                     placeholder="Draft MR No"
                     filterPlaceholder="Draft MR No"
-                    formControlName="p_draft_requisitionno"
+                    formControlName="p_draft_indent"
                     [filter]="true"
                     [showClear]="true"
                     (onChange)="onDraftChange($event)"
                 >
                     <ng-template pTemplate="selectedItem" let-item>
                         <div class="flex items-center gap-2" *ngIf="item">
-                            <span>{{ item.mf_no }}</span>
+                            <span>{{ item.indent_no }}</span>
                         </div>
                     </ng-template>
 
                     <ng-template pTemplate="item" let-item>
                         <div class="flex items-center justify-between gap-2 w-full">
-                            <span>{{ item.mf_no }}</span>
-                            <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-0" [attr.aria-label]="'Delete draft ' + item.mf_no" (click)="deleteDraftItem(item, $event)"></button>
+                            <span>{{ item.indent_no }}</span>
+                            <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-0" [attr.aria-label]="'Delete draft ' + item.indent_no" (click)="deleteDraftItem(item, $event)"></button>
                         </div>
                     </ng-template>
                 </p-dropdown>
@@ -49,7 +49,7 @@
                     optionLabel="indent_no"
                     optionValue="indent_no"
                     placeholder="Indent No"
-                    formControlName="p_minno"
+                    formControlName="p_indentno"
                     [filter]="true"
                     filterPlaceholder="Search Indent No"
                     [showClear]="true"
@@ -180,7 +180,7 @@
         <!-- ================================
          ITEMS TABLE
     ================================= -->
-        <p-table [value]="issueItems" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" class="p-datatable-gridlines p-datatable-sm">
+        <p-table [value]="issueItems" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" class="p-datatable-gridlines p-datatable-sm material-indent">
             <ng-template pTemplate="header">
                 <tr class="bg-yellow-400">
                     <th>Item Category</th>
@@ -196,12 +196,12 @@
 
             <ng-template pTemplate="body" let-item let-i="rowIndex">
                 <tr>
-                    <td class="text-sm font-medium text-primary">{{ item.categoryname }}</td>
+                    <td class="text-sm">{{ item.categoryname }}</td>
                     <td class="text-sm">{{ item.itemname }}</td>
                     <td class="text-sm">{{ item.uom }}</td>
-                    <td class="text-right text-sm">{{ item.currentstock | number }}</td>
-                    <td class="text-right text-sm">{{ item.bufferqty | number }}</td>
-                    <td class="text-right text-sm font-semibold">
+                    <td class="text-sm">{{ item.currentstock | number }}</td>
+                    <td class="text-sm">{{ item.bufferqty | number }}</td>
+                    <td class="text-sm font-semibold">
                         <span [ngClass]="{ 'text-red-500': item.availableqty <= 0, 'text-green-600': item.availableqty > 0 }">
                             {{ item.availableqty | number }}
                         </span>
@@ -209,15 +209,15 @@
                     <!-- Indent Qty (input, capped at available) -->
                     <td>
                         <p-inputNumber
-                            [(ngModel)]="item.issueqty"
+                            [(ngModel)]="item.requestqty"
                             [ngModelOptions]="{ standalone: true }"
                             [min]="0"
                             [max]="item.availableqty"
                             [useGrouping]="false"
-                            inputStyleClass="w-5rem text-right text-sm"
+                            inputStyleClass="w-full text-sm"
                             (onInput)="onIssueQtyChange(item)"
                         ></p-inputNumber>
-                        <small class="text-red-500 text-xs block mt-1" *ngIf="item.issueqty > item.availableqty"> Exceeds available stock </small>
+                        <small class="text-red-500 text-xs block mt-1" *ngIf="item.requestqty > item.availableqty"> Exceeds available stock </small>
                     </td>
                     <!-- Action -->
                     <td class="text-center">

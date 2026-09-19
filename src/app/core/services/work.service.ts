@@ -2,7 +2,7 @@ import { environment } from '@/environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ShareService } from './shared.service';
-import { GrnDelivery, GrnDocuments, GrnHeader, GrnRemarks, MaterialRequisitionPayload, MiscPurchase, PurchaseDraftPayload, PurchaseOrderPayload, UpsertRfqPayload, UpserWorkList, CancelPOPayload, MaterialIssue, MaterialIndent, MaterialReturn } from '../models/authmodel/work.model';
+import { GrnDelivery, GrnDocuments, GrnHeader, GrnRemarks, MaterialRequisitionPayload, MiscPurchase, PurchaseDraftPayload, PurchaseOrderPayload, UpsertRfqPayload, UpserWorkList, CancelPOPayload, MaterialIssue, MaterialIndent, MaterialReturn, MaterialTransfer } from '../models/authmodel/work.model';
 import { catchError, Observable, throwError } from 'rxjs';
 import { API_ENDPOINTS } from '../config/api-endpoints';
 
@@ -156,6 +156,12 @@ export class WorkService {
     upsertMaterialReturn(payload: MaterialReturn): Observable<any> {
         const payloaddata = this.shareservice.GetApiBody(payload);
         const url = `${this.baseUrl}${API_ENDPOINTS.work.upsertmaterialreturn}`;
+        return this.http.post<any>(url, payloaddata).pipe(catchError((error) => throwError(() => error)));
+    }
+
+    upsertMaterialTransfer(payload: MaterialTransfer): Observable<any> {
+        const payloaddata = this.shareservice.GetApiBody(payload);
+        const url = `${this.baseUrl}${API_ENDPOINTS.work.upsertmaterialtransfer}`;
         return this.http.post<any>(url, payloaddata).pipe(catchError((error) => throwError(() => error)));
     }
 }

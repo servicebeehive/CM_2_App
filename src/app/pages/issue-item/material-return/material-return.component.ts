@@ -38,7 +38,6 @@ export class MaterialReturnComponent implements OnInit {
     returnTypeOptions: { label: string; value: string }[] = [];
     returnConditionOptions: { label: string; value: string }[] = [];
     returnOptions: { label: string; value: string }[] = [];
-
     editingMrnId: number | null = null;
     private companyId = '';
     private userId = '';
@@ -64,15 +63,15 @@ export class MaterialReturnComponent implements OnInit {
         const currentUser = this.authService.isLogIntType()?.username || 'Current User';
 
         this.minForm = this.fb.group({
-            p_minno: [{ value: '', disabled: false }],
+            p_returnno: [{ value: '', disabled: false }],
             p_issuedate: [this.today, Validators.required],
             p_project: [null, Validators.required],
             p_tower: [null, Validators.required],
-            p_returntype: [null, Validators.required],
             p_itemdata: [null],
             p_returnby: [null, Validators.required],
             p_issuedby: [{ value: currentUser, disabled: true }],
-            p_remarks: ['', Validators.maxLength(500)]
+            p_remarks: ['', Validators.maxLength(500)],
+            status: ['']
         });
     }
 
@@ -100,7 +99,7 @@ export class MaterialReturnComponent implements OnInit {
 
     hasCopyableData(): boolean {
         const v = this.minForm.getRawValue();
-        return !!(v.p_project || v.p_tower || v.p_returntype || v.p_returnby || v.p_remarks || this.issueItems.length > 0);
+        return !!(v.p_project || v.p_tower || v.p_returnby || v.p_remarks || this.issueItems.length > 0);
     }
 
     private loadDropdowns(): void {
@@ -171,7 +170,7 @@ export class MaterialReturnComponent implements OnInit {
 
     onGetMRN(){
         const payload = {
-            p_returntype: 'MRNLIST',
+            p_returntype: 'MRNTABLELIST',
             p_returnvalue: this.companyId,
             p_username: this.userId
         };
@@ -186,7 +185,7 @@ export class MaterialReturnComponent implements OnInit {
     // ── MRN dropdown: load a submitted MRN back into the form ──────────────
     onMRNChange(event: any): void {
         if (!event.value) return;
-        const mrnvalue = this.mrnOptions.find((opt) => opt.min_id === event.value)?.min_no;
+        const mrnvalue = this.mrnOptions.find((opt) => opt.mrn_id === event.value)?.mrn_no;
         const payload = {
             p_returntype: 'MRNDETAILS',
             p_returnvalue: mrnvalue,
@@ -240,30 +239,24 @@ export class MaterialReturnComponent implements OnInit {
 
         const newRow = {
             itemid: item.itemid,
-            itemcode: item.itemid,
+            categoryid: item.categoryid,
             categoryname: item.categoryname,
             itemname: item.item_description,
             uom: item.uomname,
-            issuedqty: item.total_mr_qty ?? 0,
-            alreadyreturnedqty: 0,
-            returnableqty: item.available_stock ?? 0,
+            uomid: item.uomid,
+            issuedqty: item.total_mr_qty ?? 10,
+            alreadyreturnedqty: 2,
+            returnableqty: item.available_stock ?? 5,
             issueqty: 0,
-            returnreason: 'Excess Stock',
-            returncondition: 'Good',
+            returntype: null,
+            returncondition: null,
             rate: 0,
             amount: 0,
-            balance: item.available_stock ?? 0
+            balance: item.available_stock ?? 2
         };
 
         this.issueItems = [...this.issueItems, newRow];
         this.minForm.get('p_itemdata')?.setValue(null);
-
-        this.messageService.add({
-            severity: 'success',
-            summary: 'Item Added',
-            detail: `${item.item_description} added — enter Return Qty in the table.`,
-            life: 2000
-        });
     }
 
     // ── Table qty logic ────────────────────────────────────────────────────
@@ -340,11 +333,13 @@ export class MaterialReturnComponent implements OnInit {
     const formVal = this.minForm.getRawValue();
     const isUpdate = !!this.editingMrnId;
     const currentUserId = Number(this.authService.isLogIntType()?.userid ?? 0);
-
     const itemsPayload: MaterialReturnItem[] = this.issueItems.map((it) => ({
+        min_detail_id: null,
+        item_category_id: it.categoryid,
+        uom_id: it.uomid,
         item_id: it.itemid,
         return_qty: it.issueqty,
-        return_reason: it.returnreason,
+        return_reason: it.returntype,
         return_condition: it.returncondition
     }));
 
@@ -356,14 +351,13 @@ export class MaterialReturnComponent implements OnInit {
         p_company_id: Number(this.companyId),
         p_project_id: formVal.p_project,
         p_tower_block_id: formVal.p_tower,
-        p_level_name: formVal.p_level ?? '',          // ⚠️ needs Level field re-added to form
-        p_pour_name: formVal.p_pour ?? '',             // ⚠️ needs Pour field re-added to form
-        p_linked_min_id: formVal.p_linkedminno ?? 0,   // ⚠️ needs Linked MIN field re-added to form
-        p_return_by: Number(formVal.p_returnby ?? 0),
-        p_issued_by: currentUserId,                    // ⚠️ guessed — confirm source
-        p_return_type: formVal.p_returntype ?? '',
-        p_requested_by: currentUserId,                 // ⚠️ guessed — confirm source
-        p_created_by: currentUserId,                   // ⚠️ guessed — confirm source
+        p_level_name: formVal.p_level ?? '',         
+        p_pour_name: formVal.p_pour ?? '',          
+        p_return_form: 0,  
+        p_store_id: null,
+        p_min_id: 0,                  
+        p_return_type: '',              
+        p_returned_by: formVal.p_returnby,                
         p_remarks: formVal.p_remarks,
         p_items_json: itemsPayload,
         p_loginuser: currentUserId
@@ -372,9 +366,8 @@ export class MaterialReturnComponent implements OnInit {
     this.workService.upsertMaterialReturn(payload).subscribe({
         next: (res: any) => {
             if (res.data.success) {
-                this.messageService.add({ severity: 'success', summary: 'Submitted', detail: res.data.msg });
-                this.editingMrnId = res.data.mrn_id ?? this.editingMrnId;
-                this.minForm.patchValue({ p_minno: res.data.mrn_no ?? '', status: res.data.tran_status ?? 'SUBMITTED' });
+                this.messageService.add({ severity: 'success', summary: res.data.status, detail: res.data.msg });
+                this.minForm.patchValue({ p_returnno: res.data.mrn_no , status: res.data.status });
                 this.onGetMRN();
             } else {
                 this.messageService.add({ severity: 'error', summary: 'Error', detail: res.data.msg });

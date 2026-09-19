@@ -1,26 +1,26 @@
 <div class="card p-3 md:p-6">
-    <div class="flex justify-between items-center mb-6">
-        <span class="block text-surface-900 font-bold text-2xl">Material Return Note</span>
-        <div class="flex gap-3 flex-wrap">
-             <span class="text-xl font-bold mt-2">Status</span>
+    <form [formGroup]="minForm" (ngSubmit)="onSubmit()">
+        <div class="flex justify-between items-center mb-6">
+            <span class="block text-surface-900 font-bold text-2xl">Material Return Note</span>
+            <div class="flex gap-3 flex-wrap">
+                <span class="text-xl font-bold mt-2">Status</span>
                 <span class="font-bold text-xl mt-2" [ngStyle]="{ color: statusColor }">
                     {{ minForm.get('status')?.value }}
                 </span>
-            <button pButton type="submit" label="Submit" class="p-button-warning" [disabled]="minForm.invalid || issueItems.length === 0"></button>
-            <button pButton type="button" label="Reset" class="p-button-secondary" (click)="onReset()"></button>
+                <button pButton type="submit" label="Submit" class="p-button-warning" [disabled]="minForm.invalid || issueItems.length === 0"></button>
+                <button pButton type="button" label="Reset" class="p-button-secondary" (click)="onReset()"></button>
+            </div>
         </div>
-    </div>
 
-    <form [formGroup]="minForm" (ngSubmit)="onSubmit()">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4 w-full mb-4">
             <div class="flex flex-col">
                 <label class="font-medium mb-1">MRN No</label>
                 <p-dropdown
                     [options]="mrnOptions"
-                    optionLabel="min_no"
-                    optionValue="min_id"
+                    optionLabel="mrn_no"
+                    optionValue="mrn_id"
                     placeholder="Auto Generated"
-                    formControlName="p_minno"
+                    formControlName="p_returnno"
                     [filter]="true"
                     filterPlaceholder="Search MRN No"
                     [showClear]="true"
@@ -36,7 +36,17 @@
 
             <div class="flex flex-col">
                 <label class="font-medium mb-1">Site <span class="text-red-500">*</span></label>
-                <p-dropdown [options]="projectOptions" optionLabel="project_name" optionValue="project_id" placeholder="Select Site" formControlName="p_project" [filter]="true" filterPlaceholder="Search Site" [showClear]="true" (onChange)="onProjectChange($event)"></p-dropdown>
+                <p-dropdown
+                    [options]="projectOptions"
+                    optionLabel="project_name"
+                    optionValue="project_id"
+                    placeholder="Select Site"
+                    formControlName="p_project"
+                    [filter]="true"
+                    filterPlaceholder="Search Site"
+                    [showClear]="true"
+                    (onChange)="onProjectChange($event)"
+                ></p-dropdown>
                 <small class="text-red-500 mt-1 text-xs" *ngIf="minForm.get('p_project')?.touched && minForm.get('p_project')?.errors?.['required']"> Site is required </small>
             </div>
 
@@ -46,10 +56,30 @@
                 <small class="text-red-500 mt-1 text-xs" *ngIf="minForm.get('p_tower')?.touched && minForm.get('p_tower')?.errors?.['required']"> Tower/Block is required </small>
             </div>
 
-            <div class="flex flex-col">
-                <label class="font-medium mb-1">Return Type <span class="text-red-500">*</span></label>
-                <p-dropdown [options]="returnTypeOptions" optionLabel="label" optionValue="value" placeholder="Select Return Type" formControlName="p_returntype" [filter]="true" filterPlaceholder="Search Return Type" [showClear]="true"></p-dropdown>
-                <small class="text-red-500 mt-1 text-xs" *ngIf="minForm.get('p_returntype')?.touched && minForm.get('p_returntype')?.errors?.['required']"> Return Type is required </small>
+              <div class="flex flex-col col-span-2">
+                <label class="font-medium mb-1 text-sm md:text-base">Item</label>
+                <p-select
+                    class="w-full"
+                    [options]="itemOptions"
+                    optionLabel="itemname"
+                    optionValue="itemid"
+                    formControlName="p_itemdata"
+                    [filter]="true"
+                    filterBy="itemname"
+                    placeholder="Select Item"
+                    [showClear]="true"
+                    (onChange)="OnItemChange($event)"
+                >
+                    <ng-template #selectedItem let-item>
+                        <div class="text-sm md:text-base">{{ item.itemname }}</div>
+                    </ng-template>
+                    <ng-template #item let-details>
+                        <div class="flex items-center justify-between w-full">
+                            <div class="text-sm md:text-base">{{ details.itemname }}</div>
+                            <span class="text-xs md:text-sm" [ngClass]="details.currentstock == 0 ? 'text-red-500' : 'text-green-600'"> Stock: {{ details.currentstock }} </span>
+                        </div>
+                    </ng-template>
+                </p-select>
             </div>
 
             <div class="flex flex-col">
@@ -63,102 +93,93 @@
                 <input pInputText formControlName="p_remarks" placeholder="Enter remarks" rows="2" class="w-full" />
                 <small class="text-red-500 mt-1 text-xs" *ngIf="minForm.get('p_remarks')?.errors?.['maxlength']"> Remarks must not exceed 500 characters </small>
             </div>
-
-             <div class="flex flex-col col-span-2">
-                    <label class="font-medium mb-1 text-sm md:text-base">Item</label>
-                    <p-select
-                        class="w-full"
-                        [options]="itemOptions"
-                        optionLabel="itemname"
-                        optionValue="itemid"
-                        formControlName="p_itemdata"
-                        [filter]="true"
-                        filterBy="itemname"
-                        placeholder="Select Item"
-                        [showClear]="true"
-                        (onChange)="OnItemChange($event)"
-                    >
-                        <ng-template #selectedItem let-item>
-                            <div class="text-sm md:text-base">{{ item.itemname }}</div>
-                        </ng-template>
-                        <ng-template #item let-details>
-                            <div class="flex items-center justify-between w-full">
-                                <div class="text-sm md:text-base">{{ details.itemname }}</div>
-                                <span class="text-xs md:text-sm" [ngClass]="details.currentstock == 0 ? 'text-red-500' : 'text-green-600'"> Stock: {{ details.currentstock }} </span>
-                            </div>
-                        </ng-template>
-                    </p-select>
-                </div>
         </div>
 
         <div class="border-top-1 surface-border pt-3 mt-2">
-            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-3">
-                <div class="text-primary font-semibold flex items-center gap-2">
-                    <i class="pi pi-box"></i>
-                    <span>Item Details</span>
-                </div>
-            </div>
+            <p-table [value]="issueItems" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" class="p-datatable-gridlines p-datatable-sm material-return">
+                <ng-template pTemplate="header">
+                    <tr class="bg-yellow-400">
+                        <th>Item Category</th>
+                        <th>Item Name</th>
+                        <th>UOM</th>
+                        <th class="text-right">Last Issued Qty</th>
+                        <th class="text-right">Returnable Qty (Bal)</th>
+                        <th class="text-right">Return Qty <span class="text-red-500">*</span></th>
+                        <th>Return Type <span class="text-red-500">*</span></th>
+                        <th>Return Condition <span class="text-red-500">*</span></th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                </ng-template>
 
-            <p-table [value]="issueItems" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" class="p-datatable-gridlines p-datatable-sm">
-            <ng-template pTemplate="header">
-                <tr class="bg-yellow-400">
-                    <th>Item Category</th>
-                    <th>Item Name</th>
-                    <th>UOM</th>
-                    <th class="text-right">Last Issued Qty</th>
-                    <th class="text-right">Returnable Qty (Balance)</th>
-                    <th class="text-right">Return Qty <span class="text-red-500">*</span></th>
-                    <th>Return Condition</th>
-                    <th class="text-center">Action</th>
-                </tr>
-            </ng-template>
+                <ng-template pTemplate="body" let-item let-i="rowIndex">
+                    <tr>
+                        <td class="text-sm">{{ item.categoryname }}</td>
+                        <td class="text-sm">{{ item.itemname }}</td>
+                        <td class="text-sm">{{ item.uom }}</td>
+                        <td class="text-sm">{{ item.issuedqty | number: '1.0-2' }}</td>
+                        <td class="text-sm font-semibold">{{ item.returnableqty | number: '1.0-2' }}</td>
+                        <td>
+                            <p-inputNumber
+                                [(ngModel)]="item.issueqty"
+                                [ngModelOptions]="{ standalone: true }"
+                                [min]="0"
+                                [max]="item.returnableqty"
+                                [useGrouping]="false"
+                                inputStyleClass="w-full text-sm"
+                                (onInput)="onIssueQtyChange(item)"
+                            ></p-inputNumber>
+                            <small class="text-red-500 text-xs block mt-1" *ngIf="item.issueqty > item.returnableqty"> Exceeds returnable qty </small>
+                            <small class="text-red-500 text-xs block mt-1" *ngIf="!item.issueqty"> Return qty required </small>
+                        </td>
+                        <td class="text-sm">
+                            <p-dropdown
+                                [options]="returnTypeOptions"
+                                optionLabel="label"
+                                optionValue="value"
+                                [(ngModel)]="item.returntype"
+                                [ngModelOptions]="{ standalone: true }"
+                                placeholder="Select Type"
+                                [showClear]="false"
+                                appendTo="body"
+                                class="w-full"
+                            ></p-dropdown>
+                            <small class="text-red-500 text-xs block mt-1" *ngIf="!item.returntype"> Return type required </small>
+                        </td>
+                        <td class="text-sm">
+                            <p-dropdown
+                                [options]="returnConditionOptions"
+                                optionLabel="label"
+                                optionValue="value"
+                                [(ngModel)]="item.returncondition"
+                                [ngModelOptions]="{ standalone: true }"
+                                [showClear]="false"
+                                appendTo="body"
+                                class="w-full"
+                            ></p-dropdown>
+                            <small class="text-red-500 text-xs block mt-1" *ngIf="!item.returncondition"> Return condition required </small>
+                        </td>
+                        <td class="text-center">
+                            <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm" pTooltip="Remove" tooltipPosition="top" (click)="removeItem(i)"></button>
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td colspan="13" class="text-center text-400 italic py-6 text-sm">No items added — select item from search to add rows.</td>
+                    </tr>
+                </ng-template>
 
-            <ng-template pTemplate="body" let-item let-i="rowIndex">
-                <tr>
-                    <td class="text-sm font-medium text-primary">{{ item.categoryname }}</td>
-                    <td class="text-sm">{{ item.itemname }}</td>
-                    <td class="text-sm">{{ item.uom }}</td>
-                    <td class="text-right text-sm">{{ item.issuedqty | number: '1.0-2' }}</td>
-                    <td class="text-right text-sm font-semibold">{{ item.returnableqty | number: '1.0-2' }}</td>
-                    <td>
-                        <p-inputNumber
-                            [(ngModel)]="item.issueqty"
-                            [ngModelOptions]="{ standalone: true }"
-                            [min]="0"
-                            [max]="item.returnableqty"
-                            [useGrouping]="false"
-                            inputStyleClass="w-5rem text-right text-sm"
-                            (onInput)="onIssueQtyChange(item)"
-                        ></p-inputNumber>
-                        <small class="text-red-500 text-xs block mt-1" *ngIf="item.issueqty > item.returnableqty"> Exceeds returnable qty </small>
-                    </td>
-                    <td class="text-sm">
-                        <p-dropdown [options]="returnConditionOptions" optionLabel="label" optionValue="value" [(ngModel)]="item.returncondition" [ngModelOptions]="{ standalone: true }" [showClear]="false" appendTo="body"></p-dropdown>
-                    </td>
+                <ng-template pTemplate="paginatorleft">
+                    <div class="text-500 text-xs ms-2">Total Items: {{ issueItems.length }}</div>
+                </ng-template>
 
-                    <td class="text-center">
-                        <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm" pTooltip="Remove" tooltipPosition="top" (click)="removeItem(i)"></button>
-                    </td>
-                </tr>
-            </ng-template>
-
-            <ng-template pTemplate="emptymessage">
-                <tr>
-                    <td colspan="13" class="text-center text-400 italic py-6 text-sm">No items added — select item from search to add rows.</td>
-                </tr>
-            </ng-template>
-
-            <ng-template pTemplate="paginatorleft">
-                <div class="text-500 text-xs ms-2">Total Items: {{ issueItems.length }}</div>
-            </ng-template>
-
-            <ng-template pTemplate="summary" *ngIf="issueItems.length > 0">
-                <div class="flex justify-end gap-6 px-3 py-2 text-sm font-semibold">
-                    <span>Total Return Qty: {{ totalIssueQty | number: '1.0-2' }}</span>
-                    <span class="text-primary">Total Return Value (INR): {{ totalReturnValue | number: '1.2-2' }}</span>
-                </div>
-            </ng-template>
-        </p-table>
+                <ng-template pTemplate="summary" *ngIf="issueItems.length > 0">
+                    <div class="flex justify-end gap-6 px-3 py-2 text-sm font-semibold">
+                        <span>Total Return Qty: {{ totalIssueQty | number: '1.0-2' }}</span>
+                        <span class="text-primary">Total Return Value (INR): {{ totalReturnValue | number: '1.2-2' }}</span>
+                    </div>
+                </ng-template>
+            </p-table>
         </div>
     </form>
     <p-confirmDialog></p-confirmDialog>

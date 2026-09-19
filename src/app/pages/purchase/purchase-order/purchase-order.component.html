@@ -30,7 +30,7 @@
                 <!-- Draft PO -->
                 <button pButton type="button" label="Draft PO" class="p-button-warning w-full md:w-auto" (click)="submitDraft()" [disabled]="isSubmitDisabled() || isDraftDisabled()"></button>
                 <button pButton *ngIf="this.poForm.get('p_pono')?.value === null" type="button" label="Vendor" class="p-button-warning" pTooltip="Vendor comparison" tooltipPosition="top" (click)="openVendorDialog()"></button>
-                <button pButton *ngIf="this.poForm.get('p_pono')?.value !== null" type="button" [label]="cancelButtonLabel" class="p-button-warning w-full md:w-auto" (click)="cancelPO()" [disabled]="this.poForm.get('status')?.value==='CANCELLED'"></button>
+                <button pButton *ngIf="this.poForm.get('p_pono')?.value !== null" type="button" [label]="cancelButtonLabel" class="p-button-warning w-full md:w-auto" (click)="cancelPO()" [disabled]="this.poForm.get('status')?.value==='CANCELLED' || this.poForm.get('status')?.value==='FULLY_RECEIVED'"></button>
                 <button pButton type="button" label="View" class="p-button-warning w-full md:w-auto" (click)="openMrDialog()"></button>
 
                 <button pButton type="button" label="Mail" class="p-button-warning w-full md:w-auto" (click)="openVendorMail()" [disabled]="!poForm.get('p_pono')?.value"></button>
@@ -953,7 +953,7 @@
     </p-table>
 
     <ng-template pTemplate="footer">
-        <button pButton type="button" label="Send" icon="pi pi-send" [disabled]="!poMailVendorRows.length" (click)="sendVendorPo()"></button>
+        <button pButton type="button" label="Send" icon="pi pi-send" [disabled]="!poMailVendorRows.length || this.poForm.get('status')?.value === 'FULLY_RECEIVED'" (click)="sendVendorPo()"></button>
         <button pButton type="button" label="Cancel" class="p-button-text" (click)="showPoMailDialog = false"></button>
     </ng-template>
 </p-dialog>

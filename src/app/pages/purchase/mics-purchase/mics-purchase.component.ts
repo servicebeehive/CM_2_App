@@ -35,6 +35,7 @@ export class MicsPurchaseComponent implements OnInit {
     uploadedFileUrl = '';
     companyId = '';
     userId = '';
+    editingMiscPurchaseId: number | null = null;
 
     constructor(
         private fb: FormBuilder,
@@ -148,7 +149,7 @@ export class MicsPurchaseComponent implements OnInit {
           next: (res) => {
             const data = Array.isArray(res?.data) ? res.data[0] : res?.data ?? {};
             const attachmentValue = data?.p_attachment ?? data?.attachment ?? data?.file_url ?? data?.attachment_url ?? data?.attachmentLink ?? '';
-
+             this.editingMiscPurchaseId = data?.misc_purchase_id ?? event?.value ?? null;
             if (attachmentValue) {
                 this.setAttachmentFromServer(attachmentValue);
             } else {
@@ -264,8 +265,6 @@ export class MicsPurchaseComponent implements OnInit {
     }
 
    previewAttachment(): void {
-    // A real hosted URL (e.g. returned by the server after save/reload) can
-    // be opened directly.
     if (this.uploadedFileUrl && !/^data:/i.test(this.uploadedFileUrl)) {
         const win = window.open(this.uploadedFileUrl, '_blank', 'noopener,noreferrer');
         if (!win) {
@@ -278,8 +277,6 @@ export class MicsPurchaseComponent implements OnInit {
         return;
     }
  
-    // Otherwise we only have the base64 data URL from the file the user just
-    // picked — convert it to a Blob and preview via an object URL.
     const dataUrl = this.uploadedFileBase64 || this.uploadedFileUrl;
     if (!dataUrl) {
         this.messageService.add({
@@ -406,7 +403,7 @@ private dataUrlToBlob(dataUrl: string): Blob | null {
                     category: detail.categoryname || '',
                     uom_id: detail.uomid ?? null,
                     uom: detail.uomname || '',
-                    quantity: detail.required_qty_net ?? null,
+                    quantity: detail.quantity ?? null,
                     rate: detail.rate ?? null,
                     remarks: detail.remarks || ''
                 });
@@ -437,10 +434,11 @@ private dataUrlToBlob(dataUrl: string): Blob | null {
             });
             return;
         }
-
+        console.log(this.form);
+        const isUpdate = !!this.editingMiscPurchaseId;
         const payload: any = {
-            p_operation: 'INSERT' as const,
-            p_misc_purchase_id: null,
+            p_operation: isUpdate ? 'UPDATE' : 'INSERT',
+            p_misc_purchase_id: isUpdate ? this.editingMiscPurchaseId : null,
             p_misc_purchase_no: String(this.form.get('purchaseNo')?.value ?? 0),
             p_purchase_date: this.form.get('purchaseDate')?.value ? new Date(this.form.get('purchaseDate')?.value).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
             p_company_id: Number(this.companyId),
@@ -454,8 +452,8 @@ private dataUrlToBlob(dataUrl: string): Blob | null {
                 item_description: row.get('item_description')?.value,
                 category_id: Number(row.get('category_id')?.value || 0),
                 uom_id: Number(row.get('uom_id')?.value || 0),
-                quantity: [row.quantity ?? null, [Validators.required, Validators.min(0.01)]],
-                rate: [row.rate ?? 0, [Validators.required, Validators.min(0.01)]],
+                 quantity: Number(row.get('quantity')?.value || 0),
+                rate: Number(row.get('rate')?.value || 0),
                 remarks: row.get('remarks')?.value || ''
             })),
             p_loginuser: Number(this.userId)

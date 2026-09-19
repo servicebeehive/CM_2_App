@@ -193,19 +193,19 @@
             </div>
 
             <div class="mt-4 md:mt-6" (click)="keepBarcodeFocus($event)">
-                <input #barcodeInput type="text" class="absolute opacity-0 pointer-events-none" placeholder="Type barcode / SKU and press Enter" (keydown.enter)="onBarcodeScan($event)" />
+                <input #barcodeInput type="text" class="absolute opacity-0 pointer-events-none" styleClass="material-requisition" placeholder="Type barcode / SKU and press Enter" (keydown.enter)="onBarcodeScan($event)" />
                 <p-table [value]="itemArray.controls" dataKey="item_id" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" appendTo="body" class="p-datatable-gridlines" styleClass="material-forcast">
                     <ng-template pTemplate="header">
                         <tr class="bg-yellow-400">
                             <th>Item Category</th>
-                            <th>Item Description</th>
+                            <th>Item Name</th>
                             <th>UOM</th>
                             <th>Buffer Stock</th>
-                            <th class="text-right">Available Stock</th>
-                            <th class="text-right">Pending Qty</th>
-                            <th class="text-right">Total MR Qty</th>
-                            <th class="text-right">Required Qty</th>
-                            <th class="text-right">Required Qty (Net)</th>
+                            <th>Available Stock</th>
+                            <th>Pending Qty</th>
+                            <th>Total MR Qty</th>
+                            <th>Required Qty</th>
+                            <th>Required Qty (Net)</th>
                             <th *ngIf="!isReadOnlyView" class="text-center">Action</th>
                         </tr>
                     </ng-template>

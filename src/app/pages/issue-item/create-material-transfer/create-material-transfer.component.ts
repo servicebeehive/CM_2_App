@@ -7,7 +7,6 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
-// import { InputTextareaModule } from 'primeng/inputtextarea';
 import { TableModule } from 'primeng/table';
 import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -15,45 +14,18 @@ import { Router } from '@angular/router';
 
 import { InventoryService } from '@/core/services/inventory.service';
 import { AuthService } from '@/core/services/auth.service';
+import { WorkService } from '@/core/services/work.service';
 import { Textarea } from 'primeng/textarea';
-
-export interface TransferItem {
-    itemid: number;
-    itemcode: string;
-    itemname: string;
-    uom: string;
-    availableqty: number;
-    qtytotransfer: number;
-    remarks: string;
-}
-
-export interface ItemOption {
-    itemid: number;
-    itemcode: string;
-    itemname: string;
-    uom: string;
-    availableqty: number;
-    [key: string]: any;
-}
+import { MaterialTransfer, MaterialTransferItemPayload, TransferItem } from '@/core/models/authmodel/work.model';
 
 @Component({
     selector: 'app-create-material-transfer',
     standalone: true,
     imports: [
-    CommonModule,
-    FormsModule,
-    ReactiveFormsModule,
-    ButtonModule,
-    ConfirmDialogModule,
-    DatePickerModule,
-    DropdownModule,
-    InputNumberModule,
-    InputTextModule,
-    // InputTextareaModule,
-    TableModule,
-    TooltipModule,
-    Textarea
-],
+        CommonModule, FormsModule, ReactiveFormsModule, ButtonModule, ConfirmDialogModule,
+        DatePickerModule, DropdownModule, InputNumberModule, InputTextModule, TableModule,
+        TooltipModule, Textarea
+    ],
     templateUrl: './create-material-transfer.component.html',
     styleUrl: './create-material-transfer.component.scss',
     providers: [ConfirmationService, DatePipe]
@@ -64,19 +36,27 @@ export class CreateMaterialTransferComponent implements OnInit {
     today: Date = new Date();
 
     transferItems: TransferItem[] = [];
+    transferNoOptions: any[] = [];
     attachments: string[] = [];
     attachmentNames: string[] = [];
 
+    // master list from the API, never mutated
+    private allSiteOptions: any[] = [];
+
+    // these two are what the dropdowns actually bind to — filtered against each other
     siteOptions: any[] = [];
     toSiteOptions: any[] = [];
-    itemOptions: ItemOption[] = [];
 
+    itemOptions: any[] = [];
+
+    editingTransferId: number | null = null;
     private companyId = '';
     private userId = '';
 
     constructor(
         private fb: FormBuilder,
         private inventoryService: InventoryService,
+        private workService: WorkService,
         private authService: AuthService,
         private confirmationService: ConfirmationService,
         private messageService: MessageService,
@@ -90,11 +70,12 @@ export class CreateMaterialTransferComponent implements OnInit {
         this.initForm();
         this.onGetProject();
         this.OnGetItem();
+        this.onGetTransferNo();
     }
 
     private initForm(): void {
         this.transferForm = this.fb.group({
-            p_transferno: [{ value: '', disabled: true }],
+            p_transferno: [''],
             p_transferdate: [this.today, Validators.required],
             p_fromsite: [null, Validators.required],
             p_tosite: [null, Validators.required],
@@ -104,29 +85,20 @@ export class CreateMaterialTransferComponent implements OnInit {
         }, { validators: this.sameSiteValidator });
     }
 
-      get statusColor(): string {
+    get statusColor(): string {
         const status = (this.transferForm.get('status')?.value || '').toUpperCase();
         switch (status) {
-            case 'APPROVED':
-                return 'green';
-            case 'SUBMITTED':
-                return 'blue';
-            case 'REJECTED':
-                return 'red';
-            case 'CANCELLED':
-                return 'red';
-            case 'PARTIALLY RECEIVED':
-                return 'purple';
-            case 'DRAFT':
-                return 'grey';
-            case 'APPROVAL PENDING':
-                return 'orange';
-            default:
-                return 'grey';
+            case 'APPROVED': return 'green';
+            case 'SUBMITTED': return 'blue';
+            case 'REJECTED': return 'red';
+            case 'CANCELLED': return 'red';
+            case 'PARTIALLY RECEIVED': return 'purple';
+            case 'DRAFT': return 'grey';
+            case 'APPROVAL PENDING': return 'orange';
+            default: return 'grey';
         }
     }
-    
-    // Prevent From Site === To Site
+
     private sameSiteValidator(group: AbstractControl): ValidationErrors | null {
         const from = group.get('p_fromsite')?.value;
         const to = group.get('p_tosite')?.value;
@@ -135,79 +107,162 @@ export class CreateMaterialTransferComponent implements OnInit {
 
     onGetProject(): void {
         const companyId = this.authService.isLogIntType().companyid.toString();
-        const payload = {
-            returnType: 'ACTIVEPROJECT',
-            returnValue: '',
-            username: '',
-            option1: companyId,
-            option2: null
-        };
+        const payload = { returnType: 'ACTIVEPROJECT', returnValue: '', username: '', option1: companyId, option2: null };
         this.inventoryService.getparameterbased(payload).subscribe({
             next: (res) => {
-                this.siteOptions = res.data;
-                this.toSiteOptions = res.data;
+                this.allSiteOptions = res.data ?? [];
+                this.siteOptions = [...this.allSiteOptions];
+                this.toSiteOptions = [...this.allSiteOptions];
             },
             error: (err) => console.error(err)
         });
     }
 
+    onTransferChange(event: any): void {
+    if (!event.value) return;
+
+    const transferValue = this.transferNoOptions.find((opt) => opt.transfer_id === event.value)?.transfer_no;
+
+    const payload = {
+        p_returntype: 'TRANSFERDETAILS',
+        p_returnvalue: transferValue,
+        p_username: this.companyId
+    };
+
+    this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+        next: (res: any) => {
+            const rows = res.data ?? [];
+            if (rows.length === 0) return;
+
+            const header = rows[0];
+
+            // ── Patch the header fields from the first row ──────────────────
+            this.transferForm.patchValue({
+                p_transferno: header.transfer_id,
+                p_transferdate: header.transfer_date ? new Date(header.transfer_date) : null,
+                p_fromsite: header.from_project_id,
+                p_tosite: header.to_project_id,
+                p_remarks: header.remarks,
+                status: header.status_label ?? header.status
+            });
+
+            // keep the mutual-exclusion filters in sync with the loaded sites
+            this.toSiteOptions = this.allSiteOptions.filter((s) => s.project_id !== header.from_project_id);
+            this.siteOptions = this.allSiteOptions.filter((s) => s.project_id !== header.to_project_id);
+
+            this.transferItems = rows.map((r: any) => ({
+                itemid: r.item_id,
+                categoryname: r.categoryname ?? '',   // ⚠️ not present in this payload — see note below
+                itemname: r.item_name,
+                uom: r.uom_name,
+                uomid: r.uom_id,
+                availableqty: r.available_qty,
+                qtytotransfer: r.transfer_qty,
+                remarks: ''
+            }));
+            this.editingTransferId = header.transfer_id;
+        },
+        error: (err) => console.error(err)
+    });
+}
+
+    // ── Mutual exclusion: From Site and To Site can never be the same ──────
     onFromSiteChange(event: any): void {
+        const fromVal = event.value;
+
         this.transferForm.patchValue({ p_itemdata: null }, { emitEvent: false });
         this.transferItems = [];
+
+        // remove the chosen From Site from the To Site list
+        this.toSiteOptions = this.allSiteOptions.filter((s) => s.project_id !== fromVal);
+
+        // if To Site currently holds that same value, clear it
+        if (fromVal && this.transferForm.get('p_tosite')?.value === fromVal) {
+            this.transferForm.patchValue({ p_tosite: null });
+        }
+
+        // if From Site was cleared, restore full To Site list minus whatever To Site holds
+        if (!fromVal) {
+            const toVal = this.transferForm.get('p_tosite')?.value;
+            this.toSiteOptions = this.allSiteOptions.filter((s) => s.project_id !== toVal);
+        }
     }
 
-     OnGetItem(): void {
-        const paylaod = {
-            p_returntype: 'ITEMALL',
-            p_returnvalue: this.companyId,
-            p_username: this.userId
-        };
-        this.inventoryService.Getreturndropdowndetails(paylaod).subscribe({
+    onToSiteChange(event: any): void {
+        const toVal = event.value;
+
+        // remove the chosen To Site from the From Site list
+        this.siteOptions = this.allSiteOptions.filter((s) => s.project_id !== toVal);
+
+        // if From Site currently holds that same value, clear it
+        if (toVal && this.transferForm.get('p_fromsite')?.value === toVal) {
+            this.transferForm.patchValue({ p_fromsite: null });
+        }
+
+        if (!toVal) {
+            const fromVal = this.transferForm.get('p_fromsite')?.value;
+            this.siteOptions = this.allSiteOptions.filter((s) => s.project_id !== fromVal);
+        }
+    }
+
+    OnGetItem(): void {
+        const payload = { p_returntype: 'ITEMALL', p_returnvalue: this.companyId, p_username: this.userId };
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res) => (this.itemOptions = res.data),
             error: (err) => console.error(err)
         });
     }
 
-    OnItemChange(event: any): void {
-        if (!event.value) return;
-
-        const paylaod = {
-            p_returntype: 'ITEMWISE',
-            p_returnvalue: event.value.toString(),
-            p_username: this.userId
-        };
-        this.inventoryService.Getreturndropdowndetails(paylaod).subscribe({
-            next: (res) => {
-                const detail = Array.isArray(res.data) ? res.data[0] : res.data;
-                if (!detail) return;
-                const item = this.itemOptions.find(i => i.itemid === event.value);
-        if (!item) return;
-
-        const exists = this.transferItems.find(i => i.itemid === item.itemid);
-        if (exists) {
-            this.messageService.add({ severity: 'warn', summary: 'Duplicate Item', detail: `${item.itemname} is already in the list.`, life: 2500 });
-            this.transferForm.get('p_itemdata')?.setValue(null);
-            return;
-        }
-
-        const newRow: TransferItem = {
-            itemid: item.itemid,
-            itemcode: item.itemcode,
-            itemname: item.itemname,
-            uom: item.uom,
-            availableqty: item.availableqty,
-            qtytotransfer: 0,
-            remarks: ''
-        };
-
-        this.transferItems = [...this.transferItems, newRow];
-        this.transferForm.get('p_itemdata')?.setValue(null);
-
-        this.messageService.add({ severity: 'success', summary: 'Item Added', detail: `${item.itemname} added — enter Qty to Transfer.`, life: 2000 });
-            },
+    onGetTransferNo(): void {
+        const payload = { p_returntype: 'TRANSFERLIST', p_returnvalue: this.companyId, p_username: this.userId };
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res) => (this.transferNoOptions = res.data),
             error: (err) => console.error(err)
         });
     }
+
+OnItemChange(event: any): void {
+    if (!event.value) return;
+
+    const payload = { p_returntype: 'ITEMWISE', p_returnvalue: event.value.toString(), p_username: this.userId };
+    this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+        next: (res) => {
+            const detail = Array.isArray(res.data) ? res.data[0] : res.data;
+            if (!detail) return;
+
+            const item = this.itemOptions.find((i) => i.itemid === event.value);
+            if (!item) return;
+            
+            const exists = this.transferItems.find((i) => i.itemid === item.itemid);
+            if (exists) {
+                this.messageService.add({
+                    severity: 'warn',
+                    summary: 'Duplicate Item',
+                    detail: `${item.item_description} is already in the list.`,
+                    life: 2500
+                });
+                this.transferForm.get('p_itemdata')?.setValue(null);
+                return;
+            }
+           
+            const newRow: TransferItem = {
+                itemid:detail.itemid,
+                item_category_id: detail.categoryid,
+                categoryname: detail.categoryname,  
+                itemname: detail.item_description, 
+                uom: detail.uomname,                 
+                uomid: detail.uomid,
+                availableqty: detail.available_qty,
+                qtytotransfer: 0,
+                remarks: ''
+            };
+
+            this.transferItems = [...this.transferItems, newRow];
+            this.transferForm.get('p_itemdata')?.setValue(null);
+        },
+        error: (err) => console.error(err)
+    });
+}
 
     onQtyChange(item: TransferItem): void {
         const qty = Number(item.qtytotransfer || 0);
@@ -228,7 +283,48 @@ export class CreateMaterialTransferComponent implements OnInit {
         });
     }
 
-    onReceived(): void {}
+    onReceived(): void {
+        this.callTransferAction('RECEIVED');
+    }
+
+    onGatePass(): void {
+        this.callTransferAction('GATEPASS');
+    }
+
+    private callTransferAction(operation: 'GATEPASS' | 'RECEIVED'): void {
+        if (!this.editingTransferId) {
+            this.messageService.add({ severity: 'warn', summary: 'No Transfer', detail: 'Submit the transfer first.', life: 3000 });
+            return;
+        }
+        const payload: MaterialTransfer = {
+            p_operation: operation,
+            p_transfer_id: this.editingTransferId,
+            p_transfer_no: this.transferForm.get('p_transferno')?.value ?? null,
+            p_transfer_date: this.datePipe.transform(this.transferForm.get('p_transferdate')?.value, 'yyyy-MM-dd'),
+            p_company_id: Number(this.companyId),
+            p_from_project_id: this.transferForm.get('p_fromsite')?.value,
+            p_to_project_id: this.transferForm.get('p_tosite')?.value,
+            p_remarks: this.transferForm.get('p_remarks')?.value ?? null,
+            p_attachment: this.attachments[0] ?? null,
+            p_items_json: [],
+            p_loginuser: Number(this.userId)
+        };
+
+        this.workService.upsertMaterialTransfer(payload).subscribe({
+            next: (res: any) => {
+                if (res.data.success) {
+                    this.messageService.add({ severity: 'success', summary: operation, detail: res.data.msg });
+                    this.transferForm.patchValue({ p_transferno: res.data.transfer_no,  status: res.data.status });
+                } else {
+                    this.messageService.add({ severity: 'error', summary: 'Error', detail: res.data.msg });
+                }
+            },
+            error: (err) => {
+                console.error(err);
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: `Failed to ${operation}.`, life: 3000 });
+            }
+        });
+    }
 
     // ── Submit / Cancel ────────────────────────────────────────────────────
     onSubmit(): void {
@@ -244,7 +340,7 @@ export class CreateMaterialTransferComponent implements OnInit {
             return;
         }
 
-        const missingQty = this.transferItems.some(i => !i.qtytotransfer || i.qtytotransfer <= 0);
+        const missingQty = this.transferItems.some((i) => !i.qtytotransfer || i.qtytotransfer <= 0);
         if (missingQty) {
             this.messageService.add({ severity: 'warn', summary: 'Invalid Quantity', detail: 'Enter a valid Qty to Transfer for all items.', life: 3000 });
             return;
@@ -263,45 +359,60 @@ export class CreateMaterialTransferComponent implements OnInit {
 
     private saveTransfer(): void {
         const formVal = this.transferForm.getRawValue();
+        const isUpdate = !!this.editingTransferId;
 
-        const payload = {
-            p_transferdate: this.datePipe.transform(formVal.p_transferdate, 'yyyy-MM-dd'),
-            p_fromsite: formVal.p_fromsite,
-            p_tosite: formVal.p_tosite,
-            p_remarks: formVal.p_remarks,
-            p_items_json: this.transferItems.map(i => ({
-                item_id: i.itemid,
-                uom: i.uom,
-                available_qty: i.availableqty,
-                qty_transferred: i.qtytotransfer,
-                remarks: i.remarks
-            })),
-            p_attachments: this.attachments,
+        const itemsPayload: MaterialTransferItemPayload[] = this.transferItems.map((i) => ({
+            item_id: i.itemid,
+            uom_id: i.uomid,
+            item_category_id: i.item_category_id,
+            available_qty: i.availableqty,
+            transfer_qty: i.qtytotransfer
+        }));
+
+        const payload: MaterialTransfer = {
+            p_operation: isUpdate ? 'UPDATE' : 'INSERT',
+            p_transfer_id: isUpdate ? this.editingTransferId : null,
+            p_transfer_no: formVal.p_transferno || null,
+            p_transfer_date: this.datePipe.transform(formVal.p_transferdate, 'yyyy-MM-dd'),
+            p_company_id: Number(this.companyId),
+            p_from_project_id: formVal.p_fromsite,
+            p_to_project_id: formVal.p_tosite,
+            p_remarks: formVal.p_remarks ?? '',
+            p_attachment: this.attachments[0] ?? '',
+            p_items_json: itemsPayload,
             p_loginuser: Number(this.userId)
         };
 
-        // ── Wire your real API here ────────────────────────────────────────
-        // this.inventoryService.upsertMaterialTransfer(payload).subscribe({
-        //   next: (res: any) => { ... },
-        //   error: (err) => { ... }
-        // });
-
-        console.log('Material Transfer Payload:', payload);
-        this.messageService.add({ severity: 'success', summary: 'Submitted', detail: 'Material Transfer submitted successfully.', life: 3000 });
+        this.workService.upsertMaterialTransfer(payload).subscribe({
+            next: (res: any) => {
+                if (res.data.success) {
+                    this.messageService.add({ severity: 'success', summary: res.data.status, detail: res.data.msg });
+                     this.transferForm.patchValue({
+                        p_transferno: res.data.transfer_id ?? res.data.transfer_no ?? '',
+                        status: res.data.status
+                    });
+                    this.onGetTransferNo();
+                } else {
+                    this.messageService.add({ severity: 'error', summary: 'Error', detail: res.data.msg });
+                }
+            },
+            error: (err) => {
+                console.error(err);
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to submit Material Transfer.', life: 3000 });
+            }
+        });
     }
 
     onCancel(): void {
         this.router.navigate(['/layout/issue-item/material-transfer']);
     }
 
-    onGatePass(): void {
-        // Implement the logic for generating a gate pass here
-        console.log('Gate Pass button clicked');
-    }
-
     onReset(): void {
-        this.transferForm.reset();
+        this.transferForm.reset({ p_transferdate: this.today });
         this.transferItems = [];
         this.attachments = [];
+        this.siteOptions = [...this.allSiteOptions];
+        this.toSiteOptions = [...this.allSiteOptions];
+        this.editingTransferId = null;
     }
 }

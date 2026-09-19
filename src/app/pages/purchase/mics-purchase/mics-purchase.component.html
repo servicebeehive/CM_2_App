@@ -109,9 +109,8 @@
                 <p-table [value]="items.controls" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" class="p-datatable-gridlines" styleClass="material-forcast">
                     <ng-template pTemplate="header">
                         <tr class="bg-yellow-400">
-                            <th>#</th>
-                            <th>Item / Description</th>
-                            <th>Category</th>
+                            <th>Item Category</th>
+                            <th>Item Name</th>
                             <th>UOM</th>
                             <th class="text-right">Quantity</th>
                             <th class="text-right">Rate (₹)</th>
@@ -122,14 +121,13 @@
 
                     <ng-template pTemplate="body" let-row let-i="rowIndex">
                         <tr [formGroup]="row">
-                            <td class="text-xs md:text-sm">{{ i + 1 }}</td>
-
+                            
                             <td class="text-xs md:text-sm">
-                                {{ row.get('item_description')?.value || '-' }}
+                                {{ row.get('category')?.value || '-' }}
                             </td>
 
                             <td class="text-xs md:text-sm">
-                                {{ row.get('category')?.value || '-' }}
+                                {{ row.get('item_description')?.value || '-' }}
                             </td>
 
                             <td class="text-xs md:text-sm">

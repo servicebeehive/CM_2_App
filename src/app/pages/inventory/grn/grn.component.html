@@ -263,11 +263,11 @@
                 </div>
             </div>
 
-            <p-table [value]="itemOptionslist" dataKey="purchasedetailid" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines p-datatable-sm">
+            <p-table [value]="itemOptionslist" dataKey="purchasedetailid" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" [responsiveLayout]="'scroll'" class="p-datatable-gridlines p-datatable-sm grn">
                 <ng-template pTemplate="header">
                     <tr class="bg-yellow-400">
                         <th>Item Category</th>
-                        <th>Item Description</th>
+                        <th>Item Name</th>
                         <th>UOM</th>
                         <th class="text-right">PO Qty</th>
                         <th class="text-right">Prev Received Qty</th>
@@ -324,13 +324,12 @@
                 <ng-template pTemplate="footer">
                     <tr>
                         <td colspan="3" class="font-semibold">Total</td>
-                        <td class="text-right font-semibold">{{ totalPoQty | number: '1.0-2' }}</td>
-                        <td class="text-right font-semibold">{{ totalPreviouslyReceivedQty | number: '1.0-2' }}</td>
-                        <td class="text-right font-semibold">{{ totalPendingQty | number: '1.0-2' }}</td>
-                        <td class="text-right font-semibold">{{ totalReceivedQty | number: '1.0-2' }}</td>
-                        <td class="text-right font-semibold">{{ totalAcceptedQty | number: '1.0-2' }}</td>
-                        <td class="text-right font-semibold">{{ totalRejectedQty | number: '1.0-2' }}</td>
-                        <td></td>
+                        <td class="font-semibold">{{ totalPoQty | number: '1.0-2' }}</td>
+                        <td class="font-semibold">{{ totalPreviouslyReceivedQty | number: '1.0-2' }}</td>
+                        <td class="font-semibold">{{ totalPendingQty | number: '1.0-2' }}</td>
+                        <td class="font-semibold">{{ totalReceivedQty | number: '1.0-2' }}</td>
+                        <td class="font-semibold">{{ totalAcceptedQty | number: '1.0-2' }}</td>
+                        <td class="font-semibold">{{ totalRejectedQty | number: '1.0-2' }}</td>
                         <td></td>
                     </tr>
                 </ng-template>

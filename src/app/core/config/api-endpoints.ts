@@ -51,7 +51,8 @@ export const API_ENDPOINTS = {
         upsertgrnremarks: '/beeware/upsert_grn_remarks',
         upsertmaterialissue: '/beeware/upsert_material_issue',
         upsertmaterialindent: '/beeware/upsert_material_indent',
-        upsertmaterialreturn: '/beeware/upsert_material_return'
+        upsertmaterialreturn: '/beeware/upsert_material_return',
+        upsertmaterialtransfer: '/beeware/upsert_material_transfer'
     },
     sales: {
         getcalculatedMRP: '/beeware/getcalculatedMRP'
