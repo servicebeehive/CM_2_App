@@ -10,14 +10,27 @@ export const MENU_MODEL: any[] = [
             {
                 label: 'Dashboard',
                 icon: 'pi pi-fw pi-home',
-                routerLink: ['/layout/dashboard']
-            },
+                routerLink: ['/layout/dashboard'],
+                accessKey: 'Dashboard',
+        items: [
             {
                 label: 'Main Dashboard',
                 icon: 'pi pi-fw pi-home',
                 routerLink: ['/layout/dashboard']
+            },
+            {
+                label: 'Management Dashboard',
+                icon: 'pi pi-fw pi-chart-bar',
+                routerLink: ['/layout/management-dashboard']
+            },
+            {
+                label: 'Operational Dashboard',
+                icon: 'pi pi-fw pi-chart-line',
+                routerLink: ['/layout/operational-dashboard']
             }
         ]
+    }
+]
     },
     {
         label: 'PURCHASE',
@@ -37,7 +50,7 @@ export const MENU_MODEL: any[] = [
                     {
                         label: 'Material Requisition',
                         icon: 'pi pi-fw pi pi-sparkles',
-                        routerLink: ['/layout/purchase/material-requisition']
+                        routerLink: ['/layout/purchase/material-requisition-list']
                     },
                     {
                         label: 'Request For Quote',
@@ -52,12 +65,12 @@ export const MENU_MODEL: any[] = [
                      {
                         label: 'Purchase Order',
                         icon: 'pi pi-fw pi pi-send',
-                        routerLink: ['/layout/purchase/purchase-order']
+                        routerLink: ['/layout/purchase/purchase-order-list']
                     },
                     {
                         label: 'Misc Purchase',
                         icon: 'pi pi-fw pi-wallet',
-                        routerLink: ['/layout/purchase/mics-purchase']
+                        routerLink: ['/layout/purchase/mics-purchase-list']
                     }
                 ]
             }
@@ -91,7 +104,7 @@ export const MENU_MODEL: any[] = [
                     {
                         label: 'GRN',
                         icon: 'pi pi-fw pi-inbox',
-                        routerLink: ['/layout/inventory/grn']
+                        routerLink: ['/layout/inventory/grn-list']
                     }
                 ]
             }
@@ -195,11 +208,6 @@ export const MENU_MODEL: any[] = [
                         // icon: 'pi pi-fw pi-exchange',
                         icon: 'pi pi-fw pi-sync',
                         routerLink: ['/layout/issue-item/material-transfer']
-                    },
-                    {
-                        label: 'Material Transfer Create',
-                        icon: 'pi pi-fw pi-file-plus',
-                        routerLink: ['/layout/issue-item/create-material-transfer']
                     },
                     {
                         label: 'Invoice',

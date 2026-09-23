@@ -9,6 +9,7 @@ import { TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { DatePickerModule } from 'primeng/datepicker';
+import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { InventoryService } from '@/core/services/inventory.service';
@@ -17,10 +18,11 @@ import { WorkService } from '@/core/services/work.service';
 import { MaterialRequisitionPayload } from '@/core/models/authmodel/work.model';
 import { environment } from '@/environments/environment';
 import { ShareService } from '@/core/services/shared.service';
+import { getStatusColor } from '@/shared/utils/status-color';
 
 @Component({
     selector: 'app-material-requisition',
-    imports: [CommonModule, ReactiveFormsModule, FormsModule, TableModule, InputTextModule, TextareaModule, ButtonModule, SelectModule, DropdownModule, DatePickerModule, ConfirmDialogModule],
+    imports: [CommonModule, ReactiveFormsModule, FormsModule, TableModule, InputTextModule, TextareaModule, ButtonModule, SelectModule, DropdownModule, DatePickerModule, DialogModule, ConfirmDialogModule],
     templateUrl: './material-requisition.component.html',
     styleUrl: './material-requisition.component.scss',
     providers: [ConfirmationService, DatePipe]
@@ -37,7 +39,7 @@ export class MaterialRequisitionComponent {
     uomlist: any[] = [];
     requisitionOptions: any[] = [];
     draftRequisitionOptions: any[] = [];
-    projectOptions: { label: string; value: any }[] = [{ label: 'Project A', value: 'Project A' }];
+    projectOptions: any[] = [];
     departmentOptions: any[] = [];
     periodOptions: any[] = [];
     towerOptions: any[] = [];
@@ -48,7 +50,6 @@ export class MaterialRequisitionComponent {
         { label: 'Medium', value: 'Medium' },
         { label: 'Low', value: 'Low' }
     ];
-    costCenterOptions: any[] = [{ label: 'CC-001 - Civil Works', value: 'CC-001' }];
     itemDetailOptions: any[] = [];
     requestedByOptions: any[] = [];
     workList: any[] = [];
@@ -59,13 +60,18 @@ export class MaterialRequisitionComponent {
     approvedOnDate = '';
     approved_on: Date | null = null;
     approved_name = '';
+    approvalLogVisible = false;
+    approvalLogRows: any[] = [];
+    isLoadingApprovalLog = false;
     userId = '';
     companyId = '';
     private requestedMrNo: string | null = null;
+    private requestedMrId: string | null = null;
     private fromRfqView = false;
     private fromApprovalView = false;
     private fromPurchaseOrderView = false;
     private fromComparisonView = false;
+    private fromTransactionList = false;
     private approvalType: string | null = null;
     private approvalRequest: string | null = null;
 
@@ -85,10 +91,12 @@ export class MaterialRequisitionComponent {
         this.companyId = this.authService.isLogIntType().companyid.toString();
         this.userId = this.authService.isLogIntType().userid.toString();
         this.requestedMrNo = this.route.snapshot.queryParamMap.get('mfNo');
+        this.requestedMrId = this.route.snapshot.queryParamMap.get('mfId');
         this.fromRfqView = this.route.snapshot.queryParamMap.get('fromRfqView') === 'true';
         this.fromApprovalView = this.route.snapshot.queryParamMap.get('fromApprovalView') === 'true';
         this.fromPurchaseOrderView = this.route.snapshot.queryParamMap.get('fromPurchaseOrderView') === 'true';
         this.fromComparisonView = this.route.snapshot.queryParamMap.get('fromComparisonView') === 'true';
+        this.fromTransactionList = this.route.snapshot.queryParamMap.get('fromTransactionList') === 'true';
         this.approvalType = this.route.snapshot.queryParamMap.get('p_type');
         this.approvalRequest = this.route.snapshot.queryParamMap.get('p_request');
         this.loadAllDropdowns();
@@ -97,7 +105,7 @@ export class MaterialRequisitionComponent {
             p_mf_id: [null],
             p_requisitionno: [null],
             p_draft_requisitionno: [null],
-            p_mrdate: [{ value: this.today, disabled: true }],
+            p_mrdate: [this.today],
             p_project: [null, Validators.required],
             p_department: [null],
             p_tower: [null],
@@ -150,37 +158,22 @@ export class MaterialRequisitionComponent {
     }
 
     get statusColor(): string {
-        const status = (this.forecastForm.get('status')?.value || '').toUpperCase();
-        switch (status) {
-            case 'APPROVED':
-                return 'green';
-            case 'SUBMITTED':
-                return 'blue';
-            case 'REJECTED':
-                return 'red';
-            case 'DRAFT':
-                return 'grey';
-            case 'SENDBACK':
-                return 'orange';
-            case 'APPROVAL PENDING':
-                return 'orange';
-            default:
-                return 'grey';
-        }
+        return getStatusColor(this.forecastForm.get('status')?.value);
     }
 
     get isFromRfqView(): boolean {
-        return !!this.requestedMrNo;
+        return this.fromRfqView;
     }
 
     get showRfqBackButton(): boolean {
-        return this.fromRfqView || this.fromApprovalView || this.fromPurchaseOrderView || this.fromComparisonView;
+        return this.fromRfqView || this.fromApprovalView || this.fromPurchaseOrderView || this.fromComparisonView || this.fromTransactionList;
     }
 
     get backRoute(): string[] {
         if (this.fromApprovalView) return ['/layout/action/my-approval'];
         if (this.fromPurchaseOrderView) return ['/layout/purchase/purchase-order'];
         if (this.fromComparisonView) return ['/layout/purchase/vendor-comparison'];
+        if (this.fromTransactionList) return ['/layout/purchase/material-requisition-list'];
         return ['/layout/purchase/rfq'];
     }
 
@@ -327,11 +320,12 @@ export class MaterialRequisitionComponent {
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res) => {
                 this.requisitionOptions = res.data;
-                if (this.requestedMrNo) {
-                    const matched = this.requisitionOptions.find((item: any) => String(item.mf_no ?? item.mr_no) === this.requestedMrNo);
-                    if (matched) {
-                        this.onDraftChange({ value: matched.mf_id });
-                    }
+                if (this.requestedMrNo || this.requestedMrId) {
+                    const matched = this.requisitionOptions.find((item: any) =>
+                        (this.requestedMrId && String(item.mf_id) === this.requestedMrId) ||
+                        (this.requestedMrNo && String(item.mf_no ?? item.mr_no) === this.requestedMrNo)
+                    );
+                    if (matched) this.onDraftChange({ value: matched.mf_id });
                 }
             },
             error: (err) => console.error(err)
@@ -540,8 +534,9 @@ export class MaterialRequisitionComponent {
                                 uom_id: row.uom_id,
                                 uomname: row.uomname ?? master?.uom ?? '',
                                 buffer_stock: row.buffer_stock,
-                                currentstock: row.available_stock,
+                                currentstock: row.available_qty,
                                 pending_qty: row.pending_qty,
+                                total_mr_unapproved_qty: row.total_mr_unapproved_qty,
                                 required_qty: row.required_qty,
                                 remarks: row.itemremark ?? ''
                             })
@@ -585,8 +580,9 @@ export class MaterialRequisitionComponent {
         uom_id: [data?.uomid ?? data?.uom_id ?? null],
         uom: [data?.uomname ?? ''],
         buffer_stock: [data?.buffer_stock ?? 0],
-        available_stock: [data?.currentstock ?? 0],
+        available_stock: [data?.available_qty ?? 0],
         pending_qty: [data?.pending_qty ?? 0],
+        total_mr_unapproved_qty: [data?.total_mr_unapproved_qty ?? 0],
         required_qty: [data?.required_qty ?? '', Validators.min(0)],
         procure_qty: [{ value: 0, disabled: true }],
         remarks: [data?.remarks ?? null]
@@ -606,7 +602,7 @@ export class MaterialRequisitionComponent {
     private recalculateProcureQty(row: FormGroup): void {
         const forecastQty = Number(row.get('required_qty')?.value) || 0;
         const pendingQty = Number(row.get('pending_qty')?.value) || 0;
-        const availableQty = Number(row.get('available_stock')?.value) || 0;
+        const availableQty = Number(row.get('available_qty')?.value) || 0;
 
         const procureQty = Math.max(forecastQty - pendingQty - availableQty, 0);
         row.get('procure_qty')?.setValue(procureQty, { emitEvent: false });
@@ -688,10 +684,10 @@ export class MaterialRequisitionComponent {
                 item_id: row.get('item_id')?.value,
                 uom_id: row.get('uom_id')?.value ?? null,
                 buffer_stock: row.get('buffer_stock')?.value ?? 0,
-                available_stock: row.get('available_stock')?.value ?? 0,
+                available_stock: row.get('available_qty')?.value ?? 0,
                 pending_qty: row.get('pending_qty')?.value ?? 0,
                 required_qty: row.get('required_qty')?.value ?? 0,
-                total_mr_qty: row.get('total_mr_qty')?.value ?? 0,
+                total_mr_qty: row.get('total_mr_unapproved_qty')?.value ?? 0,
                 required_qty_net: row.get('required_qty_net')?.value ?? 0,
                 remarks: row.get('remarks')?.value || ''
             })),
@@ -837,7 +833,7 @@ export class MaterialRequisitionComponent {
         event.stopPropagation();
 
         this.confirmationService.confirm({
-            message: `Delete draft ${item.mf_no}? This cannot be undone.`,
+            message: `Do you want to delete Draft ${item.mf_no}? This cannot be undone.`,
             header: 'Confirm Delete',
             acceptLabel: 'Yes',
             rejectLabel: 'Cancel',
@@ -883,5 +879,31 @@ export class MaterialRequisitionComponent {
         const cleanPath = raw.split('?')[0];
         const segments = cleanPath.split('/');
         return { name: segments[segments.length - 1] || 'Attached file', base64: '' };
+    }
+
+    log(): void {
+        const requisitionNo = this.forecastForm.get('p_requisitionno')?.value;
+        if (!requisitionNo) {
+            this.messageService.add({ severity: 'warn', summary: 'Approval Log', detail: 'Select a material requisition first.', life: 2500 });
+            return;
+        }
+
+        this.approvalLogVisible = true;
+        this.isLoadingApprovalLog = true;
+        this.approvalLogRows = [];
+        this.inventoryService.Getreturndropdowndetails({
+            p_returntype: 'APPROVALLOG',
+            p_returnvalue: requisitionNo,
+            p_username: 'MR'
+        }).subscribe({
+            next: (res: any) => {
+                this.approvalLogRows = Array.isArray(res?.data) ? res.data : [];
+                this.isLoadingApprovalLog = false;
+            },
+            error: () => {
+                this.isLoadingApprovalLog = false;
+                this.messageService.add({ severity: 'error', summary: 'Approval Log', detail: 'Unable to load approval history.', life: 3000 });
+            }
+        });
     }
 }

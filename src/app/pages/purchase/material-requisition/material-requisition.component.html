@@ -35,9 +35,9 @@
                         </div>
                     </ng-template>
                 </p-dropdown>
-
+ <button pButton type="button" label="Draft" class="p-button-warning" (click)="submitDraft()" [disabled]="isReadOnlyView || forecastForm.invalid || isSubmitDisabled() || isFromRfqView  || this.forecastForm.get('p_requisitionno')?.value"></button>
                 <button pButton type="submit" label="Submit" class="p-button-primary" [disabled]="isReadOnlyView || forecastForm.invalid || isSubmitDisabled() || isFromRfqView"></button>
-                <button pButton type="button" label="Draft" class="p-button-warning" (click)="submitDraft()" [disabled]="isReadOnlyView || forecastForm.invalid || isSubmitDisabled() || isFromRfqView"></button>
+                 <button pButton type="button" label="Log" class="p-button-warning" (click)="log()"></button>
                 <button pButton type="button" label="Reset" class="p-button-secondary" (click)="onReset()"></button>
                 <button *ngIf="showRfqBackButton" pButton type="button" label="Back" icon="pi pi-arrow-left" class="p-button-outlined" (click)="returnToSource()"></button>
             </div>
@@ -65,7 +65,7 @@
 
                 <div class="flex flex-col">
                     <label class="font-medium mb-1">MR Date <span class="text-red-500">*</span></label>
-                    <p-datePicker fluid [showIcon]="true" formControlName="p_mrdate" dateFormat="dd-mm-yy" placeholder="Select date" [disabled]="true"></p-datePicker>
+                    <p-datePicker fluid [showIcon]="true" formControlName="p_mrdate" dateFormat="dd-mm-yy" placeholder="Select date" [maxDate]="today"></p-datePicker>
                 </div>
 
                 <div class="flex flex-col">
@@ -80,6 +80,11 @@
                         [showClear]="true"
                         filterPlaceholder="Search Department"
                     ></p-dropdown>
+                </div>
+
+                 <div class="flex flex-col">
+                    <label class="font-medium mb-1">Requested By <span class="text-red-500">*</span></label>
+                    <p-dropdown [options]="requestedByOptions" optionLabel="fullname" optionValue="userid" placeholder="Select requester" formControlName="p_requestedby" [filter]="true" [showClear]="true"></p-dropdown>
                 </div>
 
                 <div class="flex flex-col">
@@ -110,11 +115,6 @@
                 <div class="flex flex-col">
                     <label class="font-medium mb-1">Pour</label>
                     <p-dropdown [options]="pourOptions" optionLabel="label" optionValue="value" placeholder="Select Pour" formControlName="p_pour" [filter]="true" [showClear]="true"></p-dropdown>
-                </div>
-
-                <div class="flex flex-col">
-                    <label class="font-medium mb-1">Requested By <span class="text-red-500">*</span></label>
-                    <p-dropdown [options]="requestedByOptions" optionLabel="fullname" optionValue="userid" placeholder="Select requester" formControlName="p_requestedby" [filter]="true" [showClear]="true"></p-dropdown>
                 </div>
 
                 <div class="flex flex-col">
@@ -162,7 +162,7 @@
                         <ng-template #item let-details>
                             <div class="flex items-center justify-between w-full">
                                 <div class="text-sm md:text-base">{{ details.itemname }}</div>
-                                <span class="text-xs md:text-sm" [ngClass]="details.currentstock == 0 ? 'text-red-500' : 'text-green-600'"> Stock: {{ details.currentstock }} </span>
+                                <span class="text-xs md:text-sm" [ngClass]="details.available_stock == 0 ? 'text-red-500' : 'text-green-600'"> Stock: {{ details.available_stock }} </span>
                             </div>
                         </ng-template>
                     </p-select>
@@ -194,7 +194,7 @@
 
             <div class="mt-4 md:mt-6" (click)="keepBarcodeFocus($event)">
                 <input #barcodeInput type="text" class="absolute opacity-0 pointer-events-none" styleClass="material-requisition" placeholder="Type barcode / SKU and press Enter" (keydown.enter)="onBarcodeScan($event)" />
-                <p-table [value]="itemArray.controls" dataKey="item_id" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" appendTo="body" class="p-datatable-gridlines" styleClass="material-forcast">
+                <p-table [value]="itemArray.controls" dataKey="item_id" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" appendTo="body" class="p-datatable-gridlines" styleClass="purchase-items-table">
                     <ng-template pTemplate="header">
                         <tr class="bg-yellow-400">
                             <th>Item Category</th>
@@ -202,10 +202,10 @@
                             <th>UOM</th>
                             <th>Buffer Stock</th>
                             <th>Available Stock</th>
-                            <th>Pending Qty</th>
-                            <th>Total MR Qty</th>
+                            <th>Pending PO Qty</th>
+                            <th>Unapproved MR Qty</th>
                             <th>Required Qty</th>
-                            <th>Required Qty (Net)</th>
+                            <!-- <th>Required Qty (Net)</th> -->
                             <th *ngIf="!isReadOnlyView" class="text-center">Action</th>
                         </tr>
                     </ng-template>
@@ -219,13 +219,13 @@
                             <td class="text-xs md:text-sm">{{ row.get('buffer_stock')?.value }}</td>
                             <td class="text-xs md:text-sm">{{ row.get('available_stock')?.value }}</td>
                             <td class="text-xs md:text-sm">{{ row.get('pending_qty')?.value }}</td>
-                            <td class="text-xs md:text-sm">{{ row.get('pending_qty')?.value }}</td>
+                            <td class="text-xs md:text-sm">{{ row.get('total_mr_unapproved_qty')?.value }}</td>
                             <td>
                                 <input *ngIf="!isReadOnlyView" pInputText type="number" formControlName="required_qty" placeholder="0" />
-                                <span *ngIf="isReadOnlyView" class="text-xs md:text-sm">{{ row.get('required_qty')?.value }}</span>
+                                <span *ngIf="isReadOnlyView" class="text-xs md:text-sm w-full">{{ row.get('required_qty')?.value }}</span>
                             </td>
 
-                            <td class="text-xs md:text-sm">{{ row.get('procure_qty')?.value }}</td>
+                            <!-- <td class="text-xs md:text-sm">{{ row.get('procure_qty')?.value }}</td> -->
 
                             <td *ngIf="!isReadOnlyView" class="text-center">
                                 <i class="pi pi-trash text-red-500 cursor-pointer" (click)="removeItem(i)"></i>
@@ -242,4 +242,25 @@
     </form>
 
     <p-confirmDialog></p-confirmDialog>
+
+    <p-dialog header="Approval Log" [(visible)]="approvalLogVisible" [modal]="true" [draggable]="false" [resizable]="false" [style]="{ width: '75rem', maxWidth: '95vw' }">
+        <p-table [value]="approvalLogRows" [loading]="isLoadingApprovalLog" [responsiveLayout]="'scroll'" class="p-datatable-gridlines p-datatable-sm">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th>Transaction No</th><th>To Status</th><th>Approval Level</th><th>Approver Name</th><th>Remarks</th><th>Action On</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-log>
+                <tr>
+                    <td>{{ log['MR No'] || log.mr_no || forecastForm.get('p_requisitionno')?.value || '-' }}</td>
+                    <td>{{ log['To Status'] || log.to_status || '-' }}</td>
+                    <td>{{ log['Approval Level'] ?? log.approval_level ?? '-' }}</td>
+                    <td>{{ log['Approver Name'] || log.approver_name || log.approver || log['Approver ID'] || '-' }}</td>
+                    <td>{{ log.remarks || log.Remarks || '-' }}</td>
+                    <td>{{ (log['Action On'] || log.action_on) | date: 'dd/MM/yyyy HH:mm' }}</td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage"><tr><td colspan="6" class="text-center text-400 italic py-5">No approval history found</td></tr></ng-template>
+        </p-table>
+    </p-dialog>
 </div>

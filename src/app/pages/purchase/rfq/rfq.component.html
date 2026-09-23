@@ -41,7 +41,7 @@
                 </p-dropdown>
 
                 <button pButton type="button" label="Draft" class="p-button-warning" (click)="submitDraft()" [disabled]="hasRfqValue || rfqForm.invalid || rfqList.length === 0"></button>
-                <button pButton type="button" label="View" class="p-button-warning" (click)="openMaterialReqDialog()"></button>
+                <button pButton type="button" label="View" class="p-button-warning" (click)="openMaterialReqDialog()" [disabled]="!this.rfqForm.get('p_rfqno')?.value"></button>
                 <button pButton type="button" label="Mail" class="p-button-warning" (click)="openGmailReqDialog()" [disabled]="!rfqForm.get('p_rfqno')?.value"></button>
                 <button pButton type="submit" label="Submit" class="p-button-primary" [disabled]="hasRfqValue || rfqForm.invalid || rfqList.length === 0 || !hasValidVendorSelection"></button>
                 <button pButton type="button" label="Reset" class="p-button-secondary" (click)="onReset()"></button>
@@ -67,7 +67,7 @@
 
                 <div class="flex flex-col">
                     <label class="font-medium mb-1">RFQ Date <span class="text-red-500">*</span></label>
-                    <p-datePicker fluid [showIcon]="true" formControlName="p_rfqdate" dateFormat="dd-mm-yy" placeholder="Select date"></p-datePicker>
+                    <p-datePicker fluid [showIcon]="true" formControlName="p_rfqdate" dateFormat="dd-mm-yy" placeholder="Select date" [maxDate]="this.today"></p-datePicker>
                 </div>
 
                 <!-- <div class="flex flex-col">
@@ -139,7 +139,7 @@
                     [rowsPerPageOptions]="[10, 20, 50]"
                     [loading]="isLoadingItems"
                     class="p-datatable-gridlines"
-                    styleClass="material-forcast"
+                    styleClass="purchase-items-table"
                 >
                     <ng-template pTemplate="header">
                         <tr class="bg-yellow-400">

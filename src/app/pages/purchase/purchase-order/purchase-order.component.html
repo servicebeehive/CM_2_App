@@ -32,6 +32,7 @@
                 <button pButton *ngIf="this.poForm.get('p_pono')?.value === null" type="button" label="Vendor" class="p-button-warning" pTooltip="Vendor comparison" tooltipPosition="top" (click)="openVendorDialog()"></button>
                 <button pButton *ngIf="this.poForm.get('p_pono')?.value !== null" type="button" [label]="cancelButtonLabel" class="p-button-warning w-full md:w-auto" (click)="cancelPO()" [disabled]="this.poForm.get('status')?.value==='CANCELLED' || this.poForm.get('status')?.value==='FULLY_RECEIVED'"></button>
                 <button pButton type="button" label="View" class="p-button-warning w-full md:w-auto" (click)="openMrDialog()"></button>
+                <button pButton type="button" label="Log" icon="pi pi-file" class="p-button-warning w-full md:w-auto" (click)="openApprovalLog()"></button>
 
                 <button pButton type="button" label="Mail" class="p-button-warning w-full md:w-auto" (click)="openVendorMail()" [disabled]="!poForm.get('p_pono')?.value"></button>
 
@@ -43,11 +44,12 @@
 
                 <!-- Print -->
                 <button pButton type="button" label="Print" class="p-button-warning w-full md:w-auto" (click)="printPO()" [disabled]="!poForm.get('p_pono')?.value"></button>
-                <!-- Back to source view (e.g. My Approval) -->
-                <button *ngIf="showBackButton" pButton type="button" label="Back" icon="pi pi-arrow-left" class="p-button-outlined" (click)="returnToSource()"></button>
 
                 <!-- Reset -->
                 <button pButton type="button" label="Reset" class="p-button-secondary w-full md:w-auto" (click)="onReset()"></button>
+
+                <!-- Back to source view (e.g. My Approval) -->
+                <button *ngIf="showBackButton" pButton type="button" label="Back" icon="pi pi-arrow-left" class="p-button-outlined" (click)="returnToSource()"></button>
             </div>
         </div>
 
@@ -136,7 +138,7 @@
                 <p-tabpanels>
                     <!-- ── TAB 0: ITEMS (always visible) ──────────────── -->
                     <p-tabpanel value="0">
-                        <p-table [value]="poItemArray.controls" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" appendTo="body" class="p-datatable-gridlines p-datatable-sm purchase-order">
+                        <p-table [value]="poItemArray.controls" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" appendTo="body" class="p-datatable-gridlines p-datatable-sm purchase-order purchase-items-table">
                             <ng-template pTemplate="header">
                                 <tr class="bg-yellow-400">
                                     <th class="text-right">Item Category</th>
@@ -987,5 +989,26 @@
                 <td colspan="5" class="text-center text-400 italic py-6 text-sm">No material requisitions found for selected site.</td>
             </tr>
         </ng-template>
+    </p-table>
+</p-dialog>
+
+<p-dialog header="Approval Log" [(visible)]="approvalLogVisible" [modal]="true" [draggable]="false" [resizable]="false" [style]="{ width: '75rem', maxWidth: '95vw' }">
+    <p-table [value]="approvalLogRows" [loading]="isLoadingApprovalLog" [responsiveLayout]="'scroll'" class="p-datatable-gridlines p-datatable-sm">
+        <ng-template pTemplate="header">
+            <tr>
+                <th>Transaction No</th><th>To Status</th><th>Approval Level</th><th>Approver Name</th><th>Remarks</th><th>Action On</th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-log>
+            <tr>
+                <td>{{ log['PO No'] || log.po_no || log.pono || poForm.get('p_pono')?.value || '-' }}</td>
+                <td>{{ log['To Status'] || log.to_status || '-' }}</td>
+                <td>{{ log['Approval Level'] ?? log.approval_level ?? '-' }}</td>
+                <td>{{ log['Approver Name'] || log.approver_name || log.approver || log['Approver ID'] || '-' }}</td>
+                <td>{{ log.remarks || log.Remarks || '-' }}</td>
+                <td>{{ (log['Action On'] || log.action_on) | date: 'dd/MM/yyyy HH:mm' }}</td>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage"><tr><td colspan="6" class="text-center text-400 italic py-5">No approval history found</td></tr></ng-template>
     </p-table>
 </p-dialog>

@@ -21,6 +21,7 @@ import { WorkService } from '@/core/services/work.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { environment } from '@/environments/environment';
 import { ShareService } from '@/core/services/shared.service';
+import { getStatusColor } from '@/shared/utils/status-color';
 
 @Component({
     selector: 'app-rfq',
@@ -94,7 +95,7 @@ export class RfqComponent implements OnInit {
             p_rfq_id: [null],
             p_rfqno: [null],
             p_draft_rfqno: [null],
-            p_rfqdate: [{ value: this.today, disabled: true }, Validators.required],
+            p_rfqdate: [this.today, Validators.required],
             // p_site: [null, Validators.required],
             // p_rfq_desc: [''],
             p_remarks: [''],
@@ -184,19 +185,7 @@ export class RfqComponent implements OnInit {
     }
 
      get statusColor(): string {
-        const status = (this.rfqForm.get('p_status')?.value || '').toUpperCase();
-        switch (status) {
-            case 'APPROVED':
-                return 'green';
-            case 'SUBMITTED':
-                return 'blue';
-            case 'REJECTED':
-                return 'red';
-            case 'DRAFT':
-                return 'grey';
-            default:
-                return 'grey';
-        }
+        return getStatusColor(this.rfqForm.get('p_status')?.value);
     }
 
     // private upsertRfqDropdownOption(options: any[], rfqId: number, rfqNo: string): void {
@@ -766,7 +755,7 @@ private buildMrNoPayload(): string {
             this.messageService.add({
                 severity: 'warn',
                 summary: 'Select RFQ No',
-                detail: 'Select an RFQ before opening Gmail.',
+                detail: 'Select RFQ before opening Gmail.',
                 life: 2500
             });
             return;
@@ -1226,7 +1215,7 @@ private buildMrNoPayload(): string {
         event.stopPropagation();
 
         this.confirmationService.confirm({
-            message: `Delete draft ${item.rfqno}? This cannot be undone.`,
+            message: `Do you want to delete Draft ${item.rfqno}? This cannot be undone.`,
             header: 'Confirm Delete',
             acceptLabel: 'Yes',
             rejectLabel: 'Cancel',

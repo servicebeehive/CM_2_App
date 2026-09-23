@@ -61,7 +61,7 @@ import { AuthService } from '@/core/services/auth.service';
                     <!-- Actual Card Content -->
                     <ng-template #cardContent>
                         <span class="font-semibold text-lg flex items-center gap-2">
-                            <i [class]="card.icon + ' text-2xl text-primary'"></i>
+                            <i [class]="card.icon + 'text-2xl text-primary'"></i>
                             {{ card.label }}
                         </span>
 

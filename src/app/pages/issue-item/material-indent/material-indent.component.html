@@ -33,8 +33,9 @@
                     </ng-template>
                 </p-dropdown>
                 <button pButton type="button" label="Draft" class="p-button-warning" (click)="draftSubmit()" [disabled]="!hasCopyableData()"></button>
-                <button pButton type="submit" label="Submit" class="p-button-warning" [disabled]="minForm.invalid || issueItems.length === 0"></button>
+                <button pButton type="submit" label="Submit" class="p-button-warning" [disabled]="minForm.invalid || issueItems.length === 0 || hasZeroQtyItem()"></button>
                 <button pButton type="button" label="Reset" class="p-button-secondary" (click)="onReset()"></button>
+                <button pButton type="button" label="Back" icon="pi pi-arrow-left" class="p-button-secondary" (click)="onBack()"></button>
             </div>
         </div>
         <!-- ================================
@@ -158,7 +159,7 @@
                             </span>
                             <div class="flex gap-2 text-xs flex-shrink-0">
                                 <span class="text-500">{{ item.itemcode }}</span>
-                                <span [ngClass]="item.availableqty > 0 ? 'text-green-600 font-semibold' : 'text-red-500 font-semibold'"> Avail: {{ item.availableqty }} </span>
+                                <span [ngClass]="item.available_stock > 0 ? 'text-green-600 font-semibold' : 'text-red-500 font-semibold'"> Stock: {{ item.available_stock }} </span>
                                 <span class="text-400">{{ item.uom }}</span>
                             </div>
                         </div>

@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { StatsWidget } from './ecommerce/statswidget';
 import { RecentSalesWidget } from './ecommerce/recentsaleswidget';
 import { RevenueOverViewWidget } from './ecommerce/revenueoverviewwidget';
@@ -38,9 +39,21 @@ import { SaleMangerDashboard } from './salemanagerdashboard';
         InputIconModule
     ],
     template: `
-        @if (role === 'Admin' || role === 'StoreOwner') {
+        <!-- @if (role === 'Admin' || role === 'StoreOwner') { -->
             <div>
-                <p-dropdown [options]="filterOptions" [(ngModel)]="selectedFilter" optionLabel="label" optionValue="value" placeholder="Filter" (onChange)="onFilterChange($event)" styleClass="w-40 mb-4"></p-dropdown>
+                <div class="flex flex-wrap items-center gap-3 mb-4">
+                    <p-dropdown [options]="filterOptions" [(ngModel)]="selectedFilter" optionLabel="label" optionValue="value" placeholder="Filter" (onChange)="onFilterChange($event)" styleClass="w-40"></p-dropdown>
+
+                    <p-dropdown
+                        [options]="dashboardOptions"
+                        [(ngModel)]="selectedDashboard"
+                        optionLabel="label"
+                        optionValue="value"
+                        placeholder="Go to Dashboard"
+                        (onChange)="onDashboardChange($event)"
+                        styleClass="w-52"
+                    ></p-dropdown>
+                </div>
                 <!-- Main Content -->
                 <div class="grid grid-cols-12 gap-8">
                     <!-- Stats Widget -->
@@ -58,11 +71,11 @@ import { SaleMangerDashboard } from './salemanagerdashboard';
                     </div>
                 </div>
             </div>
-        } @else {
+        <!-- } @else {
             <div>
                 <app-sales-dashboard></app-sales-dashboard>
             </div>
-        }
+        } -->
     `
 })
 export class EcommerceDashboard implements OnInit {
@@ -74,9 +87,29 @@ export class EcommerceDashboard implements OnInit {
         { label: 'Yearly', value: 'YEAR' }
     ];
     selectedFilter = 'MONTH'; // default value
-    constructor(public authservice: AuthService) {}
+
+    // Dropdown to jump to another dashboard page.
+    // Update these `value` paths to match your actual route config (app.routes.ts).
+    dashboardOptions = [
+        { label: 'Management Dashboard', value: '/layout/management-dashboard' },
+        { label: 'Operational Dashboard', value: '/layout/operational-dashboard' }
+    ];
+    selectedDashboard: string | null = null;
+
+    constructor(
+        public authservice: AuthService,
+        private router: Router
+    ) {}
 
     onFilterChange(e: any) {}
+
+    onDashboardChange(e: any): void {
+        const path = e.value;
+        if (path) {
+            this.router.navigate([path]);
+        }
+    }
+
     ngOnInit(): void {
         const isUserRoleType: any = this.authservice.isLogIntType();
         this.role = isUserRoleType?.usertypecode;

@@ -18,6 +18,7 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { TextareaModule } from 'primeng/textarea';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ShareService } from '@/core/services/shared.service';
+import { getStatusColor } from '@/shared/utils/status-color';
 
 interface VendorRef {
     vendor_id: number;
@@ -40,7 +41,7 @@ interface MaterialReqRow {
     providers: [MessageService]
 })
 export class VendorComparisonComponent implements OnInit {
-    filterForm!: FormGroup;
+    vcForm!: FormGroup;
 
     // projectOptions: any[] = [];
 
@@ -53,9 +54,12 @@ export class VendorComparisonComponent implements OnInit {
     vcNoOptions: any[] = [];
     isLoadingRfqNo = false;
     rfqHeader: any = null;
-
+    today = new Date();
     showMaterialReqDialog = false;
     materialReqRows: MaterialReqRow[] = [];
+    approvalLogVisible = false;
+    approvalLogRows: any[] = [];
+    isLoadingApprovalLog = false;
 
     globalFilter = '';
     companyId = '';
@@ -107,6 +111,13 @@ export class VendorComparisonComponent implements OnInit {
         return this.fromApprovalView;
     }
 
+    get isSubmitDisabled(): boolean {
+  return this.comparisonRows.length === 0
+    || this.selectedVendors.length === 0
+    || this.isTableIncomplete
+    || this.vcForm.get('status')?.value === 'APPROVED';
+}
+
     returnToApproval(): void {
         this.sharedService.returnToSavedView(this.router, ['/layout/action/my-approval'], {
             p_type: this.approvalType ?? '',
@@ -115,14 +126,14 @@ export class VendorComparisonComponent implements OnInit {
     }
 
     private initForm(): void {
-        this.filterForm = this.fb.group({
+        this.vcForm = this.fb.group({
             p_rfqno: [''],
             p_draft_vcno: [''],
             p_rfqdate: [{ value: '', disabled: true }],
             // p_project: [{ value: null, disabled: true }],
             p_item: [null],
             p_vcno: [''],
-            p_vcdate: [{ value: new Date(), disabled: true }],
+            p_vcdate: [this.today],
             p_remarks: [''],
             status: [''],
             p_recommendedvendor: [null]
@@ -133,7 +144,7 @@ export class VendorComparisonComponent implements OnInit {
         const state = history.state?.returnViewState;
         if (!state) return;
 
-        this.filterForm.patchValue(state.formValue ?? {}, { emitEvent: false });
+        this.vcForm.patchValue(state.formValue ?? {}, { emitEvent: false });
         this.selectedVendors = state.selectedVendors ?? [];
         this.comparisonRows = state.comparisonRows ?? [];
         this.rfqHeader = state.rfqHeader ?? null;
@@ -216,7 +227,7 @@ export class VendorComparisonComponent implements OnInit {
             this.selectedVendors = [];
             this.rfqHeader = null;
             this.isViewingComparison = false;
-            this.filterForm.patchValue(source === 'DRAFT' ? { p_vcno: '', status: '' } : { p_draft_vcno: '', status: '' }, { emitEvent: false });
+            this.vcForm.patchValue(source === 'DRAFT' ? { p_vcno: '', status: '' } : { p_draft_vcno: '', status: '' }, { emitEvent: false });
             return;
         }
 
@@ -244,7 +255,7 @@ export class VendorComparisonComponent implements OnInit {
                 this.buildComparisonFromApi(rows);
                 const loadedComparisonId = rows[0].comparison_id ?? rows[0].comparisondraft_id ?? comparisonId;
                 this.rfqHeader.comparison_id = loadedComparisonId;
-                this.filterForm.patchValue(source === 'DRAFT' ? { p_draft_vcno: loadedComparisonId, p_vcno: '' } : { p_vcno: loadedComparisonId, p_draft_vcno: '' }, { emitEvent: false });
+                this.vcForm.patchValue(source === 'DRAFT' ? { p_draft_vcno: loadedComparisonId, p_vcno: '' } : { p_vcno: loadedComparisonId, p_draft_vcno: '' }, { emitEvent: false });
             },
             error: (err) => {
                 this.isLoadingItems = false;
@@ -256,7 +267,7 @@ export class VendorComparisonComponent implements OnInit {
     onRfqNoChange(event: any): void {
         this.isLoadingItems = true;
         this.isViewingComparison = false;
-        this.filterForm.patchValue({ p_vcno: '' });
+        this.vcForm.patchValue({ p_vcno: '' });
         const payload = {
             p_returntype: 'VENDORCOMPARISON',
             p_returnvalue: event.value.toString(),
@@ -296,7 +307,7 @@ export class VendorComparisonComponent implements OnInit {
             project_name: first.project_name
         };
 
-        this.filterForm.patchValue(
+        this.vcForm.patchValue(
             {
                 p_rfqno: first.rfqid,
                 p_rfqdate: first.rfqdate ? this.formatDisplayDate(first.rfqdate) : '',
@@ -371,7 +382,7 @@ export class VendorComparisonComponent implements OnInit {
         this.comparisonRows.forEach((row) => (row.weightage = evenWeight));
 
         // Rank 1 vendor ko default recommended vendor bana do jab tak backend ne apna value na diya ho
-        this.filterForm.patchValue({ p_recommendedvendor: this.bestOverallVendor?.vendor_id ?? null }, { emitEvent: false });
+        this.vcForm.patchValue({ p_recommendedvendor: this.bestOverallVendor?.vendor_id ?? null }, { emitEvent: false });
     }
 
     deleteDraftItem(item: any, event: Event): void {
@@ -446,21 +457,7 @@ export class VendorComparisonComponent implements OnInit {
     }
 
     get statusColor(): string {
-        const status = (this.filterForm.get('status')?.value || '').toUpperCase();
-        switch (status) {
-            case 'APPROVED':
-                return 'green';
-            case 'SUBMITTED':
-                return 'blue';
-            case 'REJECTED':
-                return 'red';
-            case 'DRAFT':
-                return 'grey';
-                case 'APPROVAL PENDING':
-                    return 'orange';
-            default:
-                return 'grey';
-        }
+        return getStatusColor(this.vcForm.get('status')?.value);
     }
 
     private formatDisplayDate(value: string | Date): string {
@@ -480,10 +477,36 @@ export class VendorComparisonComponent implements OnInit {
         return this.filteredRows.reduce((sum, row) => sum + (Number(row.required_qty) || 0), 0);
     }
 
+    openApprovalLog(): void {
+        const vcNo = this.vcForm.get('p_vcno')?.value;
+        if (!vcNo) {
+            this.messageService.add({ severity: 'warn', summary: 'Approval Log', detail: 'Select a vendor comparison first.', life: 2500 });
+            return;
+        }
+
+        this.approvalLogVisible = true;
+        this.isLoadingApprovalLog = true;
+        this.approvalLogRows = [];
+        this.inventoryService.Getreturndropdowndetails({
+            p_returntype: 'APPROVALLOG',
+            p_returnvalue: vcNo,
+            p_username: 'VC'
+        }).subscribe({
+            next: (res: any) => {
+                this.approvalLogRows = Array.isArray(res?.data) ? res.data : [];
+                this.isLoadingApprovalLog = false;
+            },
+            error: () => {
+                this.isLoadingApprovalLog = false;
+                this.messageService.add({ severity: 'error', summary: 'Approval Log', detail: 'Unable to load approval history.', life: 3000 });
+            }
+        });
+    }
+
     openMaterialReqDialog(): void {
-        const rfqId = this.filterForm.get('p_rfqno')?.value;
+        const rfqId = this.vcForm.get('p_rfqno')?.value;
         if (!rfqId) {
-            this.messageService.add({ severity: 'warn', summary: 'Select an RFQ first', life: 2500 });
+            this.messageService.add({ severity: 'warn', summary: 'Select RFQ first', life: 2500 });
             return;
         }
 
@@ -537,7 +560,7 @@ export class VendorComparisonComponent implements OnInit {
             route: ['/layout/purchase/vendor-comparison'],
             state: {
                 returnViewState: {
-                    formValue: this.filterForm.getRawValue(),
+                    formValue: this.vcForm.getRawValue(),
                     selectedVendors: this.selectedVendors,
                     comparisonRows: this.comparisonRows,
                     rfqHeader: this.rfqHeader,
@@ -649,7 +672,7 @@ export class VendorComparisonComponent implements OnInit {
 
     private async saveComparison(operationType: 'SUBMITTED' | 'DRAFT'): Promise<void> {
         if (!this.rfqHeader) {
-            this.messageService.add({ severity: 'warn', summary: 'Select an RFQ first', life: 2500 });
+            this.messageService.add({ severity: 'warn', summary: 'Select RFQ first', life: 2500 });
             return;
         }
         if (this.selectedVendors.length === 0) {
@@ -721,8 +744,8 @@ export class VendorComparisonComponent implements OnInit {
             p_operationtype: operationType,
             p_username: this.authService.isLogIntType()?.userid?.toString() ?? '',
             p_comparison_json: comparisonJson,
-            p_attachment_json: attachmentJson.length ? attachmentJson : null,
-            p_remarks: this.filterForm.get('p_remarks')?.value ?? ''
+            p_attachment_json: attachmentJson.length ? JSON.stringify(attachmentJson) : null,
+            p_remarks: this.vcForm.get('p_remarks')?.value ?? ''
         };
 
         this.workService.upsertRfqVendorComparison(payload).subscribe({
@@ -772,7 +795,7 @@ export class VendorComparisonComponent implements OnInit {
         if (!comparisonId) return;
 
         const savedStatus = res?.data?.tran_status ?? operationType;
-        this.filterForm.patchValue({ status: savedStatus }, { emitEvent: false });
+        this.vcForm.patchValue({ status: savedStatus }, { emitEvent: false });
         const isStillDraft = savedStatus === 'DRAFT';
 
         if (isStillDraft) {
@@ -791,7 +814,7 @@ export class VendorComparisonComponent implements OnInit {
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res: any) => {
                 this.draftOptions = res.data || [];
-                this.filterForm.patchValue({ p_draft_vcno: comparisonId, p_vcno: '', status: 'DRAFT' }, { emitEvent: false });
+                this.vcForm.patchValue({ p_draft_vcno: comparisonId, p_vcno: '', status: 'DRAFT' }, { emitEvent: false });
             },
             error: (err) => console.error('Error fetching Draft No:', err)
         });
@@ -806,7 +829,7 @@ export class VendorComparisonComponent implements OnInit {
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res: any) => {
                 this.vcNoOptions = res.data || [];
-                this.filterForm.patchValue({ p_vcno: comparisonId, p_draft_vcno: '', status: 'SUBMITTED' }, { emitEvent: false });
+                this.vcForm.patchValue({ p_vcno: comparisonId, p_draft_vcno: '', status: 'SUBMITTED' }, { emitEvent: false });
                 // finalized comparisons no longer belong in the drafts list
                 this.draftOptions = this.draftOptions.filter((d) => d.comparison_id !== comparisonId);
             },
@@ -815,8 +838,8 @@ export class VendorComparisonComponent implements OnInit {
     }
 
     onReset() {
-        this.filterForm.reset();
-        this.filterForm.patchValue({ p_vcdate: new Date() });
+        this.vcForm.reset();
+        this.vcForm.patchValue({ p_vcdate: new Date() });
         this.selectedVendors = [];
         this.comparisonRows = [];
         this.rfqHeader = null;

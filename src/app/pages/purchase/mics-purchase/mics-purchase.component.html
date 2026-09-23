@@ -12,6 +12,7 @@
 
                 <button pButton type="submit" label="Submit" class="p-button-primary" [disabled]="form.invalid"></button>
                 <button pButton type="button" label="Reset" class="p-button-secondary" (click)="onReset()"></button>
+                <button *ngIf="fromTransactionList" pButton type="button" label="Back" icon="pi pi-arrow-left" class="p-button-secondary" (click)="onBack()"></button>
             </div>
         </div>
 
@@ -49,7 +50,7 @@
 
                  <div class="flex flex-col col-span-2">
                     <label class="font-medium mb-1 text-sm md:text-base">Item</label>
-                    <p-dropdown
+                    <p-select
                         class="w-full"
                         [options]="itemOptions"
                         optionLabel="itemname"
@@ -67,10 +68,10 @@
                         <ng-template #item let-details>
                             <div class="flex items-center justify-between w-full">
                                 <div class="text-sm md:text-base">{{ details.itemname }}</div>
-                                <span class="text-xs md:text-sm" [ngClass]="details.currentstock == 0 ? 'text-red-500' : 'text-green-600'"> Stock: {{ details.currentstock }} </span>
+                                <span class="text-xs md:text-sm" [ngClass]="details.available_stock == 0 ? 'text-red-500' : 'text-green-600'"> Stock: {{ details.available_stock }} </span>
                             </div>
                         </ng-template>
-                    </p-dropdown>
+                    </p-select>
                 </div>
 
                   <div class="flex flex-col">
@@ -106,7 +107,7 @@
             </div>
 
             <div class="mt-4 md:mt-6 overflow-x-auto">
-                <p-table [value]="items.controls" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" class="p-datatable-gridlines" styleClass="material-forcast">
+                <p-table [value]="items.controls" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" class="p-datatable-gridlines" styleClass="purchase-items-table">
                     <ng-template pTemplate="header">
                         <tr class="bg-yellow-400">
                             <th>Item Category</th>

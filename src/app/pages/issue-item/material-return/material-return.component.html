@@ -9,6 +9,7 @@
                 </span>
                 <button pButton type="submit" label="Submit" class="p-button-warning" [disabled]="minForm.invalid || issueItems.length === 0"></button>
                 <button pButton type="button" label="Reset" class="p-button-secondary" (click)="onReset()"></button>
+                <button pButton type="button" label="Back" icon="pi pi-arrow-left" class="p-button-secondary" (click)="onBack()"></button>
             </div>
         </div>
 
@@ -76,7 +77,7 @@
                     <ng-template #item let-details>
                         <div class="flex items-center justify-between w-full">
                             <div class="text-sm md:text-base">{{ details.itemname }}</div>
-                            <span class="text-xs md:text-sm" [ngClass]="details.currentstock == 0 ? 'text-red-500' : 'text-green-600'"> Stock: {{ details.currentstock }} </span>
+                            <span class="text-xs md:text-sm" [ngClass]="details.available_stock == 0 ? 'text-red-500' : 'text-green-600'"> Stock: {{ details.available_stock }} </span>
                         </div>
                     </ng-template>
                 </p-select>

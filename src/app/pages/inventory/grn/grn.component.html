@@ -10,7 +10,7 @@
             <button pButton type="button" label="Submit" class="p-button-warning" [disabled]="!isHeaderReady" (click)="onSubmit()"></button>
             <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
             @if (backshow) {
-                <button pButton type="button" label="Back" class="p-button-secondary" (click)="back()"></button>
+                <button pButton type="button"  icon="pi pi-arrow-left" label="Back" class="p-button-secondary" (click)="back()"></button>
             }
         </div>
     </div>
@@ -22,7 +22,12 @@
         <div class="grid grid-cols-1 sm:grid-cols-4 gap-x-6 gap-y-4 mb-6">
             <!-- GRN No -->
             <div class="flex flex-col">
+                <div class="flex gap-2 items-center">
                 <label class="font-medium mb-1">GRN No</label>
+        <div *ngIf="!poSelected" class="surface-100 text-500 text-sm flex align-items-center gap-2">
+            (Select a PO Number to enable the tabs below)
+        </div>
+        </div>
                 <p-dropdown
                     [options]="grnOptions"
                     optionLabel="grn_no"
@@ -56,12 +61,6 @@
                     </div>
         </div>
 
-        <!-- hint when no PO selected -->
-        <div *ngIf="!poSelected" class="mb-4 px-3 py-2 border-round surface-100 text-500 text-sm flex align-items-center gap-2">
-            <i class="pi pi-info-circle text-blue-400"></i>
-            Select a PO Number above to enable the tabs below.
-        </div>
-
         <!-- ================================
          TABS (enabled after PO selected)
     ================================= -->
@@ -86,13 +85,6 @@
                         <small class="text-red-500 mt-1 text-xs" *ngIf="grnForm.get('p_vendor')?.touched && grnForm.get('p_vendor')?.errors?.['required']"> Vendor is required </small>
                     </div>
 
-                    <!-- Store Location -->
-                    <div class="flex flex-col">
-                        <label class="font-medium mb-1">Location <span class="text-red-500">*</span></label>
-                        <input pInputText formControlName="p_location" placeholder="Select Location" />
-                        <small class="text-red-500 mt-1 text-xs" *ngIf="grnForm.get('p_location')?.touched && grnForm.get('p_location')?.errors?.['required']">Location is required </small>
-                    </div>
-
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Contact Person</label>
                         <input pInputText formControlName="p_contactperson" placeholder="Contact Person" />
@@ -101,6 +93,18 @@
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Contact No</label>
                         <input pInputText formControlName="p_contactno" placeholder="Contact Number" (keypress)="allowOnlyNumbers($event)" maxlength="10" />
+                    </div>
+
+                    <!-- Quality Report -->
+                    <div class="flex flex-col">
+                        <label class="font-medium mb-1">Quality Report <span class="text-red-500" *ngIf="isQualityReportAttachmentRequired">*</span><span class="ms-3 text-xs text-red-500 mt-1">PDF / JPG / PNG</span></label>
+                        <div class="flex align-items-center gap-2 px-3 py-2" style="border: 1px solid var(--surface-300); border-radius: 6px; background: var(--surface-0); min-height: 38px">
+                            <label for="qualityReportFile" class="p-button p-button-sm p-button-outlined p-button-primary m-0" style="cursor: pointer; white-space: nowrap"> <i class="pi pi-upload mr-1"></i> Choose File </label>
+                            <input id="qualityReportFile" type="file" accept=".pdf,.jpg,.jpeg,.png" style="display: none" (change)="onFileSelect($event, 'qualityreport')" />
+                            <span class="text-xs text-400 italic mt-2">{{ fileNames.qualityreport || 'No file chosen' }}</span>
+                            <button pButton type="button" icon="pi pi-eye" class="p-button-text p-button-sm" [disabled]="!uploadedFiles.qualityreport" (click)="previewFile(uploadedFiles.qualityreport)"></button>
+                        </div>
+                        <small class="text-red-500 mt-1 text-xs" *ngIf="isQualityReportAttachmentRequired && !uploadedFiles.qualityreport">Quality report file is required when any row has Quality Report = Y.</small>
                     </div>
                 </div>
             </p-tabPanel>
@@ -210,18 +214,6 @@
                         </div>
                     </div>
 
-                    <!-- Quality Report Upload (mandatory if any row has Quality Report = Y) -->
-                    <div class="flex flex-col">
-                        <label class="font-medium mb-1">Quality Report <span class="text-red-500" *ngIf="isQualityReportAttachmentRequired">*</span><span class="ms-3 text-xs text-red-500 mt-1">PDF / JPG / PNG</span></label>
-                        <div class="flex align-items-center gap-2 px-3 py-2" style="border: 1px solid var(--surface-300); border-radius: 6px; background: var(--surface-0); min-height: 38px">
-                            <label for="qualityReportFile" class="p-button p-button-sm p-button-outlined p-button-primary m-0" style="cursor: pointer; white-space: nowrap"> <i class="pi pi-upload mr-1"></i> Choose File </label>
-                            <input id="qualityReportFile" type="file" accept=".pdf,.jpg,.jpeg,.png" style="display: none" (change)="onFileSelect($event, 'qualityreport')" />
-                            <span class="text-xs text-400 mt-2 italic">{{ fileNames.qualityreport || 'No file chosen' }}</span>
-                            <button pButton type="button" icon="pi pi-eye" class="p-button-text p-button-sm" [disabled]="!uploadedFiles.qualityreport" (click)="previewFile(uploadedFiles.qualityreport)"></button>
-                        </div>
-                        <small class="text-red-500 mt-1 text-xs" *ngIf="isQualityReportAttachmentRequired && !uploadedFiles.qualityreport">Quality report file is required when any row has Quality Report = Y.</small>
-                    </div>
-
                     <!-- Other Documents Upload -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Other Documents<span class="ms-3 text-xs text-red-500 mt-1">PDF / JPG / PNG / DOC (multiple)</span></label>
@@ -303,6 +295,7 @@
                             <p-inputNumber
                                 [(ngModel)]="product.acceptedqty"
                                 [ngModelOptions]="{ standalone: true }"
+                                [disabled]="product.qualityreport === 'P'"
                                 [min]="0"
                                 [max]="product.receivedqty || 0"
                                 [useGrouping]="false"
@@ -316,7 +309,7 @@
                             </span>
                         </td>
                         <td class="text-center">
-                            <p-dropdown [options]="qualityReportOptions" optionLabel="label" optionValue="value" [(ngModel)]="product.qualityreport" [ngModelOptions]="{ standalone: true }" placeholder="Select" appendTo="body" styleClass="w-5rem"></p-dropdown>
+                            <p-dropdown [options]="qualityReportOptions" optionLabel="label" optionValue="value" [(ngModel)]="product.qualityreport" [ngModelOptions]="{ standalone: true }" placeholder="Select" appendTo="body" styleClass="w-5rem" (onChange)="onQualityReportChange(product)"></p-dropdown>
                         </td>
                     </tr>
                 </ng-template>

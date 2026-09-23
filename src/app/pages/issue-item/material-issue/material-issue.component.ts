@@ -1,5 +1,6 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -16,6 +17,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { InventoryService } from '@/core/services/inventory.service';
 import { WorkService } from '@/core/services/work.service';
 import { AuthService } from '@/core/services/auth.service';
+import { getStatusColor } from '@/shared/utils/status-color';
 import { MaterialIssue } from '@/core/models/authmodel/work.model';
 
 @Component({
@@ -55,14 +57,17 @@ export class MaterialIssueComponent implements OnInit {
         private workService: WorkService,
         private confirmationService: ConfirmationService,
         private messageService: MessageService,
-        public datePipe: DatePipe
+        public datePipe: DatePipe,
+        private router: Router,
+        private route: ActivatedRoute
     ) {}
 
     ngOnInit(): void {
         this.companyId = this.authService.isLogIntType()?.companyid?.toString() ?? '';
         this.userId = this.authService.isLogIntType()?.userid?.toString() ?? '';
         this.initForm();
-        this.loadDropdowns();
+        const minId = this.route.snapshot.queryParamMap.get('minId');
+        this.loadDropdowns(minId ? Number(minId) : undefined);
     }
 
     private initForm(): void {
@@ -91,42 +96,32 @@ export class MaterialIssueComponent implements OnInit {
     }
 
     get statusColor(): string {
-        const status = (this.minForm.get('status')?.value || '').toUpperCase();
-        switch (status) {
-            case 'APPROVED':
-                return 'green';
-            case 'SUBMITTED':
-                return 'blue';
-            case 'REJECTED':
-                return 'red';
-            case 'CANCELLED':
-                return 'red';
-            case 'PARTIALLY RECEIVED':
-                return 'purple';
-            case 'DRAFT':
-                return 'grey';
-            case 'APPROVAL PENDING':
-                return 'orange';
-            default:
-                return 'grey';
-        }
+        return getStatusColor(this.minForm.get('status')?.value);
     }
 
-    private loadDropdowns(): void {
-        this.loadMINList();
+    private loadDropdowns(minId?: number): void {
+        this.loadMINList(minId);
         this.loadProjects();
         this.loadRequestedBy();
         this.onGetIndent();
     }
 
-    private loadMINList(): void {
+    private loadMINList(minId?: number): void {
         const payload = { p_returntype: 'MINLIST', p_username: this.companyId };
         this.inventoryService.getdropdowndetails(payload).subscribe({
             next: (res) => {
-                this.minOptions = res.data;
+                this.minOptions = res.data ?? [];
+                if (minId) {
+                    const option:any = this.minOptions.find((item: any) => Number(item.min_id) === minId);
+                    if (option) this.onMINSelect({ value: option.min_no });
+                }
             },
             error: (err) => console.error(err)
         });
+    }
+
+    onBack(): void {
+        this.router.navigate(['/layout/issue-item/material-issue']);
     }
 
     private onGetIndent(): void {

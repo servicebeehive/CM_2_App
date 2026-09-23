@@ -2,9 +2,8 @@ import { UpserWorkList } from '@/core/models/authmodel/work.model';
 import { AuthService } from '@/core/services/auth.service';
 import { InventoryService } from '@/core/services/inventory.service';
 import { WorkService } from '@/core/services/work.service';
-import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -18,13 +17,14 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ToastModule } from 'primeng/toast';
 @Component({
     selector: 'app-work',
-    imports: [CommonModule, ReactiveFormsModule, FormsModule, TableModule, InputTextModule, ButtonModule, DropdownModule, DialogModule, ConfirmDialogModule, CheckboxModule, TooltipModule, GlobalFilterComponent, ToastModule],
+    imports: [CommonModule, ReactiveFormsModule, FormsModule, TableModule, InputTextModule, ButtonModule, DropdownModule, DialogModule, ConfirmDialogModule, CheckboxModule, TooltipModule, ToastModule],
     templateUrl: './work.component.html',
     styleUrls: ['./work.component.scss'],
     providers: [ConfirmationService]
 })
 export class WorkComponent implements OnInit {
-    showGlobalSearch = true;
+    @ViewChildren('filterInput') filterInputs!: QueryList<ElementRef<HTMLInputElement>>;
+
     globalFilter = '';
     workList: any[] = [];
     filterWorkList: any[] = [];
@@ -215,20 +215,15 @@ this.loadTower({ value: row.project_id }, row.tower_block_id);
         this.filterWorkList = [...this.workList];
     }
 
-    // ── Filter ─────────────────────────────────────────────────────────────
-    applyGlobalFilter(): void {
-        const val = this.globalFilter?.toLowerCase().trim();
-        if (!val) {
-            this.filterWorkList = [...this.workList];
-            return;
-        }
-        this.filterWorkList = this.workList.filter((row) => Object.values(row).some((v) => String(v).toLowerCase().includes(val)));
-    }
-
     // ── Reset ──────────────────────────────────────────────────────────────
     onReset(): void {
         this.resetForm();
         this.filterWorkList = [...this.workList];
+    }
+
+    resetTable(table: any): void {
+        table.reset();
+        this.filterInputs.forEach((input) => (input.nativeElement.value = ''));
     }
 
     private resetForm(): void {

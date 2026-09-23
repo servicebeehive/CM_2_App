@@ -8,34 +8,45 @@
 
 ::ng-deep .purchase-order{
 
-.p-datatable-wrapper{
-    max-height: 500px;
-    overflow: auto;
-    border-radius: 6px;
-    border: 1px solid var(--surface-border);
-    border-radius: 6px;   
-}
+// .p-datatable-wrapper{
+//     max-height: 500px;
+//     overflow: auto;
+//     border-radius: 6px;
+//     border: 1px solid var(--surface-border);
+//     border-radius: 6px;   
+// }
+//   table {
+//     table-layout: fixed;
+//     width: max-content;
+//     min-width: 100%;
+//   }
+//   .p-datatable-thead > tr > th,
+//   .p-datatable-tbody > tr > td {
+//     overflow: hidden;
+//     text-overflow: ellipsis;
+//     white-space: nowrap;
+//   }
  .p-datatable-thead > tr > th:nth-child(1),
   .p-datatable-tbody > tr > td:nth-child(1) {
     position: sticky;
     left: 0;
     z-index: 100;
-    min-width: 200px;
+    min-width: 150px;
     background: var(--surface-overlay, #fff);
   }
  .p-datatable-thead > tr > th:nth-child(2),
   .p-datatable-tbody > tr > td:nth-child(2) {
     position: sticky;
-    left: 200px;  
+    left: 150px;  
     z-index: 100;
-    min-width: 150px;
-    max-width: 200px;
+    min-width: 250px;
+    max-width: 50px;
     background: var(--surface-overlay, #fff);
   }
   .p-datatable-thead > tr > th:nth-child(3),
   .p-datatable-tbody > tr > td:nth-child(3) {
-    min-width: 180px;
-    max-width: 2000px;
+    min-width: 90px;
+    max-width: 120px;
   }
   .p-datatable-thead > tr > th:nth-child(4),
   .p-datatable-tbody > tr > td:nth-child(4) {

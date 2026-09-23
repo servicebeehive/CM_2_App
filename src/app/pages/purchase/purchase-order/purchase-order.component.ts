@@ -24,6 +24,7 @@ import { TextareaModule } from 'primeng/textarea';
 import { MessageModule } from 'primeng/message';
 import { WorkService } from '@/core/services/work.service';
 import { ShareService } from '@/core/services/shared.service';
+import { getStatusColor } from '@/shared/utils/status-color';
 import { GmailVendorRow, PurchaseDraftPayload, PurchaseOrderItem, PurchaseOrderPayload, CancelPOPayload, InvoiceEntry, PaymentEntry, PerformaEntry } from '@/core/models/authmodel/work.model';
 
 
@@ -90,6 +91,9 @@ export class PurchaseOrderComponent implements OnInit {
 
     showVendorDialog = false;
     showMrDialog = false;
+    approvalLogVisible = false;
+    approvalLogRows: any[] = [];
+    isLoadingApprovalLog = false;
     showPoMailDialog = false;
     allVendorList: any[] = [];
     isLoadingVendorDialog = false;
@@ -104,6 +108,7 @@ export class PurchaseOrderComponent implements OnInit {
     userId = '';
     grandTotal = 0;
     private fromApprovalView = false;
+    private fromTransactionList = false;
     private approvalType: string | null = null;
     private approvalRequest: string | null = null;
     isLoadingMrPopup = false;
@@ -121,6 +126,7 @@ export class PurchaseOrderComponent implements OnInit {
     poMailVendorRows: GmailVendorRow[] = [];
     printHeader: any = {};
     printData: any = null;
+    private printRows: any[] = [];
 
     showCancelDialog = false;
     cancelComment = '';
@@ -153,6 +159,7 @@ export class PurchaseOrderComponent implements OnInit {
         this.companyId = this.authService.isLogIntType()?.companyid;
         this.userId = this.authService.isLogIntType()?.userid?.toString() ?? '';
         this.fromApprovalView = this.route.snapshot.queryParamMap.get('fromApprovalView') === 'true';
+        this.fromTransactionList = this.route.snapshot.queryParamMap.get('fromTransactionList') === 'true';
         this.approvalType = this.route.snapshot.queryParamMap.get('p_type');
         this.approvalRequest = this.route.snapshot.queryParamMap.get('p_request');
         this.initForm();
@@ -161,11 +168,11 @@ export class PurchaseOrderComponent implements OnInit {
     }
 
     get showBackButton(): boolean {
-        return this.fromApprovalView;
+        return this.fromApprovalView || this.fromTransactionList;
     }
 
     get backRoute(): string[] {
-        return ['/layout/action/my-approval'];
+        return this.fromTransactionList ? ['/layout/purchase/purchase-order-list'] : ['/layout/action/my-approval'];
     }
 
     get backQueryParams(): Record<string, string> {
@@ -577,6 +584,8 @@ export class PurchaseOrderComponent implements OnInit {
 
     onPOChange(event: any): void {
         const poId = event.value;
+        this.printRows = [];
+        this.printData = null;
         if (!poId) return;
 
         const po = this.ponoOptions.find((p) => p['po_id'] === poId);
@@ -589,7 +598,10 @@ export class PurchaseOrderComponent implements OnInit {
         };
 
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-            next: (res: any) => this.applyPORowsToForm(res.data ?? [], false),
+            next: (res: any) => {
+                this.applyPORowsToForm(res.data ?? [], false);
+                this.loadPOPrintData(poId);
+            },
             error: (err: any) => {
                 console.error('Error fetching PO details:', err);
                 this.messageService.add({ severity: 'error', summary: 'Failed to load PO details', life: 2500 });
@@ -599,6 +611,8 @@ export class PurchaseOrderComponent implements OnInit {
 
     onPODraftChange(event: any): void {
         const draftId = event.value;
+        this.printRows = [];
+        this.printData = null;
         if (!draftId) return;
 
         const draft = this.onPODraftOptions.find((p) => p['draft_id'] === draftId);
@@ -647,6 +661,24 @@ export class PurchaseOrderComponent implements OnInit {
         this.onGetPerformaInvoice();
         this.onGetPOPayment();
         this.submitted = true;
+    }
+
+    private loadPOPrintData(poId: number): void {
+        const payload = this.createReturnPayload('POPRINT', String(poId), this.companyId);
+
+        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+            next: (res: any) => {
+                if (Number(this.poForm.get('p_pono')?.value) !== Number(poId)) return;
+                this.printRows = Array.isArray(res?.data) ? res.data : (res?.data?.data ?? []);
+                this.printData = this.buildPurchaseOrderPrintData(this.printRows);
+            },
+            error: (err: any) => {
+                console.error('Error fetching PO print details:', err);
+                if (Number(this.poForm.get('p_pono')?.value) !== Number(poId)) return;
+                this.printRows = [];
+                this.printData = null;
+            }
+        });
     }
 
     private hydrateRelatedDetails(header: any): void {
@@ -856,7 +888,7 @@ export class PurchaseOrderComponent implements OnInit {
             p_items_json: this.buildItemsPayload(),
             p_loginuser: this.authService.isLogIntType()?.userid.toString(),
             p_mr_no: this.getSelectedMrNumbers(),
-            p_po_attachment: ""
+            p_po_attachment: this.printRows.length ? JSON.stringify(this.printRows) : null
         };
 
        this.workService.upsertPurchaseOrder(payload).subscribe({
@@ -1474,6 +1506,8 @@ export class PurchaseOrderComponent implements OnInit {
         this.performaFileDataUrl = '';
         this.showExistingPerformaDate = false;
         this.totalPaid = 0;
+        this.printRows = [];
+        this.printData = null;
         this.newPayment = { date: new Date(), amount: 0, mode: '', referenceNo: '', invoiceNo: '', performaInvoiceNo: '' };
         this.clearFileInput(this.performaFileInputRef);
     }
@@ -1483,16 +1517,14 @@ export class PurchaseOrderComponent implements OnInit {
         const poNo = this.poForm.get('p_pono')?.value;
         if (!poNo) return;
 
-        const payload = {
-            p_returntype: 'POPRINT',
-            p_returnvalue: String(poNo),
-            p_username: this.companyId
-        };
+        const printRows = this.printRows;
+        if (!printRows.length) {
+            this.loadPOPrintData(poNo);
+            this.messageService.add({ severity: 'info', summary: 'Print data loading', detail: 'Please click Print again once the purchase order data is ready.', life: 2500 });
+            return;
+        }
 
-        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-            next: (res: any) => {
-                const printRows = Array.isArray(res.data) ? res.data : (res.data?.data ?? []);
-                this.printData = this.buildPurchaseOrderPrintData(printRows);
+        this.printData = this.buildPurchaseOrderPrintData(printRows);
                 setTimeout(() => {
                     const printContents = document.getElementById('poPrintSection')?.innerHTML;
                     if (!printContents) return;
@@ -1503,12 +1535,6 @@ export class PurchaseOrderComponent implements OnInit {
                     );
                     w?.document.close();
                 });
-            },
-            error: (err: any) => {
-                console.error('Error fetching PO print details:', err);
-                this.messageService.add({ severity: 'error', summary: 'Print failed', detail: 'Unable to load purchase order print details.', life: 2500 });
-            }
-        });
     }
 
     private buildPurchaseOrderPrintData(printRows: any[] = []): any {
@@ -1894,27 +1920,7 @@ export class PurchaseOrderComponent implements OnInit {
     }
 
     get statusColor(): string {
-        const status = (this.poForm.get('status')?.value || '').toUpperCase();
-        switch (status) {
-            case 'APPROVED':
-                return 'green';
-            case 'SUBMITTED':
-                return 'blue';
-            case 'REJECTED':
-                return 'red';
-            case 'CANCELLED':
-                return 'red';
-            case 'PARTIALLY RECEIVED':
-                return 'purple';
-            case 'DRAFT':
-                return 'grey';
-            case 'FULLY_RECEIVED':
-                return 'green';
-            case 'APPROVAL PENDING':
-                return 'orange';
-            default:
-                return 'grey';
-        }
+        return getStatusColor(this.poForm.get('status')?.value);
     }
 
     private recalcRow(i: number): void {
@@ -2127,6 +2133,32 @@ export class PurchaseOrderComponent implements OnInit {
         const uniqueVendors = [...new Set(this.poItemArray.controls.map((row) => row.get('vendorName')?.value as string).filter((name) => !!name))];
         this.selectedVendorNames = uniqueVendors;
         this.poForm.get('p_vendor')?.setValue(uniqueVendors.join(', '), { emitEvent: false });
+    }
+
+    openApprovalLog(): void {
+        const poNo = this.poForm.get('p_pono')?.value;
+        if (!poNo) {
+            this.messageService.add({ severity: 'warn', summary: 'Approval Log', detail: 'Select a purchase order first.', life: 2500 });
+            return;
+        }
+
+        this.approvalLogVisible = true;
+        this.isLoadingApprovalLog = true;
+        this.approvalLogRows = [];
+        this.inventoryService.Getreturndropdowndetails({
+            p_returntype: 'APPROVALLOG',
+            p_returnvalue: poNo,
+            p_username: 'PO'
+        }).subscribe({
+            next: (res: any) => {
+                this.approvalLogRows = Array.isArray(res?.data) ? res.data : [];
+                this.isLoadingApprovalLog = false;
+            },
+            error: () => {
+                this.isLoadingApprovalLog = false;
+                this.messageService.add({ severity: 'error', summary: 'Approval Log', detail: 'Unable to load approval history.', life: 3000 });
+            }
+        });
     }
 
     openMrDialog(): void {

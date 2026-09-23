@@ -1,5 +1,6 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { SelectModule } from 'primeng/select';
 import { ButtonModule } from 'primeng/button';
@@ -14,6 +15,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { InventoryService } from '@/core/services/inventory.service';
 import { AuthService } from '@/core/services/auth.service';
+import { getStatusColor } from '@/shared/utils/status-color';
 import { WorkService } from '@/core/services/work.service';
 import { MaterialReturn, MaterialReturnItem } from '@/core/models/authmodel/work.model';
 
@@ -49,7 +51,9 @@ export class MaterialReturnComponent implements OnInit {
         private messageService: MessageService,
         public datePipe: DatePipe,
         private authService: AuthService,
-        private workService: WorkService
+        private workService: WorkService,
+        private router: Router,
+        private route: ActivatedRoute
     ) {}
 
     ngOnInit(): void {
@@ -76,25 +80,7 @@ export class MaterialReturnComponent implements OnInit {
     }
 
       get statusColor(): string {
-        const status = (this.minForm.get('status')?.value || '').toUpperCase();
-        switch (status) {
-            case 'APPROVED':
-                return 'green';
-            case 'SUBMITTED':
-                return 'blue';
-            case 'REJECTED':
-                return 'red';
-            case 'CANCELLED':
-                return 'red';
-            case 'PARTIALLY RECEIVED':
-                return 'purple';
-            case 'DRAFT':
-                return 'grey';
-            case 'APPROVAL PENDING':
-                return 'orange';
-            default:
-                return 'grey';
-        }
+        return getStatusColor(this.minForm.get('status')?.value);
     }
 
     hasCopyableData(): boolean {
@@ -103,7 +89,8 @@ export class MaterialReturnComponent implements OnInit {
     }
 
     private loadDropdowns(): void {
-        this.onGetMRN();
+        const mrnId = this.route.snapshot.queryParamMap.get('mrnId');
+        this.onGetMRN(mrnId ? Number(mrnId) : undefined);
         this.loadProjects();
         this.loadRequestedBy();
         this.OnGetItem();
@@ -168,7 +155,7 @@ export class MaterialReturnComponent implements OnInit {
         });
     }
 
-    onGetMRN(){
+    onGetMRN(mrnId?: number){
         const payload = {
             p_returntype: 'MRNTABLELIST',
             p_returnvalue: this.companyId,
@@ -177,9 +164,17 @@ export class MaterialReturnComponent implements OnInit {
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res: any) => {
                 this.mrnOptions = res.data ?? [];
+                if (mrnId) {
+                    const option = this.mrnOptions.find((item: any) => Number(item.mrn_id) === mrnId);
+                    if (option) this.onMRNChange({ value: option.mrn_id });
+                }
             },
             error: (err) => console.error(err)
         });
+    }
+
+    onBack(): void {
+        this.router.navigate(['/layout/issue-item/material-return']);
     }
 
     // ── MRN dropdown: load a submitted MRN back into the form ──────────────
@@ -193,15 +188,62 @@ export class MaterialReturnComponent implements OnInit {
         };
 
         this.inventoryService.Getreturndropdowndetails(payload).subscribe((res) => {
-            const d = res.data[0];
+            const rows: any[] = res.data ?? [];
+            if (!rows.length) return;
+
+            const d = rows[0];
+            const towerId = d.tower_block_id != null ? Number(d.tower_block_id) : null;
+            this.editingMrnId = d.mrn_id ?? null;
             this.minForm.patchValue({
-                p_issuedate: d.issuedate ? new Date(d.issuedate) : null,
-                p_project: d.project,
-                p_tower: d.tower,
-                p_returnby: d.requestedby,
-                p_remarks: d.remarks
+                p_returnno: d.mrn_id ?? event.value,
+                p_issuedate: d.return_date ? new Date(d.return_date) : null,
+                p_project: d.project_id ?? null,
+                p_tower: towerId,
+                p_returnby: d.return_from != null ? Number(d.return_from) : null,
+                p_remarks: d.remarks ?? '',
+                status: d.status ?? ''
             });
-            this.issueItems = res.data.items || [];
+
+            if (d.project_id) {
+                const workPayload = { p_returntype: 'WORKLISTDD', p_returnvalue: String(d.project_id), p_username: this.userId };
+                this.inventoryService.Getreturndropdowndetails(workPayload).subscribe({
+                    next: (workRes: any) => {
+                        this.workList = workRes.data ?? [];
+                        const towers = new Map<number, any>();
+                        this.workList.forEach((work) => towers.set(work.tower_block_id, { tower_id: work.tower_block_id, tower_name: work.tower_name }));
+                        this.towerOptions = Array.from(towers.values());
+                        this.minForm.patchValue({ p_tower: towerId });
+                    },
+                    error: (err) => console.error(err)
+                });
+            }
+
+            this.issueItems = rows
+                .filter((row) => row.item_id != null)
+                .map((row) => {
+                    const returnQty = Number(row.return_qty ?? 0);
+                    const condition = this.returnConditionOptions.find((option) => option.value.toLowerCase() === String(row.return_condition ?? '').toLowerCase())?.value ?? row.return_condition ?? null;
+                    return {
+                        itemid: row.item_id,
+                        itemcode: row.item_code ?? row.item_id,
+                        categoryid: row.item_category_id,
+                        categoryname: row.category_name,
+                        itemname: row.item_name,
+                        uom: row.uom_name,
+                        uomid: row.uom_id,
+                        issuedqty: returnQty,
+                        alreadyreturnedqty: 0,
+                        returnableqty: returnQty,
+                        issueqty: returnQty,
+                        returntype: row.return_reason ?? null,
+                        returncondition: condition,
+                        rate: row.rate ?? 0,
+                        amount: row.amount ?? returnQty * Number(row.rate ?? 0),
+                        balance: 0,
+                        mindetailid: row.min_detail_id ?? null,
+                        remarks: row.detail_remarks ?? ''
+                    };
+                });
         });
     }
 

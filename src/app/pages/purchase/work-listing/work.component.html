@@ -2,35 +2,10 @@
     <!-- HEADER + ACTION BUTTONS -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <span class="block text-surface-900 font-bold text-lg md:text-xl">Work Listing</span>
-        <div class="flex flex-wrap gap-2 md:gap-4 w-full md:w-auto">
-            <button pButton type="button" [label]="isEditing ? 'Save' : 'Add'"
-                class="p-button-warning w-full md:w-auto"
-                (click)="add()">
-            </button>
-            <button pButton type="button" label="Cancel"
-                class="p-button-secondary w-full md:w-auto"
-                *ngIf="isEditing"
-                (click)="cancelEdit()">
-            </button>
-            <button pButton type="button" label="Reset"
-                class="p-button-secondary w-full md:w-auto"
-                *ngIf="!isEditing"
-                (click)="onReset()">
-            </button>
-        </div>
-    </div>
-
-     <!-- Global Search -->
-    <div class="mb-6 w-full" *ngIf="showGlobalSearch">
-        <app-global-filter
-            [(value)]="globalFilter"
-            placeholder="Search..."
-            (valueChange)="applyGlobalFilter()"
-        ></app-global-filter>
     </div>
 
     <form [formGroup]="salesForm">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-3 mb-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-x-4 gap-y-3 mb-6">
 
             <!-- Site -->
             <div class="flex flex-col">
@@ -90,11 +65,29 @@
                     Pour is required
                 </small>
             </div>
+
+               <div class="flex gap-2 md:gap-4 w-full mt-6">
+            <button pButton type="button" [label]="isEditing ? 'Save' : '+ Add Work'"
+                class="p-button-warning w-full"
+                (click)="add()">
+            </button>
+            <button pButton type="button" label="Cancel"
+                class="p-button-secondary w-full"
+                *ngIf="isEditing"
+                (click)="cancelEdit()">
+            </button>
+            <button pButton type="button" label="Reset"
+                class="p-button-secondary w-full"
+                *ngIf="!isEditing"
+                (click)="onReset()">
+            </button>
+        </div>
         </div>
     </form>
 
     <!-- TABLE -->
     <p-table
+        #dt
         [value]="filterWorkList"
         [responsiveLayout]="'scroll'"
         [paginator]="true"
@@ -103,6 +96,15 @@
         class="p-datatable-gridlines p-datatable-sm"
     >
         <ng-template pTemplate="header">
+            <tr class="mr-filter-row bg-white">
+        <th class="bg-white" style="width: 3rem"></th>
+        <th class="bg-white"><input #filterInput pInputText type="text" placeholder="Search" class="w-full" (input)="dt.filter($any($event.target).value, 'project_name', 'contains')" /></th>
+        <th class="bg-white"><input #filterInput pInputText type="text" placeholder="Search" class="w-full" (input)="dt.filter($any($event.target).value, 'tower_name', 'contains')" /></th>
+        <th class="bg-white"><input #filterInput pInputText type="text" placeholder="Search" class="w-full" (input)="dt.filter($any($event.target).value, 'level_name', 'contains')" /></th>
+        <th class="bg-white"><input #filterInput pInputText type="text" placeholder="Search" class="w-full" (input)="dt.filter($any($event.target).value, 'pour_name', 'contains')" /></th>
+        <th class="bg-white"><input #filterInput pInputText type="text" placeholder="Search" class="w-full" (input)="dt.filter($any($event.target).value, 'is_active', 'contains')" /></th>
+        <th class="bg-white"><button pButton type="button" label="Reset" icon="pi pi-refresh" class="p-button-sm w-full" (click)="resetTable(dt)"></button></th>
+    </tr>
             <tr class="bg-yellow-400">
                 <!-- Select All checkbox in header -->
                 <th class="text-center" style="width: 3rem">
@@ -114,11 +116,11 @@
                         [indeterminate]="someCompleted && !allCompleted"
                     ></p-checkbox>
                 </th>
-                <th>Site</th>
-                <th>Tower / Block</th>
-                <th>Level</th>
-                <th>Pour</th>
-                <th>Active</th>
+                <th pSortableColumn="project_name">Site <p-sortIcon field="project_name"></p-sortIcon></th>
+                <th pSortableColumn="tower_name">Tower / Block <p-sortIcon field="tower_name"></p-sortIcon></th>
+                <th pSortableColumn="level_name">Level <p-sortIcon field="level_name"></p-sortIcon></th>
+                <th pSortableColumn="pour_name">Pour <p-sortIcon field="pour_name"></p-sortIcon></th>
+                <th pSortableColumn="is_active">Active <p-sortIcon field="is_active"></p-sortIcon></th>
                 <th class="text-center">Action</th>
             </tr>
         </ng-template>

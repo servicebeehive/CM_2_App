@@ -87,6 +87,58 @@ $radius: 10px;
   }
 }
 
+::ng-deep .purchase-items-table {
+  .p-datatable-wrapper {
+    max-height: 500px;
+    overflow: auto;
+    border-radius: 6px;
+    border: 1px solid var(--surface-border);
+  }
+
+  table {
+    table-layout: fixed;
+    width: max-content;
+    min-width: 100%;
+  }
+
+  .p-datatable-thead > tr > th,
+  .p-datatable-tbody > tr > td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .p-datatable-thead > tr > th:nth-child(1),
+  .p-datatable-tbody > tr > td:nth-child(1) {
+    min-width: 150px;
+    max-width: 180px;
+  }
+
+  .p-datatable-thead > tr > th:nth-child(2),
+  .p-datatable-tbody > tr > td:nth-child(2) {
+    min-width: 250px;
+    max-width: 250px;
+  }
+
+  .p-datatable-thead > tr > th:nth-child(3),
+  .p-datatable-tbody > tr > td:nth-child(3) {
+    min-width: 90px;
+    max-width: 120px;
+  }
+
+  .p-datatable-thead > tr > th:nth-child(n + 4),
+  .p-datatable-tbody > tr > td:nth-child(n + 4) {
+    min-width: 110px;
+    max-width: 140px;
+  }
+
+  .p-datatable-thead > tr > th:last-child,
+  .p-datatable-tbody > tr > td:last-child {
+    min-width: 90px;
+    text-align: center;
+  }
+}
+
 :host ::ng-deep {
 
   .p-fileupload-basic {

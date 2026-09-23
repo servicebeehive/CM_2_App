@@ -12,13 +12,14 @@ import { TableModule } from 'primeng/table';
 import { TabViewModule } from 'primeng/tabview';
 import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { InventoryService } from '@/core/services/inventory.service';
 import { AuthService } from '@/core/services/auth.service';
 import { ShareService } from '@/core/services/shared.service';
 import { WorkService } from '@/core/services/work.service';
 import { GrnDelivery, GrnDocumentItem, GrnDocuments, GrnHeader, GrnItem, GrnRemarks } from '@/core/models/authmodel/work.model';
+import { getStatusColor } from '@/shared/utils/status-color';
 
 @Component({
     selector: 'app-grn',
@@ -47,6 +48,7 @@ export class GrnComponent implements OnInit, OnDestroy {
     poSelected = false;
     public transationid: any;
     backshow = false;
+    private fromTransactionList = false;
     dateTime = new Date();
     userId = '';
     editingDeliveryId: number | null = null;
@@ -86,6 +88,7 @@ editingDocumentId: number | null = null; // see note below on documents
         private messageService: MessageService,
         private sharedService: ShareService,
         private route: Router,
+        private activatedRoute: ActivatedRoute,
         private authService: AuthService,
         private inventoryService: InventoryService,
         private workService: WorkService
@@ -94,6 +97,8 @@ editingDocumentId: number | null = null; // see note below on documents
     // ── Lifecycle ──────────────────────────────────────────────────────────
     ngOnInit(): void {
         this.initForm();
+        this.fromTransactionList = this.activatedRoute.snapshot.queryParamMap.get('fromTransactionList') === 'true';
+        this.backshow = this.fromTransactionList;
         this.onGetPONO();
         this.onGetGRN();
         this.userId = this.authService.isLogIntType().username;
@@ -124,7 +129,7 @@ editingDocumentId: number | null = null; // see note below on documents
             p_project_id: [null],
             p_vendor: [{value: null, disabled: true}, Validators.required],
             p_vendor_id: [null],
-            p_location: [{value: null, disabled: true}, Validators.required],
+                    p_location: [{value: null, disabled: true}, Validators.required],
             p_worklocation: [''],
             p_deliveryterms: [''],
             p_poreference: [''],
@@ -149,25 +154,7 @@ editingDocumentId: number | null = null; // see note below on documents
     }
 
     get statusColor(): string {
-        const status = (this.grnForm.get('status')?.value || '').toUpperCase();
-        switch (status) {
-            case 'APPROVED':
-                return 'green';
-            case 'SUBMITTED':
-                return 'blue';
-            case 'REJECTED':
-                return 'red';
-            case 'DRAFT':
-                return 'grey';
-            case 'SENDBACK':
-                return 'orange';
-            case 'APPROVAL PENDING':
-                return 'orange';
-            case 'FULLY_RECEIVED':
-                return 'green';
-            default:
-                return 'grey';
-        }
+        return getStatusColor(this.grnForm.get('status')?.value);
     }
 
     onGetGRN(){
@@ -177,7 +164,12 @@ editingDocumentId: number | null = null; // see note below on documents
         }
         this.inventoryService.getdropdowndetails(payload).subscribe({
             next: (res) => {
-                this.grnOptions = res.data;
+                this.grnOptions = res.data ?? [];
+                const grnId = this.activatedRoute.snapshot.queryParamMap.get('grnId');
+                if (grnId) {
+                    const option = this.grnOptions.find((item: any) => String(item.grn_id) === grnId);
+                    if (option) this.onGRNChange({ value: option.grn_id });
+                }
             },
             error: (error) => {
                 console.error(error);
@@ -333,12 +325,52 @@ private overlayGrnItemQuantities(grnRows: any[]): void {
 }
     // ── File preview (opens the base64 file in a new tab) ──────────────────
     previewFile(base64: string | null): void {
-        if (!base64) {
-            this.messageService.add({ severity: 'info', summary: 'No File', detail: 'No file selected to preview.', life: 2000 });
-            return;
-        }
-        window.open(base64, '_blank');
+    if (!base64) {
+        this.messageService.add({ severity: 'info', summary: 'No File', detail: 'No file selected to preview.', life: 2000 });
+        return;
     }
+
+    try {
+        const blobUrl = this.dataUriToBlobUrl(base64);
+        const win = window.open(blobUrl, '_blank');
+
+        // If the popup was blocked, at least tell the user why nothing happened
+        if (!win) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Popup Blocked',
+                detail: 'Please allow popups for this site to preview the file.',
+                life: 3000
+            });
+        }
+
+        // Free the memory once the browser has had a chance to load it into the new tab
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+    } catch (err) {
+        console.error('Preview failed:', err);
+        this.messageService.add({ severity: 'error', summary: 'Preview Failed', detail: 'Could not open the file.', life: 3000 });
+    }
+}
+
+private dataUriToBlobUrl(dataUri: string): string {
+    // If this isn't actually a data: URI (e.g. a plain server path/URL from a saved GRN),
+    // just use it as-is.
+    if (!dataUri.startsWith('data:')) return dataUri;
+
+    const [header, base64Data] = dataUri.split(',');
+    const mimeMatch = header.match(/data:(.*?);base64/);
+    const mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
+
+    const byteChars = atob(base64Data);
+    const byteNumbers = new Array(byteChars.length);
+    for (let i = 0; i < byteChars.length; i++) {
+        byteNumbers[i] = byteChars.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: mime });
+
+    return URL.createObjectURL(blob);
+}
 
     // ── File upload (converts every file to base64) ────────────────────────
     private fileToBase64(file: File): Promise<string> {
@@ -384,23 +416,64 @@ private overlayGrnItemQuantities(grnRows: any[]): void {
     }
 
     // ── Qty logic ──────────────────────────────────────────────────────────
-    onReceivedQtyChange(product: any): void {
-        const received = Number(product.receivedqty || 0);
-        if (received > product.pendingqty) product.receivedqty = product.pendingqty;
+   onReceivedQtyChange(product: any): void {
+      if (product.qualityreport === 'N') {
+        product.acceptedqty = product.receivedqty;
         product.rejectedqty = 0;
     }
+    const received = Number(product.receivedqty || 0);
+    if (received > product.pendingqty) product.receivedqty = product.pendingqty;
 
-    onAcceptedQtyChange(product: any): void {
-        const received = Number(product.receivedqty || 0);
-        if (product.acceptedqty === null || product.acceptedqty === undefined) {
+    if (product.qualityreport === 'P') {
+        product.acceptedqty = null;
+        product.rejectedqty = 0;
+    } else {
+        product.rejectedqty = 0;
+    }
+}
+
+   onAcceptedQtyChange(product: any): void {
+    if (product.qualityreport === 'P') {
+        product.acceptedqty = null;
         product.rejectedqty = 0;
         return;
     }
 
+   if (product.qualityreport === 'N') {
+        const received = Number(product.receivedqty || 0);
+        const maxAllowed = Math.min(received, product.pendingqty);
+
+        let accepted = Number(product.acceptedqty || 0);
+        if (accepted > maxAllowed) accepted = maxAllowed;
+        product.acceptedqty = accepted;
+
+        product.rejectedqty = received - accepted;
+        return;
+    }
+
+    // Y (or any other status): accepted qty is capped at received qty
+    const received = Number(product.receivedqty || 0);
+    if (product.acceptedqty === null || product.acceptedqty === undefined) {
+        product.rejectedqty = 0;
+        return;
+    }
     const accepted = Number(product.acceptedqty);
     if (accepted > received) product.acceptedqty = received;
     product.rejectedqty = received - Number(product.acceptedqty || 0);
+}
+
+onQualityReportChange(product: any): void {
+    if (product.qualityreport === 'N') {
+        // Switching to N: sync received to whatever accepted currently holds
+        product.receivedqty = product.acceptedqty ?? 0;
+        product.rejectedqty = 0;
+    } else if (product.qualityreport === 'P') {
+        product.acceptedqty = null;
+        product.rejectedqty = 0;
+    } else {
+        product.rejectedqty = 0;
     }
+}
 
     calculateRowAmount(product: any): number {
         return Number(product.acceptedqty || 0) * Number(product.rate || 0);
@@ -463,8 +536,8 @@ private overlayGrnItemQuantities(grnRows: any[]): void {
         this.grnForm.get('p_pono')?.valid === true &&
         !!this.grnForm.get('p_project')?.value &&
         !!this.grnForm.get('p_vendor')?.value &&
-        !!this.grnForm.get('p_location')?.value &&
-        receivedQtyValid
+        receivedQtyValid &&
+        (!this.isQualityReportAttachmentRequired || !!this.uploadedFiles.qualityreport)
     );
 }
 
@@ -483,8 +556,7 @@ get isRemarksReady(): boolean {
 get isDocumentsReady(): boolean {
     const challanOk = !!this.uploadedFiles.challan;
     const materialOk = !!(this.uploadedFiles.material && this.uploadedFiles.material.length);
-    const qualityOk = !this.isQualityReportAttachmentRequired || !!this.uploadedFiles.qualityreport;
-    return challanOk && materialOk && qualityOk;
+    return challanOk && materialOk;
 }
 
     // ── Submit ─────────────────────────────────────────────────────────────
@@ -521,9 +593,10 @@ get isDocumentsReady(): boolean {
             p_company_id: this.authService.isLogIntType().companyid,
             p_project_id: value.p_project_id,
             p_vendor_id: value.p_vendor_id,
-            p_status: isUpdate ? 'UPDATE' : 'SUBMIT',
+            p_status: 'SUBMIT',
             p_items_json: this.buildItemsJson(),
             p_loginuser: this.authService.isLogIntType().userid,
+            p_qualityreport: this.uploadedFiles.qualityreport
         };
 
         this.workService.upsertGrn(payload).subscribe({
@@ -535,7 +608,7 @@ get isDocumentsReady(): boolean {
                 });
                 this.grnForm.patchValue({
                     p_grn_id: res.data.grn_id,
-                    status: res.data.tran_status
+                    status: res.data.v_status
                 });
                 this.transationid = res.data.grn_id;
                this.onGetGRN();
@@ -561,8 +634,14 @@ get isDocumentsReady(): boolean {
  private buildItemsJson(): GrnItem[] {
     return this.itemOptionslist.map((item) => {
         const receivedQty = item.receivedqty != null ? Number(item.receivedqty) : 0;
-        const hasAcceptedQty = item.acceptedqty !== null && item.acceptedqty !== undefined && item.acceptedqty !== '';
-        const acceptedQty = hasAcceptedQty ? Number(item.acceptedqty) : receivedQty;
+        const acceptedQty = item.qualityreport === 'P'
+            ? null
+            : item.acceptedqty !== null && item.acceptedqty !== undefined && item.acceptedqty !== ''
+                ? Number(item.acceptedqty)
+                : null;
+        const rejectedQty = item.qualityreport === 'N'
+            ? (receivedQty - Number(item.acceptedqty || 0))
+            : item.rejectedqty != null ? Number(item.rejectedqty) : 0;
 
         return {
             po_detail_id: item.purchasedetailid,
@@ -570,7 +649,7 @@ get isDocumentsReady(): boolean {
             uom_id: item.uomid,
             received_qty: receivedQty,
             accepted_qty: acceptedQty,
-            rejected_qty: item.rejectedqty != null ? Number(item.rejectedqty) : 0,
+            rejected_qty: rejectedQty,
             rate: Number(item.rate) || 0,
             batch_no: item.batchno ?? '',
             batch_date: item.batchdate
@@ -935,7 +1014,7 @@ get isDocumentsReady(): boolean {
     }
 
     back(): void {
-        this.route.navigate(['/layout/inventory/transaction']);
+        this.route.navigate([this.fromTransactionList ? '/layout/inventory/grn-list' : '/layout/inventory/transaction']);
     }
 
     setupBackButtonListener(): void {

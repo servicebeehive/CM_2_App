@@ -22,6 +22,18 @@ export const appRoutes: Routes = [
                 canActivate:[AuthGuard],
                 data: { breadcrumb: 'Dashboard',expectedRole:'admin'},
             },
+            {
+                path: 'management-dashboard',
+                loadComponent: () => import('./app/pages/dashboards/managementdashboard').then((c) => c.ManagementDashboard),
+                canActivate: [AuthGuard],
+                data: { breadcrumb: 'Management Dashboard' }
+            },
+            {
+                path: 'operational-dashboard',
+                loadComponent: () => import('./app/pages/dashboards/operationaldashboard').then((c) => c.OperationalDashboard),
+                canActivate: [AuthGuard],
+                data: { breadcrumb: 'Operational Dashboard' }
+            },
               
             // {
             //     path: 'dashboard-banking',

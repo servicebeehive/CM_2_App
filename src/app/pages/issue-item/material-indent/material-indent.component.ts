@@ -1,5 +1,6 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -14,6 +15,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { InventoryService } from '@/core/services/inventory.service';
 import { WorkService } from '@/core/services/work.service';
 import { AuthService } from '@/core/services/auth.service';
+import { getStatusColor } from '@/shared/utils/status-color';
 import { MaterialIndent, MaterialIndentItem, MaterialIssue } from '@/core/models/authmodel/work.model';
 
 @Component({
@@ -54,7 +56,9 @@ export class MaterialIndentComponent implements OnInit {
         private workService: WorkService,
         private confirmationService: ConfirmationService,
         private messageService: MessageService,
-        public datePipe: DatePipe
+        public datePipe: DatePipe,
+        private router: Router,
+        private route: ActivatedRoute
     ) {}
 
     ngOnInit(): void {
@@ -85,23 +89,7 @@ export class MaterialIndentComponent implements OnInit {
     }
 
     get statusColor(): string {
-        const status = (this.minForm.get('status')?.value || '').toUpperCase();
-        switch (status) {
-            case 'APPROVED':
-                return 'green';
-            case 'SUBMITTED':
-                return 'blue';
-            case 'REJECTED':
-                return 'red';
-            case 'DRAFT':
-                return 'grey';
-            case 'SENDBACK':
-                return 'orange';
-            case 'APPROVAL PENDING':
-                return 'orange';
-            default:
-                return 'grey';
-        }
+        return getStatusColor(this.minForm.get('status')?.value);
     }
 
     hasCopyableData(): boolean {
@@ -113,18 +101,31 @@ export class MaterialIndentComponent implements OnInit {
         this.loadProjects();
         this.loadRequestedBy();
         this.OnGetItem();
-        this.onGetIndentList();
+        const indentId = this.route.snapshot.queryParamMap.get('indentId');
+        this.onGetIndentList(indentId ? Number(indentId) : undefined);
         this.onGetDraftIndentList();
     }
 
-    onGetIndentList(): void {
+    hasZeroQtyItem(): boolean {
+    return this.issueItems.some((it) => !it.requestqty || Number(it.requestqty) <= 0);
+}
+
+    onGetIndentList(indentId?: number): void {
         const payload = { p_returntype: 'INDENTLIST', p_returnvalue: this.companyId, p_username: this.userId };
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res) => {
-                this.indentOptions = res.data;
+                this.indentOptions = res.data ?? [];
+                if (indentId) {
+                    const option = this.indentOptions.find((item: any) => Number(item.indent_id) === indentId);
+                    if (option) this.onIndentChange({ value: option.indent_no });
+                }
             },
             error: (err) => console.error(err)
         });
+    }
+
+    onBack(): void {
+        this.router.navigate(['/layout/issue-item/material-indent']);
     }
 
     onGetDraftIndentList(): void {

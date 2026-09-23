@@ -16,11 +16,14 @@ import { MessageService } from 'primeng/api';
 import { DatePicker } from 'primeng/datepicker';
 import { InventoryService } from '@/core/services/inventory.service';
 import { AuthService } from '@/core/services/auth.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { getStatusColor } from '@/shared/utils/status-color';
+import { SelectModule } from 'primeng/select';
 
 @Component({
     selector: 'app-mics-purchase',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, ButtonModule, InputTextModule, TextareaModule, InputNumberModule, CalendarModule, DropdownModule, TableModule, FileUploadModule, TooltipModule, ToastModule, DatePicker],
+    imports: [CommonModule, ReactiveFormsModule, ButtonModule, InputTextModule, TextareaModule, InputNumberModule, CalendarModule, DropdownModule, TableModule, FileUploadModule, TooltipModule, ToastModule, DatePicker, SelectModule],
     providers: [MessageService],
     templateUrl: './mics-purchase.component.html',
     styleUrl: './mics-purchase.component.scss'
@@ -36,13 +39,16 @@ export class MicsPurchaseComponent implements OnInit {
     companyId = '';
     userId = '';
     editingMiscPurchaseId: number | null = null;
+    fromTransactionList = false;
 
     constructor(
         private fb: FormBuilder,
         private messageService: MessageService,
         private inventoryService: InventoryService,
         private authService: AuthService,
-        private workService: WorkService
+        private workService: WorkService,
+        private route: ActivatedRoute,
+        private router: Router
     ) {}
 
     ngOnInit(): void {
@@ -58,6 +64,7 @@ export class MicsPurchaseComponent implements OnInit {
         });
         this.companyId = this.authService.isLogIntType().companyid.toString();
         this.userId = this.authService.isLogIntType().userid.toString();
+        this.fromTransactionList = this.route.snapshot.queryParamMap.get('fromTransactionList') === 'true';
         this.loadPurchaseNoOptions();
         this.OnGetItem();
         this.onGetProject();
@@ -71,23 +78,7 @@ export class MicsPurchaseComponent implements OnInit {
 }
 
     get statusColor(): string {
-        const status = (this.form.get('status')?.value || '').toUpperCase();
-        switch (status) {
-            case 'APPROVED':
-                return 'green';
-            case 'SUBMITTED':
-                return 'blue';
-            case 'REJECTED':
-                return 'red';
-            case 'DRAFT':
-                return 'grey';
-            case 'SENDBACK':
-                return 'orange';
-            case 'APPROVAL PENDING':
-                return 'orange';
-            default:
-                return 'grey';
-        }
+        return getStatusColor(this.form.get('status')?.value);
     }
 
      OnGetItem(): void {
@@ -131,12 +122,21 @@ export class MicsPurchaseComponent implements OnInit {
                     ...row,
                     misc_purchase_no: row.misc_purchase_no ?? row.purchase_no ?? row.purchaseNo ?? row.miscpurchase_no ?? row.miscpurchase_no ?? row.value ?? ''
                 }));
+                const purchaseId = this.route.snapshot.queryParamMap.get('miscPurchaseId');
+                if (purchaseId) {
+                    const option = this.purchaseNoOptions.find((item: any) => String(item.misc_purchase_id) === purchaseId);
+                    if (option) this.onPurchaseChange({ value: option.misc_purchase_id });
+                }
             },
             error: (err) => {
                 console.error('Error fetching misc purchase numbers:', err);
                 this.purchaseNoOptions = [];
             }
         });
+    }
+
+    onBack(): void {
+        this.router.navigate(['/layout/purchase/mics-purchase-list']);
     }
 
     onPurchaseChange(event: any): void {

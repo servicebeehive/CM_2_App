@@ -1,181 +1,69 @@
 <div class="card p-3 md:p-6">
-    <!-- Header -->
+    <!-- Header: title + New Transfer button aligned top-right -->
     <div class="flex justify-between items-center mb-6">
-        <span class="block text-surface-900 font-bold text-2xl">Material Transfer</span>
+        <span class="block text-surface-900 font-bold text-2xl">{{ pageTitle }}</span>
+        <button pButton type="button" [label]="newButtonLabel" icon="pi pi-plus"
+                class="p-button-warning" (click)="newTransfer()"></button>
     </div>
-
-    <!-- ================================
-         FILTER FIELDS
-    ================================= -->
-    <form [formGroup]="filterForm" (ngSubmit)="onSearch()">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-x-6 gap-y-4 w-full mb-6">
-            <!-- Transfer No -->
-            <div class="flex flex-col">
-                <label class="font-medium mb-1">Transfer No</label>
-                <input pInputText formControlName="p_transferno" placeholder="Enter Transfer No" class="w-full" />
-            </div>
-
-            <!-- From Site -->
-            <div class="flex flex-col">
-                <label class="font-medium mb-1">From Site</label>
-                <p-dropdown
-                    [options]="siteOptions"
-                    optionLabel="site_name"
-                    optionValue="site_id"
-                    placeholder="All Sites"
-                    formControlName="p_fromsite"
-                    [filter]="true"
-                    [showClear]="true">
-                </p-dropdown>
-            </div>
-
-            <!-- To Site -->
-            <div class="flex flex-col">
-                <label class="font-medium mb-1">To Site</label>
-                <p-dropdown
-                    [options]="siteOptions"
-                    optionLabel="site_name"
-                    optionValue="site_id"
-                    placeholder="All Sites"
-                    formControlName="p_tosite"
-                    [filter]="true"
-                    [showClear]="true">
-                </p-dropdown>
-            </div>
-
-            <!-- Status -->
-            <div class="flex flex-col">
-                <label class="font-medium mb-1">Status</label>
-                <p-dropdown
-                    [options]="statusOptions"
-                    optionLabel="label"
-                    optionValue="label"
-                    placeholder="All Statuses"
-                    formControlName="p_status"
-                    [showClear]="true">
-                </p-dropdown>
-            </div>
-
-            <!-- Search -->
-            <div class="flex justify-between gap-3 mt-6">
-                <button pButton type="submit" label="Search" class="p-button-warning w-full"></button>
-                 <button pButton type="button" label="New Transfer" class="p-button-warning w-full" (click)="newTransfer()"></button>
-            </div>
-        </div>
-    </form>
 
     <!-- ================================
          TRANSFER LIST TABLE
     ================================= -->
-    <p-table [value]="transferList" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10"
+    <p-table #dt [value]="transferList" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10"
              [rowsPerPageOptions]="[10, 20, 50]" class="p-datatable-gridlines p-datatable-sm mb-6 material-transfer">
+
         <ng-template pTemplate="header">
+            <!-- Search row — sits above the column titles, outside each column -->
+            <tr class="mr-filter-row">
+        <th *ngFor="let column of columns; let i = index; trackBy: trackByField">
+         <input #filterInput pInputText type="text" placeholder="Search" class="w-full"
+             (input)="dt.filter($any($event.target).value, column.field, 'contains')" />
+        </th>
+    <th class="text-center">
+        <button pButton type="button" label="Reset" icon="pi pi-refresh"
+                class="p-button-sm mr-reset-btn w-full"
+              (click)="resetTable(dt)">
+        </button>
+    </th>
+</tr>
+
+            <!-- Column titles + sort icons -->
             <tr class="bg-yellow-400">
-                <th>Transfer No</th>
-                <th>Transfer Date</th>
-                <th>From Site</th>
-                <th>To Site</th>
-                <th>Status</th>
+                <th *ngFor="let column of columns; trackBy: trackByField" [pSortableColumn]="column.field">
+                    {{ column.header }} <p-sortIcon [field]="column.field"></p-sortIcon>
+                </th>
                 <th class="text-center">Action</th>
             </tr>
         </ng-template>
 
         <ng-template pTemplate="body" let-row>
             <tr>
-                <td class="text-sm font-medium text-primary">{{ row.transferno }}</td>
-                <td class="text-sm">{{ row.transferdate | date: 'dd-MM-yyyy' }}</td>
-                <td class="text-sm">{{ row.fromsite }}</td>
-                <td class="text-sm">{{ row.tosite }}</td>
-                <td class="text-sm">
-                    <span class="px-3 py-1 rounded-full text-xs font-semibold"
-                          [ngClass]="row.status === 'WITHDRAW' ? 'bg-yellow-200 text-yellow-800' : 'bg-green-200 text-green-800'">
-                        {{ row.status === 'WITHDRAW' ? 'Material Withdraw' : 'Material Deposite' }}
-                    </span>
+                <td *ngFor="let column of columns; let i = index; trackBy: trackByField" class="text-sm" [class.font-bold]="i === 0">
+                    <span *ngIf="column.field === 'status'; else plainValue" class="px-3 py-1 rounded-full text-xs font-semibold" [ngClass]="statusClass(value(row, column))">{{ value(row, column) }}</span>
+                    <ng-template #plainValue>{{ isDateField(column.field) && value(row, column) !== '-' ? (value(row, column) | date: 'dd-MM-yyyy') : value(row, column) }}</ng-template>
                 </td>
                 <td class="text-center">
-                    <button pButton type="button" label="View" class="p-button-outlined p-button-sm"
-                            (click)="onViewTransfer(row)"></button>
+                    <div class="mr-action-group">
+                        <button pButton type="button" icon="pi pi-eye" pTooltip="View"
+                                class="p-button-text p-button-sm" (click)="onViewTransfer(row)"></button>
+                        
+                        <button *ngIf="transactionType === 'transfer'" pButton type="button" icon="pi pi-trash" pTooltip="Delete"
+                                class="p-button-text p-button-sm p-button-danger" (click)="onDeleteTransfer(row)"></button>
+                    </div>
                 </td>
             </tr>
         </ng-template>
 
         <ng-template pTemplate="emptymessage">
             <tr>
-                <td colspan="6" class="text-center text-400 italic py-6 text-sm">No transfers found</td>
+                <td [attr.colspan]="columns.length + 1" class="text-center text-400 italic py-6 text-sm">No records found</td>
             </tr>
         </ng-template>
-         <ng-template pTemplate="paginatorleft">
-                <div class="text-500 text-xs ms-2">Total Items: {{ transferList.length }}</div>
-            </ng-template>
+        <ng-template pTemplate="paginatorleft">
+            <div class="text-500 text-xs ms-2">Total Items: {{ transferList.length }}</div>
+        </ng-template>
     </p-table>
 
-    <!-- ================================
-         TRANSFER DETAIL VIEW
-    ================================= -->
-    <div *ngIf="selectedTransfer" class="border rounded-lg p-3 md:p-6 surface-50">
+    <p-confirmDialog></p-confirmDialog>
 
-        <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
-            <span class="text-xl font-bold text-surface-900">{{ selectedTransfer.transferno }}</span>
-            <span class="px-3 py-1 rounded-full text-xs font-semibold"
-                  [ngClass]="selectedTransfer.status === 'WITHDRAW' ? 'bg-yellow-200 text-yellow-800' : 'bg-green-200 text-green-800'">
-                {{ selectedTransfer.status === 'WITHDRAW' ? 'Material Withdraw' : 'Material Deposite' }}
-            </span>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-3 mb-6">
-            <div class="flex flex-col">
-                <label class="text-500 text-xs mb-1">Transfer Date</label>
-                <span class="text-sm font-medium">{{ selectedTransfer.transferdate | date: 'dd-MM-yyyy' }}</span>
-            </div>
-            <div class="flex flex-col">
-                <label class="text-500 text-xs mb-1">From Site</label>
-                <span class="text-sm font-medium">{{ selectedTransfer.fromsite }}</span>
-            </div>
-            <div class="flex flex-col">
-                <label class="text-500 text-xs mb-1">To Site</label>
-                <span class="text-sm font-medium">{{ selectedTransfer.tosite }}</span>
-            </div>
-            <div class="flex flex-col">
-                <label class="text-500 text-xs mb-1">Remarks</label>
-                <span class="text-sm font-medium">{{ selectedTransfer.remarks || '-' }}</span>
-            </div>
-        </div>
-
-        <!-- Material Items -->
-        <span class="block font-semibold mb-2">Material Items</span>
-        <p-table [value]="selectedTransfer.items" [responsiveLayout]="'scroll'" class="p-datatable-gridlines p-datatable-sm mb-4">
-            <ng-template pTemplate="header">
-                <tr class="bg-yellow-400">
-                    <th>#</th>
-                    <th>Item Name</th>
-                    <th>UOM</th>
-                    <th class="text-right">Qty Transferred</th>
-                    <th>Remarks</th>
-                </tr>
-            </ng-template>
-            <ng-template pTemplate="body" let-item let-i="rowIndex">
-                <tr>
-                    <td class="text-sm">{{ i + 1 }}</td>
-                    <td class="text-sm">{{ item.itemname }}</td>
-                    <td class="text-sm">{{ item.uom }}</td>
-                    <td class="text-right text-sm">{{ item.qty | number }}</td>
-                    <td class="text-sm">{{ item.remarks || '-' }}</td>
-                </tr>
-            </ng-template>
-        </p-table>
-
-        <!-- Receipt Confirmation -->
-        <div *ngIf="selectedTransfer.status === 'WITHDRAW'"
-             class="flex justify-between items-center bg-green-50 border border-green-200 rounded-lg p-3 flex-wrap gap-3">
-            <div class="flex items-center gap-2">
-                <i class="pi pi-check-circle text-green-600 text-xl"></i>
-                <div class="flex flex-col">
-                    <span class="text-sm font-semibold text-green-800">Receipt Confirmation (Material Deposite)</span>
-                    <span class="text-xs text-500">Mark received at destination site to change status to Material Deposite.</span>
-                </div>
-            </div>
-            <button pButton type="button" label="Mark as Received" class="p-button-success"
-                    (click)="onMarkReceived(selectedTransfer)"></button>
-        </div>
-    </div>
 </div>

@@ -10,12 +10,12 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
 import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { InventoryService } from '@/core/services/inventory.service';
 import { AuthService } from '@/core/services/auth.service';
+import { getStatusColor } from '@/shared/utils/status-color';
 import { WorkService } from '@/core/services/work.service';
-import { Textarea } from 'primeng/textarea';
 import { MaterialTransfer, MaterialTransferItemPayload, TransferItem } from '@/core/models/authmodel/work.model';
 
 @Component({
@@ -24,7 +24,7 @@ import { MaterialTransfer, MaterialTransferItemPayload, TransferItem } from '@/c
     imports: [
         CommonModule, FormsModule, ReactiveFormsModule, ButtonModule, ConfirmDialogModule,
         DatePickerModule, DropdownModule, InputNumberModule, InputTextModule, TableModule,
-        TooltipModule, Textarea
+        TooltipModule
     ],
     templateUrl: './create-material-transfer.component.html',
     styleUrl: './create-material-transfer.component.scss',
@@ -61,6 +61,7 @@ export class CreateMaterialTransferComponent implements OnInit {
         private confirmationService: ConfirmationService,
         private messageService: MessageService,
         private router: Router,
+        private route: ActivatedRoute,
         public datePipe: DatePipe
     ) {}
 
@@ -70,7 +71,8 @@ export class CreateMaterialTransferComponent implements OnInit {
         this.initForm();
         this.onGetProject();
         this.OnGetItem();
-        this.onGetTransferNo();
+        const transferId = this.route.snapshot.queryParamMap.get('transferId');
+        this.onGetTransferNo(transferId ? Number(transferId) : undefined);
     }
 
     private initForm(): void {
@@ -86,17 +88,7 @@ export class CreateMaterialTransferComponent implements OnInit {
     }
 
     get statusColor(): string {
-        const status = (this.transferForm.get('status')?.value || '').toUpperCase();
-        switch (status) {
-            case 'APPROVED': return 'green';
-            case 'SUBMITTED': return 'blue';
-            case 'REJECTED': return 'red';
-            case 'CANCELLED': return 'red';
-            case 'PARTIALLY RECEIVED': return 'purple';
-            case 'DRAFT': return 'grey';
-            case 'APPROVAL PENDING': return 'orange';
-            default: return 'grey';
-        }
+        return getStatusColor(this.transferForm.get('status')?.value);
     }
 
     private sameSiteValidator(group: AbstractControl): ValidationErrors | null {
@@ -121,7 +113,7 @@ export class CreateMaterialTransferComponent implements OnInit {
     onTransferChange(event: any): void {
     if (!event.value) return;
 
-    const transferValue = this.transferNoOptions.find((opt) => opt.transfer_id === event.value)?.transfer_no;
+    const transferValue = this.transferNoOptions.find((opt) => Number(opt.transfer_id) === Number(event.value))?.transfer_no;
 
     const payload = {
         p_returntype: 'TRANSFERDETAILS',
@@ -213,10 +205,13 @@ export class CreateMaterialTransferComponent implements OnInit {
         });
     }
 
-    onGetTransferNo(): void {
+    onGetTransferNo(transferId?: number): void {
         const payload = { p_returntype: 'TRANSFERLIST', p_returnvalue: this.companyId, p_username: this.userId };
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-            next: (res) => (this.transferNoOptions = res.data),
+            next: (res) => {
+                this.transferNoOptions = res.data ?? [];
+                if (transferId) this.onTransferChange({ value: transferId });
+            },
             error: (err) => console.error(err)
         });
     }
@@ -326,7 +321,7 @@ OnItemChange(event: any): void {
         });
     }
 
-    // ── Submit / Cancel ────────────────────────────────────────────────────
+    // ── Submit / Back ──────────────────────────────────────────────────────
     onSubmit(): void {
         this.transferForm.markAllAsTouched();
 
@@ -403,7 +398,7 @@ OnItemChange(event: any): void {
         });
     }
 
-    onCancel(): void {
+    onBack(): void {
         this.router.navigate(['/layout/issue-item/material-transfer']);
     }
 

@@ -214,6 +214,7 @@ export interface GrnHeader {
      p_status: string;
      p_items_json: GrnItem[];
      p_loginuser: number;
+     p_qualityreport: string | null;
 }
 
 export interface GrnItem {
