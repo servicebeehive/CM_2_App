@@ -20,12 +20,12 @@ import { ButtonModule } from 'primeng/button';
                     </div>
                 </div>
                 <div class="header-right">
-        <div class="header-meta">
-            <i class="pi pi-calendar"></i><span>Date Range<br /><strong>01 Sep - 30 Sep 2026</strong></span
-            ><i class="pi pi-user"></i><span>Site Manager<br /><strong>Operations</strong></span>
-        </div>
-        <button pButton type="button" icon="pi pi-arrow-left" label="Back" class="p-button-warning back-btn" (click)="back()"></button>
-    </div>
+                    <div class="header-meta">
+                        <i class="pi pi-calendar"></i><span>Date Range<br /><strong>01 Sep - 30 Sep 2026</strong></span
+                        ><i class="pi pi-user"></i><span>Site Manager<br /><strong>Operations</strong></span>
+                    </div>
+                    <button pButton type="button" icon="pi pi-arrow-left" label="Back" class="p-button-warning back-btn" (click)="back()"></button>
+                </div>
             </header>
 
             <!-- ROW 1: all 8 KPI cards in one line -->
@@ -158,10 +158,7 @@ import { ButtonModule } from 'primeng/button';
                 </div>
                 <div class="panel quick-actions">
                     <div class="panel-title"><h2>Quick Actions</h2></div>
-                    <button><i class="pi pi-file-plus"></i>Create MR</button
-                    ><button><i class="pi pi-shopping-cart"></i>Create PO</button
-                    ><button><i class="pi pi-eye"></i>View Stock</button
-                    ><button><i class="pi pi-chart-bar"></i>View Reports</button>
+                    <button><i class="pi pi-file-plus"></i>Create MR</button><button><i class="pi pi-shopping-cart"></i>Create PO</button><button><i class="pi pi-eye"></i>View Stock</button><button><i class="pi pi-chart-bar"></i>View Reports</button>
                 </div>
             </section>
         </div>
@@ -181,11 +178,11 @@ import { ButtonModule } from 'primeng/button';
                 margin-bottom: 1.25rem;
             }
             .header-right {
-    display: flex;
-    align-items: center;
-    gap: 1rem;   
-    margin-top: 45px;
-}
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                margin-top: 45px;
+            }
 
             .header-left {
                 display: flex;
@@ -495,7 +492,7 @@ import { ButtonModule } from 'primeng/button';
     ]
 })
 export class OperationalDashboard {
-       constructor(private router: Router) {}
+    constructor(private router: Router) {}
     forecastData = {
         labels: ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8', 'W9', 'W10', 'W11', 'W12'],
         datasets: [
@@ -532,6 +529,6 @@ export class OperationalDashboard {
     ];
 
     back(): void {
-        this.router.navigate(['/layout/dashboard']);
+        this.router.navigate(['/layout/management-dashboard']);
     }
 }

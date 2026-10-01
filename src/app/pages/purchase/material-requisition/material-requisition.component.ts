@@ -1,7 +1,7 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Component, ElementRef, ViewChild, ViewChildren, QueryList, inject } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { Dropdown, DropdownModule } from 'primeng/dropdown';
 import { SelectModule } from 'primeng/select';
@@ -67,6 +67,7 @@ export class MaterialRequisitionComponent {
     companyId = '';
     private requestedMrNo: string | null = null;
     private requestedMrId: string | null = null;
+    private requestedMrStatus: string | null = null;
     private fromRfqView = false;
     private fromApprovalView = false;
     private fromPurchaseOrderView = false;
@@ -92,6 +93,7 @@ export class MaterialRequisitionComponent {
         this.userId = this.authService.isLogIntType().userid.toString();
         this.requestedMrNo = this.route.snapshot.queryParamMap.get('mfNo');
         this.requestedMrId = this.route.snapshot.queryParamMap.get('mfId');
+        this.requestedMrStatus = this.route.snapshot.queryParamMap.get('status');
         this.fromRfqView = this.route.snapshot.queryParamMap.get('fromRfqView') === 'true';
         this.fromApprovalView = this.route.snapshot.queryParamMap.get('fromApprovalView') === 'true';
         this.fromPurchaseOrderView = this.route.snapshot.queryParamMap.get('fromPurchaseOrderView') === 'true';
@@ -107,7 +109,7 @@ export class MaterialRequisitionComponent {
             p_draft_requisitionno: [null],
             p_mrdate: [this.today],
             p_project: [null, Validators.required],
-            p_department: [null],
+            p_department: [null, Validators.required],
             p_tower: [null],
             p_level: [null],
             p_pour: [null],
@@ -121,12 +123,30 @@ export class MaterialRequisitionComponent {
             priority: [null],
             reference: [''],
             p_priority: [null],
-            p_requested: [null],
-            p_requestedby: [null, Validators.required],
-            p_requiredbydate: [null, Validators.required],
+            p_requestedby: [null,Validators.required],
+            p_requiredbydate: [null, [Validators.required, this.requiredDateNotBeforeMrDate()]],
             p_items: this.fb.array([])
         });
+         this.forecastForm.get('p_mrdate')?.valueChanges.subscribe(() => {
+        this.forecastForm.get('p_requiredbydate')?.updateValueAndValidity({ emitEvent: false });
+    });
     }
+
+    private requiredDateNotBeforeMrDate(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+        const mrDateValue = this.forecastForm?.get('p_mrdate')?.value;
+        const requiredDateValue = control.value;
+
+        if (!mrDateValue || !requiredDateValue) return null;
+
+        const mrDate = new Date(mrDateValue);
+        mrDate.setHours(0, 0, 0, 0);
+        const requiredDate = new Date(requiredDateValue);
+        requiredDate.setHours(0, 0, 0, 0);
+
+        return requiredDate < mrDate ? { beforeMrDate: true } : null;
+    };
+}
 
     get itemArray(): FormArray {
         return this.forecastForm.get('p_items') as FormArray;
@@ -180,6 +200,19 @@ export class MaterialRequisitionComponent {
     get backQueryParams(): Record<string, string> {
         return this.fromApprovalView ? { p_type: this.approvalType ?? '', p_request: this.approvalRequest ?? 'PENDING' } : {};
     }
+
+get isDraftDisabled(): boolean {
+    if (this.isFromRfqView) return true;
+    if (!!this.forecastForm.get('p_requisitionno')?.value) return true; // real MR loaded, not a draft
+    if (this.isReadOnlyView) return true;
+
+    // Minimum fields required even for a Draft save — adjust this list
+    // to whatever your backend actually needs for a valid draft insert.
+    const project = this.forecastForm.get('p_project')?.value;
+    const requestedBy = this.forecastForm.get('p_requestedby')?.value;
+
+    return !project || !requestedBy;
+}
 
     returnToSource(): void {
         this.sharedService.returnToSavedView(this.router, this.backRoute, this.backQueryParams);
@@ -320,12 +353,12 @@ export class MaterialRequisitionComponent {
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res) => {
                 this.requisitionOptions = res.data;
-                if (this.requestedMrNo || this.requestedMrId) {
+                if ((this.requestedMrNo || this.requestedMrId) && this.requestedMrStatus?.toUpperCase() !== 'DRAFT') {
                     const matched = this.requisitionOptions.find((item: any) =>
                         (this.requestedMrId && String(item.mf_id) === this.requestedMrId) ||
                         (this.requestedMrNo && String(item.mf_no ?? item.mr_no) === this.requestedMrNo)
                     );
-                    if (matched) this.onDraftChange({ value: matched.mf_id });
+                    if (matched) this.onMrNoChange({ value: matched.mf_id });
                 }
             },
             error: (err) => console.error(err)
@@ -341,7 +374,15 @@ export class MaterialRequisitionComponent {
         };
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res) => {
-                this.draftRequisitionOptions = res.data;
+                this.draftRequisitionOptions = res.data ?? [];
+                if (this.requestedMrStatus?.toUpperCase() === 'DRAFT') {
+                    const draft = this.draftRequisitionOptions.find(
+                        (item: any) =>
+                            (this.requestedMrId && String(item.mf_id) === String(this.requestedMrId)) ||
+                            (this.requestedMrNo && String(item.mf_no ?? item.mr_no) === String(this.requestedMrNo))
+                    );
+                    if (draft) this.onDraftSelectChange({ value: draft.mf_id });
+                }
             },
             error: (err) => console.error(err)
         });
@@ -363,17 +404,16 @@ export class MaterialRequisitionComponent {
     }
 
     onGetProject(): void {
-        const companyId = this.authService.isLogIntType().companyid.toString();
+       const companyId = this.authService.isLogIntType().companyid.toString();
+        const userId = this.authService.isLogIntType().userid.toString();
         const payload = {
-            returnType: 'ACTIVEPROJECT',
-            returnValue: '',
-            username: '',
-            option1: companyId,
-            option2: null
+            p_companyid: companyId,
+            p_userid: userId,
+            p_isactive: null
         };
-        this.inventoryService.getparameterbased(payload).subscribe({
+        this.workService.getProjectListRbac(payload).subscribe({
             next: (res) => {
-                this.projectOptions = res.data;
+                this.projectOptions = res.data.data;
             },
             error: (err) => console.error(err)
         });
@@ -460,112 +500,123 @@ export class MaterialRequisitionComponent {
         this.forecastForm.patchValue({ p_pour: null }, { emitEvent: false });
     }
 
-    onDraftChange(data: any): void {
-        this.onReset();
-        const fromRequisition = this.requisitionOptions.find((m: any) => String(m.mf_id) === String(data.value));
-        const fromDraft = this.draftRequisitionOptions.find((m: any) => String(m.mf_id) === String(data.value));
-        const matched = fromRequisition ?? fromDraft;
+    onMrNoChange(data: any): void {
+    this.forecastForm.patchValue({ p_draft_requisitionno: null }, { emitEvent: false });
+    this.loadRequisitionDetails(data.value, 'MR');
+}
 
-        if (!matched) {
-            console.warn('No matching MF found for value:', data.value);
-            return;
-        }
+onDraftSelectChange(data: any): void {
+    this.forecastForm.patchValue({ p_requisitionno: null }, { emitEvent: false });
+    this.loadRequisitionDetails(data.value, 'DRAFT');
+}
 
-        const paylaod = { p_returntype: 'MFDETAILS', p_returnvalue: matched.mf_no, p_username: this.userId };
-        this.inventoryService.Getreturndropdowndetails(paylaod).subscribe({
-            next: (res) => {
-                const rows: any[] = Array.isArray(res?.data) ? res.data : [];
-                if (!rows.length) return;
-                const header = rows[0];
-                const applyDraft = () => {
-                    this.buildTowerOptions();
+ private loadRequisitionDetails(mfId: any, source: 'MR' | 'DRAFT'): void {
+    this.onReset();
+    const fromRequisition = this.requisitionOptions.find((m: any) => String(m.mf_id) === String(mfId));
+    const fromDraft = this.draftRequisitionOptions.find((m: any) => String(m.mf_id) === String(mfId));
+    const matched = fromRequisition ?? fromDraft;
 
-                    this.levelOptions = this.workList
-                        .filter((w) => w.tower_block_id === header.tower_block_id)
-                        .reduce((acc: any[], w) => {
-                            if (!acc.some((l) => l.value === w.level_name)) acc.push({ label: w.level_name, value: w.level_name });
-                            return acc;
-                        }, []);
-
-                    this.pourOptions = this.workList
-                        .filter((w) => w.tower_block_id === header.tower_block_id && w.level_name === header.level_name)
-                        .reduce((acc: any[], w) => {
-                            if (!acc.some((p) => p.value === w.pour_name)) acc.push({ label: w.pour_name, value: w.pour_name });
-                            return acc;
-                        }, []);
-
-                    const resolvedPour = header.pour_name ?? (this.pourOptions.length === 1 ? this.pourOptions[0].value : null);
-                    const { name, base64 } = this.extractDisplayFileName(header.attachment ?? '');
-                    this.attachmentFileName = name;
-                    this.attachmentBase64 = base64;
-                    this.approved_on = header.approved_on ? new Date(header.approved_on) : null;
-                    this.approved_name = header.approved_name ?? '';
-                    this.forecastForm.patchValue(
-                        {
-                            p_mf_id: header.mf_id,
-                            p_requisitionno: header.mf_id,
-                            p_draft_requisitionno: header.mf_id,
-                            p_project: header.project_id,
-                            p_department: header.department_id,
-                            p_tower: header.tower_block_id,
-                            p_level: header.level_name,
-                            p_pour: resolvedPour,
-                            p_requestedby: header.requested_by,
-                            p_requiredbydate: header.required_by_date ? new Date(header.required_by_date) : null,
-                            p_priority: header.priority,
-                            p_remarks: header.remarks ?? '',
-                            p_attachment: header.attachment ?? '',
-                            p_mrdate: header.created_on ? new Date(header.created_on) : this.today,
-                            status: header.status
-                        },
-                        { emitEvent: false }
-                    );
-
-                    this.itemArray.clear();
-                    rows.forEach((row: any) => {
-                        const master = this.itemOptions.find((i) => i.itemid === row.item_id);
-                        this.itemArray.push(
-                            this.createItemRow({
-                                mfdetailid: row.mfdetailid,
-                                item_category_id: row.item_category_id,
-                                categoryname: row.categoryname ?? row.item_category ?? master?.item_category ?? '',
-                                itemid: row.item_id,
-                                item_description: row.itemname ?? master?.item_description ?? '',
-                                uom_id: row.uom_id,
-                                uomname: row.uomname ?? master?.uom ?? '',
-                                buffer_stock: row.buffer_stock,
-                                currentstock: row.available_qty,
-                                pending_qty: row.pending_qty,
-                                total_mr_unapproved_qty: row.total_mr_unapproved_qty,
-                                required_qty: row.required_qty,
-                                remarks: row.itemremark ?? ''
-                            })
-                        );
-                    });
-                };
-
-                const hasTower = this.workList.some((w) => w.tower_block_id === header.tower_block_id);
-                if (!hasTower) {
-                    // workList wasn't loaded for this draft's project yet — fetch it first
-                    const wlPayload = { p_returntype: 'WORKLISTDD', p_returnvalue: header.project_id.toString(), p_username: this.userId };
-                    this.inventoryService.Getreturndropdowndetails(wlPayload).subscribe({
-                        next: (res2) => {
-                            this.workList = res2.data || [];
-                            applyDraft();
-                        },
-                        error: (err) => console.error(err)
-                    });
-                } else {
-                    applyDraft();
-                }
-            },
-            error: (err) => {
-                console.error(err);
-                const detail = err?.error?.message || 'Failed to load forecast';
-                this.messageService.add({ severity: 'error', summary: detail, life: 2500 });
-            }
-        });
+    if (!matched) {
+        console.warn('No matching MF found for value:', mfId);
+        return;
     }
+
+    const paylaod = { p_returntype: 'MFDETAILS', p_returnvalue: matched.mf_no, p_username: this.userId };
+    this.inventoryService.Getreturndropdowndetails(paylaod).subscribe({
+        next: (res) => {
+            const rows: any[] = Array.isArray(res?.data) ? res.data : [];
+            if (!rows.length) return;
+            const header = rows[0];
+            const applyDraft = () => {
+                this.buildTowerOptions();
+
+                this.levelOptions = this.workList
+                    .filter((w) => w.tower_block_id === header.tower_block_id)
+                    .reduce((acc: any[], w) => {
+                        if (!acc.some((l) => l.value === w.level_name)) acc.push({ label: w.level_name, value: w.level_name });
+                        return acc;
+                    }, []);
+
+                this.pourOptions = this.workList
+                    .filter((w) => w.tower_block_id === header.tower_block_id && w.level_name === header.level_name)
+                    .reduce((acc: any[], w) => {
+                        if (!acc.some((p) => p.value === w.pour_name)) acc.push({ label: w.pour_name, value: w.pour_name });
+                        return acc;
+                    }, []);
+
+                const resolvedPour = header.pour_name ?? (this.pourOptions.length === 1 ? this.pourOptions[0].value : null);
+                const { name, base64 } = this.extractDisplayFileName(header.attachment ?? '');
+                this.attachmentFileName = name;
+                this.attachmentBase64 = base64;
+                this.approved_on = header.approved_on ? new Date(header.approved_on) : null;
+                this.approved_name = header.approved_name ?? '';
+
+                this.forecastForm.patchValue(
+                    {
+                        p_mf_id: header.mf_id,
+                        // ── only patch the field matching the source dropdown ──
+                        p_requisitionno: source === 'MR' ? header.mf_id : null,
+                        p_draft_requisitionno: source === 'DRAFT' ? header.mf_id : null,
+                        p_project: header.project_id,
+                        p_department: header.department_id,
+                        p_tower: header.tower_block_id,
+                        p_level: header.level_name,
+                        p_pour: resolvedPour,
+                        p_requestedby: header.requested_by,
+                        p_requiredbydate: header.required_by_date ? new Date(header.required_by_date) : null,
+                        p_priority: header.priority,
+                        p_remarks: header.remarks ?? '',
+                        p_attachment: header.attachment ?? '',
+                        p_mrdate: header.created_on ? new Date(header.created_on) : this.today,
+                        status: header.status
+                    },
+                    { emitEvent: false }
+                );
+                 
+                this.itemArray.clear();
+                rows.forEach((row: any) => {
+                    const master = this.itemOptions.find((i) => i.itemid === row.item_id);
+                    this.itemArray.push(
+                        this.createItemRow({
+                            mfdetailid: row.mfdetailid,
+                            item_category_id: row.item_category_id,
+                            categoryname: row.categoryname ?? row.item_category ?? master?.item_category ?? '',
+                            itemid: row.item_id,
+                            item_description: row.itemname ?? master?.item_description ?? '',
+                            uom_id: row.uom_id,
+                            uomname: row.uomname ?? master?.uom ?? '',
+                            buffer_stock: row.buffer_stock,
+                            currentstock: row.available_qty,
+                            pending_qty: row.pending_qty,
+                            total_mr_unapproved_qty: row.total_mr_unapproved_qty,
+                            required_qty: row.required_qty,
+                            remarks: row.itemremark ?? ''
+                        })
+                    );
+                });
+            };
+
+            const hasTower = this.workList.some((w) => w.tower_block_id === header.tower_block_id);
+            if (!hasTower) {
+                const wlPayload = { p_returntype: 'WORKLISTDD', p_returnvalue: header.project_id.toString(), p_username: this.userId };
+                this.inventoryService.Getreturndropdowndetails(wlPayload).subscribe({
+                    next: (res2) => {
+                        this.workList = res2.data || [];
+                        applyDraft();
+                    },
+                    error: (err) => console.error(err)
+                });
+            } else {
+                applyDraft();
+            }
+        },
+        error: (err) => {
+            console.error(err);
+            const detail = err?.error?.message || 'Failed to load forecast';
+            this.messageService.add({ severity: 'error', summary: detail, life: 2500 });
+        }
+    });
+}
 
     get isReadOnlyView(): boolean {
         return this.forecastForm.get('status')?.value !== 'DRAFT' && this.forecastForm.get('status')?.value !== '' && this.forecastForm.get('status')?.value !== 'SENDBACK';
@@ -580,7 +631,7 @@ export class MaterialRequisitionComponent {
         uom_id: [data?.uomid ?? data?.uom_id ?? null],
         uom: [data?.uomname ?? ''],
         buffer_stock: [data?.buffer_stock ?? 0],
-        available_stock: [data?.available_qty ?? 0],
+        available_stock: [Math.max(Number(data?.available_qty) || 0, 0)],
         pending_qty: [data?.pending_qty ?? 0],
         total_mr_unapproved_qty: [data?.total_mr_unapproved_qty ?? 0],
         required_qty: [data?.required_qty ?? '', Validators.min(0)],
@@ -602,7 +653,7 @@ export class MaterialRequisitionComponent {
     private recalculateProcureQty(row: FormGroup): void {
         const forecastQty = Number(row.get('required_qty')?.value) || 0;
         const pendingQty = Number(row.get('pending_qty')?.value) || 0;
-        const availableQty = Number(row.get('available_qty')?.value) || 0;
+        const availableQty = Number(row.get('available_stock')?.value) || 0;
 
         const procureQty = Math.max(forecastQty - pendingQty - availableQty, 0);
         row.get('procure_qty')?.setValue(procureQty, { emitEvent: false });
@@ -703,14 +754,8 @@ export class MaterialRequisitionComponent {
                 this.messageService.add({ severity: 'success', summary: res.data.message, life: 2000 });
 
                 if (res.data.status === 'success') {
-                    // if (!this.draftRequisitionOptions.some((r) => r.mf_id === newEntry.mf_id)) {
-                    //     this.draftRequisitionOptions = [...this.draftRequisitionOptions, newEntry];
-                    // }{ mf_id: res.data.mf_id, mf_no: res.data.mf_no };
                     this.OnGetDraftList();
-                    const newEntry = this.draftRequisitionOptions.find((u) => u.mf_no === res.data.mf_id);
-                    console.log(newEntry);
                     this.forecastForm.patchValue({
-                        p_mf_id: res.data.mf_id,
                         p_draft_requisitionno: res.data.mf_id,
                         status: res.data.tran_status
                     });
@@ -794,10 +839,13 @@ export class MaterialRequisitionComponent {
                             }
 
                             this.forecastForm.patchValue({
+                                p_draft_requisitionno: null,
                                 p_mf_id: res.data.mf_id,
                                 p_requisitionno: res.data.mf_id,
                                 status: res.data.tran_status
                             });
+                            this.OnGetDraftList();
+                            this.onGetMFNumberist();
                         } else {
                             this.messageService.add({ severity: 'error', summary: res.data.message, life: 2000 });
                         }
@@ -817,7 +865,7 @@ export class MaterialRequisitionComponent {
             p_action: 'DRAFT',
             p_operation: 'DELETE',
             p_mf_id: mfId,
-            p_project_id: null,
+            p_project_id: this.forecastForm.get('p_project')?.value ?? null,
             p_department_id: null,
             p_tower_block_id: null,
             p_level_name: null,
@@ -825,7 +873,12 @@ export class MaterialRequisitionComponent {
             p_pour_name: null,
             p_remarks: null,
             p_items: [],
-            p_loginuser: this.authService.isLogIntType()?.userid
+            p_loginuser: Number(this.authService.isLogIntType()?.userid),
+            p_mr_date: null,
+            p_required_by_date: null,
+            p_requested_by: null,
+            p_priority: null,
+            p_attachment: null
         };
     }
 
@@ -843,7 +896,8 @@ export class MaterialRequisitionComponent {
                 this.workService.upsertMaterialForecast(this.buildDeletePayload(item.mf_id)).subscribe({
                     next: (res) => {
                         this.messageService.add({ severity: 'success', summary: res.data.message, life: 2000 });
-                        this.draftRequisitionOptions = this.draftRequisitionOptions.filter((x) => x.mf_id !== item.mf_id);
+                        this.onReset();
+                        this.OnGetDraftList();
                     },
                     error: (err) => {
                         console.error(err);
@@ -882,9 +936,9 @@ export class MaterialRequisitionComponent {
     }
 
     log(): void {
-        const requisitionNo = this.forecastForm.get('p_requisitionno')?.value;
+        const requisitionNo = this.forecastForm.get('p_requisitionno')?.value || this.forecastForm.get('p_draft_requisitionno')?.value;
         if (!requisitionNo) {
-            this.messageService.add({ severity: 'warn', summary: 'Approval Log', detail: 'Select a material requisition first.', life: 2500 });
+            this.messageService.add({ severity: 'warn', summary: 'Approval Log', detail: 'Select material requisition first.', life: 2500 });
             return;
         }
 

@@ -34,7 +34,7 @@ export class AccessControlComponent {
     allPermissions:any[] = [];
     availablePermissions: any[] = [];
     restrictPermissions: any[] = [];
-    selectedAccess: string = 'M';
+    selectedAccess: string = 'W';
     companyId = '';
     industryType = '';
 

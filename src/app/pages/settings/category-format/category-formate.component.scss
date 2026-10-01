@@ -1,5 +1,27 @@
+:host ::ng-deep {
+    .p-datatable-thead > tr.mr-filter-row > th {
+        background: #ffffff !important;
+        border-color: #e5e7eb !important;
+        border: none !important;
+         border-right: none !important;
+        border-left: none !important;
+        box-shadow: none !important;
+        vertical-align: middle;
+    }
+}
+
 .disabled-icon {
     opacity: 0.4;
     pointer-events: none;
     cursor: not-allowed;
+}
+
+:host ::ng-deep .category-master-table {
+    .p-datatable-thead > tr > th:nth-last-child(-n + 2),
+    .p-datatable-tbody > tr > td:nth-last-child(-n + 2) {
+        width: 120px !important;
+        min-width: 120px !important;
+        max-width: 120px !important;
+        text-align: center;
+    }
 }

@@ -1,0 +1,11 @@
+:host ::ng-deep {
+    .p-datatable-thead > tr.mr-filter-row > th {
+        background: #ffffff !important;
+        border-color: #e5e7eb !important;
+        border: none !important;
+         border-right: none !important;
+        border-left: none !important;
+        box-shadow: none !important;
+        vertical-align: middle;
+    }
+}

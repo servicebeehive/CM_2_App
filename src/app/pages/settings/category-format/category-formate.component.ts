@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, ElementRef, QueryList, ViewChildren } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
@@ -10,7 +10,6 @@ import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { RippleModule } from 'primeng/ripple';
-import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
 import { AuthService } from '@/core/services/auth.service';
 import { InventoryService } from '@/core/services/inventory.service';
 import { UserService } from '@/core/services/user.service';
@@ -19,6 +18,7 @@ import { Subject, switchMap, of } from 'rxjs';
 import * as XLSX from 'xlsx';
 
 import { MultiSelectModule } from 'primeng/multiselect';
+import { TooltipModule } from 'primeng/tooltip';
 
 export function gstNumberValidator(control: AbstractControl): ValidationErrors | null {
     if (!control.value) return null;
@@ -32,10 +32,12 @@ export function gstNumberValidator(control: AbstractControl): ValidationErrors |
     standalone: true,
     templateUrl: './category-formate.component.html',
     styleUrls: ['./category-formate.component.scss'],
-    imports: [CommonModule, FormsModule, ReactiveFormsModule, ButtonModule, DropdownModule, InputTextModule, TableModule, CheckboxModule, DialogModule, ConfirmDialogModule, RippleModule, GlobalFilterComponent, MultiSelectModule],
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, ButtonModule, DropdownModule, InputTextModule, TableModule, CheckboxModule, DialogModule, ConfirmDialogModule, RippleModule, MultiSelectModule, TooltipModule],
     providers: [ConfirmationService]
 })
 export class CategoryFormateComponent {
+    @ViewChildren('filterInput') filterInputs!: QueryList<ElementRef<HTMLInputElement>>;
+
     masterForm!: FormGroup;
     visibleDialog = false;
     user: any[] = [];
@@ -219,7 +221,7 @@ export class CategoryFormateComponent {
     commonMasterColumns = [
         { field: 'fieldname', header: 'Name', width: '300px' },
         { field: 'fielddesc', header: 'Description' },
-        { field: 'isactive', header: 'Active', width: '80px' }
+        { field: 'isactive', header: 'Active' }
     ];
 
     tableConfig: Record<string, any[]> = {
@@ -227,19 +229,19 @@ export class CategoryFormateComponent {
             { field: 'fieldname', header: 'Name', width: '300px' },
             { field: 'fielddesc', header: 'Description', width: '500px' },
             { field: 'fieldvalue', header: 'Value' },
-            { field: 'isactive', header: 'Active', width: '80px' }
+            { field: 'isactive', header: 'Active'}
         ],
         categorymaster: [
             { field: 'categoryname', header: 'Name', width: '300px' },
             { field: 'categorydesc', header: 'Description' },
-            { field: 'isactive', header: 'Active', width: '80px' }
+            { field: 'isactive', header: 'Active' }
         ],
         customermaster: [
             { field: 'customername', header: 'Name', width: '300px' },
             { field: 'customerphone', header: 'Phone' },
             { field: 'customergstno', header: 'Gst No' },
             { field: 'customercity', header: 'City' },
-            { field: 'isactive', header: 'Active', width: '80px' }
+            { field: 'isactive', header: 'Active' }
         ],
         suppliermaster: [
             { field: 'suppliername', header: 'Name', width: '300px' },
@@ -248,24 +250,24 @@ export class CategoryFormateComponent {
             { field: 'suppliercity', header: 'City' },
             { field: 'paymentterm', header: 'Payment Terms' },
             { field: 'preferred_vendor', header: 'Preferred', width: '120px'  },
-            { field: 'isactive', header: 'Active', width: '80px' }
+            { field: 'isactive', header: 'Active' }
         ],
         taxmaster: [
             { field: 'taxname', header: 'Name' },
             { field: 'taxtype', header: 'Type', width: '300px' },
             { field: 'taxdesc', header: 'Description' },
             { field: 'taxpercentage', header: 'Percentage' },
-            { field: 'isactive', header: 'Active', width: '80px' }
+            { field: 'isactive', header: 'Active' }
         ],
         uommaster: [
             { field: 'fieldname', header: 'Name', width: '300px' },
             { field: 'uomdesc', header: 'Description' },
-            { field: 'isactive', header: 'Active', width: '80px' }
+            { field: 'isactive', header: 'Active' }
         ],
         usertype: [
-            { field: 'usertypename', header: 'Name', width: '300px' },
-            { field: 'web_access', header: 'Web Access', width: '80px' },
-            { field: 'isactive', header: 'Active', width: '80px' }
+            { field: 'usertypename', header: 'Name' },
+            { field: 'web_access', header: 'Web Access' , width: '100px'},
+            { field: 'isactive', header: 'Active' }
         ]
     };
     /** ✳️ Add User Dialog **/
@@ -889,21 +891,11 @@ export class CategoryFormateComponent {
             option2: ''
         };
     }
-    /** 🔍 Global Filter **/
 
-    applyGlobalFilter() {
-        const value = this.globalFilter?.toLowerCase().trim();
-        if (!value) {
-            this.filterMaster = [...this.masterDetails];
-            return;
-        }
-        this.filterMaster = this.masterDetails.filter((user) => Object.values(user).some((v) => String(v).toLowerCase().includes(value)));
-    }
-
-    /** 🔁 Reset Filter **/
-    clearGlobalFilter(input: HTMLInputElement) {
-        input.value = '';
-        this.globalFilter = '';
+    resetTable(table: any): void {
+        table.reset();
+        this.filterInputs.forEach((input) => (input.nativeElement.value = ''));
+        this.filterMaster = [...this.masterDetails];
     }
 
     showSuccess(message: string) {

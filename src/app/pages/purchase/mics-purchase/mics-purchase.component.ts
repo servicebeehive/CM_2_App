@@ -29,7 +29,7 @@ import { SelectModule } from 'primeng/select';
     styleUrl: './mics-purchase.component.scss'
 })
 export class MicsPurchaseComponent implements OnInit {
-    form!: FormGroup;
+    miscPurchaseForm!: FormGroup;
     itemOptions: any[] = [];
     siteOptions: any[] = [];
     purchaseNoOptions: any[] = [];
@@ -52,7 +52,7 @@ export class MicsPurchaseComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        this.form = this.fb.group({
+        this.miscPurchaseForm = this.fb.group({
             purchaseNo: [null],
             purchaseDate: [new Date(), Validators.required],
             site: [null, Validators.required],
@@ -60,6 +60,7 @@ export class MicsPurchaseComponent implements OnInit {
             remarks: [''],
             status: [''],
             p_itemdata: [null],
+            attachment:[null, Validators.required],
            items: this.fb.array([], this.minLengthArray(1))
         });
         this.companyId = this.authService.isLogIntType().companyid.toString();
@@ -78,7 +79,7 @@ export class MicsPurchaseComponent implements OnInit {
 }
 
     get statusColor(): string {
-        return getStatusColor(this.form.get('status')?.value);
+        return getStatusColor(this.miscPurchaseForm.get('status')?.value);
     }
 
      OnGetItem(): void {
@@ -94,17 +95,16 @@ export class MicsPurchaseComponent implements OnInit {
     }
 
     onGetProject(): void {
-        const companyId = this.companyId;
+        const companyId = this.authService.isLogIntType().companyid.toString();
+        const userId = this.authService.isLogIntType().userid.toString();
         const payload = {
-            returnType: 'ACTIVEPROJECT',
-            returnValue: '',
-            username: '',
-            option1: companyId,
-            option2: null
+            p_companyid: companyId,
+            p_userid: userId,
+            p_isactive: null
         };
-        this.inventoryService.getparameterbased(payload).subscribe({
+        this.workService.getProjectListRbac(payload).subscribe({
             next: (res) => {
-                this.siteOptions = res.data;
+                this.siteOptions = res.data.data;
             },
             error: (err) => console.error(err)
         });
@@ -158,12 +158,13 @@ export class MicsPurchaseComponent implements OnInit {
                 this.uploadedFileName = '';
             }
 
-            this.form.patchValue({
-                purchaseDate: data?.purchase_date ? new Date(data.purchase_date) : this.form.get('purchaseDate')?.value,
+            this.miscPurchaseForm.patchValue({
+                purchaseDate: data?.purchase_date ? new Date(data.purchase_date) : this.miscPurchaseForm.get('purchaseDate')?.value,
                 site: data?.project_id ?? null,
                 vendor: data?.vendor_name ?? '',
                 remarks: data?.remarks ?? '',
-                status: data?.status ?? ''
+                status: data?.status ?? '',
+                attachment: attachmentValue || null
             });
 
             this.mapMiscItemsToFormArray(Array.isArray(data?.items) ? data.items : []);
@@ -193,7 +194,7 @@ export class MicsPurchaseComponent implements OnInit {
     }
 
     get items(): FormArray {
-        return this.form.get('items') as FormArray;
+        return this.miscPurchaseForm.get('items') as FormArray;
     }
 
     buildItemRow(): FormGroup {
@@ -223,7 +224,7 @@ export class MicsPurchaseComponent implements OnInit {
     }
 
     get totalAmount(): number {
-        return this.items.controls.reduce((sum, _ctrl, i) => sum + this.rowAmount(i), 0);
+        return this.items.controls.reduce((sum:any, _ctrl:any, i:any) => sum + this.rowAmount(i), 0);
     }
 
     onFileSelect(event: Event): void {
@@ -255,6 +256,7 @@ export class MicsPurchaseComponent implements OnInit {
 
         this.readFileAsBase64(file).then((base64) => {
             this.uploadedFileBase64 = base64;
+            this.setAttachmentControl(base64);
         }).catch(() => {
             this.messageService.add({
                 severity: 'error',
@@ -263,6 +265,12 @@ export class MicsPurchaseComponent implements OnInit {
             });
         });
     }
+
+    private setAttachmentControl(value: string | null): void {
+    const ctrl = this.miscPurchaseForm.get('attachment');
+    ctrl?.setValue(value || null);
+    ctrl?.markAsTouched();
+}
 
    previewAttachment(): void {
     if (this.uploadedFileUrl && !/^data:/i.test(this.uploadedFileUrl)) {
@@ -363,7 +371,7 @@ private dataUrlToBlob(dataUrl: string): Blob | null {
         const selectedItemId = event?.value;
         if (!selectedItemId) return;
 
-     const alreadyAdded = this.items.controls.some((row) => Number(row.get('item_id')?.value) === Number(selectedItemId));
+     const alreadyAdded = this.items.controls.some((row:any) => Number(row.get('item_id')?.value) === Number(selectedItemId));
  
     if (alreadyAdded) {
         this.messageService.add({
@@ -371,7 +379,7 @@ private dataUrlToBlob(dataUrl: string): Blob | null {
             summary: 'Item already added',
             detail: 'This item is already in the list. Update the quantity in the existing row instead.'
         });
-        this.form.get('p_itemdata')?.setValue(null, { emitEvent: false });
+        this.miscPurchaseForm.get('p_itemdata')?.setValue(null, { emitEvent: false });
         return;
     }
 
@@ -397,7 +405,7 @@ private dataUrlToBlob(dataUrl: string): Blob | null {
                 }
 
                 targetRow?.patchValue({
-                    item_id: detail.itemid ?? null,
+                    item_id: detail.item_id ?? null,
                     item_description: detail.item_description,
                     category_id: detail.categoryid ?? null,
                     category: detail.categoryname || '',
@@ -408,14 +416,14 @@ private dataUrlToBlob(dataUrl: string): Blob | null {
                     remarks: detail.remarks || ''
                 });
 
-                this.form.get('p_itemdata')?.setValue(null, { emitEvent: false });
+                this.miscPurchaseForm.get('p_itemdata')?.setValue(null, { emitEvent: false });
             },
             error: (err) => console.error(err)
         });
     }
 
     onReset(): void {
-        this.form.reset({
+        this.miscPurchaseForm.reset({
             purchaseDate: new Date()
         });
         this.items.clear();
@@ -425,8 +433,8 @@ private dataUrlToBlob(dataUrl: string): Blob | null {
     }
 
     onSave(): void {
-        if (this.form.invalid) {
-            this.form.markAllAsTouched();
+        if (this.miscPurchaseForm.invalid) {
+            this.miscPurchaseForm.markAllAsTouched();
             this.messageService.add({
                 severity: 'error',
                 summary: 'Missing information',
@@ -434,25 +442,24 @@ private dataUrlToBlob(dataUrl: string): Blob | null {
             });
             return;
         }
-        console.log(this.form);
         const isUpdate = !!this.editingMiscPurchaseId;
         const payload: any = {
             p_operation: isUpdate ? 'UPDATE' : 'INSERT',
             p_misc_purchase_id: isUpdate ? this.editingMiscPurchaseId : null,
-            p_misc_purchase_no: String(this.form.get('purchaseNo')?.value ?? 0),
-            p_purchase_date: this.form.get('purchaseDate')?.value ? new Date(this.form.get('purchaseDate')?.value).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            p_misc_purchase_no: String(this.miscPurchaseForm.get('purchaseNo')?.value ?? 0),
+            p_purchase_date: this.miscPurchaseForm.get('purchaseDate')?.value ? new Date(this.miscPurchaseForm.get('purchaseDate')?.value).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
             p_company_id: Number(this.companyId),
-            p_project_id: Number(this.form.get('site')?.value),
-            p_vendor_name: String(this.form.get('vendor')?.value),
+            p_project_id: Number(this.miscPurchaseForm.get('site')?.value),
+            p_vendor_name: String(this.miscPurchaseForm.get('vendor')?.value),
             p_attachment: this.uploadedFileBase64 || this.uploadedFileUrl || this.uploadedFileName || null,
-            p_remarks: this.form.get('remarks')?.value,
+            p_remarks: this.miscPurchaseForm.get('remarks')?.value,
             p_items_json: this.items.controls.map((row: any) => ({
                 misc_purchase_detail_id: Number(row.get('misc_purchase_detail_id')?.value || 0),
                 item_id: Number(row.get('item_id')?.value),
                 item_description: row.get('item_description')?.value,
                 category_id: Number(row.get('category_id')?.value || 0),
                 uom_id: Number(row.get('uom_id')?.value || 0),
-                 quantity: Number(row.get('quantity')?.value || 0),
+                quantity: Number(row.get('quantity')?.value || 0),
                 rate: Number(row.get('rate')?.value || 0),
                 remarks: row.get('remarks')?.value || ''
             })),
@@ -463,7 +470,7 @@ private dataUrlToBlob(dataUrl: string): Blob | null {
     next: (res) => {
         const responseData = res?.data;
         const savedId = responseData.misc_purchase_id ?? null;
-        const savedNo = responseData.misc_purchase_no ?? this.form.get('purchaseNo')?.value ?? '';
+        const savedNo = responseData.misc_purchase_no ?? this.miscPurchaseForm.get('purchaseNo')?.value ?? '';
         const message = responseData.msg || responseData.message || 'Misc Purchase saved successfully';
 
         if (savedId) {
@@ -474,7 +481,7 @@ private dataUrlToBlob(dataUrl: string): Blob | null {
         }
 
         // Always patch purchaseNo (as the numeric id the dropdown expects) and status
-        this.form.patchValue({
+        this.miscPurchaseForm.patchValue({
             purchaseNo: savedId,
             status: responseData.tran_status ?? responseData.status ?? ''
         });
@@ -484,6 +491,7 @@ private dataUrlToBlob(dataUrl: string): Blob | null {
             summary: 'Saved',
             detail: message
         });
+        this.OnGetItem();
     },
     error: (err) => {
         const message = err?.error?.message || err?.error?.msg || 'Failed to save misc purchase.';

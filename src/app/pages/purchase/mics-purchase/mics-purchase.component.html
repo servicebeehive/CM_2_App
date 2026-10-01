@@ -1,16 +1,16 @@
 <p-toast></p-toast>
 <div class="card p-3 md:p-6">
-    <form [formGroup]="form" (ngSubmit)="onSave()">
+    <form [formGroup]="miscPurchaseForm" (ngSubmit)="onSave()">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-2">
             <span class="block text-surface-900 font-bold text-lg md:text-xl">Misc Purchase</span>
 
             <div class="mr-form-footer">
                 <span class="text-xl font-bold mt-2">Status</span>
                 <span class="font-bold text-xl mt-2" [ngStyle]="{ color: statusColor }">
-                    {{ form.get('status')?.value }}
+                    {{ miscPurchaseForm.get('status')?.value }}
                 </span>
 
-                <button pButton type="submit" label="Submit" class="p-button-primary" [disabled]="form.invalid"></button>
+                <button pButton type="submit" label="Submit" class="p-button-primary" [disabled]="miscPurchaseForm.invalid"></button>
                 <button pButton type="button" label="Reset" class="p-button-secondary" (click)="onReset()"></button>
                 <button *ngIf="fromTransactionList" pButton type="button" label="Back" icon="pi pi-arrow-left" class="p-button-secondary" (click)="onBack()"></button>
             </div>
@@ -19,33 +19,33 @@
         <div class="mr-card mb-4">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-3">
                 <div class="flex flex-col">
-                    <label class="font-medium mb-1">Purchase No</label>
+                    <label class="font-medium mb-1">Misc PO No</label>
                     <p-dropdown
                         [options]="purchaseNoOptions"
                         optionLabel="misc_purchase_no"
                         optionValue="misc_purchase_id"
-                        formControlName="purchaseNo"
+                       formControlName="purchaseNo"
                         [filter]="true"
                         [showClear]="true"
                         (onChange)="onPurchaseChange($event)"
-                        placeholder="Select purchase no"
-                        filterPlaceholder="Search purchase no"
+                        placeholder="Select misc po no"
+                        filterPlaceholder="Search misc po no"
                     ></p-dropdown>
                 </div>
 
                 <div class="flex flex-col">
-                    <label class="font-medium mb-1">Purchase Date <span class="text-red-500">*</span></label>
-                    <p-datePicker fluid [showIcon]="true" formControlName="purchaseDate" dateFormat="dd-mm-yy" placeholder="Select date"></p-datePicker>
+                    <label class="font-medium mb-1">Misc PO Date <span class="text-red-500">*</span></label>
+                    <p-datePicker fluid [showIcon]="true"formControlName="purchaseDate" dateFormat="dd-mm-yy" placeholder="Select date"></p-datePicker>
                 </div>
 
                 <div class="flex flex-col">
                     <label class="font-medium mb-1">Site <span class="text-red-500">*</span></label>
-                    <p-dropdown [options]="siteOptions" optionLabel="project_name" optionValue="project_id" placeholder="Select Site" formControlName="site" [filter]="true" [showClear]="true" filterPlaceholder="Search project"></p-dropdown>
+                    <p-dropdown [options]="siteOptions" optionLabel="project_name" optionValue="project_id" placeholder="Select Site"formControlName="site" [filter]="true" [showClear]="true" filterPlaceholder="Search project"></p-dropdown>
                 </div>
 
                 <div class="flex flex-col">
                     <label class="font-medium mb-1">Vendor <span class="text-red-500">*</span></label>
-                    <input pInputText placeholder="Select vendor" formControlName="vendor" />
+                    <input pInputText placeholder="Select vendor"formControlName="vendor" />
                 </div>
 
                  <div class="flex flex-col col-span-2">
@@ -74,28 +74,26 @@
                     </p-select>
                 </div>
 
-                  <div class="flex flex-col">
-                    <label class="font-medium mb-1">Attachment</label>
-                    <div class="mr-file-input flex items-center gap-2">
-                        <label for="miscAttachment" class="mr-choose-btn"><i class="pi pi-upload"></i> Choose File</label>
-                        <input id="miscAttachment" type="file" accept=".pdf,.jpg,.jpeg,.png" hidden (change)="onFileSelect($event)" />
-                        <span class="mr-file-name">{{ uploadedFileName || 'No file chosen' }}</span>
-                        <button
-                            type="button"
-                            *ngIf="uploadedFileName || uploadedFileBase64 || uploadedFileUrl"
-                            pButton
-                            icon="pi pi-eye"
-                            class="p-button-text p-button-sm"
-                            pTooltip="Preview PDF"
-                            tooltipPosition="top"
-                            (click)="previewAttachment()"
-                        ></button>
-                    </div>
-                </div>
+                <div class="flex flex-col">
+    <label class="font-medium mb-1">Attachment <span class="text-red-500">*</span></label>
+    <div class="mr-file-input flex items-center gap-2"
+         [style.border-color]="miscPurchaseForm.get('attachment')?.touched && miscPurchaseForm.get('attachment')?.invalid ? '#ef4444' : null">
+        <label for="miscAttachment" class="mr-choose-btn"><i class="pi pi-upload"></i> Choose File</label>
+        <input #fileInput id="miscAttachment" type="file" accept=".pdf,.jpg,.jpeg,.png" hidden (change)="onFileSelect($event)" />
+        <span class="mr-file-name">{{ uploadedFileName || 'No file chosen' }}</span>
+        <button type="button" *ngIf="uploadedFileName || uploadedFileBase64 || uploadedFileUrl"
+                pButton icon="pi pi-eye" class="p-button-text p-button-sm"
+                pTooltip="Preview attachment" tooltipPosition="top" (click)="previewAttachment()"></button>
+    </div>
+    <small class="text-red-500 mt-1 text-xs"
+           *ngIf="miscPurchaseForm.get('attachment')?.touched && miscPurchaseForm.get('attachment')?.errors?.['required']">
+        Attachment is required
+    </small>
+</div>
 
                 <div class="flex flex-col">
                     <label class="font-medium mb-1">Remarks</label>
-                    <input pInputText formControlName="remarks" placeholder="Enter remarks" />
+                    <input pInputTextformControlName="remarks" placeholder="Enter remarks" />
                 </div>
             </div>
         </div>
@@ -136,11 +134,11 @@
                             </td>
 
                             <td>
-                                <p-inputNumber formControlName="quantity" [minFractionDigits]="0" [maxFractionDigits]="2" placeholder="0"  [inputStyleClass]="row.get('quantity')?.touched && row.get('quantity')?.invalid ? 'w-full text-right ng-invalid ng-dirty' : 'w-full text-right'" styleClass="w-full"></p-inputNumber>
+                                <p-inputNumber formControlName="quantity" [minFractionDigits]="0" [maxFractionDigits]="2" placeholder="0"  [inputStyleClass]="row.get('quantity')?.touched && row.get('quantity')?.invalid ? 'w-full ng-invalid ng-dirty' : 'w-full'" styleClass="w-full"></p-inputNumber>
                             </td>
 
                                 <td>
-                                    <p-inputNumber formControlName="rate" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" placeholder="0"  [inputStyleClass]="row.get('rate')?.touched && row.get('rate')?.invalid ? 'w-full text-right ng-invalid ng-dirty' : 'w-full text-right'" styleClass="w-full"></p-inputNumber>
+                                    <p-inputNumber formControlName="rate" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" placeholder="0"  [inputStyleClass]="row.get('rate')?.touched && row.get('rate')?.invalid ? 'w-full ng-invalid ng-dirty' : 'w-full'" styleClass="w-full"></p-inputNumber>
                             </td>
 
                             <td class="text-xs md:text-sm text-right font-semibold">{{ rowAmount(i) | number: '1.2-2' }}</td>

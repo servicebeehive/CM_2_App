@@ -5,11 +5,13 @@ import { ChartModule } from 'primeng/chart';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
+import { DropdownModule } from 'primeng/dropdown';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
     selector: 'app-management-dashboard',
     standalone: true,
-    imports: [CommonModule, ChartModule, TableModule, TagModule, ButtonModule],
+    imports: [CommonModule, ChartModule, TableModule, TagModule, ButtonModule, DropdownModule, FormsModule, ReactiveFormsModule],
     template: `
         <div class="dashboard-shell management-dashboard">
             <header class="dashboard-header">
@@ -22,10 +24,18 @@ import { ButtonModule } from 'primeng/button';
                 </div>
                  <div class="header-right">
         <div class="header-meta">
+            <p-dropdown
+                        [options]="dashboardOptions"
+                        [(ngModel)]="selectedDashboard"
+                        optionLabel="label"
+                        optionValue="value"
+                        placeholder="Go to Dashboard"
+                        (onChange)="onDashboardChange($event)"
+                        styleClass="w-100"
+                    ></p-dropdown>
             <i class="pi pi-calendar"></i><span>Date Range<br /><strong>01 Sep - 30 Sep 2026</strong></span
             ><i class="pi pi-user"></i><span>Site Manager<br /><strong>Operations</strong></span>
         </div>
-        <button pButton type="button" icon="pi pi-arrow-left" label="Back" class="p-button-warning back-btn" (click)="back()"></button>
     </div>
             </header>
 
@@ -494,8 +504,13 @@ import { ButtonModule } from 'primeng/button';
     ]
 })
 export class ManagementDashboard {
-    
+     selectedDashboard: string | null = null;
     constructor(private router: Router) {}
+     dashboardOptions = [
+        { label: 'Management Dashboard', value: '/layout/management-dashboard' },
+        { label: 'Operational Dashboard', value: '/layout/operational-dashboard' }
+    ];
+   
     forecastData = {
         labels: ['Apr 26', 'May 26', 'Jun 26', 'Jul 26', 'Aug 26', 'Sep 26'],
         datasets: [
@@ -535,7 +550,10 @@ export class ManagementDashboard {
         { label: 'GRN', count: 1, amount: 340200, icon: 'pi-inbox' }
     ];
 
-    back(): void {
-        this.router.navigate(['/layout/dashboard']);
+    onDashboardChange(e: any): void {
+        const path = e.value;
+        if (path) {
+            this.router.navigate([path]);
+        }
     }
 }

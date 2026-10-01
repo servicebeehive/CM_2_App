@@ -115,7 +115,7 @@ export class MaterialIndentComponent implements OnInit {
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res) => {
                 this.indentOptions = res.data ?? [];
-                if (indentId) {
+                if (indentId && this.route.snapshot.queryParamMap.get('status')?.toUpperCase() !== 'DRAFT') {
                     const option = this.indentOptions.find((item: any) => Number(item.indent_id) === indentId);
                     if (option) this.onIndentChange({ value: option.indent_no });
                 }
@@ -132,15 +132,31 @@ export class MaterialIndentComponent implements OnInit {
         const payload = { p_returntype: 'INDENTLISTDRAFT', p_returnvalue: this.companyId, p_username: this.userId };
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res) => {
-                this.draftIndentOptions = res.data;
+                this.draftIndentOptions = res.data ?? [];
+                if (this.route.snapshot.queryParamMap.get('status')?.toUpperCase() === 'DRAFT') {
+                    const draftId = this.route.snapshot.queryParamMap.get('draftId') ?? this.route.snapshot.queryParamMap.get('indentId');
+                    const draft = this.draftIndentOptions.find((item) => String(item.indent_id) === String(draftId));
+                    if (draft) this.onDraftChange({ value: draft.indent_id });
+                }
             },
             error: (err) => console.error(err)
         });
     }
 
     private loadProjects(): void {
-        const payload = { returnType: 'ACTIVEPROJECT', returnValue: '', username: '', option1: this.companyId, option2: null };
-        this.inventoryService.getparameterbased(payload).subscribe({ next: (res: any) => (this.projectOptions = res.data ?? []), error: (err) => console.error(err) });
+        const companyId = this.authService.isLogIntType().companyid.toString();
+        const userId = this.authService.isLogIntType().userid.toString();
+        const payload = {
+            p_companyid: companyId,
+            p_userid: userId,
+            p_isactive: null
+        };
+        this.workService.getProjectListRbac(payload).subscribe({
+            next: (res) => {
+                this.projectOptions = res.data.data;
+            },
+            error: (err) => console.error(err)
+        });
     }
 
     onProjectChange(event: any): void {
@@ -275,7 +291,6 @@ onChangePatch(rows:any){
                     uomid: r.uom_id,
                     currentstock: r.current_stock ?? 0,
                     bufferqty: Number(r.current_stock - r.available_qty) ?? 0,                          // ⚠️ not present in this response — confirm source
-                    availableqty: r.available_qty ?? 0,
                     requestqty: r.requested_qty ?? 0,
                     indentdetailid: r.indent_detail_id ?? null
                 };
@@ -315,14 +330,16 @@ onChangePatch(rows:any){
 
     onDraftChange(event: any): void {
         if (!event.value) return;
-        const draftvalue = this.draftIndentOptions.find((i) => i.indent_id === event.value)?.indent_no;
+        const draft = this.draftIndentOptions.find((i) => String(i.indent_id) === String(event.value));
+        const draftvalue = draft?.indent_no;
+        if (!draftvalue) return;
         const payload = {
             p_returntype: 'INDENTDETAILSDRAFT',
             p_returnvalue: draftvalue,
             p_username: this.companyId
         };
         this.inventoryService.Getreturndropdowndetails(payload).subscribe((res) => {
-           this.minForm.patchValue({ p_indentno: '' });
+              this.minForm.patchValue({ p_indentno: '', p_draft_indent: draft.indent_id });
            this.onChangePatch(res.data)
         });
     }
@@ -409,7 +426,7 @@ onChangePatch(rows:any){
         }
 
         const newRow: any = {
-            itemid: item.itemid,
+            itemid: item.item_id,
             itemname: item.item_description,
             categoryid: item.categoryid,
             categoryname: item.categoryname,
@@ -417,7 +434,6 @@ onChangePatch(rows:any){
             uomid: item.uomid,
             currentstock: item.current_stock ?? 0,
             bufferqty: item.buffer_stock ?? 0,
-            availableqty: item.available_qty,
             requestedqty: item.requestqty ?? 0,
         };
 
@@ -434,7 +450,7 @@ onChangePatch(rows:any){
                 if (res.data.success) {
                     this.messageService.add({ severity: 'success', summary: 'Submitted', detail: res.data.msg });
                     this.editingIndentId = res.data.indent_id ?? this.editingIndentId;
-                    this.minForm.patchValue({ p_indentno: res.data.indent_no ?? '', status: res.data.tran_status ?? 'SUBMITTED' });
+                    this.minForm.patchValue({ p_indentno: res.data.indent_no ?? '', status: res.data.tran_status ?? 'SUBMITTED', p_draft_indent: null });
                     this.onGetIndentList();
                 } else {
                     this.messageService.add({ severity: 'error', summary: 'Error', detail: res.data.msg });
@@ -448,23 +464,40 @@ onChangePatch(rows:any){
     }
 
     draftSubmit(): void {
-        const payload = this.buildIndentPayload('DRAFT');
+    const payload = this.buildIndentPayload('DRAFT');
 
-        this.workService.upsertMaterialIndent(payload).subscribe({
-            next: (res: any) => {
-                if (res.data.success) {
-                    this.messageService.add({ severity: 'success', summary: 'Draft Saved', detail: res.data.msg });
-                    this.minForm.patchValue({p_draft_indent: res.data.indent_id ?? '', status: res.data.status });
-                } else {
-                    this.messageService.add({ severity: 'error', summary: 'Error', detail: res.data.msg });
+    this.workService.upsertMaterialIndent(payload).subscribe({
+        next: (res: any) => {
+            if (res.data.success) {
+                const draftId = Number(res.data.indent_id);
+                const draftNo = res.data.indent_no;
+
+                // Add the new draft to the dropdown options if it isn't there yet
+                const exists = this.draftIndentOptions.some((d) => Number(d.indent_id) === draftId);
+                if (!exists) {
+                    this.draftIndentOptions = [...this.draftIndentOptions, { indent_id: draftId, indent_no: draftNo }];
                 }
-            },
-            error: (err) => {
-                console.error(err);
-                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to save draft.', life: 3000 });
+
+                // Keep the id so the next Draft/Submit does an UPDATE, not a new INSERT
+                this.editingIndentId = draftId;
+
+                this.minForm.patchValue({
+                    p_draft_indent: draftId,
+                    p_indentno: '',
+                    status: res.data.status ?? 'DRAFT'
+                });
+
+                this.messageService.add({ severity: 'success', summary: 'Draft Saved', detail: res.data.msg });
+            } else {
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: res.data.msg });
             }
-        });
-    }
+        },
+        error: (err) => {
+            console.error(err);
+            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to save draft.', life: 3000 });
+        }
+    });
+}
 
     private buildIndentPayload(action: 'DRAFT' | 'SUBMIT'): MaterialIndent {
         const formVal = this.minForm.getRawValue();
@@ -476,7 +509,7 @@ onChangePatch(rows:any){
             uom_id: it.uomid,
             current_stock: it.currentstock,
             requested_qty: it.requestqty,
-            available_qty: it.availableqty
+            available_qty: it.currentstock
         }));
 
         return {

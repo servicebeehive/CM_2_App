@@ -10,15 +10,23 @@
         :host ::ng-deep .p-fileupload-content {
             height: 20rem;
         }
-     
-::ng-deep .stock{
-    .p-datatable-thead > tr > th:nth-child(4),
-    .p-datatable-tbody > tr > th:nth-child(4){
-       min-width: 180px !important;
-    max-width: 200px !important;
+
+:host ::ng-deep .site-master-table {
+    .p-datatable-thead > tr.mr-filter-row > th {
+        background: #ffffff !important;
+        border-color: #e5e7eb !important;
+        border: none !important;
+         border-right: none !important;
+        border-left: none !important;
+        box-shadow: none !important;
+        vertical-align: middle;
     }
-}
- [readonly] {
-    background-color: #eaf0f5 !important;
-    color: #6b757e !important;
+
+    .p-datatable-thead > tr > th:nth-child(5),
+    .p-datatable-tbody > tr > td:nth-child(5) {
+        width: 110px !important;
+        min-width: 110px !important;
+        max-width: 120px !important;
+        text-align: center;
+    }
 }

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, ElementRef, QueryList, ViewChildren } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
@@ -10,18 +10,20 @@ import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { SelectModule } from 'primeng/select';
-import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
+import { TooltipModule } from 'primeng/tooltip';
 import { AuthService } from '@/core/services/auth.service';
 import { InventoryService } from '@/core/services/inventory.service';
 
 @Component({
     selector: 'app-project',
-    imports: [CommonModule, FormsModule, ReactiveFormsModule, ButtonModule, DropdownModule, InputTextModule, TableModule, CheckboxModule, DialogModule, ConfirmDialogModule, SelectModule, GlobalFilterComponent],
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, ButtonModule, DropdownModule, InputTextModule, TableModule, CheckboxModule, DialogModule, ConfirmDialogModule, SelectModule, TooltipModule],
     templateUrl: './project.component.html',
     styleUrl: './project.component.scss',
     providers: [ConfirmationService]
 })
 export class ProjectComponent {
+    @ViewChildren('filterInput') filterInputs!: QueryList<ElementRef<HTMLInputElement>>;
+
     projectForm!: FormGroup;
     visibleDialog = false;
     project: any[] = [];
@@ -29,7 +31,6 @@ export class ProjectComponent {
     filterValue = '';
     editMode = false;
     selectedUser: any = null;
-    globalFilter: string = '';
     showGlobalSearch: boolean = true;
     siteIncharge: any[] = [];
     projectInchargeOptions: any[] = [];
@@ -352,22 +353,10 @@ export class ProjectComponent {
         this.siteIncharge.splice(index, 1);
     }
 
-    applyGlobalFilter() {
-        this.applyGlobalFilterManual();
-    }
-
-    applyGlobalFilterManual() {
-        const value = this.globalFilter.toLowerCase();
-        if (!value) {
-            this.filteredUser = [...this.project];
-            return;
-        }
-        this.filteredUser = this.project.filter((project) => Object.values(project).some((v) => String(v).toLowerCase().includes(value)));
-    }
-
-    clearGlobalFilter(input: HTMLInputElement) {
-        input.value = '';
-        this.globalFilter = '';
+    resetTable(table: any): void {
+        table.reset();
+        this.filterInputs.forEach((input) => (input.nativeElement.value = ''));
+        this.filteredUser = [...this.project];
     }
 
     showMessage(severity: string, summary: string, message: string) {

@@ -16,6 +16,7 @@ import * as XLSX from 'xlsx';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ShareService } from '@/core/services/shared.service';
 import { WorkService } from '@/core/services/work.service';
+import { getStatusColor } from '@/shared/utils/status-color';
 
 @Component({
     selector: 'app-my-approval',
@@ -53,6 +54,9 @@ export class MyApprovalComponent {
     approvalHistory: any[] = [];
     products: any[] = [];
     filteredProducts: any[] = [];
+    mrDetails: any[] = [];
+    mrDetailsVisible = false;
+    mrDetailsLoading = false;
     logDetailsVisible = false;
     actionType: 'APPROVE' | 'REJECT' | 'SENDBACK' = 'REJECT';
 
@@ -90,6 +94,10 @@ export class MyApprovalComponent {
         }
     }
 
+     getStatusColor(status: string): string {
+    return getStatusColor(status);
+}
+
     private restoreViewState(): void {
         const state = history.state?.returnViewState;
         if (!state) return;
@@ -126,6 +134,40 @@ get isVendorApproval(): boolean {
 
 get isPurchaseOrder(): boolean {
     return this.selectedTypeName === 'PURCHASE ORDER';
+}
+
+get isMaterialRequisition(): boolean {
+    return this.selectedTypeName === 'MATERIAL REQUISITION';
+}
+
+get mrProjectName(): string {
+    return [...new Set(this.mrDetails.map((item) => item.project_name).filter(Boolean))].join(', ') || '-';
+}
+
+showMrDetails(): void {
+    const companyId = this.authService.isLogIntType()?.companyid?.toString() || '';
+    this.mrDetailsVisible = true;
+    this.mrDetailsLoading = true;
+    this.mrDetails = [];
+
+    this.inventoryService.Getreturndropdowndetails({
+        p_returntype: 'PROJECTRFQ',
+        p_returnvalue: '',
+        p_username: companyId
+    }).subscribe({
+        next: (res: any) => {
+            this.mrDetails = Array.isArray(res.data) ? res.data : [];
+            this.mrDetailsLoading = false;
+        },
+        error: () => {
+            this.mrDetailsLoading = false;
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Failed to load material requisition details'
+            });
+        }
+    });
 }
 
     applyFilter() {
@@ -269,7 +311,7 @@ get isPurchaseOrder(): boolean {
             }
         });
         this.router.navigate(['/layout/purchase/purchase-order'], {
-            queryParams: { poId, fromApprovalView: true }
+            queryParams: { poId, draftId: row?.draft_id ?? poId, status: row?.status ?? null, fromApprovalView: true }
         });
         return;
     }
@@ -303,12 +345,28 @@ get isPurchaseOrder(): boolean {
         return;
     }
 
-    const mfNo = row?.mf_no ;
+    const mfNo = row?.mf_no;
     if (!mfNo) return;
 
+    this.sharedService.setReturnView({
+        route: ['/layout/action/my-approval'],
+        queryParams: {
+            p_type: this.approvalForm.get('p_type')?.value ?? '',
+            p_request: this.approvalForm.get('p_request')?.value ?? 'PENDING'
+        },
+        state: {
+            returnViewState: {
+                formValue: this.approvalForm.getRawValue(),
+                products: this.products,
+                filteredProducts: this.filteredProducts
+            }
+        }
+    });
     this.router.navigate(['/layout/purchase/material-requisition'], {
         queryParams: {
             mfNo,
+            mfId: row?.mf_id ?? null,
+            status: row?.status ?? null,
             fromApprovalView: true,
             p_type: this.approvalForm.get('p_type')?.value,
             p_request: this.approvalForm.get('p_request')?.value
@@ -481,11 +539,20 @@ get isSubmitDisabled(): boolean {
                 };
 
                 this.workService.sendVendorMail(mailPayload).subscribe({
-                    next: () => {
+                    next: (response: any) => {
+                        const sentCount = this.workService.updateMailStatusesFromSend(
+                            readyRows.map((row) => ({ mailLogId: row.mail_log_id, vendorId: row.vendorid ?? row.supplierid })),
+                            response,
+                            Number(this.authService.isLogIntType()?.userid) || null
+                        );
+                        if (!sentCount) {
+                            this.messageService.add({ severity: 'error', summary: 'Mail send failed', detail: 'No successful vendor delivery was returned.', life: 2500 });
+                            return;
+                        }
                         this.messageService.add({
                             severity: 'success',
                             summary: 'PO emails sent',
-                            detail: `Purchase order email sent to ${readyRows.length} vendor(s).`,
+                            detail: `Purchase order email sent to ${sentCount} of ${readyRows.length} vendor(s).`,
                             life: 2500
                         });
                         if (missingEmail.length) {
@@ -498,10 +565,16 @@ get isSubmitDisabled(): boolean {
                         }
                     },
                     error: (err: any) => {
+                        this.workService.updateMailStatusesFromSend(
+                            readyRows.map((row) => ({ mailLogId: row.mail_log_id, vendorId: row.vendorid ?? row.supplierid })),
+                            null,
+                            Number(this.authService.isLogIntType()?.userid) || null,
+                            err
+                        );
                         this.messageService.add({
                             severity: 'error',
                             summary: 'Mail send failed',
-                            detail: err?.error?.error ?? err?.message ?? 'Failed to send PO email',
+                            detail: this.workService.getMailFailureMessage(err, 'Failed to send PO email'),
                             life: 2500
                         });
                     }

@@ -109,8 +109,8 @@
                     <th>Item Category</th>
                     <th>Item Name</th>
                     <th>UOM</th>
+                    <th class="text-right">Buffer Qty</th>                    
                     <th class="text-right">Current Stock</th>
-                    <th class="text-right">Buffer Qty</th>
                     <th class="text-right">Requested Qty</th>
                     <th class="text-right">Issue Qty</th>
                     <th class="text-right">Balance</th>
@@ -123,8 +123,8 @@
                     <td class="text-sm">{{ item.categoryname }}</td>
                     <td class="text-sm">{{ item.itemname }}</td>
                     <td class="text-sm">{{ item.uom }}</td>
-                    <td class="text-sm">{{ item.currentstock | number }}</td>
                     <td class="text-sm">{{ item.bufferqty | number }}</td>
+                    <td class="text-sm">{{ item.currentstock | number }}</td>
                     <td class="text-sm">{{ item.requestedqty | number }}</td>
 
                     <!-- Issue Qty (input, capped at available) -->

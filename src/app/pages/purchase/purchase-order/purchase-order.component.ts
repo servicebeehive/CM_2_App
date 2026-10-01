@@ -26,7 +26,9 @@ import { WorkService } from '@/core/services/work.service';
 import { ShareService } from '@/core/services/shared.service';
 import { getStatusColor } from '@/shared/utils/status-color';
 import { GmailVendorRow, PurchaseDraftPayload, PurchaseOrderItem, PurchaseOrderPayload, CancelPOPayload, InvoiceEntry, PaymentEntry, PerformaEntry } from '@/core/models/authmodel/work.model';
-
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import { ChangeDetectorRef } from '@angular/core';
 
 @Component({
     selector: 'app-purchase-order',
@@ -97,7 +99,7 @@ export class PurchaseOrderComponent implements OnInit {
     showPoMailDialog = false;
     allVendorList: any[] = [];
     isLoadingVendorDialog = false;
-    vendorDialogRows: { category: string; item: string; vendorId: number | null; rate: number | null; taxType: string | null }[] = [];
+    vendorDialogRows: any[] = [];
     performaFileName: string = '';
     performaFileDataUrl: string = '';
     showExistingPerformaDate = false;
@@ -151,7 +153,8 @@ export class PurchaseOrderComponent implements OnInit {
         private workService: WorkService,
         private router: Router,
         private route: ActivatedRoute,
-        private sharedService: ShareService
+        private sharedService: ShareService,
+        private cdr: ChangeDetectorRef
     ) {}
 
     // ── Lifecycle ──────────────────────────────────────────────────────────────
@@ -328,7 +331,8 @@ export class PurchaseOrderComponent implements OnInit {
             next: (res: any) => {
                 this.ponoOptions = res.data ?? [];
                 const poId = this.route.snapshot.queryParamMap.get('poId');
-                if (poId) {
+                const status = this.route.snapshot.queryParamMap.get('status');
+                if (poId && status?.toUpperCase() !== 'DRAFT') {
                     const po = this.ponoOptions.find((item) => String(item.po_id) === poId);
                     if (po) this.onPOChange({ value: po.po_id });
                 }
@@ -397,10 +401,10 @@ export class PurchaseOrderComponent implements OnInit {
             next: (res: any) => {
                 const rows: any[] = Array.isArray(res?.data) ? res.data : [];
                 const row = rows[0] ?? {};
-
+                if (!row) return; 
                 this.poForm.patchValue(
                     {
-                        p_totalpoamount: Number(row.total_po_amount ?? 0).toFixed(2),
+                        ...(row.po_total != null && { p_totalpoamount: Number(row.po_total).toFixed(2) }),
                         p_totalinvoiceamount: Number(row.total_invoice_amount ?? 0).toFixed(2),
                         p_remaininginvoiceamount: Number(row.remaining_inv_amount ?? 0).toFixed(2)
                     },
@@ -476,7 +480,12 @@ export class PurchaseOrderComponent implements OnInit {
         };
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res: any) => {
-                this.onPODraftOptions = res.data;
+                this.onPODraftOptions = res.data ?? [];
+                if (this.route.snapshot.queryParamMap.get('status')?.toUpperCase() === 'DRAFT') {
+                    const draftId = this.route.snapshot.queryParamMap.get('draftId') ?? this.route.snapshot.queryParamMap.get('poId');
+                    const draft = this.onPODraftOptions.find((item) => String(item.draft_id) === String(draftId));
+                    if (draft) this.onPODraftChange({ value: draft.draft_id });
+                }
             },
             error: (err: any) => {
                 console.error('Error fetching PO numbers:', err);
@@ -494,16 +503,15 @@ export class PurchaseOrderComponent implements OnInit {
 
     onGetProject(): void {
         const companyId = this.authService.isLogIntType().companyid.toString();
+        const userId = this.authService.isLogIntType().userid.toString();
         const payload = {
-            returnType: 'ACTIVEPROJECT',
-            returnValue: '',
-            username: '',
-            option1: companyId,
-            option2: null
+            p_companyid: companyId,
+            p_userid: userId,
+            p_isactive: null
         };
-        this.inventoryService.getparameterbased(payload).subscribe({
+        this.workService.getProjectListRbac(payload).subscribe({
             next: (res) => {
-                this.projectOptions = res.data;
+                this.projectOptions = res.data.data;
             },
             error: (err) => console.error(err)
         });
@@ -721,7 +729,7 @@ export class PurchaseOrderComponent implements OnInit {
             referenceNo: item.transaction_no ?? '',
             invoiceNo: item.invoice_no ?? '',
             performaInvoiceNo: item.performa_no ?? '',
-            remainingAfter: Number(item.remaining_payment ?? 0)
+            remainingAfter: Number(item.remaining_payment ?? 0),
         }));
 
         this.totalPaid = Number(summary.total_paid ?? this.paymentHistory.reduce((total, item) => total + item.amount, 0));
@@ -760,7 +768,7 @@ export class PurchaseOrderComponent implements OnInit {
             p_misccharge: null,
             p_grandtotal: null,
             p_performainvoiceno_invoice: '',
-
+            p_totalpoamount: Number(summary.po_total ?? 0).toFixed(2),
             p_totalpayment: Number(summary.total_payment ?? summary.po_total ?? 0).toFixed(2),
             p_remainingpayment: Number(summary.remaining_payment ?? 0).toFixed(2)
         });
@@ -807,9 +815,9 @@ export class PurchaseOrderComponent implements OnInit {
                     tax_id: [row.tax_id ?? 0],
                     taxPercent: [Number(row.tax_percentage ?? 0)],
                     taxType: [row.tax_type ?? null],
-                      cgstAmount: [Number(row.cgst ?? 0)],
-                sgstAmount: [Number(row.sgst ?? 0)],
-                igstAmount: [Number(row.igst ?? 0)],
+                    cgstAmount: [Number(row.cgst ?? 0)],
+                    sgstAmount: [Number(row.sgst ?? 0)],
+                    igstAmount: [Number(row.igst ?? 0)],
                     totalAmount: [row.total_amount ?? row.totalAmount ?? row.amount ?? null],
                     remarks: [row.detail_remarks ?? ''],
                     status: [row.status ?? ''],
@@ -819,7 +827,8 @@ export class PurchaseOrderComponent implements OnInit {
                     vendor_id: [headerVendorId ?? null],
                     item_category_id: [row.item_category_id ?? null],
                     item_id: [row.item_id ?? null],
-                    uom_id: [row.uom_id ?? null]
+                    uom_id: [row.uom_id ?? null],
+                    old_rate:[null]
                 })
             );
         });
@@ -870,8 +879,9 @@ export class PurchaseOrderComponent implements OnInit {
         });
     }
 
-    private savePO(): void {
+    private async savePO(): Promise<void> {
         const formVal = this.poForm.getRawValue();
+         const attachment = await this.generatePoAttachmentBase64();
         const payload: PurchaseOrderPayload = {
             p_action: 'SUBMIT',
             p_operation: 'INSERT',
@@ -888,47 +898,47 @@ export class PurchaseOrderComponent implements OnInit {
             p_items_json: this.buildItemsPayload(),
             p_loginuser: this.authService.isLogIntType()?.userid.toString(),
             p_mr_no: this.getSelectedMrNumbers(),
-            p_po_attachment: this.printRows.length ? JSON.stringify(this.printRows) : null
+            p_po_attachment: attachment
         };
 
-       this.workService.upsertPurchaseOrder(payload).subscribe({
-    next: (res: any) => {
-        const data = res.data;
+        this.workService.upsertPurchaseOrder(payload).subscribe({
+            next: (res: any) => {
+                const data = res.data;
 
-        if (data.success) {
-            this.poForm.patchValue({
-                p_pono: data.po_id ?? null,
-                status: data.tran_status
-            });
+                if (data.success) {
+                    this.poForm.patchValue({
+                        p_pono: data.po_id ?? null,
+                        status: data.tran_status
+                    });
 
-            this.onGetPONo();
-            this.submitted = true;
+                    this.onGetPONo();
+                    this.submitted = true;
 
-            this.messageService.add({
-                severity: 'success',
-                summary: 'Success',
-                detail: data.msg,
-                life: 2500
-            });
-        } else {
-            this.messageService.add({
-                severity: 'error',
-                summary: 'Submit Failed',
-                detail: data.msg,
-                life: 3000
-            });
-        }
-    },
-    error: (err) => {
-        console.error(err);
-        this.messageService.add({
-            severity: 'error',
-            summary: 'Submit Failed',
-            detail: err?.error?.error ?? err?.message ?? 'Something went wrong.',
-            life: 3000
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Success',
+                        detail: data.msg,
+                        life: 2500
+                    });
+                } else {
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Submit Failed',
+                        detail: data.msg,
+                        life: 3000
+                    });
+                }
+            },
+            error: (err) => {
+                console.error(err);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Submit Failed',
+                    detail: err?.error?.error ?? err?.message ?? 'Something went wrong.',
+                    life: 3000
+                });
+            }
         });
-    }
-});
     }
 
     // ── Performa ──────────────────────────────────────────────
@@ -1525,16 +1535,16 @@ export class PurchaseOrderComponent implements OnInit {
         }
 
         this.printData = this.buildPurchaseOrderPrintData(printRows);
-                setTimeout(() => {
-                    const printContents = document.getElementById('poPrintSection')?.innerHTML;
-                    if (!printContents) return;
-                    const w = window.open('', '_blank', 'width=900,height=1200');
-                    w?.document.open();
-                    w?.document.write(
-                        `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Purchase Order ${this.printData.poNo}</title><style>${this.purchaseOrderPrintStyles()}</style></head><body>${printContents}<script>window.onload=function(){window.print();window.onafterprint=function(){window.close();};}</script></body></html>`
-                    );
-                    w?.document.close();
-                });
+        setTimeout(() => {
+            const printContents = document.getElementById('poPrintSection')?.innerHTML;
+            if (!printContents) return;
+            const w = window.open('', '_blank', 'width=900,height=1200');
+            w?.document.open();
+            w?.document.write(
+                `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Purchase Order ${this.printData.poNo}</title><style>${this.purchaseOrderPrintStyles()}</style></head><body>${printContents}<script>window.onload=function(){window.print();window.onafterprint=function(){window.close();};}</script></body></html>`
+            );
+            w?.document.close();
+        });
     }
 
     private buildPurchaseOrderPrintData(printRows: any[] = []): any {
@@ -1840,6 +1850,46 @@ export class PurchaseOrderComponent implements OnInit {
         return value ?? fallback;
     }
 
+    private async generatePoAttachmentBase64(): Promise<string | null> {
+    this.printData = this.buildPurchaseOrderPrintData([]);
+
+    // Force Angular to render the *ngIf block NOW, synchronously
+    this.cdr.detectChanges();
+
+    // Give the browser one more tick to finish painting (helps with images/fonts)
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const printSection = document.getElementById('poPrintSection');
+    if (!printSection) {
+        console.error('poPrintSection not found in DOM after detectChanges');
+        return null;
+    }
+
+    const container = document.createElement('div');
+    container.style.position = 'fixed';
+    container.style.left = '-9999px';
+    container.style.width = '210mm';
+    container.innerHTML = printSection.innerHTML;
+    document.body.appendChild(container);
+
+    try {
+        const canvas = await html2canvas(container, { scale: 2, useCORS: true });
+        const imgData = canvas.toDataURL('image/png');
+
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        return pdf.output('datauristring');
+    } catch (err) {
+        console.error('PDF generation failed:', err);
+        return null;
+    } finally {
+        document.body.removeChild(container);
+    }
+}
+
     // ──────────────────────────────────────────────────────────────────────────
     // MF DIALOG
     // ──────────────────────────────────────────────────────────────────────────
@@ -1899,7 +1949,8 @@ export class PurchaseOrderComponent implements OnInit {
                     vendor_id: [null],
                     item_category_id: [it.item_category_id ?? null],
                     item_id: [it.item_id ?? null],
-                    uom_id: [it.uom_id ?? null]
+                    uom_id: [it.uom_id ?? null],
+                    old_rate: [null]
                 })
             );
         });
@@ -2010,10 +2061,17 @@ export class PurchaseOrderComponent implements OnInit {
                 item: row.get('item')?.value ?? '',
                 vendorId: preferredVendor?.supplierid ?? row.get('vendor_id')?.value ?? null,
                 rate: this.getVendorRate(preferredVendor),
-                taxType: preferredVendor?.taxtype ?? row.get('taxPercent')?.value ?? null
-            };
-        });
-    }
+                taxType: preferredVendor?.taxtype ?? row.get('taxPercent')?.value ?? null,
+              oldRate: this.getVendorOldRate(preferredVendor) ?? row.get('old_rate')?.value ?? null
+        };
+    });
+}
+
+private getVendorOldRate(vendor: any): number | null {
+    if (!vendor) return null;
+    const v = vendor.old_rate ?? null;
+    return v == null ? null : Number(v);
+}
 
     onVendorDialogVendorChange(index: number, vendorId: number | null): void {
         const dialogRow = this.vendorDialogRows[index];
@@ -2021,6 +2079,7 @@ export class PurchaseOrderComponent implements OnInit {
         dialogRow.vendorId = vendorId;
         dialogRow.rate = this.getVendorRate(vendor) ?? dialogRow.rate;
         dialogRow.taxType = vendor?.taxtype ?? dialogRow.taxType;
+        dialogRow.oldRate = this.getVendorOldRate(vendor);
     }
 
     submitVendorAssignments(): void {
@@ -2121,11 +2180,28 @@ export class PurchaseOrderComponent implements OnInit {
                 }))
             })
             .subscribe({
-                next: () => {
-                    this.messageService.add({ severity: 'success', summary: 'PO email sent', detail: `Purchase order shared with ${selectedRows.length} vendor(s).`, life: 2500 });
-                    this.showPoMailDialog = false;
+                next: (response: any) => {
+                    const sentCount = this.workService.updateMailStatusesFromSend(
+                        selectedRows.map((row) => ({ mailLogId: row.mailLogId, vendorId: row.vendorId })),
+                        response,
+                        Number(this.userId) || null
+                    );
+                    if (sentCount) {
+                        this.messageService.add({ severity: 'success', summary: 'PO email sent', detail: `Purchase order shared with ${sentCount} of ${selectedRows.length} vendor(s).`, life: 2500 });
+                        this.showPoMailDialog = false;
+                    } else {
+                        this.messageService.add({ severity: 'error', summary: 'Send failed', detail: 'No successful vendor delivery was returned.', life: 2500 });
+                    }
                 },
-                error: (err) => this.messageService.add({ severity: 'error', summary: 'Send failed', detail: err.message, life: 2500 })
+                error: (err) => {
+                    this.workService.updateMailStatusesFromSend(
+                        selectedRows.map((row) => ({ mailLogId: row.mailLogId, vendorId: row.vendorId })),
+                        null,
+                        Number(this.userId) || null,
+                        err
+                    );
+                    this.messageService.add({ severity: 'error', summary: 'Send failed', detail: this.workService.getMailFailureMessage(err), life: 2500 });
+                }
             });
     }
 
@@ -2145,20 +2221,22 @@ export class PurchaseOrderComponent implements OnInit {
         this.approvalLogVisible = true;
         this.isLoadingApprovalLog = true;
         this.approvalLogRows = [];
-        this.inventoryService.Getreturndropdowndetails({
-            p_returntype: 'APPROVALLOG',
-            p_returnvalue: poNo,
-            p_username: 'PO'
-        }).subscribe({
-            next: (res: any) => {
-                this.approvalLogRows = Array.isArray(res?.data) ? res.data : [];
-                this.isLoadingApprovalLog = false;
-            },
-            error: () => {
-                this.isLoadingApprovalLog = false;
-                this.messageService.add({ severity: 'error', summary: 'Approval Log', detail: 'Unable to load approval history.', life: 3000 });
-            }
-        });
+        this.inventoryService
+            .Getreturndropdowndetails({
+                p_returntype: 'APPROVALLOG',
+                p_returnvalue: poNo,
+                p_username: 'PO'
+            })
+            .subscribe({
+                next: (res: any) => {
+                    this.approvalLogRows = Array.isArray(res?.data) ? res.data : [];
+                    this.isLoadingApprovalLog = false;
+                },
+                error: () => {
+                    this.isLoadingApprovalLog = false;
+                    this.messageService.add({ severity: 'error', summary: 'Approval Log', detail: 'Unable to load approval history.', life: 3000 });
+                }
+            });
     }
 
     openMrDialog(): void {

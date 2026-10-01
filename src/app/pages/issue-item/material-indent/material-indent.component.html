@@ -12,8 +12,8 @@
                     [options]="draftIndentOptions"
                     optionLabel="indent_no"
                     optionValue="indent_id"
-                    placeholder="Draft MR No"
-                    filterPlaceholder="Draft MR No"
+                    placeholder="Draft Indent No"
+                    filterPlaceholder="Draft Indent No"
                     formControlName="p_draft_indent"
                     [filter]="true"
                     [showClear]="true"
@@ -187,9 +187,8 @@
                     <th>Item Category</th>
                     <th>Item Name</th>
                     <th>UOM</th>
-                    <th class="text-right">Current Stock</th>
-                    <th class="text-right">Buffer Qty</th>
                     <th class="text-right">Available Qty</th>
+                    <th class="text-right">Buffer Qty</th>
                     <th class="text-right">Requested Qty</th>
                     <th class="text-center">Action</th>
                 </tr>
@@ -202,11 +201,6 @@
                     <td class="text-sm">{{ item.uom }}</td>
                     <td class="text-sm">{{ item.currentstock | number }}</td>
                     <td class="text-sm">{{ item.bufferqty | number }}</td>
-                    <td class="text-sm font-semibold">
-                        <span [ngClass]="{ 'text-red-500': item.availableqty <= 0, 'text-green-600': item.availableqty > 0 }">
-                            {{ item.availableqty | number }}
-                        </span>
-                    </td>
                     <!-- Indent Qty (input, capped at available) -->
                     <td>
                         <p-inputNumber

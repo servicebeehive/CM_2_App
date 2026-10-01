@@ -135,8 +135,19 @@ export class MaterialIssueComponent implements OnInit {
     }
 
     private loadProjects(): void {
-        const payload = { returnType: 'ACTIVEPROJECT', returnValue: '', username: '', option1: this.companyId, option2: null };
-        this.inventoryService.getparameterbased(payload).subscribe({ next: (res: any) => (this.projectOptions = res.data ?? []), error: (err) => console.error(err) });
+        const companyId = this.authService.isLogIntType().companyid.toString();
+        const userId = this.authService.isLogIntType().userid.toString();
+        const payload = {
+            p_companyid: companyId,
+            p_userid: userId,
+            p_isactive: null
+        };
+        this.workService.getProjectListRbac(payload).subscribe({
+            next: (res) => {
+                this.projectOptions = res.data.data;
+            },
+            error: (err) => console.error(err)
+        });
     }
 
     onIndentChange(event: any): void {

@@ -52,7 +52,9 @@ export const API_ENDPOINTS = {
         upsertmaterialissue: '/beeware/upsert_material_issue',
         upsertmaterialindent: '/beeware/upsert_material_indent',
         upsertmaterialreturn: '/beeware/upsert_material_return',
-        upsertmaterialtransfer: '/beeware/upsert_material_transfer'
+        upsertmaterialtransfer: '/beeware/upsert_material_transfer',
+        getprojectlistrbac: '/beeware/get_project_list_rbac',
+        updatemailstatus: '/beeware/update_mail_status'
     },
     sales: {
         getcalculatedMRP: '/beeware/getcalculatedMRP'

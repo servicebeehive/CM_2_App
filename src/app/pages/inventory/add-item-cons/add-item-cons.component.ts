@@ -22,6 +22,7 @@ import { ShareService } from '@/core/services/shared.service';
 import { DatePickerModule } from 'primeng/datepicker';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+import { InputNumberModule } from 'primeng/inputnumber';
 
 interface Product {
     name: string;
@@ -65,7 +66,8 @@ interface Image {
         MessageModule,
         AutoCompleteModule,
         CheckboxModule,
-        ToastModule
+        ToastModule,
+        InputNumberModule
     ],
     templateUrl: './add-item-cons.component.html',
     styleUrl: './add-item-cons.component.scss',
@@ -147,6 +149,7 @@ export class AddItemConsComponent {
                 curStock: [''],
                 purchasePrice: ['', [Validators.min(1)]],
                 qty: ['', [Validators.min(1)]],
+                available_stock:[{ value: 0, disabled: false }, [Validators.min(0)]],
                 minStock: ['', [Validators.required, Validators.maxLength(3)]],
                 reorderLevel: ['', [Validators.required, Validators.maxLength(3)]],
                 warPeriod: ['', Validators.maxLength(2)],
@@ -161,7 +164,7 @@ export class AddItemConsComponent {
                 itemSearch: [''],
                 itemtype: [''],
                 p_tax: ['', Validators.required],
-                transactionType: ['purchase'],
+                transactionType: ['purchase']
             }
         );
         this.onGetTax();
@@ -248,10 +251,12 @@ export class AddItemConsComponent {
         itemSubGroup: itemData.itemsubgroupid ?? '',
         location: itemData.location ?? '',
         p_tax: itemData.gstrate ?? '',
-        purchasePrice: itemData.purchaseprice ?? 0
+        purchasePrice: itemData.purchaseprice ?? 0,
+        available_stock: itemData.available_stock ?? 0,
     });
 
-    this.resetDisabled = true;
+   this.addForm.get('available_stock')?.disable();
+this.resetDisabled = true;
     // this.disableItemRelatedControls();
 }
 
@@ -282,7 +287,7 @@ export class AddItemConsComponent {
 
     enterAddModeReset() {
     this.resetDisabled = false;
-        this.addForm.reset();
+    this.addForm.reset({ available_stock: 0 });
     this.addForm.enable();
     this.addForm.get('activeItem')?.setValue(true);
     this.addForm.get('transactionType')?.setValue('purchase');
@@ -384,6 +389,7 @@ export class AddItemConsComponent {
         p_itemsku: form.itemCode || '',
         p_itemname: form.itemName,
         p_location: form.location ?? '',
+        // p_availablestock: Number(form.available_stock) || 0,
         p_minimumstock: Number(form.minStock) || 0,
         p_categoryid: Number(form.category),
         p_warrentyperiod: Number(form.warPeriod) || 0,
@@ -434,7 +440,7 @@ onSubmit() {
     }
 
     resetForm() {
-        this.addForm.reset();
+        this.addForm.reset({ available_stock: 0 });
         this.addForm.get('activeItem')?.setValue(true);
         this.addForm.get('transactionType')?.setValue('purchase');
         this.addForm.enable();

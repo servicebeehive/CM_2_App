@@ -142,7 +142,7 @@
                             <ng-template pTemplate="header">
                                 <tr class="bg-yellow-400">
                                     <th class="text-right">Item Category</th>
-                                    <th class="text-right">Item</th>
+                                    <th class="text-right">Item Name</th>
                                     <th class="text-right">UOM</th>
                                     <th class="text-right">Forecast Qty</th>
                                     <th class="text-right">Available Stock</th>
@@ -454,7 +454,7 @@
                             </div>
 
                             <div class="flex flex-col">
-                                <label class="font-medium">Remaining Payment (₹)</label>
+                                <label class="font-medium">Remaining PO Payment (₹)</label>
                                 <input
                                     pInputText
                                     type="text"
@@ -554,7 +554,7 @@
                         </div>
 
                         <div class="p-3 pt-0">
-                            <p-table [value]="paymentHistory" class="p-datatable-gridlines p-datatable-sm" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" appendTo="body">
+                            <p-table [value]="paymentHistory" class="p-datatable-gridlines p-datatable-sm" [responsiveLayout]="'scroll'"  appendTo="body">
                                 <ng-template pTemplate="header">
                                     <tr class="bg-yellow-400">
                                         <th style="min-width: 150px">Invoice No</th>
@@ -875,6 +875,7 @@
                 <th>Item</th>
                 <th>Vendor</th>
                 <th class="text-right">Rate</th>
+                <th>Last Rate</th>
             </tr>
         </ng-template>
 
@@ -898,9 +899,10 @@
                         (onChange)="onVendorDialogVendorChange(i, $event.value)"
                     ></p-select>
                 </td>
-                <td style="min-width: 130px">
+                <td style="min-width: 80px">
                     <p-inputNumber [(ngModel)]="row.rate" [ngModelOptions]="{ standalone: true }" [min]="0" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" inputStyleClass="w-full"></p-inputNumber>
                 </td>
+                <td>{{ row.oldRate }}</td>
             </tr>
         </ng-template>
     </p-table>
@@ -979,7 +981,7 @@
                 <td>{{ row.department || '—' }}</td>
                 <td>{{ row.requested_by || '—' }}</td>
                 <td class="text-center">
-                    <button pButton type="button" label="View" class="p-button-text p-button-sm" (click)="openMaterialRequisition(row)"></button>
+                    <button pButton type="button" icon="pi pi-eye" class="p-button-text p-button-sm" (click)="openMaterialRequisition(row)"></button>
                 </td>
             </tr>
         </ng-template>

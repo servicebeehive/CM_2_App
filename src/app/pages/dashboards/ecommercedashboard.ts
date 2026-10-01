@@ -43,16 +43,6 @@ import { SaleMangerDashboard } from './salemanagerdashboard';
             <div>
                 <div class="flex flex-wrap items-center gap-3 mb-4">
                     <p-dropdown [options]="filterOptions" [(ngModel)]="selectedFilter" optionLabel="label" optionValue="value" placeholder="Filter" (onChange)="onFilterChange($event)" styleClass="w-40"></p-dropdown>
-
-                    <p-dropdown
-                        [options]="dashboardOptions"
-                        [(ngModel)]="selectedDashboard"
-                        optionLabel="label"
-                        optionValue="value"
-                        placeholder="Go to Dashboard"
-                        (onChange)="onDashboardChange($event)"
-                        styleClass="w-52"
-                    ></p-dropdown>
                 </div>
                 <!-- Main Content -->
                 <div class="grid grid-cols-12 gap-8">
@@ -94,7 +84,6 @@ export class EcommerceDashboard implements OnInit {
         { label: 'Management Dashboard', value: '/layout/management-dashboard' },
         { label: 'Operational Dashboard', value: '/layout/operational-dashboard' }
     ];
-    selectedDashboard: string | null = null;
 
     constructor(
         public authservice: AuthService,
@@ -102,13 +91,6 @@ export class EcommerceDashboard implements OnInit {
     ) {}
 
     onFilterChange(e: any) {}
-
-    onDashboardChange(e: any): void {
-        const path = e.value;
-        if (path) {
-            this.router.navigate([path]);
-        }
-    }
 
     ngOnInit(): void {
         const isUserRoleType: any = this.authservice.isLogIntType();

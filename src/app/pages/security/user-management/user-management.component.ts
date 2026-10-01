@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, ElementRef, QueryList, ViewChildren } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
@@ -10,22 +10,25 @@ import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { RippleModule } from 'primeng/ripple';
-import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
 import { AuthService } from '@/core/services/auth.service';
 import { InventoryService } from '@/core/services/inventory.service';
 import { UserService } from '@/core/services/user.service';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { GetUserDetail, RemovedParamterBased } from '@/core/models/inventory.model';
+import { WorkService } from '@/core/services/work.service';
+import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
     selector: 'app-user-management',
     standalone: true,
     templateUrl: './user-management.component.html',
     styleUrls: ['./user-management.component.scss'],
-    imports: [CommonModule, FormsModule, ReactiveFormsModule, ButtonModule, DropdownModule, InputTextModule, TableModule, CheckboxModule, DialogModule, ConfirmDialogModule, RippleModule, GlobalFilterComponent, MultiSelectModule],
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, ButtonModule, DropdownModule, InputTextModule, TableModule, CheckboxModule, DialogModule, ConfirmDialogModule, RippleModule, MultiSelectModule, TooltipModule],
     providers: [ConfirmationService]
 })
 export class UserManagementComponent {
+    @ViewChildren('filterInput') filterInputs!: QueryList<ElementRef<HTMLInputElement>>;
+
     userForm!: FormGroup;
     visibleDialog = false;
     showPassword = false;
@@ -48,7 +51,8 @@ export class UserManagementComponent {
         private authService: AuthService,
         private inventoryService: InventoryService,
         private userService: UserService,
-        private messageService: MessageService
+        private messageService: MessageService,
+        private workService: WorkService
     ) {}
 
     ngOnInit() {
@@ -86,17 +90,16 @@ export class UserManagementComponent {
     };
 
     onGetProjectList() {
-        const companyId = this.authService.isLogIntType().companyid.toString();
+         const companyId = this.authService.isLogIntType().companyid.toString();
+        const userId = this.authService.isLogIntType().userid.toString();
         const payload = {
-            returnType: 'ACTIVEPROJECT',
-            returnValue: '',
-            username: '',
-            option1: companyId,
-            option2: null
+            p_companyid: companyId,
+            p_userid: userId,
+            p_isactive: null
         };
-        this.inventoryService.getparameterbased(payload).subscribe({
+        this.workService.getProjectListRbac(payload).subscribe({
             next: (res) => {
-                this.projectOptions = res.data || [];
+                this.projectOptions = res.data.data;
             },
             error: (err) => console.error(err)
         });
@@ -275,17 +278,16 @@ export class UserManagementComponent {
             error: (err) => console.log(err)
         });
     }
-    /** 🔍 Global Filter **/
-    applyGlobalFilter() {
-        this.applyGlobalFilterManual();
+
+    resetTable(table: any): void {
+        table.reset();
+        this.filterInputs.forEach((input) => (input.nativeElement.value = ''));
+        this.globalFilter = '';
+        this.filteredUser = this.getVisibleUsers();
     }
-    applyGlobalFilterManual() {
-        const value = this.globalFilter;
-        if (!value) {
-            this.filteredUser = [...this.user];
-            return;
-        }
-        this.filteredUser = this.user.filter((user) => Object.values(user).some((v) => String(v).toLowerCase().includes(value)));
+
+    private getVisibleUsers(): any[] {
+        return this.loggedInUserRole === 'ADMINISTRATOR' ? [...this.user] : this.user.filter((user) => user.username === this.loggedInUserName);
     }
 
     /** 🔁 Reset Filter **/

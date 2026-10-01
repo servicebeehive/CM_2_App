@@ -7,7 +7,7 @@
                 <span class="font-bold text-xl mt-2" [ngStyle]="{ color: statusColor }">
                     {{ minForm.get('status')?.value }}
                 </span>
-                <button pButton type="submit" label="Submit" class="p-button-warning" [disabled]="minForm.invalid || issueItems.length === 0"></button>
+                <button pButton type="submit" label="Submit" class="p-button-warning" [disabled]="minForm.invalid || issueItems.length === 0 || hasInvalidQty() "></button>
                 <button pButton type="button" label="Reset" class="p-button-secondary" (click)="onReset()"></button>
                 <button pButton type="button" label="Back" icon="pi pi-arrow-left" class="p-button-secondary" (click)="onBack()"></button>
             </div>
@@ -57,7 +57,7 @@
                 <small class="text-red-500 mt-1 text-xs" *ngIf="minForm.get('p_tower')?.touched && minForm.get('p_tower')?.errors?.['required']"> Tower/Block is required </small>
             </div>
 
-              <div class="flex flex-col col-span-2">
+            <div class="flex flex-col col-span-2">
                 <label class="font-medium mb-1 text-sm md:text-base">Item</label>
                 <p-select
                     class="w-full"
@@ -121,19 +121,21 @@
                         <td class="text-sm font-semibold">{{ item.returnableqty | number: '1.0-2' }}</td>
                         <td>
                             <p-inputNumber
+                                #issueQtyModel="ngModel"
                                 [(ngModel)]="item.issueqty"
                                 [ngModelOptions]="{ standalone: true }"
                                 [min]="0"
                                 [max]="item.returnableqty"
                                 [useGrouping]="false"
                                 inputStyleClass="w-full text-sm"
-                                (onInput)="onIssueQtyChange(item)"
+                                (onInput)="onIssueQtyChange(item, $event)"
                             ></p-inputNumber>
-                            <small class="text-red-500 text-xs block mt-1" *ngIf="item.issueqty > item.returnableqty"> Exceeds returnable qty </small>
-                            <small class="text-red-500 text-xs block mt-1" *ngIf="!item.issueqty"> Return qty required </small>
+                            <small class="text-red-500 text-xs block mt-1" *ngIf="item.issueqty > maxReturnQty(item)"> Cannot exceed last issued qty ({{ maxReturnQty(item) | number: '1.0-2' }}) </small>
+                            <small class="text-red-500 text-xs block mt-1" *ngIf="issueQtyModel.touched && !item.issueqty"> Return qty required </small>
                         </td>
                         <td class="text-sm">
                             <p-dropdown
+                                #returnTypeModel="ngModel"
                                 [options]="returnTypeOptions"
                                 optionLabel="label"
                                 optionValue="value"
@@ -143,21 +145,25 @@
                                 [showClear]="false"
                                 appendTo="body"
                                 class="w-full"
+                                (onBlur)="returnTypeModel.control.markAsTouched()"
                             ></p-dropdown>
-                            <small class="text-red-500 text-xs block mt-1" *ngIf="!item.returntype"> Return type required </small>
+                            <small class="text-red-500 text-xs block mt-1" *ngIf="returnTypeModel.touched && !item.returntype"> Return type required </small>
                         </td>
                         <td class="text-sm">
                             <p-dropdown
+                                #returnConditionModel="ngModel"
                                 [options]="returnConditionOptions"
                                 optionLabel="label"
                                 optionValue="value"
                                 [(ngModel)]="item.returncondition"
                                 [ngModelOptions]="{ standalone: true }"
                                 [showClear]="false"
+                                placeholder="Select Condition"
                                 appendTo="body"
                                 class="w-full"
+                                (onBlur)="returnConditionModel.control.markAsTouched()"
                             ></p-dropdown>
-                            <small class="text-red-500 text-xs block mt-1" *ngIf="!item.returncondition"> Return condition required </small>
+                            <small class="text-red-500 text-xs block mt-1" *ngIf="returnConditionModel.touched && !item.returncondition"> Return condition required </small>
                         </td>
                         <td class="text-center">
                             <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm" pTooltip="Remove" tooltipPosition="top" (click)="removeItem(i)"></button>

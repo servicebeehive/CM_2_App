@@ -5,7 +5,7 @@
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <span class="block text-surface-900 font-bold text-lg md:text-xl">Vendor Comparison</span>
             <div class="mr-form-footer">
-                  <span class="text-xl font-bold mt-2">Status</span>
+                <span class="text-xl font-bold mt-2">Status</span>
                 <span class="font-bold text-xl mt-2" [ngStyle]="{ color: statusColor }">
                     {{ vcForm.get('status')?.value }}
                 </span>
@@ -21,18 +21,6 @@
                     [showClear]="true"
                     (onChange)="onVcNoChange($event, 'DRAFT')"
                 >
-                    <ng-template pTemplate="selectedItem" let-item>
-                        <div class="flex items-center gap-2" *ngIf="item">
-                            <span>{{ item.comparisonid_name }}</span>
-                        </div>
-                    </ng-template>
-
-                    <ng-template pTemplate="item" let-item>
-                        <div class="flex items-center justify-between gap-2 w-full">
-                            <span>{{ item.comparisonid_name }}</span>
-                            <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-0" [attr.aria-label]="'Delete draft ' + item.comparisonid_name" (click)="deleteDraftItem(item, $event)"></button>
-                        </div>
-                    </ng-template>
                 </p-dropdown>
                 <button pButton type="button" label="Draft" class="p-button-warning" [disabled]="vcForm.get('p_vcno')?.value" (click)="onSaveDraft()"></button>
                 <button pButton type="button" label="View" class="p-button-warning" (click)="openMaterialReqDialog()"></button>
@@ -95,11 +83,11 @@
         </div>
 
         <div class="mr-card">
-             <div class="mr-card-header justify-between">
+            <div class="mr-card-header justify-between">
                 <div class="mr-card-header-left">
                     <i class="pi pi-list"></i>
                     <span>Item Wise Comparison</span>
-                 </div>
+                </div>
                 <div class="text-gray-600 me-2 text-sm">
                     <span class="mr-3">Total Items: {{ totalVisibleItems }}</span>
                     <span>Total Quantity: {{ totalVisibleRequestedQty }}</span>
@@ -220,33 +208,49 @@
                         <div class="mr-card-header">
                             <i class="pi pi-users"></i>
                             <span>Vendors Invited ({{ selectedVendors.length }})</span>
-                        </div>    
+                            <span class="text-red-500 text-sm ml-1">(PDF Only*)</span>
+                        </div>
                         <div class="vendor-attachment-list">
-                            <div class="vendor-attachment-row" *ngFor="let v of selectedVendors">
-                                <span class="vendor-name">{{ v.vendor_name }}</span>
-                                <div class="mr-file-input">
-                                    <label [for]="'vendorAttachment-' + v.vendor_id" class="mr-choose-btn"><i class="pi pi-upload"></i> Choose File</label>
-                                    <input [id]="'vendorAttachment-' + v.vendor_id" type="file" hidden (change)="onVendorAttachmentSelect($event, v.vendor_id)" />
-                                    <span class="mr-file-name">{{ vendorAttachmentNames[v.vendor_id] }}</span>
-                                    <button
-                                        *ngIf="vendorAttachmentNames[v.vendor_id]"
-                                        pButton
-                                        type="button"
-                                        icon="pi pi-eye"
-                                        class="p-button-text p-button-sm"
-                                        [attr.aria-label]="'View attachment for ' + v.vendor_name"
-                                        (click)="viewVendorAttachment(v.vendor_id)"
-                                    ></button>
-                                    <button
-                                        *ngIf="vendorAttachmentNames[v.vendor_id]"
-                                        pButton
-                                        type="button"
-                                        icon="pi pi-times"
-                                        class="p-button-text p-button-danger p-button-sm"
-                                        [attr.aria-label]="'Remove attachment for ' + v.vendor_name"
-                                        (click)="removeVendorAttachment(v.vendor_id)"
-                                    ></button>
-                                </div>
+                            <div class="vendor-attachment-row" *ngFor="let v of selectedVendors" [ngClass]="{ 'attachment-missing': !vendorAttachmentNames[v.vendor_id] }">
+                                <span class="vendor-name">
+                                    {{ v.vendor_name }}
+                                    <span class="text-red-500">*</span>
+                                </span>
+                              <div class="mr-file-input">
+    <label
+        *ngIf="!vendorAttachmentNames[v.vendor_id]"
+        [for]="'vendorAttachment-' + v.vendor_id"
+        class="mr-choose-btn"
+    >
+        <i class="pi pi-upload"></i> Choose PDF
+    </label>
+    <input [id]="'vendorAttachment-' + v.vendor_id" type="file" accept=".pdf,application/pdf" hidden (change)="onVendorAttachmentSelect($event, v.vendor_id)" />
+    <span
+        class="mr-file-name"
+        [ngClass]="{ 'text-red-500': !vendorAttachmentNames[v.vendor_id] }"
+        [title]="vendorAttachmentNames[v.vendor_id] || ''"
+    >
+        {{ vendorAttachmentNames[v.vendor_id] }}
+    </span>
+    <button
+        *ngIf="vendorAttachmentNames[v.vendor_id]"
+        pButton
+        type="button"
+        icon="pi pi-eye"
+        class="p-button-text p-button-sm"
+        [attr.aria-label]="'View attachment for ' + v.vendor_name"
+        (click)="viewVendorAttachment(v.vendor_id)"
+    ></button>
+    <button
+        *ngIf="vendorAttachmentNames[v.vendor_id]"
+        pButton
+        type="button"
+        icon="pi pi-times"
+        class="p-button-text p-button-danger p-button-sm"
+        [attr.aria-label]="'Remove attachment for ' + v.vendor_name"
+        (click)="removeVendorAttachment(v.vendor_id)"
+    ></button>
+</div>
                             </div>
                         </div>
                     </div>
@@ -292,7 +296,7 @@
     </form>
 
     <p-dialog [(visible)]="showMaterialReqDialog" [modal]="true" [style]="{ width: '72rem', maxWidth: '95vw' }" [draggable]="false" [resizable]="false" header="Material Requisitions">
-        <p-table [value]="materialReqRows" [responsiveLayout]="'scroll'" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]" [loading]="isLoadingMrRows" class="p-datatable-gridlines p-datatable-sm">
+        <p-table [value]="materialReqRows" [responsiveLayout]="'scroll'" [loading]="isLoadingMrRows" class="p-datatable-gridlines p-datatable-sm">
             <ng-template pTemplate="header">
                 <tr class="bg-yellow-400">
                     <th>MR No</th>
@@ -310,7 +314,7 @@
                     <td>{{ row.department || '—' }}</td>
                     <td>{{ row.requested_by || '—' }}</td>
                     <td class="text-center">
-                        <button pButton type="button" label="View" class="p-button-text p-button-sm" (click)="openMaterialRequisition(row)"></button>
+                        <button pButton type="button" icon="pi pi-eye" class="p-button-text p-button-sm" (click)="openMaterialRequisition(row)"></button>
                     </td>
                 </tr>
             </ng-template>
@@ -327,7 +331,12 @@
         <p-table [value]="approvalLogRows" [loading]="isLoadingApprovalLog" [responsiveLayout]="'scroll'" class="p-datatable-gridlines p-datatable-sm">
             <ng-template pTemplate="header">
                 <tr>
-                    <th>Transaction No</th><th>To Status</th><th>Approval Level</th><th>Approver Name</th><th>Remarks</th><th>Action On</th>
+                    <th>Transaction No</th>
+                    <th>To Status</th>
+                    <th>Approval Level</th>
+                    <th>Approver Name</th>
+                    <th>Remarks</th>
+                    <th>Action On</th>
                 </tr>
             </ng-template>
             <ng-template pTemplate="body" let-log>
@@ -337,10 +346,14 @@
                     <td>{{ log['Approval Level'] ?? log.approval_level ?? '-' }}</td>
                     <td>{{ log['Approver Name'] || log.approver_name || log.approver || log['Approver ID'] || '-' }}</td>
                     <td>{{ log.remarks || log.Remarks || '-' }}</td>
-                    <td>{{ (log['Action On'] || log.action_on) | date: 'dd/MM/yyyy HH:mm' }}</td>
+                    <td>{{ log['Action On'] || log.action_on | date: 'dd/MM/yyyy HH:mm' }}</td>
                 </tr>
             </ng-template>
-            <ng-template pTemplate="emptymessage"><tr><td colspan="6" class="text-center text-400 italic py-5">No approval history found</td></tr></ng-template>
+            <ng-template pTemplate="emptymessage"
+                ><tr>
+                    <td colspan="6" class="text-center text-400 italic py-5">No approval history found</td>
+                </tr></ng-template
+            >
         </p-table>
     </p-dialog>
 </div>

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, ElementRef, QueryList, ViewChildren } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
@@ -9,26 +9,27 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { GlobalFilterComponent } from '@/shared/global-filter/global-filter.component';
 import { AuthService } from '@/core/services/auth.service';
 import { InventoryService } from '@/core/services/inventory.service';
+import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
     selector: 'app-rule-detail',
     standalone: true,
     templateUrl: './rule-detail.component.html',
     styleUrls: ['./rule-detail.component.scss'],
-    imports: [CommonModule, FormsModule, ReactiveFormsModule, ButtonModule, DropdownModule, InputTextModule, TableModule, CheckboxModule, DialogModule, ConfirmDialogModule, GlobalFilterComponent],
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, ButtonModule, DropdownModule, InputTextModule, TableModule, CheckboxModule, DialogModule, ConfirmDialogModule, TooltipModule],
     providers: [ConfirmationService]
 })
 export class RuleDetailComponent {
+    @ViewChildren('filterInput') filterInputs!: QueryList<ElementRef<HTMLInputElement>>;
+
     ruleForm!: FormGroup;
     visibleDialog = false;
     user: any[] = [];
     filteredUser: any[] = [];
     editMode = false;
     selectedUser: any = null;
-    globalFilter: string = '';
     showGlobalSearch: boolean = true;
     levels: any[] = [];
     ruleOptions: any[] = [];
@@ -276,19 +277,6 @@ export class RuleDetailComponent {
         return this.levels.some((level: any) => !level.pusername);
     }
 
-    /** 🔍 Global Filter **/
-    applyGlobalFilter() {
-        this.applyGlobalFilterManual();
-    }
-    applyGlobalFilterManual() {
-        const value = this.globalFilter;
-        if (!value) {
-            this.filteredUser = [...this.user];
-            return;
-        }
-        this.filteredUser = this.user.filter((user) => Object.values(user).some((v) => String(v).toLowerCase().includes(value)));
-    }
-
     addRow() {
         const nextLevel = (this.levels?.length || 0) + 1;
         this.levels.push({
@@ -301,8 +289,8 @@ export class RuleDetailComponent {
         this.levels.splice(index, 1);
     }
 
-  buildDisplayRows(activeOnly: boolean = false) {
-    const source = activeOnly ? this.user.filter(r => r.is_active === 'Y') : this.user;
+    buildDisplayRows(activeOnly: boolean = this.isActiveChecked) {
+        let source = activeOnly ? this.user.filter((row) => row.is_active === 'Y') : this.user;
 
     this.allGroupedRows = new Map();
     for (const row of source) {
@@ -324,6 +312,13 @@ export class RuleDetailComponent {
 onChangeActive(event: any) {
     this.buildDisplayRows(this.isActiveChecked);
 }
+
+    resetTable(table: any): void {
+        table.reset();
+        this.filterInputs.forEach((input) => (input.nativeElement.value = ''));
+        this.isActiveChecked = false;
+        this.buildDisplayRows(false);
+    }
 
     getGroupCount(id: number): number {
         return this.allGroupedRows.get(id)?.length ?? 0;

@@ -99,8 +99,19 @@ export class MaterialReturnComponent implements OnInit {
     }
 
     private loadProjects(): void {
-        const payload = { returnType: 'ACTIVEPROJECT', returnValue: '', username: '', option1: this.companyId, option2: null };
-        this.inventoryService.getparameterbased(payload).subscribe({ next: (res: any) => (this.projectOptions = res.data ?? []), error: (err) => console.error(err) });
+      const companyId = this.authService.isLogIntType().companyid.toString();
+        const userId = this.authService.isLogIntType().userid.toString();
+        const payload = {
+            p_companyid: companyId,
+            p_userid: userId,
+            p_isactive: null
+        };
+        this.workService.getProjectListRbac(payload).subscribe({
+            next: (res) => {
+                this.projectOptions = res.data.data;
+            },
+            error: (err) => console.error(err)
+        });
     }
 
     onProjectChange(event: any): void {
@@ -142,6 +153,19 @@ export class MaterialReturnComponent implements OnInit {
             { label: 'Damaged', value: 'Damaged' }
         ];
     }
+
+    maxReturnQty(item: any): number {
+    const issued = Number(item.issuedqty || 0);
+    const returnable = Number(item.returnableqty || 0);
+    return Math.max(0, Math.min(issued, returnable));
+}
+
+hasInvalidQty(): boolean {
+    return this.issueItems.some((it) => {
+        const qty = Number(it.issueqty || 0);
+        return qty <= 0 || qty > this.maxReturnQty(it);
+    });
+}
 
     OnGetItem(): void {
         const payload = {
@@ -224,6 +248,7 @@ export class MaterialReturnComponent implements OnInit {
                     const returnQty = Number(row.return_qty ?? 0);
                     const condition = this.returnConditionOptions.find((option) => option.value.toLowerCase() === String(row.return_condition ?? '').toLowerCase())?.value ?? row.return_condition ?? null;
                     return {
+                        selected: true,
                         itemid: row.item_id,
                         itemcode: row.item_code ?? row.item_id,
                         categoryid: row.item_category_id,
@@ -280,15 +305,16 @@ export class MaterialReturnComponent implements OnInit {
         }
 
         const newRow = {
-            itemid: item.itemid,
+            selected: false,
+            itemid: item.item_id,
             categoryid: item.categoryid,
             categoryname: item.categoryname,
             itemname: item.item_description,
             uom: item.uomname,
             uomid: item.uomid,
-            issuedqty: item.total_mr_qty ?? 10,
-            alreadyreturnedqty: 2,
-            returnableqty: item.available_stock ?? 5,
+            issuedqty: item.total_mr_qty,
+            alreadyreturnedqty: item.al,
+            returnableqty: item.available_stock,
             issueqty: 0,
             returntype: null,
             returncondition: null,
@@ -302,15 +328,23 @@ export class MaterialReturnComponent implements OnInit {
     }
 
     // ── Table qty logic ────────────────────────────────────────────────────
-    onIssueQtyChange(item: any): void {
+    onIssueQtyChange(item: any, event?: any): void {
         const issued = Number(item.issueqty || 0);
         const available = Number(item.returnableqty || 0);
+         const entered = Number(event?.value ?? item.issueqty ?? 0);
+    const max = this.maxReturnQty(item);
 
         if (issued > available) item.issueqty = available;
         if (issued < 0) item.issueqty = 0;
 
         item.balance = available - Number(item.issueqty);
         item.amount = Number(item.issueqty || 0) * Number(item.rate || 0);
+
+         setTimeout(() => {
+        item.issueqty = Math.min(Math.max(entered, 0), max);
+        item.balance = max - item.issueqty;
+        item.amount = item.issueqty * Number(item.rate || 0);
+    });
     }
 
     removeItem(index: number): void {
@@ -359,6 +393,16 @@ export class MaterialReturnComponent implements OnInit {
             });
             return;
         }
+
+        if (this.hasInvalidQty()) {
+    this.messageService.add({
+        severity: 'error',
+        summary: 'Invalid Return Qty',
+        detail: 'Return qty must be greater than 0 and not more than the last issued qty.',
+        life: 3000
+    });
+    return;
+}
 
         this.confirmationService.confirm({
             message: 'Are you sure you want to submit this Material Return Note?',

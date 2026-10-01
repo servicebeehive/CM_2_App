@@ -137,10 +137,15 @@ export class RfqComponent implements OnInit {
     }
 
     loadSites(): void {
-        this.isLoadingProjects = true;
-        const payload = this.createDropdownPayload('ACTIVEPROJECT', null, null);
-
-        this.inventoryService.getparameterbased(payload).subscribe({
+          this.isLoadingProjects = true;
+         const companyId = this.authService.isLogIntType().companyid.toString();
+        const userId = this.authService.isLogIntType().userid.toString();
+        const payload = {
+            p_companyid: companyId,
+            p_userid: userId,
+            p_isactive: null
+        };
+        this.workService.getProjectListRbac(payload).subscribe({
             next: (res: any) => {
                 this.projectOptions = res.data || [];
                 this.isLoadingProjects = false;
@@ -214,34 +219,57 @@ export class RfqComponent implements OnInit {
     //     this.rebuildVendorInviteRows();
     // }
 
-    openPullMrDialog(): void {
-       this.pullMrRows = [];
-        this.showPullMrDialog = true;
-        this.isLoadingPullMr = true;
-        const payload = {
-            p_returntype: 'PROJECTRFQ',
-            p_returnvalue: '',
-            p_username: this.userId
-        };
+  openPullMrDialog(): void {
+    this.pullMrRows = [];
+    this.showPullMrDialog = true;
+    this.isLoadingPullMr = true;
 
-        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-            next: (res: any) => {
-                this.pullMrRows = (res.data ?? []).map((row: any) => ({ ...row, selected: false }));
-                this.isLoadingPullMr = false;
-            },
-            error: () => {
-                this.pullMrRows = [];
-                this.isLoadingPullMr = false;
-                this.messageService.add({ severity: 'error', summary: 'MR load failed', detail: 'Unable to load material requisitions for the selected site.', life: 2500 });
-            }
-        });
-    }
+     this.rfqList = [];
+    this.includedMrList = [];
+    this.mrDetailsMap = {};
+    this.hasBackendMrList = false;
+    this.rebuildVendorInviteRows();
 
+    const payload = {
+        p_returntype: 'PROJECTRFQ',
+        p_returnvalue: '',
+        p_username: this.companyId
+    };
+
+    this.inventoryService.Getreturndropdowndetails(payload).subscribe({
+        next: (res: any) => {
+            this.pullMrRows = this.dedupePullMrRows(res.data ?? []);
+            this.isLoadingPullMr = false;
+        },
+        error: () => {
+            this.pullMrRows = [];
+            this.isLoadingPullMr = false;
+            this.messageService.add({ severity: 'error', summary: 'MR load failed', detail: 'Unable to load material requisitions for the selected site.', life: 2500 });
+        }
+    });
+}
+
+private dedupePullMrRows(rows: any[]): any[] {
+    const grouped = new Map<string, any>();
+
+    rows.forEach((row) => {
+        const key = `${row.item_category_id ?? ''}-${row.project_name ?? ''}-${row.mf_no ?? ''}-${row.department_name ?? ''}`;
+
+        if (!grouped.has(key)) {
+            // first row for this combo becomes the display row; keep the raw items alongside it
+            grouped.set(key, { ...row, selected: false, items: [row] });
+        } else {
+            grouped.get(key).items.push(row);
+        }
+    });
+
+    return Array.from(grouped.values());
+}
     private aggregateRfqList(): (ItemDetail & { mrNos: string[] })[] {
     const grouped = new Map<string, ItemDetail & { mrNos: Set<string> }>();
 
     this.rfqList.forEach((row) => {
-        const key = `${row.item_id ?? 'null'}-${row.category_id ?? 'null'}-${row.uom_id ?? 'null'}`;
+        const key = `${row.item_id ?? 'null'}-${row.category_id ?? 'null'}-${row.uomid ?? 'null'}`;
 
         if (!grouped.has(key)) {
             grouped.set(key, {
@@ -249,7 +277,7 @@ export class RfqComponent implements OnInit {
                 category_id: row.category_id ?? null,
                 category: row.category,
                 item: row.item,
-                uom_id: row.uom_id ?? null,
+                uom_id: row.uomid ?? null,
                 uom: row.uom,
                 buffer_stock: 0,
                 required_qty: 0,
@@ -263,12 +291,12 @@ export class RfqComponent implements OnInit {
         }
 
         const entry = grouped.get(key)!;
-        entry.buffer_stock += Number(row.buffer_stock ?? 0);
+        entry.buffer_stock = Math.max(entry.buffer_stock, Number(row.buffer_stock ?? 0));
         entry.required_qty += Number(row.required_qty ?? 0);
-        entry.available_stock += Number(row.available_stock ?? 0);
-        entry.pending_qty += Number(row.pending_qty ?? 0);
+        entry.available_stock =  Math.max(entry.available_stock, Number(row.available_stock ?? 0));
+        entry.pending_qty =  Math.max(entry.pending_qty, Number(row.pending_qty ?? 0));
         entry.total_mr_qty += Number(row.total_mr_qty ?? 0);
-        entry.net_required_qty += Number(row.net_required_qty ?? 0);
+        entry.net_required_qty = Number(row.required_qty ?? 0) - Number(row.available_stock ?? 0) - Number(row.pending_qty ?? 0);
 
         if (row.mr_no) entry.mrNos.add(row.mr_no);
     });
@@ -307,13 +335,13 @@ private buildMrNoPayload(): string {
             this.messageService.add({ severity: 'warn', summary: 'Select MR items', detail: 'Select at least one item to add to the RFQ.', life: 2500 });
             return;
         }
-
+         const expandedRows = selectedRows.flatMap((group) => group.items ?? [group]);
         const existingKeys = new Set(this.rfqList.map((row) => `${row.mr_no ?? ''}-${row.item_id ?? ''}`));
-        const newRows = selectedRows
+        const newRows = expandedRows
             .map((row): RfqRow => ({
                 category: row.item_category ?? row.itemcategoryname ?? row.categoryname ?? '',
                 item: row.item_description ?? row.itemdescription ?? row.itemname ?? '',
-                uom_id: row.uom_id ?? null,
+                uomid: row.uomid ?? null,
                 uom: row.uom ?? row.uomname ?? '',
                 buffer_stock: Number(row.buffer_stock ?? 0),
                 required_qty: Number(row.required_qty ?? 0),
@@ -727,6 +755,10 @@ private buildMrNoPayload(): string {
         return completeInvite && !incompleteInvite;
     }
 
+    get hasNegativeNetQty(): boolean {
+    return this.aggregateRfqList().some((item) => Number(item.net_required_qty) < 0);
+}
+
     openMaterialReqDialog(): void {
         this.showMaterialReqDialog = true;
     }
@@ -783,7 +815,9 @@ private buildMrNoPayload(): string {
                     body1: row.mail_body1 ?? '',
                     body2: row.mail_body2 ?? '',
                     attachmentPath: row.attachment_path ?? null,
-                    mailLogId: row.mail_log_id ?? null
+                    mailLogId: row.mail_log_id ?? null,
+                    mailStatus: row.mail_status ?? null,
+                    errorMessage: row.error_message ?? null
                 }));
                 this.showGmailReqDialog = true;
             },
@@ -833,13 +867,22 @@ private buildMrNoPayload(): string {
                 };
 
                 this.workService.sendVendorMail(mailPayload).subscribe({
-                    next: () => {
-                        this.messageService.add({
-                            severity: 'success',
-                            summary: 'RFQ emails sent',
-                            detail: `RFQ shared with ${readyRows.length} vendor(s).`,
-                            life: 2500
-                        });
+                    next: (response: any) => {
+                        const sentCount = this.workService.updateMailStatusesFromSend(
+                            readyRows.map((row) => ({ mailLogId: row.mail_log_id, vendorId: row.vendorid })),
+                            response,
+                            Number(this.userId) || null
+                        );
+                        if (sentCount > 0) {
+                            this.messageService.add({
+                                severity: 'success',
+                                summary: 'RFQ emails sent',
+                                detail: `RFQ shared with ${sentCount} of ${readyRows.length} vendor(s).`,
+                                life: 2500
+                            });
+                        } else {
+                            this.messageService.add({ severity: 'error', summary: 'Mail send failed', detail: 'No successful vendor delivery was returned.', life: 2500 });
+                        }
                         if (missingEmail.length) {
                             this.messageService.add({
                                 severity: 'warn',
@@ -850,7 +893,13 @@ private buildMrNoPayload(): string {
                         }
                     },
                     error: (err) => {
-                        this.messageService.add({ severity: 'error', summary: 'Mail send failed', detail: err.message, life: 2500 });
+                        this.workService.updateMailStatusesFromSend(
+                            readyRows.map((row) => ({ mailLogId: row.mail_log_id, vendorId: row.vendorid })),
+                            null,
+                            Number(this.userId) || null,
+                            err
+                        );
+                        this.messageService.add({ severity: 'error', summary: 'Mail send failed', detail: this.workService.getMailFailureMessage(err), life: 2500 });
                     }
                 });
             },
@@ -901,14 +950,30 @@ private buildMrNoPayload(): string {
 
         this.workService.sendVendorMail(payload).subscribe({
             next: (res: any) => {
-                this.messageService.add({ severity: 'success', summary: 'RFQ email sent', detail: `RFQ shared with ${selectedRows.length} vendor(s).`, life: 2500 });
-                this.showGmailReqDialog = false;
+                const sentCount = this.workService.updateMailStatusesFromSend(
+                    selectedRows.map((row) => ({ mailLogId: row.mailLogId, vendorId: row.vendorId })),
+                    res,
+                    Number(this.userId) || null
+                );
+                if (sentCount > 0) {
+                    this.messageService.add({ severity: 'success', summary: 'RFQ email sent', detail: `RFQ shared with ${sentCount} of ${selectedRows.length} vendor(s).`, life: 2500 });
+                    this.showGmailReqDialog = false;
+                } else {
+                    this.messageService.add({ severity: 'error', summary: 'Send failed', detail: 'No successful vendor delivery was returned.', life: 2500 });
+                }
             },
             error: (err) => {
-                this.messageService.add({ severity: 'error', summary: 'Send failed', detail: err.message, life: 2500 });
+                this.workService.updateMailStatusesFromSend(
+                    selectedRows.map((row) => ({ mailLogId: row.mailLogId, vendorId: row.vendorId })),
+                    null,
+                    Number(this.userId) || null,
+                    err
+                );
+                this.messageService.add({ severity: 'error', summary: 'Send failed', detail: this.workService.getMailFailureMessage(err), life: 2500 });
             }
         });
     }
+
     onDraftChange(event: any): void {
         const selected = this.draftRfqOptions.find((d: any) => String(d.rfqid) === String(event.value));
         if (!selected) return;
@@ -986,16 +1051,6 @@ private buildMrNoPayload(): string {
     }
 
     submitDraft(): void {
-        // if (!this.rfqForm.get('p_site')?.value || this.rfqList.length === 0) {
-        //     this.messageService.add({
-        //         severity: 'warn',
-        //         summary: 'Cannot save draft',
-        //         detail: 'Select a site and add at least one item before saving as draft.',
-        //         life: 2500
-        //     });
-        //     return;
-        // }
-
         const vendorJson: VendorInvitePayload[] = this.vendorInviteRows
             .filter((r) => r.category_id != null)
             .map((r) => ({
@@ -1026,7 +1081,7 @@ private buildMrNoPayload(): string {
                     this.rfqForm.patchValue({
                         // p_rfq_id: rfqId,
                         p_draft_rfqno: rfqId,
-                        p_status: res.data.tran_status
+                        p_status: res.data.status
                     });
                     this.messageService.add({ severity: 'success', summary: res.data.msg });
                     this.loadDraftList();
@@ -1191,14 +1246,14 @@ private buildMrNoPayload(): string {
                 if (res.data?.success) {
                     const rfqId = res.data.rfqid;
                    
-                    const rfq = this.rfqNoOptions.find(option => option.rfqid === rfqId);
-                    console.log("jhhjj",rfq)
                     this.rfqForm.patchValue({
                         p_rfq_id: rfqId,
                         p_rfqno: rfqId,
-                        p_status: res.data.tran_status
+                        p_status: res.data.status,
+                        p_draft_rfqno: null
                     });
                     this.loadRfqNo();
+                    this.loadDraftList();
                     this.messageService.add({ severity: 'success', summary: res.data.msg });
                     this.sendMailToVendors(rfqId);
                 } else {

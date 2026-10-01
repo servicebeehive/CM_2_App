@@ -20,7 +20,7 @@ import { Router, RouterLink } from '@angular/router';
     >
       <div class="flex flex-col mx-auto md:mx-0">
         <span class="mb-2 font-semibold">Welcome</span>
-        <span class="text-surface-500 dark:text-surface-400 font-medium mb-8">{{username}}</span>
+        <span class="text-surface-500 dark:text-surface-400 font-medium mb-8">{{username}} | {{profile}}</span>
 
         <ul class="list-none m-0 p-0">
           <!-- Profile -->
@@ -70,6 +70,7 @@ import { Router, RouterLink } from '@angular/router';
 })
 export class AppProfileSidebar {
   username:string = '';
+  profile:string = '';
   constructor(
     public layoutService: LayoutService,
     public authservice: AuthService,
@@ -77,6 +78,7 @@ export class AppProfileSidebar {
   ) {}
   ngOnInit(): void{
   this.username=this.authservice.isLogIntType().fullname;
+  this.profile=this.authservice.isLogIntType().usertypename;
   }
   visible = computed(() => this.layoutService.layoutState().profileSidebarVisible);
   

@@ -10,21 +10,21 @@ export const MENU_MODEL: any[] = [
             {
                 label: 'Dashboard',
                 icon: 'pi pi-fw pi-home',
-                routerLink: ['/layout/dashboard'],
+                routerLink: ['/layout/management-dashboard'],
                 accessKey: 'Dashboard',
         items: [
+            // {
+            //     label: 'Main Dashboard',
+            //     icon: 'pi pi-fw pi-home',
+            //     routerLink: ['/layout/dashboard']
+            // },
             {
-                label: 'Main Dashboard',
-                icon: 'pi pi-fw pi-home',
-                routerLink: ['/layout/dashboard']
-            },
-            {
-                label: 'Management Dashboard',
+                label: 'Management',
                 icon: 'pi pi-fw pi-chart-bar',
                 routerLink: ['/layout/management-dashboard']
             },
             {
-                label: 'Operational Dashboard',
+                label: 'Operational',
                 icon: 'pi pi-fw pi-chart-line',
                 routerLink: ['/layout/operational-dashboard']
             }
@@ -50,7 +50,8 @@ export const MENU_MODEL: any[] = [
                     {
                         label: 'Material Requisition',
                         icon: 'pi pi-fw pi pi-sparkles',
-                        routerLink: ['/layout/purchase/material-requisition-list']
+                        routerLink: ['/layout/purchase/material-requisition-list'],
+                        activeRoute: ['/layout/purchase/material-requisition']
                     },
                     {
                         label: 'Request For Quote',
@@ -65,12 +66,14 @@ export const MENU_MODEL: any[] = [
                      {
                         label: 'Purchase Order',
                         icon: 'pi pi-fw pi pi-send',
-                        routerLink: ['/layout/purchase/purchase-order-list']
+                                routerLink: ['/layout/purchase/purchase-order-list'],
+                                activeRoute: ['/layout/purchase/purchase-order']
                     },
                     {
                         label: 'Misc Purchase',
                         icon: 'pi pi-fw pi-wallet',
-                        routerLink: ['/layout/purchase/mics-purchase-list']
+                        routerLink: ['/layout/purchase/mics-purchase-list'],
+                        activeRoute: ['/layout/purchase/mics-purchase']
                     }
                 ]
             }
@@ -104,7 +107,8 @@ export const MENU_MODEL: any[] = [
                     {
                         label: 'GRN',
                         icon: 'pi pi-fw pi-inbox',
-                        routerLink: ['/layout/inventory/grn-list']
+                        routerLink: ['/layout/inventory/grn-list'],
+                        activeRoute: ['/layout/inventory/grn']
                     }
                 ]
             }
@@ -191,17 +195,20 @@ export const MENU_MODEL: any[] = [
                      {
                         label: 'Material Indent',
                         icon: 'pi pi-fw pi-file-plus',
-                        routerLink: ['/layout/issue-item/material-indent']
+                        routerLink: ['/layout/issue-item/material-indent'],
+                        activeRoute: ['/layout/issue-item/create-material-indent']
                     },
                     {
                         label: 'Material Issue',
                         icon: 'pi pi-fw pi-arrow-right-arrow-left',
-                        routerLink: ['/layout/issue-item/material-issue']
+                        routerLink: ['/layout/issue-item/material-issue'],
+                        activeRoute: ['/layout/issue-item/create-material-issue']
                     },
                     {
                         label: 'Material Return',
                         icon: 'pi pi-fw pi-arrow-left',
-                        routerLink: ['/layout/issue-item/material-return']
+                        routerLink: ['/layout/issue-item/material-return'],
+                        activeRoute: ['/layout/issue-item/create-material-return']
                     }, 
                     {
                         label: 'Material Transfer',

@@ -69,7 +69,7 @@ export class AppLayout {
         });
 
         this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => {
-            this.hideMenu();
+            this.hideMenu(false);
         });
     }
 
@@ -80,14 +80,16 @@ export class AppLayout {
         return !(sidebarEl?.isSameNode(event.target) || sidebarEl?.contains(event.target) || topbarButtonEl?.isSameNode(event.target) || topbarButtonEl?.contains(event.target));
     }
 
-    hideMenu() {
+    hideMenu(resetMenu = true) {
         this.layoutService.layoutState.update((prev) => ({
             ...prev,
             overlayMenuActive: false,
             staticMenuMobileActive: false,
             menuHoverActive: false
         }));
-        this.layoutService.reset();
+        if (resetMenu) {
+            this.layoutService.reset();
+        }
         if (this.menuOutsideClickListener) {
             this.menuOutsideClickListener();
             this.menuOutsideClickListener = null;

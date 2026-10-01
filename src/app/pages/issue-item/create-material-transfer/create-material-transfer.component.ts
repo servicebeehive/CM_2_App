@@ -98,11 +98,16 @@ export class CreateMaterialTransferComponent implements OnInit {
     }
 
     onGetProject(): void {
-        const companyId = this.authService.isLogIntType().companyid.toString();
-        const payload = { returnType: 'ACTIVEPROJECT', returnValue: '', username: '', option1: companyId, option2: null };
-        this.inventoryService.getparameterbased(payload).subscribe({
+         const companyId = this.authService.isLogIntType().companyid.toString();
+        const userId = this.authService.isLogIntType().userid.toString();
+        const payload = {
+            p_companyid: companyId,
+            p_userid: userId,
+            p_isactive: null
+        };
+        this.workService.getProjectListRbac(payload).subscribe({
             next: (res) => {
-                this.allSiteOptions = res.data ?? [];
+                this.allSiteOptions = res.data.data ?? [];
                 this.siteOptions = [...this.allSiteOptions];
                 this.toSiteOptions = [...this.allSiteOptions];
             },
@@ -241,7 +246,7 @@ OnItemChange(event: any): void {
             }
            
             const newRow: TransferItem = {
-                itemid:detail.itemid,
+                itemid:detail.item_id,
                 item_category_id: detail.categoryid,
                 categoryname: detail.categoryname,  
                 itemname: detail.item_description, 

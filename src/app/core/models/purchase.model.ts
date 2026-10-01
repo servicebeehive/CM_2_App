@@ -1,7 +1,7 @@
 export interface RfqRow {
     category: string;
     item: string;
-    uom_id?: number | null;
+    uomid?: number | null;
     uom: string;
     buffer_stock: number;
     required_qty: number;

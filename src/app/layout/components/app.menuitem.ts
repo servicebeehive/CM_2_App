@@ -40,15 +40,7 @@ import {LayoutService} from '@/layout/service/layout.service';
                 (mouseenter)="onMouseEnter()"
                 [ngClass]="item.class"
                 [routerLink]="item.routerLink"
-                routerLinkActive="active-route"
-                [routerLinkActiveOptions]="
-                    item.routerLinkActiveOptions || {
-                        paths: 'exact',
-                        queryParams: 'ignored',
-                        matrixParams: 'ignored',
-                        fragment: 'ignored'
-                    }
-                "
+                [class.active-route]="routeActive"
                 [fragment]="item.fragment"
                 [queryParamsHandling]="item.queryParamsHandling"
                 [preserveFragment]="item.preserveFragment"
@@ -123,6 +115,7 @@ export class AppMenuitem implements OnInit, OnDestroy {
     }
 
     active = false;
+    routeActive = false;
 
     menuSourceSubscription: Subscription;
 
@@ -172,6 +165,7 @@ export class AppMenuitem implements OnInit, OnDestroy {
         });
 
         this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe((params) => {
+            this.refreshRouteActive();
             if (this.isSlimPlus() || this.isSlim() || this.isHorizontal()) {
                 this.active = false;
             } else {
@@ -184,6 +178,9 @@ export class AppMenuitem implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.key = this.parentKey ? this.parentKey + '-' + this.index : String(this.index);
+        if (this.item.routerLink) {
+            this.refreshRouteActive();
+        }
 
         if (!(this.isSlimPlus() || this.isSlim() || this.isHorizontal()) && this.item.routerLink) {
             this.updateActiveStateFromRoute();
@@ -197,20 +194,27 @@ export class AppMenuitem implements OnInit, OnDestroy {
     }
 
     updateActiveStateFromRoute() {
-        const fullPath = Array.isArray(this.item.routerLink)? this.item.routerLink.join('/') : this.item.routerLink;
-        let activeRoute = this.router.isActive(fullPath, {
-            paths: 'exact',
-            queryParams: 'ignored',
-            matrixParams: 'ignored',
-            fragment: 'ignored'
-        });
-
-        if (activeRoute) {
+        this.refreshRouteActive();
+        if (this.routeActive) {
             this.layoutService.onMenuStateChange({
                 key: this.key,
                 routeEvent: true
             });
         }
+    }
+
+    private refreshRouteActive(): void {
+        const routeLinks = [this.item.routerLink, this.item.activeRoute].filter(Boolean);
+        this.routeActive = routeLinks.some((routeLink: any) => {
+            const fullPath = Array.isArray(routeLink) ? routeLink.join('/') : routeLink;
+            const usesSubsetMatch = this.item.routerLinkActiveOptions?.exact === false || this.item.routerLinkActiveOptions?.paths === 'subset';
+            return this.router.isActive(fullPath, {
+                paths: usesSubsetMatch ? 'subset' : 'exact',
+                queryParams: 'ignored',
+                matrixParams: 'ignored',
+                fragment: 'ignored'
+            });
+        });
     }
     onSubmenuAnimated(event: AnimationEvent) {
         if (event.toState === 'visible' && this.isDesktop && (this.isHorizontal() || this.isSlim() || this.isSlimPlus())) {

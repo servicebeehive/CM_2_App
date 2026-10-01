@@ -98,7 +98,7 @@ const loginBody = { usercode: clientcode, pwd } as authLogin;
     next: (res: any) => {
       if (res.status === 'success') {
         this.authservice.setToken(res.data?.usertoken);
-        this.route.navigate(['/layout']);
+        this.route.navigate(['/layout/management-dashboard']);
       } else {
         this.errorSuccess(res.data.msg);
       }
@@ -181,7 +181,7 @@ const loginBody = { usercode: clientcode, pwd } as authLogin;
               }));
             }
             
-            this.route.navigate(['/layout']);
+            this.route.navigate(['/layout/management-dashboard']);
           } else {
             this.errorSuccess(res.data.msg);
           }

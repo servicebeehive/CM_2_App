@@ -231,6 +231,8 @@ editingDocumentId: number | null = null; // see note below on documents
             p_drivername: delivery.driver_name ?? '',
             p_drivermobile: delivery.driver_mobile ?? ''
         });
+        ['p_challanno', 'p_challandate', 'p_vehicleno', 'p_drivername', 'p_drivermobile']
+        .forEach(c => this.grnForm.get(c)?.markAsUntouched());
     }
     else{
         this.editingDeliveryId = null;
@@ -608,7 +610,7 @@ get isDocumentsReady(): boolean {
                 });
                 this.grnForm.patchValue({
                     p_grn_id: res.data.grn_id,
-                    status: res.data.v_status
+                    status: res.data.tran_status
                 });
                 this.transationid = res.data.grn_id;
                this.onGetGRN();
@@ -860,22 +862,12 @@ get isDocumentsReady(): boolean {
     }
 
     resetRemarks(): void {
-        this.grnForm.patchValue({ p_received_by: null, p_remarks: '' });
+        this.grnForm.patchValue({ p_received_by: this.authService.isLogIntType().fullname, p_remarks: '' });
         this.grnForm.get('p_received_by')?.markAsUntouched();
     }
 
     // ── Documents tab: submit / reset ────────────────────────────────────
     submitDocuments(): void {
-        if (this.isQualityReportAttachmentRequired && !this.uploadedFiles.qualityreport) {
-            this.messageService.add({
-                severity: 'error',
-                summary: 'Quality Report Required',
-                detail: 'Attach a quality report file when any item has Quality Report = Y.',
-                life: 3000
-            });
-            return;
-        }
-
         const documents: GrnDocumentItem[] = [];
 
         if (this.uploadedFiles.challan) {
@@ -891,14 +883,7 @@ get isDocumentsReady(): boolean {
                 document_name: `material-photo-${i + 1}`,
                 document_path: base64
             }));
-        }
-        if (this.uploadedFiles.qualityreport) {
-            documents.push({
-                document_type: 'QUALITY_REPORT',
-                document_name: this.fileNames.qualityreport,
-                document_path: this.uploadedFiles.qualityreport
-            });
-        }
+        }   
         if (this.uploadedFiles.other?.length) {
             this.uploadedFiles.other.forEach((base64, i) => documents.push({
                 document_type: 'OTHER',
@@ -1000,11 +985,10 @@ get isDocumentsReady(): boolean {
 
     reset(): void {
         this.grnForm.reset(
-            { p_grndate: this.dateTime }
+            { p_grndate: this.dateTime, p_received_by: this.authService.isLogIntType().fullname }
         );
         this.itemOptionslist = [];
         this.poSelected = false;
-        this.backshow = false;
         this.transationid = null;
         this.editingDeliveryId = null;
     this.editingRemarkId = null;

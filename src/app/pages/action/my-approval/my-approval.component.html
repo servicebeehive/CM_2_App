@@ -5,6 +5,7 @@
 
         <!-- Buttons - Hidden on mobile, shown in header on desktop -->
         <div class="hidden md:flex gap-4">
+            <button *ngIf="isMaterialRequisition" pButton type="button" label="MR Log" class="p-button-warning" (click)="showMrDetails()"></button>
             <button pButton type="button" label="Download" icon="pi pi-download" iconPos="right" class="p-button-warning" (click)="onDownloadClick()"></button>
             <button pButton type="button" label="Reset" class="p-button-secondary" (click)="reset()"></button>
         </div>
@@ -53,6 +54,7 @@
         <!-- Action Buttons - Visible only on mobile, below form fields -->
         <div class="flex md:hidden justify-center gap-2 mt-6">
             <button pButton type="button" label="Download" class="p-button-warning flex-1" (click)="onDownloadClick()"></button>
+            <button *ngIf="isMaterialRequisition" pButton type="button" label="MR" class="p-button-info flex-1" (click)="showMrDetails()"></button>
             <button pButton type="button" label="Reset" class="p-button-secondary flex-1" (click)="reset()"></button>
         </div>
 
@@ -62,7 +64,7 @@
                 <ng-template pTemplate="header">
                     <tr class="bg-yellow-400">
                         <th>Project</th>
-                        <th>{{ isVendorApproval ? 'Comparison No' : (isPurchaseOrder ? 'PO No' : 'MF No') }}</th>
+                        <th>{{ isVendorApproval ? 'Comparison No' : isPurchaseOrder ? 'PO No' : 'MF No' }}</th>
                         <th>Request Date</th>
                         <th>Requested By</th>
                         <th>Level</th>
@@ -74,11 +76,11 @@
                 <ng-template pTemplate="body" let-row let-i="rowIndex">
                     <tr>
                         <td>{{ row.project_name }}</td>
-                        <td>{{ isVendorApproval ? row.comparison_no : (isPurchaseOrder ? row.po_no : row.mf_no) }}</td>
+                        <td>{{ isVendorApproval ? row.comparison_no : isPurchaseOrder ? row.po_no : row.mf_no }}</td>
                         <td>{{ row.request_date | date: 'dd/MM/yyyy' }}</td>
                         <td>{{ row.fullname }}</td>
                         <td>{{ row.level_no }}</td>
-                        <td>{{ row.status }}</td>
+                        <td [ngStyle]="{ color: getStatusColor(row.status) }">{{ row.status }}</td>
                         <td class="text-center w-[60px]">
                             <div class="flex g-2">
                                 <button pButton type="button" icon="pi pi-check-square" class="p-button-text p-button-sm p-button-success" (click)="approved(row)" [disabled]="isApprovalActionDisabled(row)"></button>
@@ -100,10 +102,56 @@
         </div>
     </form>
 
+    <p-dialog header="MR Log" [(visible)]="mrDetailsVisible" [modal]="true" [style]="{ width: '1100px' }" [closable]="true">
+        <ng-template pTemplate="header">
+            <div class="flex flex-col w-full pr-4">
+                <span class="font-bold mb-3 text-lg">MR Log</span>
+                <div class="flex flex-col sm:flex-row sm:justify-between gap-2">
+                    <span class="flex items-center gap-3">
+                        <b>Project Name:</b> {{ mrProjectName }}
+                    </span>
+                    <span class="flex items-center gap-3">
+                        <b>Status:</b>
+                        <span [ngStyle]="{ color: 'orange' }">{{ "APPROVAL PENDING" }}</span>
+                    </span>
+                </div>
+            </div>
+        </ng-template>
+        <p-table [value]="mrDetails" [loading]="mrDetailsLoading" [responsiveLayout]="'scroll'" class="p-datatable-gridlines">
+            <ng-template #header>
+                <tr>
+                    <th>Item Category</th>
+                    <th>Item Name</th>
+                    <th>UOM</th>
+                    <th>Buffer</th>
+                    <th>Available Qty</th>
+                    <th>Pending PO Qty</th>
+                    <th>Req Qty</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-item>
+                <tr>
+                    <td>{{ item.item_category }}</td>
+                    <td>{{ item.itemname }}</td>
+                    <td>{{ item.uomname }}</td>
+                    <td>{{ item.buffer_stock }}</td>
+                    <td>{{ item.available_stock }}</td>
+                    <td>{{ item.pending_qty }}</td>
+                    <td>{{ item.required_qty }}</td>
+                </tr>
+            </ng-template>
+            <ng-template #emptymessage>
+                <tr>
+                    <td colspan="7" class="text-center">No material requisition details found.</td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </p-dialog>
+
     <p-dialog header="Approval Log" [(visible)]="logDetailsVisible" [modal]="true" [style]="{ width: '800px' }" [closable]="true">
         <form [formGroup]="logForm" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
             <div class="flex flex-col">
-                <label for="log-mf-no" class="font-medium mb-1">{{ isVendorApproval ? 'Comparison No' : (isPurchaseOrder ? 'PO No' : 'MF No') }}</label>
+                <label for="log-mf-no" class="font-medium mb-1">{{ isVendorApproval ? 'Comparison No' : isPurchaseOrder ? 'PO No' : 'MF No' }}</label>
                 <input id="log-mf-no" pInputText formControlName="mfNo" readonly />
             </div>
             <div class="flex flex-col">
@@ -126,7 +174,7 @@
                     <td>{{ history.level ?? history.level_no }}</td>
                     <td>{{ history.approvedBy ?? history.approved_by ?? history.approver }}</td>
                     <td>{{ history.approvedOn ?? history.approved_on | date: 'dd/MM/yyyy' }}</td>
-                    <td>{{ history.status }}</td>
+                    <td [ngStyle]="{ color: getStatusColor(history.status) }">{{ history.status }}</td>
                 </tr>
             </ng-template>
         </p-table>

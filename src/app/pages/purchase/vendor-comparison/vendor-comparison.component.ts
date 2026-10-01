@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
 import { MultiSelectModule } from 'primeng/multiselect';
@@ -76,9 +76,8 @@ export class VendorComparisonComponent implements OnInit {
 
     evaluationCriteria: { label: string; weight: number }[] = [
         { label: 'Unit Price', weight: 60 },
-        { label: 'Quality', weight: 20 },
-        { label: 'Payment Terms', weight: 10 },
-        { label: 'Delivery Terms', weight: 10 }
+        { label: 'Quality', weight: 30 },
+        { label: 'Payment Terms', weight: 10 }
     ];
 
     constructor(
@@ -115,6 +114,7 @@ export class VendorComparisonComponent implements OnInit {
   return this.comparisonRows.length === 0
     || this.selectedVendors.length === 0
     || this.isTableIncomplete
+    || this.isAttachmentsIncomplete
     || this.vcForm.get('status')?.value === 'APPROVED';
 }
 
@@ -133,7 +133,7 @@ export class VendorComparisonComponent implements OnInit {
             // p_project: [{ value: null, disabled: true }],
             p_item: [null],
             p_vcno: [''],
-            p_vcdate: [this.today],
+            p_vcdate: [this.today, Validators.required],
             p_remarks: [''],
             status: [''],
             p_recommendedvendor: [null]
@@ -153,18 +153,18 @@ export class VendorComparisonComponent implements OnInit {
 
     // ── Load Project dropdown ───────────────────────────────────────────
     // private loadProjects(): void {
+    //  const companyId = this.authService.isLogIntType().companyid.toString();
+    //     const userId = this.authService.isLogIntType().userid.toString();
     //     const payload = {
-    //         returnType: 'ACTIVEPROJECT',
-    //         returnValue: '',
-    //         username: '',
-    //         option1: this.companyId.toString(),
-    //         option2: null
+    //         p_companyid: companyId,
+    //         p_userid: userId,
+    //         p_isactive: null
     //     };
-
-    //     this.inventoryService.getparameterbased(payload).subscribe({
-    //         next: (res: any) => {
-    //             this.projectOptions = res.data || [];
-    //         }
+    //     this.workService.getProjectListRbac(payload).subscribe({
+    //         next: (res) => {
+    //             this.projectOptions = res.data.data;
+    //         },
+    //         error: (err) => console.error(err)
     //     });
     // }
 
@@ -385,12 +385,6 @@ export class VendorComparisonComponent implements OnInit {
         this.vcForm.patchValue({ p_recommendedvendor: this.bestOverallVendor?.vendor_id ?? null }, { emitEvent: false });
     }
 
-    deleteDraftItem(item: any, event: Event): void {
-        event.stopPropagation();
-        // Implement the logic to delete the draft item here
-        this.messageService.add({ severity: 'info', summary: 'Delete Draft Item', detail: `Draft item ${item.mf_no} deleted (not really, just a placeholder).`, life: 2500 });
-    }
-
     get evaluationCriteriaTotal(): number {
         return this.evaluationCriteria.reduce((sum, c) => sum + (Number(c.weight) || 0), 0);
     }
@@ -419,13 +413,23 @@ export class VendorComparisonComponent implements OnInit {
     }
 
     private normalizeAttachmentPath(value: unknown): string {
-        if (typeof value === 'string') return value;
-        if (value && typeof value === 'object') {
-            const attachment = value as { file_attachment?: unknown; attachment_path?: unknown; path?: unknown };
-            return [attachment.file_attachment, attachment.attachment_path, attachment.path].find((path): path is string => typeof path === 'string') ?? '';
+    if (typeof value === 'string') return value;
+
+    // backend now returns an array: [{ attachment_id, file_attachment }]
+    if (Array.isArray(value)) {
+        for (const entry of value) {
+            const path = this.normalizeAttachmentPath(entry);
+            if (path) return path;
         }
         return '';
     }
+
+    if (value && typeof value === 'object') {
+        const attachment = value as { file_attachment?: unknown; attachment_path?: unknown; path?: unknown };
+        return [attachment.file_attachment, attachment.attachment_path, attachment.path].find((path): path is string => typeof path === 'string') ?? '';
+    }
+    return '';
+}
 
     private getAttachmentName(path: string): string {
         if (path.startsWith('data:')) return 'Attached file';
@@ -626,6 +630,16 @@ export class VendorComparisonComponent implements OnInit {
         return ranks;
     }
 
+    get isAttachmentsIncomplete(): boolean {
+    if (!this.selectedVendors.length) return true;
+    return this.selectedVendors.some((v) => !this.vendorAttachmentFiles[v.vendor_id] && !this.vendorAttachmentPaths[v.vendor_id]);
+}
+
+// Vendors still missing an attachment — used to highlight rows in the template
+get vendorsMissingAttachment(): number[] {
+    return this.selectedVendors.filter((v) => !this.vendorAttachmentFiles[v.vendor_id] && !this.vendorAttachmentPaths[v.vendor_id]).map((v) => v.vendor_id);
+}
+
     getVendorTotal(vendorId: number): number {
         return this.vendorWeightedTotals.find((t) => t.vendorId === vendorId)?.total ?? 0;
     }
@@ -683,7 +697,15 @@ export class VendorComparisonComponent implements OnInit {
             this.messageService.add({ severity: 'warn', summary: 'Fill unit price for all items before finalizing', life: 3000 });
             return;
         }
-
+        if (operationType === 'SUBMITTED' && this.isAttachmentsIncomplete) {
+        this.messageService.add({
+            severity: 'warn',
+            summary: 'Attachment Required',
+            detail: 'Please attach a PDF quotation for every vendor before finalizing.',
+            life: 3000
+        });
+        return;
+    }
         const comparisonJson: any[] = [];
 
         this.comparisonRows.forEach((row) => {
@@ -794,47 +816,17 @@ export class VendorComparisonComponent implements OnInit {
         const comparisonId = res?.data?.comparison_id;
         if (!comparisonId) return;
 
-        const savedStatus = res?.data?.tran_status ?? operationType;
+        const savedStatus = res?.data?.tran_status;
         this.vcForm.patchValue({ status: savedStatus }, { emitEvent: false });
-        const isStillDraft = savedStatus === 'DRAFT';
+        const isStillDraft = operationType === 'DRAFT';
 
         if (isStillDraft) {
-            this.patchAfterDraftReload(comparisonId);
+           this.vcForm.patchValue({p_draft_vcno: res.data.comparison_id})
         } else {
-            this.patchAfterVcReload(comparisonId);
+            this.vcForm.patchValue({p_vcno: res.data.comparison_id, p_draft_vcno: null})
         }
-    }
-
-    private patchAfterDraftReload(comparisonId: number): void {
-        const payload = {
-            p_returntype: 'VENDORCOMPARISONIDDRAFT',
-            p_returnvalue: this.companyId.toString(),
-            p_username: this.authService.isLogIntType()?.companyid?.toString() ?? ''
-        };
-        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-            next: (res: any) => {
-                this.draftOptions = res.data || [];
-                this.vcForm.patchValue({ p_draft_vcno: comparisonId, p_vcno: '', status: 'DRAFT' }, { emitEvent: false });
-            },
-            error: (err) => console.error('Error fetching Draft No:', err)
-        });
-    }
-
-    private patchAfterVcReload(comparisonId: number): void {
-        const payload = {
-            p_returntype: 'VENDORCOMPARISONID',
-            p_returnvalue: this.companyId.toString(),
-            p_username: this.authService.isLogIntType()?.userid?.toString() ?? ''
-        };
-        this.inventoryService.Getreturndropdowndetails(payload).subscribe({
-            next: (res: any) => {
-                this.vcNoOptions = res.data || [];
-                this.vcForm.patchValue({ p_vcno: comparisonId, p_draft_vcno: '', status: 'SUBMITTED' }, { emitEvent: false });
-                // finalized comparisons no longer belong in the drafts list
-                this.draftOptions = this.draftOptions.filter((d) => d.comparison_id !== comparisonId);
-            },
-            error: (err) => console.error('Error fetching VC No:', err)
-        });
+        this.onGetDraftNo();
+        this.onGetVCNo();
     }
 
     onReset() {

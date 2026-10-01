@@ -3,7 +3,7 @@
     <div>
         <form [formGroup]="updateForm" class="space-y-8">
             <div class="flex justify-between items-center mb-6">
-                <span class="block text-surface-900 font-bold text-xl mb-6">Item Update</span>
+                <span class="block text-surface-900 font-bold text-xl mb-6">Item List</span>
             </div>
 
             <!-- 🏷 Product Info Section -->
@@ -39,81 +39,85 @@
                     </div>
                     <!-- Buttons -->
                     <div class="flex gap-4 items-end">
-        <button pButton type="button" label="Add" class="p-button-secondary h-[42px]" (click)="add()"></button>
-        <button pButton type="button" label="Reset" class="p-button-secondary h-[42px]" (click)="reset()"></button>
-        <button pButton disabled type="button" label="BarCode Print" (click)="openBarcodeDialog()" class="p-button-secondary h-[42px]"></button>
-    </div>
+                        <button pButton type="button" label="Add" class="p-button-secondary h-[42px]" (click)="add()"></button>
+                        <button pButton type="button" label="Reset" class="p-button-secondary h-[42px]" (click)="reset()"></button>
+                        <button pButton disabled type="button" label="BarCode Print" (click)="openBarcodeDialog()" class="p-button-secondary h-[42px]"></button>
+                    </div>
                 </div>
                 <div class="mt-6">
                     <p-table
                         [value]="filteredProducts"
-                        dataKey="code"
+                        dataKey="itemid"
                         [paginator]="true"
                         [(selection)]="selectedItems"
                         [rows]="10"
                         selectionMode="multiple"
                         [rowsPerPageOptions]="[10, 20, 50]"
-                        [responsiveLayout]="'scroll'"
+                        [scrollable]="true"
+                        [tableStyle]="{ 'table-layout': 'fixed', width: '100%', 'min-width': '60rem' }"
                         class="p-datatable-gridlines mt-6"
                     >
-                        <ng-template pTemplate #header>
+                        <ng-template pTemplate="colgroup">
+                            <colgroup>
+                                <col style="width: 4rem" />
+                                <col style="width: 14rem" />
+                                <col style="width: auto" />
+                                <col style="width: 7rem" />
+                                <col style="width: 10rem" />
+                                <col style="width: 10rem" />
+                                <col style="width: 6rem" />
+                                <col style="width: 7rem" />
+                            </colgroup>
+                        </ng-template>
+
+                        <ng-template pTemplate="header">
                             <tr class="bg-yellow-400">
-                                <th style="width: 4rem"><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
-                                <th class="!min-w-[120px]">Category</th>
+                                <th><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
+                                <th>Category</th>
                                 <th>Item Name</th>
                                 <th>UOM</th>
-                                <th>Available Stock</th>
-                                <th>Buffer Stock</th>
-                                <th>Active</th>
-                                <!-- <th>BarCode</th> -->
+                                <th class="text-right">Buffer Stock</th>
+                                <th class="text-right">Available Stock</th>
+                                <th class="text-center">Active</th>
                                 <th class="text-center">Action</th>
                             </tr>
                         </ng-template>
-                        <ng-template pTemplate="body" let-row let-i="rowIndex">
+
+                        <ng-template pTemplate="body" let-row>
                             <tr>
                                 <td><p-tableCheckbox [value]="row" /></td>
-                               <td class="!min-w-[120px]">{{ row.categoryname }}</td>
-                                <td>{{ row.item_description }}</td>
-                                <td class="w-[60px]">{{ row.uomname }}</td>
-                                <td class="w-[60px]">{{ row.available_stock }}</td>
-                                <td class="w-[60px]">{{ row.buffer_stock }}</td>     
-                                <td class="w-[60px]">{{ row.isactive }}</td>
-                                <!-- <td class="w-[140px]">
-                                    <img [src]="generateBarcode(row.itembarcode)" alt="barcode" />
-                                </td> -->
-                                <td class="text-center w-[60px]">
-                                    <div class="flex g-2">
+                                <td class="truncate" [title]="row.categoryname">{{ row.categoryname }}</td>
+                                <td class="truncate" [title]="row.item_description">{{ row.item_description }}</td>
+                                <td>{{ row.uomname }}</td>
+                                <td>{{ row.buffer_stock }}</td>
+                                <td>{{ row.available_stock > 0 ? row.available_stock : 0 }}</td>
+                                <td class="text-center">{{ row.isactive }}</td>
+                                <td class="text-center">
+                                    <div class="flex justify-center">
                                         <button pButton type="button" icon="pi pi-print" disabled class="p-button-text p-button-sm" (click)="printSingleBarcode(row)"></button>
                                         <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm text-red-500" (click)="openEditDialog(row)"></button>
                                     </div>
                                 </td>
                             </tr>
                         </ng-template>
+
+                        <ng-template pTemplate="emptymessage">
+                            <tr>
+                                <td colspan="8" class="text-center italic py-6 text-sm">No items found</td>
+                            </tr>
+                        </ng-template>
+
                         <ng-template pTemplate="paginatorleft">
-                            <div class="text-gray-600 ms-2">Total Items:{{ filteredProducts.length || 0 }}</div>
+                            <div class="text-gray-600 ms-2">Total Items: {{ filteredProducts.length || 0 }}</div>
                         </ng-template>
                     </p-table>
                 </div>
             </div>
         </form>
     </div>
-   <p-dialog
-    header="{{ mode === 'add' ? 'Add Item' : 'Edit Item' }}"
-    [(visible)]="visibleDialog"
-    [modal]="true"
-    [style]="{ width: '80vw' }"
-    [contentStyle]="{ 'max-height': '80vh', overflow: 'auto' }"
-    appendTo="body"
->
-    <app-add-item-cons
-        [categoryOptions]="categoryOptions"
-        [uomOptions]="uomOptions"
-        [editData]="selectedRow"
-        [mode]="mode"
-        (close)="closeDialog()"
-        (save)="onSave($event)"
-    ></app-add-item-cons>
-</p-dialog>
+    <p-dialog header="{{ mode === 'add' ? 'Add Item' : 'Edit Item' }}" [(visible)]="visibleDialog" [modal]="true" [style]="{ width: '80vw' }" [contentStyle]="{ 'max-height': '80vh', overflow: 'auto' }" appendTo="body">
+        <app-add-item-cons [categoryOptions]="categoryOptions" [uomOptions]="uomOptions" [editData]="selectedRow" [mode]="mode" (close)="closeDialog()" (save)="onSave($event)"></app-add-item-cons>
+    </p-dialog>
     <p-confirmDialog></p-confirmDialog>
 </div>
 

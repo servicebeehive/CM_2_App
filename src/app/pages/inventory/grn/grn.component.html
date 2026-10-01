@@ -24,9 +24,6 @@
             <div class="flex flex-col">
                 <div class="flex gap-2 items-center">
                 <label class="font-medium mb-1">GRN No</label>
-        <div *ngIf="!poSelected" class="surface-100 text-500 text-sm flex align-items-center gap-2">
-            (Select a PO Number to enable the tabs below)
-        </div>
         </div>
                 <p-dropdown
                     [options]="grnOptions"
@@ -101,10 +98,10 @@
                         <div class="flex align-items-center gap-2 px-3 py-2" style="border: 1px solid var(--surface-300); border-radius: 6px; background: var(--surface-0); min-height: 38px">
                             <label for="qualityReportFile" class="p-button p-button-sm p-button-outlined p-button-primary m-0" style="cursor: pointer; white-space: nowrap"> <i class="pi pi-upload mr-1"></i> Choose File </label>
                             <input id="qualityReportFile" type="file" accept=".pdf,.jpg,.jpeg,.png" style="display: none" (change)="onFileSelect($event, 'qualityreport')" />
-                            <span class="text-xs text-400 italic mt-2">{{ fileNames.qualityreport || 'No file chosen' }}</span>
+                           <span class="text-xs text-400 italic mt-2" style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block" [title]="fileNames.qualityreport">{{ fileNames.qualityreport || 'No file chosen' }}</span>
                             <button pButton type="button" icon="pi pi-eye" class="p-button-text p-button-sm" [disabled]="!uploadedFiles.qualityreport" (click)="previewFile(uploadedFiles.qualityreport)"></button>
                         </div>
-                        <small class="text-red-500 mt-1 text-xs" *ngIf="isQualityReportAttachmentRequired && !uploadedFiles.qualityreport">Quality report file is required when any row has Quality Report = Y.</small>
+                        <small class="text-red-500 mt-1 text-xs" *ngIf="isQualityReportAttachmentRequired && !uploadedFiles.qualityreport">Quality report file is required</small>
                     </div>
                 </div>
             </p-tabPanel>
@@ -115,11 +112,11 @@
                     <span [ngClass]="{ 'text-400 cursor-not-allowed': !poSelected }"> <i class="pi pi-truck mr-2"></i>Delivery </span>
                 </ng-template>
 
-                <div class="flex flex-wrap items-end gap-4 p-3">
+                <div class="flex flex-wrap items-start gap-4 p-3">
                     <!-- Delivery Challan No -->
                     <div class="flex flex-col">
                         <label class="font-medium mb-1">Delivery Challan No <span class="text-red-500">*</span></label>
-                        <input pInputText formControlName="p_challanno" placeholder="Delivery Challan No" (keypress)="allowOnlyNumbers($event)" />
+                        <input pInputText formControlName="p_challanno" placeholder="Delivery Challan No" />
                         <small class="text-red-500 mt-1 text-xs" *ngIf="grnForm.get('p_challanno')?.touched && grnForm.get('p_challanno')?.errors?.['required']"> Challan No is required </small>
                     </div>
 
@@ -198,7 +195,7 @@
                         <div class="flex align-items-center gap-2 px-3 py-2" style="border: 1px solid var(--surface-300); border-radius: 6px; background: var(--surface-0); min-height: 38px">
                             <label for="challanFile" class="p-button p-button-sm p-button-outlined p-button-primary m-0" style="cursor: pointer; white-space: nowrap"> <i class="pi pi-upload mr-1"></i> Choose File </label>
                             <input id="challanFile" type="file" accept=".pdf,.jpg,.jpeg,.png" style="display: none" (change)="onFileSelect($event, 'challan')" />
-                            <span class="text-xs text-400 italic mt-2">{{ fileNames.challan || 'No file chosen' }}</span>
+                            <span class="text-xs text-400 italic mt-2" style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block" [title]="fileNames.challan">{{ fileNames.challan || 'No file chosen' }}</span>
                             <button pButton type="button" icon="pi pi-eye" class="p-button-text p-button-sm" [disabled]="!uploadedFiles.challan" (click)="previewFile(uploadedFiles.challan)"></button>
                         </div>
                     </div>
@@ -209,7 +206,7 @@
                         <div class="flex align-items-center gap-2 px-3 py-2" style="border: 1px solid var(--surface-300); border-radius: 6px; background: var(--surface-0); min-height: 38px">
                             <label for="materialPhotoFile" class="p-button p-button-sm p-button-outlined p-button-primary m-0" style="cursor: pointer; white-space: nowrap"> <i class="pi pi-upload mr-1"></i> Choose File </label>
                             <input id="materialPhotoFile" type="file" accept=".jpg,.jpeg,.png" style="display: none" (change)="onFileSelect($event, 'material')" multiple />
-                            <span class="text-xs text-400 mt-2 italic">{{ fileNames.material || 'No file chosen' }}</span>
+                            <span class="text-xs text-400 italic mt-2" style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block" [title]="fileNames.material">{{ fileNames.material || 'No file chosen' }}</span>
                             <button pButton type="button" icon="pi pi-eye" class="p-button-text p-button-sm" [disabled]="!uploadedFiles.material?.length" (click)="previewFile(uploadedFiles.material?.[0] || null)"></button>
                         </div>
                     </div>
@@ -220,7 +217,7 @@
                         <div class="flex align-items-center gap-2 px-3 py-2" style="border: 1px solid var(--surface-300); border-radius: 6px; background: var(--surface-0); min-height: 38px">
                             <label for="otherDocFile" class="p-button p-button-sm p-button-outlined p-button-primary m-0" style="cursor: pointer; white-space: nowrap"> <i class="pi pi-upload mr-1"></i> Choose File </label>
                             <input id="otherDocFile" type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="display: none" (change)="onFileSelect($event, 'other')" multiple />
-                            <span class="text-xs text-400 mt-2 italic">{{ fileNames.other || 'No file chosen' }}</span>
+                            <span class="text-xs text-400 italic mt-2" style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block" [title]="fileNames.other">{{ fileNames.other || 'No file chosen' }}</span>
                             <button pButton type="button" icon="pi pi-eye" class="p-button-text p-button-sm" [disabled]="!uploadedFiles.other?.length" (click)="previewFile(uploadedFiles.other?.[0] || null)"></button>
                         </div>
                     </div>

@@ -29,7 +29,7 @@ export class WorkComponent implements OnInit {
     workList: any[] = [];
     filterWorkList: any[] = [];
     editingIndex = -1;
-    editingWorkerId:number = 0;
+    editingWorkerId: number = 0;
 
     salesForm!: FormGroup;
     towerOptions = [];
@@ -63,11 +63,11 @@ export class WorkComponent implements OnInit {
         const companyId = this.authService.isLogIntType().companyid.toString();
         const userId = this.authService.isLogIntType().userid.toString();
         const payload = {
-           p_returntype: 'WORKLIST',
-           p_returnvalue: companyId,
-           username: userId
+            p_returntype: 'WORKLIST',
+            p_returnvalue: companyId,
+            username: userId
         };
-       
+
         this.inventoryService.Getreturndropdowndetails(payload).subscribe({
             next: (res) => {
                 this.filterWorkList = res.data;
@@ -79,37 +79,36 @@ export class WorkComponent implements OnInit {
 
     loadProject(): void {
         const companyId = this.authService.isLogIntType().companyid.toString();
+        const userId = this.authService.isLogIntType().userid.toString();
         const payload = {
-            returnType : 'ACTIVEPROJECT',
-            returnValue : '',
-            username: '',
-            option1: companyId,
-            option2: null
-        }
-        this.inventoryService.getparameterbased(payload).subscribe({
+            p_companyid: companyId,
+            p_userid: userId,
+            p_isactive: null
+        };
+        this.workService.getProjectListRbac(payload).subscribe({
             next: (res) => {
-                this.projectOptions = res.data;
+                this.projectOptions = res.data.data;
             },
             error: (err) => console.error(err)
         });
     }
 
-    loadTower(data:any, patchTowerId?: any): void {
+    loadTower(data: any, patchTowerId?: any): void {
         const companyId = this.authService.isLogIntType().companyid.toString();
 
         const payload = {
-            returnType : 'ALLTOWER',
-            returnValue : data.value,
+            returnType: 'ALLTOWER',
+            returnValue: data.value,
             username: '',
             option1: companyId,
             option2: null
-        }
+        };
         this.inventoryService.getparameterbased(payload).subscribe({
             next: (res) => {
                 this.towerOptions = res.data;
-                 if (patchTowerId != null) {
-                this.salesForm.patchValue({ p_tower: patchTowerId });
-            }
+                if (patchTowerId != null) {
+                    this.salesForm.patchValue({ p_tower: patchTowerId });
+                }
             },
             error: (err) => console.error(err)
         });
@@ -125,7 +124,7 @@ export class WorkComponent implements OnInit {
         if (this.salesForm.invalid) return;
         const userid = this.authService.isLogIntType().userid;
         const v = this.salesForm.value;
-        
+
         const payload: UpserWorkList = {
             p_work_id: this.isEditing ? this.editingWorkerId : 0,
             p_project_id: v.p_project,
@@ -139,14 +138,14 @@ export class WorkComponent implements OnInit {
 
         this.workService.upsertWorkListing(payload).subscribe({
             next: (res) => {
-                if(res.status === 'success'){
-                     this.showSuccess( 'success', "Success", res.data.message)
-                }else{
-                    this.showSuccess(  'success', "Failed", res.data.message )
+                if (res.status === 'success') {
+                    this.showSuccess('success', 'Success', res.data.message);
+                } else {
+                    this.showSuccess('success', 'Failed', res.data.message);
                 }
-               
+
                 this.loadWorkList();
-                this.editingIndex=-1;
+                this.editingIndex = -1;
                 this.editingWorkerId = 0;
                 this.resetForm();
             },
@@ -166,17 +165,17 @@ export class WorkComponent implements OnInit {
     }
 
     // ── Edit (loads into top form) ───────────────────────────────────────
-      startEdit(index: number): void {
-    this.editingIndex = index;
-    const row = this.workList[index];
-    if (!row) return;
-    this.editingWorkerId = row.work_id;
-    this.salesForm.patchValue({
-        p_project: row.project_id,
-        p_level: row.level_name,
-        p_pour: row.pour_name
-    });
-this.loadTower({ value: row.project_id }, row.tower_block_id);
+    startEdit(index: number): void {
+        this.editingIndex = index;
+        const row = this.workList[index];
+        if (!row) return;
+        this.editingWorkerId = row.work_id;
+        this.salesForm.patchValue({
+            p_project: row.project_id,
+            p_level: row.level_name,
+            p_pour: row.pour_name
+        });
+        this.loadTower({ value: row.project_id }, row.tower_block_id);
     }
 
     cancelEdit(): void {
@@ -184,35 +183,41 @@ this.loadTower({ value: row.project_id }, row.tower_block_id);
         this.resetForm();
     }
 
-    // ── Delete ─────────────────────────────────────────────────────────────
-   removeItem(index: number): void {
-    this.confirmationService.confirm({
-        message: 'Are you sure you want to delete this row?',
-        header: 'Confirm Delete',
-        acceptLabel: 'Yes',
-        rejectLabel: 'Cancel',
-        acceptButtonStyleClass: 'p-button-danger',
-        rejectButtonStyleClass: 'p-button-secondary',
-        accept: () => {
-            this.workList.splice(index, 1);
-            this.filterWorkList = [...this.workList];
-            if (this.editingIndex === index) {
-                this.editingIndex = -1;
-                this.resetForm();
-            }
-        }
+    // ── Duplicate (loads into top form as a NEW entry) ───────────────────────
+duplicateItem(index: number): void {
+    const row = this.workList[index];
+    if (!row) return;
+
+    this.editingIndex = -1;
+    this.editingWorkerId = 0;
+
+    this.salesForm.patchValue({
+        p_project: row.project_id,
+        p_level: row.level_name,
+        p_pour: row.pour_name
     });
+
+    this.loadTower({ value: row.project_id }, row.tower_block_id);
 }
 
-    // Toggle all checkboxes
-    toggleAll(checked: boolean): void {
-        this.workList.forEach((r) => (r.completed = checked));
-        this.filterWorkList = [...this.workList];
-    }
-
-    // Single row toggle
-    onCompletedChange(index: number): void {
-        this.filterWorkList = [...this.workList];
+    // ── Delete ─────────────────────────────────────────────────────────────
+    removeItem(index: number): void {
+        this.confirmationService.confirm({
+            message: 'Are you sure you want to delete this row?',
+            header: 'Confirm Delete',
+            acceptLabel: 'Yes',
+            rejectLabel: 'Cancel',
+            acceptButtonStyleClass: 'p-button-danger',
+            rejectButtonStyleClass: 'p-button-secondary',
+            accept: () => {
+                this.workList.splice(index, 1);
+                this.filterWorkList = [...this.workList];
+                if (this.editingIndex === index) {
+                    this.editingIndex = -1;
+                    this.resetForm();
+                }
+            }
+        });
     }
 
     // ── Reset ──────────────────────────────────────────────────────────────
@@ -227,14 +232,14 @@ this.loadTower({ value: row.project_id }, row.tower_block_id);
     }
 
     private resetForm(): void {
-      this.salesForm.reset();
-    this.editingIndex = -1;
-    this.editingWorkerId = 0;
+        this.salesForm.reset();
+        this.editingIndex = -1;
+        this.editingWorkerId = 0;
         this.salesForm.markAsUntouched();
         this.salesForm.markAsPristine();
     }
 
     showSuccess(severity: string, summary: string, message: string) {
-        this.messageService.add({ severity: severity , summary: summary, detail: message });
+        this.messageService.add({ severity: severity, summary: summary, detail: message });
     }
 }

@@ -58,7 +58,7 @@ export class MaterialTransferComponent implements OnInit {
                 { field: 'indent_no', header: 'Indent No' },
                 { field: 'indent_date', header: 'Indent Date'},
                 { field: 'project_name', header: 'Site' },
-                { field: 'requested_by_name', header: 'Requested By' },
+                { field: 'requested_by', header: 'Requested By' },
                 { field: 'status', header: 'Status' }
             ]
         },
@@ -72,7 +72,7 @@ export class MaterialTransferComponent implements OnInit {
             newLabel: 'New Issue',
             columns: [
                 { field: 'min_no', header: 'MIN No'},
-                { field: 'issue_date', header: 'Issue Date'},
+                { field: 'issue_date', header: 'MIN Date'},
                 { field: 'project_name', header: 'Site' },
                 { field: 'issued_by_name', header: 'Requested By'},
                 { field: 'status', header: 'Status' }
@@ -88,7 +88,7 @@ export class MaterialTransferComponent implements OnInit {
             newLabel: 'New Return',
             columns: [
                 { field: 'mrn_no', header: 'MRN No' },
-                { field: 'return_date', header: 'Return Date' },
+                { field: 'return_date', header: 'MRN Date' },
                 { field: 'project_name', header: 'Site' },
                 { field: 'returned_by_name', header: 'Return By', fields: ['returned_by_name', 'return_by_name'] },
                 { field: 'status', header: 'Status' }
@@ -107,7 +107,7 @@ export class MaterialTransferComponent implements OnInit {
         grn: {
             listType: 'GRNLIST',
             idFields: ['grn_id', 'id'], formRoute: '/layout/inventory/grn', idQuery: 'grnId',
-            title: 'GRN', newLabel: 'New GRN',
+            title: 'Good Received Note - List', newLabel: 'New GRN',
             columns: [
                 { field: 'grn_no', header: 'GRN No' }, { field: 'grn_date', header: 'GRN Date' },
                 { field: 'po_no', header: 'PO No' }, { field: 'project_name', header: 'Site' },
@@ -119,14 +119,14 @@ export class MaterialTransferComponent implements OnInit {
             idFields: ['misc_purchase_id', 'id'], formRoute: '/layout/purchase/mics-purchase', idQuery: 'miscPurchaseId',
             title: 'Misc Purchase', newLabel: 'New Misc Purchase',
             columns: [
-                { field: 'misc_purchase_no', header: 'Purchase No' }, { field: 'purchase_date', header: 'Purchase Date' },
+                { field: 'misc_purchase_no', header: 'Misc PO No' }, { field: 'purchase_date', header: 'Misc PO Date' },
                 { field: 'project_name', header: 'Site' }, { field: 'vendor_name', header: 'Vendor' },
                 { field: 'total_amount', header: 'Total Amount' }, { field: 'status', header: 'Status' }
             ]
         },
         purchaseOrder: {
             listType: 'POLIST',
-            idFields: ['po_id', 'id'], formRoute: '/layout/purchase/purchase-order', idQuery: 'poId',
+            idFields: ['po_id', 'draft_id', 'id'], formRoute: '/layout/purchase/purchase-order', idQuery: 'poId',
             title: 'Purchase Order', newLabel: 'New Purchase Order',
             columns: [
                 { field: 'po_no', header: 'PO No' }, { field: 'po_date', header: 'PO Date' },
@@ -173,10 +173,17 @@ export class MaterialTransferComponent implements OnInit {
     onViewTransfer(row: any): void {
         const config = this.configurations[this.transactionType];
         const id = config.idFields.map((field) => row[field]).find((value) => value != null);
-        const queryParams: Record<string, any> = { [config.idQuery]: id, fromTransactionList: true };
+        const isDraft = String(row.status ?? '').trim().toUpperCase() === 'DRAFT';
+        const queryParams: Record<string, any> = { [config.idQuery]: id, fromTransactionList: true, status: row.status ?? null };
         if (this.transactionType === 'requisition') {
             queryParams['mfId'] = row.mf_id ?? id;
             queryParams['mfNo'] = row.mf_no ?? null;
+        }
+        if (this.transactionType === 'purchaseOrder' && isDraft) {
+            queryParams['draftId'] = row.draft_id ?? id;
+        }
+        if (this.transactionType === 'indent' && isDraft) {
+            queryParams['draftId'] = row.indent_id ?? id;
         }
         this.router.navigate([config.formRoute], {
             queryParams

@@ -435,3 +435,10 @@ export interface TransferItem {
     qtytotransfer: number;
     remarks: string;
 }
+
+export interface UpdateMailStatus {
+    p_mail_log_id: number;
+    p_status: string;
+    p_error_message: string | null;
+    p_updated_by: number | null;
+}

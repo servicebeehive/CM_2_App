@@ -2,7 +2,7 @@ import { environment } from '@/environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ShareService } from './shared.service';
-import { GrnDelivery, GrnDocuments, GrnHeader, GrnRemarks, MaterialRequisitionPayload, MiscPurchase, PurchaseDraftPayload, PurchaseOrderPayload, UpsertRfqPayload, UpserWorkList, CancelPOPayload, MaterialIssue, MaterialIndent, MaterialReturn, MaterialTransfer } from '../models/authmodel/work.model';
+import { GrnDelivery, GrnDocuments, GrnHeader, GrnRemarks, MaterialRequisitionPayload, MiscPurchase, PurchaseDraftPayload, PurchaseOrderPayload, UpsertRfqPayload, UpserWorkList, CancelPOPayload, MaterialIssue, MaterialIndent, MaterialReturn, MaterialTransfer, UpdateMailStatus } from '../models/authmodel/work.model';
 import { catchError, Observable, throwError } from 'rxjs';
 import { API_ENDPOINTS } from '../config/api-endpoints';
 
@@ -163,5 +163,67 @@ export class WorkService {
         const payloaddata = this.shareservice.GetApiBody(payload);
         const url = `${this.baseUrl}${API_ENDPOINTS.work.upsertmaterialtransfer}`;
         return this.http.post<any>(url, payloaddata).pipe(catchError((error) => throwError(() => error)));
+    }
+
+    getProjectListRbac(payload: any): Observable<any> {
+        const payloaddata = this.shareservice.GetApiBody(payload);
+        const url = `${this.baseUrl}${API_ENDPOINTS.work.getprojectlistrbac}`;
+        return this.http.post<any>(url, payloaddata).pipe(catchError((error) => throwError(() => error)));
+    }
+
+     updateMailStatus(payload: UpdateMailStatus): Observable<any> {
+        const payloaddata = this.shareservice.GetApiBody(payload);
+        const url = `${this.baseUrl}${API_ENDPOINTS.work.updatemailstatus}`;
+        return this.http.post<any>(url, payloaddata).pipe(catchError((error) => throwError(() => error)));
+    }
+
+    updateMailStatusesFromSend(
+        mailRows: Array<{ mailLogId: number | string | null | undefined; vendorId: number | string | null | undefined }>,
+        response: any,
+        updatedBy: number | null,
+        sendError?: any
+    ): number {
+        const results: any[] = Array.isArray(response?.data) ? response.data : response?.data ? [response.data] : [];
+        const hasVendorIds = results.some((result) => result?.vendorId != null || result?.vendor_id != null);
+        let sentCount = 0;
+
+        mailRows.forEach((mailRow, index) => {
+            if (mailRow.mailLogId == null || mailRow.mailLogId === '') return;
+
+            const result = results.find((item) => {
+                const resultVendorId = item?.vendorId ?? item?.vendor_id;
+                return resultVendorId != null && String(resultVendorId) === String(mailRow.vendorId);
+            }) ?? (!hasVendorIds ? results[index] : undefined);
+            const isSent = !sendError && String(result?.status ?? '').toUpperCase() === 'SENT';
+            if (isSent) sentCount++;
+
+            const error = sendError ?? result?.error ?? result?.error_message ?? result?.errorMessage ?? result?.message ?? response?.error;
+            this.updateMailStatus({
+                p_mail_log_id: Number(mailRow.mailLogId),
+                p_status: isSent ? 'SENT' : 'FAILED',
+                p_error_message: isSent ? null : this.getMailFailureMessage(error, result ? `Vendor mail status: ${result.status ?? 'unknown'}` : 'No vendor result returned'),
+                p_updated_by: updatedBy
+            }).subscribe({
+                error: (statusError) => console.error('Failed to update mail status:', statusError)
+            });
+        });
+
+        return sentCount;
+    }
+
+    getMailFailureMessage(error: any, fallback = 'Mail send failed'): string {
+        const message = typeof error === 'string'
+            ? error
+            : error?.error?.error ?? error?.error?.message ?? error?.error?.detail ?? error?.message ?? error?.error ?? error?.detail ?? error?.statusText;
+
+        if (typeof message === 'string' && message.trim()) return message.trim();
+        if (message != null) {
+            try {
+                return JSON.stringify(message);
+            } catch {
+                return fallback;
+            }
+        }
+        return fallback;
     }
 }
